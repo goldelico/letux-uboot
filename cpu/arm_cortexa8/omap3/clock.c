@@ -402,3 +402,24 @@ void per_clocks_enable(void)
 
 	sdelay(1000);
 }
+
+/*
+ * Configure PRCM registers to get 720 Mhz
+ *
+ * NOTE: N value doesn't change, only M gets affected
+ */
+void prcm_config_720mhz(void)
+{
+	struct prcm *prcm_base = (struct prcm *)PRCM_BASE;
+
+	/* Unlock MPU DPLL (slows things down, and needed later) */
+	sr32(&prcm_base->clken_pll_mpu, 0, 3, PLL_LOW_POWER_BYPASS);
+	wait_on_value(ST_MPU_CLK, 0, &prcm_base->idlest_pll_mpu, LDELAY);
+
+	/* Set M */
+	sr32(&prcm_base->clksel1_pll_mpu, 8, 11, 0x2D0);
+
+	/* lock mode */
+	sr32(&prcm_base->clken_pll_mpu, 0, 3, PLL_LOCK);
+	wait_on_value(ST_MPU_CLK, 1, &prcm_base->idlest_pll_mpu, LDELAY);
+}
