@@ -132,8 +132,26 @@ int misc_init_r(void)
 	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
 	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 
+	beagle_identify();
+
 	twl4030_power_init();
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
+
+	if (beagle_revision == REVISION_C4) {
+
+		/* Select TWL4030 VSEL to support 720Mhz */
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
+					VAUX2_VSEL_18,
+					TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
+					DEV_GRP_P1);
+
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VDD1_VSEL,
+					VDD1_VSEL_14,
+					TWL4030_PM_RECEIVER_VDD1_DEV_GRP,
+					DEV_GRP_P1);
+		prcm_config_720mhz();
+	}
+
 	display_init();
 
 	/* Configure GPIOs to output */
@@ -147,7 +165,6 @@ int misc_init_r(void)
 	writel(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
 		GPIO15 | GPIO14 | GPIO13 | GPIO12, &gpio5_base->setdataout);
 
-	beagle_identify();
 
 	dieid_num_r();
 	omap3_dss_enable();
