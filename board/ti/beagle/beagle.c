@@ -38,7 +38,7 @@
 #include <asm/mach-types.h>
 #include "beagle.h"
 
-static int beagle_revision_c;
+static int beagle_revision;
 
 /*
  * Routine: board_init
@@ -60,41 +60,57 @@ int board_init(void)
 /*
  * Routine: beagle_get_revision
  * Description: Return the revision of the BeagleBoard this code is running on.
- *              If it is a revision Ax/Bx board, this function returns 0,
- *              on a revision C board you will get a 1.
  */
 int beagle_get_revision(void)
 {
-	return beagle_revision_c;
+	return beagle_revision;
 }
 
 /*
  * Routine: beagle_identify
- * Description: Detect if we are running on a Beagle revision Ax/Bx or
- *              Cx. This can be done by GPIO_171. If this is low, we are
- *              running on a revision C board.
+ * Description: Detect if we are running on a Beagle revision Ax/Bx,
+ *		C1/2/3, C4 or D. This can be done by reading
+ *		the level of GPIO173, GPIO172 and GPIO171. This should
+ *		result in
+ *		GPIO173, GPIO172, GPIO171: 1 1 1 => Ax/Bx
+ *		GPIO173, GPIO172, GPIO171: 1 1 0 => C1/2/3
+ *		GPIO173, GPIO172, GPIO171: 1 0 1 => C4
+ *		GPIO173, GPIO172, GPIO171: 0 0 0 => D
  */
 void beagle_identify(void)
 {
-	beagle_revision_c = 0;
-	if (!omap_request_gpio(171)) {
-		unsigned int val;
+	omap_request_gpio(171);
+	omap_request_gpio(172);
+	omap_request_gpio(173);
+	omap_set_gpio_direction(171, 1);
+	omap_set_gpio_direction(172, 1);
+	omap_set_gpio_direction(173, 1);
 
-		omap_set_gpio_direction(171, 1);
-		val = omap_get_gpio_datain(171);
-		omap_free_gpio(171);
-
-		if (val)
-			beagle_revision_c = 0;
-		else
-			beagle_revision_c = 1;
-	}
+	beagle_revision = omap_get_gpio_datain(173) << 2 |
+			  omap_get_gpio_datain(172) << 1 |
+			  omap_get_gpio_datain(171);
+	omap_free_gpio(171);
+	omap_free_gpio(172);
+	omap_free_gpio(173);
 
 	printf("Board revision ");
-	if (beagle_revision_c)
-		printf("C\n");
-	else
+
+	switch (beagle_revision) {
+	case REVISION_AXBX:
 		printf("Ax/Bx\n");
+		break;
+	case REVISION_CX:
+		printf("C1/C2/C3\n");
+		break;
+	case REVISION_C4:
+		printf("C4\n");
+		break;
+	case REVISION_D:
+		printf("D\n");
+		break;
+	default:
+		printf("unknown 0x%02x\n", beagle_revision);
+	}
 }
 
 /*
@@ -137,7 +153,7 @@ void set_muxconf_regs(void)
 {
 	MUX_BEAGLE();
 
-	if (beagle_revision_c) {
+	if (beagle_revision != REVISION_AXBX) {
 		MUX_BEAGLE_C();
 	}
 }
