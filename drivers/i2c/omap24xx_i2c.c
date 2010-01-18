@@ -435,3 +435,8 @@ int i2c_set_bus_num(unsigned int bus)
 
 	return 0;
 }
+
+int i2c_get_bus_num(void)
+{
+	return (int) current_bus;
+}
