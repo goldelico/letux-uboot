@@ -59,16 +59,9 @@ void twl4030_power_reset_init(void)
 	}
 }
 
-
 /*
  * Power Init
  */
-#define DEV_GRP_P1		0x20
-#define VAUX3_VSEL_28		0x03
-#define DEV_GRP_ALL		0xE0
-#define VPLL2_VSEL_18		0x05
-#define VDAC_VSEL_18		0x03
-
 void twl4030_power_init(void)
 {
 	unsigned char byte;
@@ -98,8 +91,6 @@ void twl4030_power_init(void)
 			     TWL4030_PM_RECEIVER_VDAC_DEDICATED);
 }
 
-#define VMMC1_VSEL_30		0x02
-
 void twl4030_power_mmc_init(void)
 {
 	unsigned char byte;
@@ -112,4 +103,19 @@ void twl4030_power_mmc_init(void)
 	byte = VMMC1_VSEL_30;
 	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, byte,
 			     TWL4030_PM_RECEIVER_VMMC1_DEDICATED);
+}
+
+/*
+ * Generic function to select Device Group and Voltage
+ */
+void twl4030_pmrecv_vsel_cfg(u8 vsel_reg, u8 vsel_val,
+				u8 dev_grp, u8 dev_grp_sel)
+{
+	/* Select the Voltage */
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, vsel_val,
+				vsel_reg);
+
+	/* Select the Device Group */
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, dev_grp_sel,
+				dev_grp);
 }
