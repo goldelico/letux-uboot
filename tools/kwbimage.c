@@ -23,11 +23,20 @@
  */
 
 /* Required to obtain the getline prototype from stdio.h */
-#define _GNU_SOURCE
+// #define _GNU_SOURCE
 
 #include "mkimage.h"
 #include <image.h>
 #include "kwbimage.h"
+
+ssize_t getline(char **lineptr, size_t *n, FILE *stream)
+{
+	if(!*lineptr)
+		*lineptr=malloc(*n=512);
+	if(fgets(*lineptr, *n, stream) == NULL)
+		return -1;
+	return strlen(*lineptr);
+}
 
 /*
  * Supported commands for configuration file
