@@ -53,6 +53,9 @@ HOSTSTRIP	= strip
 #
 # Mac OS X / Darwin's C preprocessor is Apple specific.  It
 # generates numerous errors and warnings.  We want to bypass it
+
+# hns: this may no longer be true...
+
 # and use GNU C's cpp.  To do this we pass the -traditional-cpp
 # option to the compiler.  Note that the -traditional-cpp flag
 # DOES NOT have the same semantics as GNU C's flag, all it does
@@ -65,7 +68,7 @@ HOSTSTRIP	= strip
 
 ifeq ($(HOSTOS),darwin)
 HOSTCC		= cc
-HOSTCFLAGS	+= -traditional-cpp
+# HOSTCFLAGS	+= -traditional-cpp
 HOSTLDFLAGS	+= -multiply_defined suppress
 else
 HOSTCC		= gcc
