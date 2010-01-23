@@ -1,0 +1,38 @@
+new uBoot commands:
+
+led in[it]			setup GPIOs
+led ge[t]			get button status
+led se[t] hh		set LEDs to lower 4 bit
+led se[t]			increment last state, i.e. make LEDs count
+led mi[rror]		read button status and mirror to LEDs until a key is pressed
+led bl[ink]			blink LEDs
+
+lcm in[it]			initialize subsystem (DSS, GPIOs etc.)
+lcm ba[cklight] dd	set backlight level (0..255)
+lcm po[wer] dd		set power level (0..2)
+lcm on				set lcm on
+lcm of[f]			set lcm off
+
+
+To be Done:
+
+gps on | of[f]		control GPS receiver (and initialize UART)
+gps re[ad]			read GPS NMEA from UART until a key is pressed
+
+tsc init			initialize/enable TSC2007 through I2C2
+tsc get				read current ADC values (incl. internal temp and AUX/photosensor)
+tsc lo[op]			read x/y coordinates
+tsc ch[oose]		somehow allow to define receptive fields and use the result to select different boot options
+
+can uBoot load bitmap files from the boot-partition directly to the framebuffer of the LCM?
+
+if yes:
+a) load splash.bmap screen from MMC while waiting to break into uBoot console
+b) load menu.bmap background image (so we can use icons etc.) and combine with 'tsc choose' to provide a simple but nice boot-menu
+
+
+General ToDo:
+
+integrate/rebase on official uBoot as soon as the patches by Khasim are approved.
+
+http://groups.google.de/group/beagleboard/browse_thread/thread/f70159f29b29a68c
