@@ -341,6 +341,16 @@ static const struct panel_config lcm_cfg =
 	.panel_color	= DVI_BACKGROUND_COLOR
 };
 
+void omap3_dss_go(void)
+{ // push changes from shadow register to display controller
+	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
+	u32 l = 0;
+	
+	l = readl(&dispc->control);
+	l |= GO_LCD | GO_DIG;
+	writel(l, &dispc->control);
+}
+
 void board_video_init(GraphicDevice *pGD)
 {
 	omap3_dss_panel_config(&lcm_cfg);	// set new config
@@ -373,6 +383,7 @@ static int do_lcd_color(int argc, char *argv[])
 	}
 	color=simple_strtoul(argv[2], NULL, 16);
 	writel(color, &dispc->default_color0);
+	omap3_dss_go();
 	return 0;
 }
 
