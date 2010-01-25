@@ -303,17 +303,15 @@ int jbt6k74_display_onoff(int on)
 		return jbt_reg_write_nodata(jbt, JBT_REG_DISPLAY_OFF);
 }
 
-void board_video_init(GraphicDevice *pGD)
-{
 #define DVI_BACKGROUND_COLOR		0x00fadc29	// rgb(250, 220, 41)
 
-	// configure beagle board DSS for the TD28TTEC1
+// configure beagle board DSS for the TD28TTEC1
 
 #define DSS1_FCLK	432000000	// see figure 15-65
 #define PIXEL_CLOCK	22000000	// approx. 22 MHz (will be divided from 432 MHz)
-	
-	// all values are min ratings
-	
+
+// all values are min ratings
+
 #define VDISP	640				// vertical active area
 #define VFP		4				// vertical front porch
 #define VS		2				// VSYNC pulse width (negative going)
@@ -321,7 +319,7 @@ void board_video_init(GraphicDevice *pGD)
 #define VDS		(VS+VBP)		// vertical data start
 #define VBL		(VS+VBP+VFP)	// vertical blanking period
 #define VP		(VDISP+VBL)		// vertical cycle
-	
+
 #define HDISP	480				// horizontal active area
 #define HFP		24				// horizontal front porch
 #define HS		8				// HSYNC pulse width (negative going)
@@ -329,19 +327,22 @@ void board_video_init(GraphicDevice *pGD)
 #define HDS		(HS+HBP)		// horizontal data start
 #define HBL		(HS+HBP+HFP)	// horizontal blanking period
 #define HP		(HDISP+HBL)		// horizontal cycle
-	
-	static const struct panel_config lcm_cfg = {
-		.timing_h	= ((HBP-1)<<20) | ((HFP-1)<<8) | ((HS-1)<<0), /* Horizantal timing */
-		.timing_v	= ((VBP+0)<<20) | ((VFP+0)<<8) | ((VS-1)<<0), /* Vertical timing */
-		.pol_freq	= (1<<17)|(0<<16)|(0<<15)|(1<<14)|(1<<13)|(1<<12)|0x28,    /* Pol Freq */
-		.divisor	= (0x0001<<16)|(DSS1_FCLK/PIXEL_CLOCK), /* Pixel Clock divisor from dss1_fclk */
-		.lcd_size	= ((HDISP-1)<<0) | ((VDISP-1)<<16), /* as defined by LCM */
-		.panel_type	= 0x01, /* TFT */
-		.data_lines	= 0x03, /* 24 Bit RGB */
-		.load_mode	= 0x02, /* Frame Mode */
-		.panel_color	= DVI_BACKGROUND_COLOR
-	};
-	
+
+static const struct panel_config lcm_cfg = 
+{
+	.timing_h	= ((HBP-1)<<20) | ((HFP-1)<<8) | ((HS-1)<<0), /* Horizantal timing */
+	.timing_v	= ((VBP+0)<<20) | ((VFP+0)<<8) | ((VS-1)<<0), /* Vertical timing */
+	.pol_freq	= (1<<17)|(0<<16)|(0<<15)|(1<<14)|(1<<13)|(1<<12)|0x28,    /* Pol Freq */
+	.divisor	= (0x0001<<16)|(DSS1_FCLK/PIXEL_CLOCK), /* Pixel Clock divisor from dss1_fclk */
+	.lcd_size	= ((HDISP-1)<<0) | ((VDISP-1)<<16), /* as defined by LCM */
+	.panel_type	= 0x01, /* TFT */
+	.data_lines	= 0x03, /* 24 Bit RGB */
+	.load_mode	= 0x02, /* Frame Mode */
+	.panel_color	= DVI_BACKGROUND_COLOR
+};
+
+void board_video_init(GraphicDevice *pGD)
+{
 	omap3_dss_panel_config(&lcm_cfg);	// set new config
 	omap3_dss_enable();	// and (re)enable
 	
@@ -360,6 +361,28 @@ void board_video_init(GraphicDevice *pGD)
 	lcd->LPCSEL  = 0x00000000;
 #endif
 	printf("did board_video_init()\n");
+}
+
+static int do_lcd_color(int argc, char *argv[])
+{
+	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
+	unsigned int color;
+	if (argc < 3) {
+		printf ("lcm color: missing color (0..ffffff).\n");
+		return (-1);
+	}
+	color=simple_strtoul(argv[2], NULL, 16);
+	writel(color, &dispc->default_color0);
+	return 0;
+}
+
+static int do_lcd_framebuffer(int argc, char *argv[])
+{
+	if (argc < 3) {
+		printf ("lcm fb: missing address.\n");
+		return (-1);
+	}
+	return 0;
 }
 
 static int do_lcd_backlight(int argc, char *argv[])
@@ -428,6 +451,10 @@ static int do_lcd(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		return do_lcd_onoff (argc, argv, 1);
 	} else if (strncmp ("in", argv[1], 2) == 0) {
 		return do_lcd_init (argc, argv);
+	} else if (strncmp ("co", argv[1], 2) == 0) {
+		return do_lcd_color (argc, argv);
+	} else if (strncmp ("fb", argv[1], 2) == 0) {
+		return do_lcd_framebuffer (argc, argv);
 	} else {
 		printf ("lcm: unknown operation: %s\n", argv[1]);
 	}
@@ -438,7 +465,9 @@ static int do_lcd(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 U_BOOT_CMD(lcm, 3, 0, do_lcd, "LCM sub-system",
 		   "init - initialize DSS, GPIOs and LCM controller\n"
 		   "backlight level - set backlight level\n"
-		   "power mode - set power mode\n"
 		   "off - switch off\n"
 		   "on - switch on\n"
+		   "power mode - set power mode\n"
+		   "color hhhhhh - switch color (can be used without init)\n"
+		   "fb address - set framebuffer address (can be used without init)\n"
 		   );
