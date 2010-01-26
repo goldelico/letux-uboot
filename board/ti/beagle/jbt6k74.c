@@ -358,6 +358,7 @@ struct gfx_regs
 	u32 gfx_size;				/* 8c */
 	u32 reserved1[4];			
 	u32 gfx_attributes;			/* a0 */
+#define GFX_ENABLE 0x0001
 	u32 gfx_fifo_threshold;		/* a4 */
 	u32 gfx_fifo_size_status;	/* a8 */
 	u32 gfx_row_inc;			/* ac */
@@ -367,6 +368,18 @@ struct gfx_regs
 }
 
 #define OMAP3_GFX_BASE (0x48050480)
+
+static int omap3_dss_enable_fb(int flag)
+{
+	u32 l = readl(&dispc->size_lcd);
+	if(flag)
+		l |= GFX_ENABLE;
+	else
+		l &= ~GFX_ENABLE;
+	writel(l, &gfx->gfx_attributes);
+	omap3_dss_go();
+	return 0;
+}
 
 static int omap3_dss_set_fb(void *addr)
 { // set framebuffer address
@@ -378,19 +391,19 @@ static int omap3_dss_set_fb(void *addr)
 			writel(addr, &gfx->gfx_ba[1]);
 			writel(0, &gfx->gfx_position);
 			writel(readl(&dispc->size_lcd), &gfx->gfx_position);
-			writel(0x008d, &gfx->gfx_attributes);	// 16x32 bit bursts + RGB16? + bit0 is enable
-			writel((0x3fc << 16) + (0x3bc)), &gfx->gfx_fifo_threshold);	// high & low
+			writel(0x008c, &gfx->gfx_attributes);	// 16x32 bit bursts + RGB16?
+			writel(((0x3fc << 16) + (0x3bc)), &gfx->gfx_fifo_threshold);	// high & low
 			writel(1024, &gfx->gfx_fifo_size_status);	// FIFO size in bytes
 			writel(1, &gfx->gfx_row_inc);
 			writel(1, &gfx->gfx_pixel_inc);
 			writel(0, &gfx->gfx_window_skip);
 			writel(0, &gfx->gfx_table_ba);
+			omap3_dss_enable_fb(1);
 		}
 	else
 		{ // disable
-			writel(0x008c, &gfx->gfx_attributes);
+			omap3_dss_enable_fb(0);
 		}
-	omap3_dss_go();
 	return 0;
 }
 
@@ -398,6 +411,7 @@ static int omap3_set_color(long color)
 {
 	writel(color, &dispc->default_color0);
 	omap3_dss_go();
+	return 0;
 }
 
 void board_video_init(GraphicDevice *pGD)
