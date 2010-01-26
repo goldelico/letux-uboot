@@ -396,7 +396,6 @@ static int omap3_dss_set_fb(void *addr)
 			u32 l = readl(&dispc->control);
 			l |= GO_LCD | GO_DIG;
 			writel(l, &dispc->control);
-			printf("dispc_control: %08x\n", readl(&dispc->control));
 			printf("write %x to gfx_attibutes: %08x\n", l, &gfx->gfx_attributes);
 			writel(l, &gfx->gfx_attributes);
 			printf("gfx_ba[0]: %08x\n", &gfx->gfx_ba[0]);
@@ -405,7 +404,7 @@ static int omap3_dss_set_fb(void *addr)
 			printf("framebuffer address: %08x\n", addr);
 			writel(0, &gfx->gfx_position);
 			printf("size_lcd: %08x\n", readl(&dispc->size_lcd));
-			writel(readl(&dispc->size_lcd), &gfx->gfx_position);
+			writel(readl(&dispc->size_lcd), &gfx->gfx_size);
 			writel(0x008c, &gfx->gfx_attributes);	// 16x32 bit bursts + RGB16?
 			writel(((0x3fc << 16) + (0x3bc)), &gfx->gfx_fifo_threshold);	// high & low
 			writel(1024, &gfx->gfx_fifo_size_status);	// FIFO size in bytes
@@ -414,6 +413,17 @@ static int omap3_dss_set_fb(void *addr)
 			writel(0, &gfx->gfx_window_skip);
 			writel(0x807ff000, &gfx->gfx_table_ba);
 			omap3_dss_enable_fb(1);
+			{
+				u32 addr;
+				for(addr=0x48050010; addr <= 0x48050010; addr+=4)
+					printf("%08x: %08x\n", addr, readl(addr));
+				for(addr=0x48050040; addr <= 0x48050058; addr+=4)
+					printf("%08x: %08x\n", addr, readl(addr));
+				for(addr=0x48050410; addr <= 0x48050414; addr+=4)
+					printf("%08x: %08x\n", addr, readl(addr));
+				for(addr=0x48050444; addr <= 0x480504b8; addr+=4)
+					printf("%08x: %08x\n", addr, readl(addr));
+			}
 		}
 	else
 		{ // disable
