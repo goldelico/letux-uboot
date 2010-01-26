@@ -393,7 +393,7 @@ static int omap3_dss_set_fb(void *addr)
 	struct gfx_regs *gfx = (struct gfx_regs *) OMAP3_GFX_BASE;
 	if(addr != NULL)
 		{
-			l = readl(&dispc->control);
+			u32 l = readl(&dispc->control);
 			l |= GO_LCD | GO_DIG;
 			writel(l, &dispc->control);
 			printf("dispc_control: %08x\n", readl(&dispc->control));
