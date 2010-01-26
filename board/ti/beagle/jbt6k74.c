@@ -371,7 +371,8 @@ struct gfx_regs
 
 static int omap3_dss_enable_fb(int flag)
 {
-	u32 l = readl(&dispc->size_lcd);
+	struct gfx_regs *gfx = (struct gfx_regs *) OMAP3_GFX_BASE;
+	u32 l = readl(&gfx->gfx_attributes);
 	if(flag)
 		l |= GFX_ENABLE;
 	else
@@ -385,10 +386,10 @@ static int omap3_dss_set_fb(void *addr)
 { // set framebuffer address
 	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
 	struct gfx_regs *gfx = (struct gfx_regs *) OMAP3_GFX_BASE;
-	if(addr != 0)
+	if(addr != NULL)
 		{
-			writel(addr, &gfx->gfx_ba[0]);
-			writel(addr, &gfx->gfx_ba[1]);
+			writel((u32) addr, &gfx->gfx_ba[0]);
+			writel((u32) addr, &gfx->gfx_ba[1]);
 			writel(0, &gfx->gfx_position);
 			writel(readl(&dispc->size_lcd), &gfx->gfx_position);
 			writel(0x008c, &gfx->gfx_attributes);	// 16x32 bit bursts + RGB16?
@@ -409,6 +410,7 @@ static int omap3_dss_set_fb(void *addr)
 
 static int omap3_set_color(long color)
 {
+	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
 	writel(color, &dispc->default_color0);
 	omap3_dss_go();
 	return 0;
@@ -438,7 +440,6 @@ void board_video_init(GraphicDevice *pGD)
 
 static int do_lcd_color(int argc, char *argv[])
 {
-	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
 	unsigned int color;
 	if (argc < 3) {
 		printf ("lcm color: missing color (0..ffffff).\n");
@@ -456,7 +457,7 @@ static int do_lcd_framebuffer(int argc, char *argv[])
 		printf ("lcm fb: missing address.\n");
 		return (-1);
 	}
-	addr=simple_strtoul(argv[2], NULL, 16);
+	addr=(void *) simple_strtoul(argv[2], NULL, 16);
 	omap3_dss_set_fb(addr);
 	return 0;
 }
