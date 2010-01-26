@@ -40,7 +40,7 @@
 #include <twl4030.h>
 #include "TD028TTEC1.h"
 
-#if 1
+#if 0
 #define DEBUGP(x, args...) printf("%s: " x, __FUNCTION__, ## args);
 #define DEBUGPC(x, args...) printf(x, ## args);
 #define VERIFY(VAL) if(SPI_READ != (VAL)) printf("expected: %d found: %d\n", VAL, SPI_READ)
