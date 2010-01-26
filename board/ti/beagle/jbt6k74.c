@@ -379,6 +379,7 @@ static int omap3_dss_enable_fb(int flag)
 		l &= ~GFX_ENABLE;
 	writel(l, &gfx->gfx_attributes);
 	omap3_dss_go();
+	printf("framebuffer enabled: %d\n", flag);
 	return 0;
 }
 
@@ -390,6 +391,7 @@ static int omap3_dss_set_fb(void *addr)
 		{
 			writel((u32) addr, &gfx->gfx_ba[0]);
 			writel((u32) addr, &gfx->gfx_ba[1]);
+			printf("framebuffer address: %08x\n", addr);
 			writel(0, &gfx->gfx_position);
 			writel(readl(&dispc->size_lcd), &gfx->gfx_position);
 			writel(0x008c, &gfx->gfx_attributes);	// 16x32 bit bursts + RGB16?
@@ -398,7 +400,7 @@ static int omap3_dss_set_fb(void *addr)
 			writel(1, &gfx->gfx_row_inc);
 			writel(1, &gfx->gfx_pixel_inc);
 			writel(0, &gfx->gfx_window_skip);
-			writel(0, &gfx->gfx_table_ba);
+			writel(0x807ff000, &gfx->gfx_table_ba);
 			omap3_dss_enable_fb(1);
 		}
 	else
@@ -413,6 +415,7 @@ static int omap3_set_color(long color)
 	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
 	writel(color, &dispc->default_color0);
 	omap3_dss_go();
+	printf("background color: %06x\n", color);
 	return 0;
 }
 
@@ -471,7 +474,6 @@ static int do_lcd_backlight(int argc, char *argv[])
 	}
 	level=simple_strtoul(argv[2], NULL, 10);
 	backlight_set_level(level);
-	printf("lcm backlight level set to %d (0..255)\n", level);
 	return 0;
 }
 
