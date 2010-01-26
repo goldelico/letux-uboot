@@ -350,7 +350,7 @@ void omap3_dss_go(void)
 	writel(l, &dispc->control);
 	while((readl(&dispc->control) & (GO_LCD | GO_DIG)) != 0)
 		udelay(1000);	// udelay(1000) until the bit(s) are reset by Hardware!
-	printf("omap3_dss_go() dispc_control: %08x\n", readl(&dispc->control));
+//	printf("omap3_dss_go() dispc_control: %08x\n", readl(&dispc->control));
 }
 
 struct gfx_regs 
@@ -379,11 +379,11 @@ static int omap3_dss_enable_fb(int flag)
 		l |= GFX_ENABLE;
 	else
 		l &= ~GFX_ENABLE;
-	printf("write %x to gfx_attibutes: %08x\n", l, &gfx->gfx_attributes);
+//	printf("write %x to gfx_attibutes: %08x\n", l, &gfx->gfx_attributes);
 	writel(l, &gfx->gfx_attributes);
 	omap3_dss_go();
-	printf("framebuffer enabled: %d\n", flag);
-	printf("gfx_attibutes: %08x\n", readl(&gfx->gfx_attributes));
+//	printf("framebuffer enabled: %d\n", flag);
+//	printf("gfx_attibutes: %08x\n", readl(&gfx->gfx_attributes));
 	return 0;
 }
 
@@ -393,17 +393,17 @@ static int omap3_dss_set_fb(void *addr)
 	struct gfx_regs *gfx = (struct gfx_regs *) OMAP3_GFX_BASE;
 	if(addr != NULL)
 		{
-			u32 l = readl(&dispc->control);
-			l |= GO_LCD | GO_DIG;
-			writel(l, &dispc->control);
-			printf("write %x to gfx_attibutes: %08x\n", l, &gfx->gfx_attributes);
-			writel(l, &gfx->gfx_attributes);
-			printf("gfx_ba[0]: %08x\n", &gfx->gfx_ba[0]);
+//			u32 l = readl(&dispc->control);
+//			l |= GO_LCD | GO_DIG;
+//			writel(l, &dispc->control);
+//			printf("write %x to gfx_attibutes: %08x\n", l, &gfx->gfx_attributes);
+//			writel(l, &gfx->gfx_attributes);
+//			printf("gfx_ba[0]: %08x\n", &gfx->gfx_ba[0]);
 			writel((u32) addr, &gfx->gfx_ba[0]);
 			writel((u32) addr, &gfx->gfx_ba[1]);
-			printf("framebuffer address: %08x\n", addr);
+//			printf("framebuffer address: %08x\n", addr);
 			writel(0, &gfx->gfx_position);
-			printf("size_lcd: %08x\n", readl(&dispc->size_lcd));
+//			printf("size_lcd: %08x\n", readl(&dispc->size_lcd));
 			writel(readl(&dispc->size_lcd), &gfx->gfx_size);
 			writel(0x008c, &gfx->gfx_attributes);	// 16x32 bit bursts + RGB16?
 			writel(((0x3fc << 16) + (0x3bc)), &gfx->gfx_fifo_threshold);	// high & low
@@ -413,6 +413,7 @@ static int omap3_dss_set_fb(void *addr)
 			writel(0, &gfx->gfx_window_skip);
 			writel(0x807ff000, &gfx->gfx_table_ba);
 			omap3_dss_enable_fb(1);
+#if DEBUGP
 			{
 				u32 addr;
 				for(addr=0x48050010; addr <= 0x48050010; addr+=4)
@@ -421,9 +422,12 @@ static int omap3_dss_set_fb(void *addr)
 					printf("%08x: %08x\n", addr, readl(addr));
 				for(addr=0x48050410; addr <= 0x48050414; addr+=4)
 					printf("%08x: %08x\n", addr, readl(addr));
-				for(addr=0x48050444; addr <= 0x480504b8; addr+=4)
+				for(addr=0x48050444; addr <= 0x4805048c; addr+=4)
+					printf("%08x: %08x\n", addr, readl(addr));
+				for(addr=0x480504a0; addr <= 0x480504b8; addr+=4)
 					printf("%08x: %08x\n", addr, readl(addr));
 			}
+#endif
 		}
 	else
 		{ // disable
