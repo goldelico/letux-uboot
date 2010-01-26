@@ -348,7 +348,9 @@ void omap3_dss_go(void)
 	l = readl(&dispc->control);
 	l |= GO_LCD | GO_DIG;
 	writel(l, &dispc->control);
-	// we should udelay(1000) until the bit(s) are reset by Hardware!
+	while((readl(&dispc->control) & (GO_LCD | GO_DIG)) != 0)
+		udelay(1000);	// udelay(1000) until the bit(s) are reset by Hardware!
+	printf("omap3_dss_go() dispc_control: %08x\n", readl(&dispc->control));
 }
 
 struct gfx_regs 
@@ -381,6 +383,7 @@ static int omap3_dss_enable_fb(int flag)
 	writel(l, &gfx->gfx_attributes);
 	omap3_dss_go();
 	printf("framebuffer enabled: %d\n", flag);
+	printf("gfx_attibutes: %08x\n", readl(&gfx->gfx_attributes));
 	return 0;
 }
 
@@ -390,7 +393,12 @@ static int omap3_dss_set_fb(void *addr)
 	struct gfx_regs *gfx = (struct gfx_regs *) OMAP3_GFX_BASE;
 	if(addr != NULL)
 		{
+			l = readl(&dispc->control);
+			l |= GO_LCD | GO_DIG;
+			writel(l, &dispc->control);
 			printf("dispc_control: %08x\n", readl(&dispc->control));
+			printf("write %x to gfx_attibutes: %08x\n", l, &gfx->gfx_attributes);
+			writel(l, &gfx->gfx_attributes);
 			printf("gfx_ba[0]: %08x\n", &gfx->gfx_ba[0]);
 			writel((u32) addr, &gfx->gfx_ba[0]);
 			writel((u32) addr, &gfx->gfx_ba[1]);
