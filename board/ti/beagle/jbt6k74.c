@@ -365,7 +365,7 @@ struct gfx_regs
 	u32 gfx_pixel_inc;			/* b0 */
 	u32 gfx_window_skip;		/* b4 */
 	u32 gfx_table_ba;			/* b8 */
-}
+};
 
 #define OMAP3_GFX_BASE (0x48050480)
 
