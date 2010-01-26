@@ -43,14 +43,16 @@
 
 void backlight_set_level(int level)	// 0..255
 {
+	struct gptimer *gpt_base = (struct gptimer *)OMAP34XX_GPT10; // use GPT11 for GTA04
+	// 	writel(value, &gpt_base->registername);
 	omap_set_gpio_dataout(GPIO_BACKLIGHT, level >= 128);	// for simplicity we just have on/off
 }
 
 int backlight_init(void)
 {
+// configure PIN MUX for GPT10 (11)	
+
 	omap_request_gpio(GPIO_BACKLIGHT);
-
-
 	omap_set_gpio_direction(GPIO_BACKLIGHT, 1);		// output
 
 	//	omap_free_gpio(GPIO_BACKLIGHT);

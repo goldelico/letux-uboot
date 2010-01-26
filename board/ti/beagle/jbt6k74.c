@@ -345,10 +345,59 @@ void omap3_dss_go(void)
 { // push changes from shadow register to display controller
 	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
 	u32 l = 0;
-	
 	l = readl(&dispc->control);
 	l |= GO_LCD | GO_DIG;
 	writel(l, &dispc->control);
+	// we should udelay(1000) until the bit(s) are reset by Hardware!
+}
+
+struct gfx_regs 
+{
+	u32 gfx_ba[2];				/* 80 */
+	u32 gfx_position;			/* 88 */
+	u32 gfx_size;				/* 8c */
+	u32 reserved1[4];			
+	u32 gfx_attributes;			/* a0 */
+	u32 gfx_fifo_threshold;		/* a4 */
+	u32 gfx_fifo_size_status;	/* a8 */
+	u32 gfx_row_inc;			/* ac */
+	u32 gfx_pixel_inc;			/* b0 */
+	u32 gfx_window_skip;		/* b4 */
+	u32 gfx_table_ba;			/* b8 */
+}
+
+#define OMAP3_GFX_BASE (0x48050480)
+
+static int omap3_dss_set_fb(void *addr)
+{ // set framebuffer address
+	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
+	struct gfx_regs *gfx = (struct gfx_regs *) OMAP3_GFX_BASE;
+	if(addr != 0)
+		{
+			writel(addr, &gfx->gfx_ba[0]);
+			writel(addr, &gfx->gfx_ba[1]);
+			writel(0, &gfx->gfx_position);
+			writel(readl(&dispc->size_lcd), &gfx->gfx_position);
+			writel(0x008d, &gfx->gfx_attributes);	// 16x32 bit bursts + RGB16? + bit0 is enable
+			writel((0x3fc << 16) + (0x3bc)), &gfx->gfx_fifo_threshold);	// high & low
+			writel(1024, &gfx->gfx_fifo_size_status);	// FIFO size in bytes
+			writel(1, &gfx->gfx_row_inc);
+			writel(1, &gfx->gfx_pixel_inc);
+			writel(0, &gfx->gfx_window_skip);
+			writel(0, &gfx->gfx_table_ba);
+		}
+	else
+		{ // disable
+			writel(0x008c, &gfx->gfx_attributes);
+		}
+	omap3_dss_go();
+	return 0;
+}
+
+static int omap3_set_color(long color)
+{
+	writel(color, &dispc->default_color0);
+	omap3_dss_go();
 }
 
 void board_video_init(GraphicDevice *pGD)
@@ -382,17 +431,19 @@ static int do_lcd_color(int argc, char *argv[])
 		return (-1);
 	}
 	color=simple_strtoul(argv[2], NULL, 16);
-	writel(color, &dispc->default_color0);
-	omap3_dss_go();
+	omap3_set_color(color);
 	return 0;
 }
 
 static int do_lcd_framebuffer(int argc, char *argv[])
 {
+	void *addr;
 	if (argc < 3) {
 		printf ("lcm fb: missing address.\n");
 		return (-1);
 	}
+	addr=simple_strtoul(argv[2], NULL, 16);
+	omap3_dss_set_fb(addr);
 	return 0;
 }
 
