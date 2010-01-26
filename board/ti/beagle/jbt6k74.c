@@ -377,6 +377,7 @@ static int omap3_dss_enable_fb(int flag)
 		l |= GFX_ENABLE;
 	else
 		l &= ~GFX_ENABLE;
+	printf("write %x to gfx_attibutes: %08x\n", l, &gfx->gfx_attributes);
 	writel(l, &gfx->gfx_attributes);
 	omap3_dss_go();
 	printf("framebuffer enabled: %d\n", flag);
@@ -389,10 +390,13 @@ static int omap3_dss_set_fb(void *addr)
 	struct gfx_regs *gfx = (struct gfx_regs *) OMAP3_GFX_BASE;
 	if(addr != NULL)
 		{
+			printf("dispc_control: %08x\n", readl(&dispc->control));
+			printf("gfx_ba[0]: %08x\n", &gfx->gfx_ba[0]);
 			writel((u32) addr, &gfx->gfx_ba[0]);
 			writel((u32) addr, &gfx->gfx_ba[1]);
 			printf("framebuffer address: %08x\n", addr);
 			writel(0, &gfx->gfx_position);
+			printf("size_lcd: %08x\n", readl(&dispc->size_lcd));
 			writel(readl(&dispc->size_lcd), &gfx->gfx_position);
 			writel(0x008c, &gfx->gfx_attributes);	// 16x32 bit bursts + RGB16?
 			writel(((0x3fc << 16) + (0x3bc)), &gfx->gfx_fifo_threshold);	// high & low

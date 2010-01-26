@@ -46,6 +46,7 @@ void backlight_set_level(int level)	// 0..255
 	struct gptimer *gpt_base = (struct gptimer *)OMAP34XX_GPT10; // use GPT11 for GTA04
 	// 	writel(value, &gpt_base->registername);
 	omap_set_gpio_dataout(GPIO_BACKLIGHT, level >= 128);	// for simplicity we just have on/off
+	printf("lcm backlight level set to %d (0..255)\n", level);
 }
 
 int backlight_init(void)
