@@ -105,12 +105,12 @@ static const char *jbt_state_names[] = {
 	[JBT_STATE_NORMAL]		= "normal",
 };
 
+static struct jbt_info _jbt, *jbt = &_jbt;
+
 char *jbt_state(void)
 {
 	return jbt_state_names[jbt->state];
 }
-
-static struct jbt_info _jbt, *jbt = &_jbt;
 
 static int jbt_init_regs(struct jbt_info *jbt)
 {
