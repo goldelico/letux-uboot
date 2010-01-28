@@ -172,3 +172,8 @@ int omap3_set_color(u32 color)
 	return 0;
 }
 
+void dssfb_init(void)
+{
+	omap3_dss_panel_config(&lcm_cfg);	// set new config
+	omap3_dss_enable();	// and (re)enable
+}	

@@ -21,6 +21,8 @@
  *
  */
 
+void dssfb_init(void);
+
 void omap3_dss_go(void);
 
 int omap3_dss_enable_fb(int flag);

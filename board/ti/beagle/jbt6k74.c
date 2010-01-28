@@ -33,6 +33,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <asm/arch/dss.h>
+#include <video_fb.h>
 #include "jbt6k74.h"
 
 #if 1
@@ -301,9 +302,7 @@ int jbt6k74_display_onoff(int on)
 
 void board_video_init(GraphicDevice *pGD)
 {
-	omap3_dss_panel_config(&lcm_cfg);	// set new config
-	omap3_dss_enable();	// and (re)enable
-	
+	dssfb_init();
 	jbt_reg_init();		// initialize SPI
 	backlight_init();	// initialize backlight
 	
