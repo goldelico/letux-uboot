@@ -1,6 +1,24 @@
-/*
- * blink leds connected to GPIOs
- * and poll buttons
+/* u-boot driver for the GTA04 LEDs and Buttons
+ *
+ * Copyright (C) 2010 by Golden Delicious Computers GmbH&Co. KG
+ * Author: H. Nikolaus Schaller <hns@goldelico.com>
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ *
  */
 
 #include <common.h>
@@ -78,100 +96,3 @@ int led_init(void)
 	return 0;
 }
 
-static int do_led_init(int argc, char *argv[])
-{
-	led_init();
-	return 0;
-}
-
-static void print_buttons(int status)
-{
-	printf("AUX: %s Power: %s Antenna: %s Pen: %s", (status&0x01)?"on":"off", (status&0x04)?"on":"off", (status&0x02)?"EXT":"INT", (status&0x08)?"1":"0");
-}
-
-static int do_led_get(int argc, char *argv[])
-{
-	int status=led_get_buttons();
-	printf("button status: %01x\n", status);
-	print_buttons(status);
-	printf("\n");
-	return 0;
-}
-
-static int do_led_set(int argc, char *argv[])
-{ // led set hh
-	static int state;
-	if(argc == 2)
-		state++;
-	else
-		state=simple_strtoul(argv[2], NULL, 16);
-	led_set_led(state);
-	return 0;
-}
-
-static int do_led_loop(int argc, char *argv[])
-{
-	printf("mirroring buttons to LEDs.\n"
-		   "Press any key to stop\n\n");
-	while (!tstc())
-		{
-			int state=led_get_buttons();
-			print_buttons(state);
-			printf("\r");
-			led_set_led(state);	// mirror to LEDs
-			udelay(100000);	// 0.1 seconds
-		}
-	getc();
-	printf("\n");
-	return 0;
-}
-
-static int do_led_blink(int argc, char *argv[])
-{
-	int value=0;
-	printf("blinking LEDs.\n"
-		   "Press any key to stop\n\n");
-	while (!tstc())
-		{
-			led_set_led(value++);	// mirror to LEDs
-			udelay(500000);	// 0.5 seconds
-		}
-	getc();
-	return 0;
-}
-
-static int do_led(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
-{
-	int len;
-	
-	if (argc < 2) {
-		printf ("led: missing subcommand.\n");
-		return (-1);
-	}
-	
-	len = strlen (argv[1]);
-	if (strncmp ("ge", argv[1], 2) == 0) {
-		return do_led_get (argc, argv);
-	} else if (strncmp ("se", argv[1], 2) == 0) {
-		return do_led_set (argc, argv);
-	} else if (strncmp ("mi", argv[1], 2) == 0) {
-		return do_led_loop (argc, argv);
-	} else if (strncmp ("bl", argv[1], 2) == 0) {
-		return do_led_blink (argc, argv);
-	} else if (strncmp ("in", argv[1], 2) == 0) {
-		return do_led_init (argc, argv);
-	} else {
-		printf ("led: unknown operation: %s\n", argv[1]);
-	}
-	
-	return (0);
-}
-
-
-U_BOOT_CMD(led, 3, 0, do_led, "LED and Buttons sub-system",
-		   "init - initialize GPIOs\n"
-		   "get - read button status\n"
-		   "set value - set LEDs state\n"
-		   "mirror - read buttons and mirror to LEDs\n"
-		   "blink - blink LEDs\n"
-		   );

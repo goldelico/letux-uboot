@@ -1,5 +1,24 @@
-/*
- * read values from TSC2007 touch screen controller connected to I2C2
+/* u-boot driver for the TSC2007 connected to I2C2
+ *
+ * Copyright (C) 2010 by Golden Delicious Computers GmbH&Co. KG
+ * Author: H. Nikolaus Schaller <hns@goldelico.com>
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ *
  */
 
 #include <common.h>
@@ -15,19 +34,20 @@
 #include <twl4030.h>
 #include "tsc2007.h"
 
-#define TSC2007 0x48
+#define TSC2007_BUS 2	// I2C2
+#define TSC2007_ADDRESS 0x48
 
 int tsc2007_init(void)
 {
 	unsigned char buf[16];
 	uint addr=0;
-	if(i2c_set_bus_num(2-1))	// I2C2
+	if(i2c_set_bus_num(TSC2007_BUS-1))
 		{
 			printf ("could not select I2C2\n");
 			return -1;
 		}
 	
-	if (i2c_read(TSC2007, addr, 1, buf, sizeof(buf)) != 0)
+	if (i2c_read(TSC2007_ADDRESS, addr, 1, buf, sizeof(buf)) != 0)
 		{
 			printf ("Error reading the TSC.\n");
 			return -1;
@@ -59,79 +79,3 @@ static void print_adc(void)
 		   read_adc(7));
 }
 
-static int do_tsc_init(int argc, char *argv[])
-{
-	tsc2007_init();
-	return 0;
-}
-
-static int do_tsc_get(int argc, char *argv[])
-{
-	print_adc();
-	printf("\n");
-	return 0;
-}
-
-static int do_tsc_loop(int argc, char *argv[])
-{
-	printf("permanently reading ADCs of TSC.\n"
-		   "Press any key to stop\n\n");
-	while (!tstc())
-		{
-			print_adc();
-			printf("\r");
-		}
-	getc();
-	printf("\n");
-	return 0;
-}
-
-static int do_tsc_choose(int argc, char *argv[])
-{
-	int value=0;
-	printf("choosing by waiting for touch.\n"
-		   "Press any key to stop\n\n");
-	while (!tstc())
-		{
-			int x=read_adc(0);
-			int y=read_adc(1);
-			// check if pressed - then print receptive field (e.g. 1 of 8 or 16) and return 0
-			printf("did choose %d/%d\n", x, y);
-			return 0;
-		}
-	getc();
-	return 0;
-}
-
-static int do_tsc(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
-{
-	int len;
-	
-	if (argc < 2) {
-		printf ("led: missing subcommand.\n");
-		return (-1);
-	}
-	
-	len = strlen (argv[1]);
-	if (strncmp ("ge", argv[1], 2) == 0) {
-		return do_tsc_get (argc, argv);
-	} else if (strncmp ("lo", argv[1], 2) == 0) {
-		return do_tsc_loop (argc, argv);
-	} else if (strncmp ("ch", argv[1], 2) == 0) {
-		return do_tsc_choose (argc, argv);
-	} else if (strncmp ("in", argv[1], 2) == 0) {
-		return do_tsc_init (argc, argv);
-	} else {
-		printf ("tsc: unknown operation: %s\n", argv[1]);
-	}
-	
-	return (0);
-}
-
-
-U_BOOT_CMD(tsc, 3, 0, do_tsc, "TSC2007 sub-system",
-		   "in[it] - initialize TSC2007\n"
-		   "ge[t] - read ADCs\n"
-		   "lo[op] - loop and display x/y coordinates\n"
-		   "ch[oose] - chosse item\n"
-		   );
