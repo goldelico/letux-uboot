@@ -28,6 +28,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
+#include <i2c.h>
 #include "tsc2007.h"
 
 #define TSC2007_BUS 2	// I2C2
@@ -56,13 +57,13 @@ int tsc2007_init(void)
 	return 0;
 }
 
-static int read_adc(int adcnum)
+int read_adc(int adcnum)
 {
 	// read value from given ADC
 	return adcnum;
 }
 
-static void print_adc(void)
+void print_adc(void)
 {
 	printf("0: %03d 1:%03d 2:%03d 3:%03d 4: %03d 5:%03d 6:%03d 7:%03d",
 		   read_adc(0),

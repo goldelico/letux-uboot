@@ -34,6 +34,7 @@
 #include <asm/mach-types.h>
 #include <asm/arch/dss.h>
 #include <video_fb.h>
+#include "dssfb.h"
 #include "jbt6k74.h"
 
 #if 1
@@ -104,6 +105,10 @@ static const char *jbt_state_names[] = {
 	[JBT_STATE_NORMAL]		= "normal",
 };
 
+char *jbt_state(void)
+{
+	return jbt_state_names[jbt->state];
+}
 
 static struct jbt_info _jbt, *jbt = &_jbt;
 

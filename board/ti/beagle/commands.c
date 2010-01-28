@@ -88,8 +88,7 @@ static int do_lcd_power(int argc, char *argv[])
 			return (-1);
 		}
 	jbt6k74_enter_state(state);
-	printf("lcm state set to %s\n", jbt_state_names[state]);
-	
+	printf("lcm state set to %s\n", jbt_state());	
 	return 0;
 }
 

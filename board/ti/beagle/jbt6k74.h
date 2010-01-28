@@ -12,5 +12,6 @@ enum jbt_state {
 
 int jbt6k74_display_onoff(int on);
 int jbt6k74_enter_state(enum jbt_state new_state);
+char *jbt_state(void);
 
 #endif

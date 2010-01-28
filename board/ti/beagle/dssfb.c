@@ -55,6 +55,14 @@
 #define HBL		(HS+HBP+HFP)	// horizontal blanking period
 #define HP		(HDISP+HBL)		// horizontal cycle
 
+#if 0
+#define DEBUGP(x, args...) printf("%s: " x, __FUNCTION__, ## args);
+#define DEBUGPC(x, args...) printf(x, ## args);
+#else
+#define DEBUGP(x, args...) do { } while (0)
+#define DEBUGPC(x, args...) do { } while (0)
+#endif
+
 static const struct panel_config lcm_cfg = 
 {
 .timing_h	= ((HBP-1)<<20) | ((HFP-1)<<8) | ((HS-1)<<0), /* Horizantal timing */
