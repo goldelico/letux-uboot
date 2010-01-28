@@ -22,37 +22,42 @@
  */
 
 #include <common.h>
-#include <spi.h>
-#include <video_fb.h>
 #include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
-#include <twl4030.h>
 #include "backlight.h"
 
-// should program pulse-width modulator!
-
 #define GPIO_BACKLIGHT		145
+#define USE_PWM	1
 
 void backlight_set_level(int level)	// 0..255
 {
+#if USE_PWM
 	struct gptimer *gpt_base = (struct gptimer *)OMAP34XX_GPT10; // use GPT11 for GTA04
 	// 	writel(value, &gpt_base->registername);
+#else
 	omap_set_gpio_dataout(GPIO_BACKLIGHT, level >= 128);	// for simplicity we just have on/off
+	level=(level >= 128)?255:0;
+#endif
 	printf("lcm backlight level set to %d (0..255)\n", level);
 }
 
 int backlight_init(void)
 {
-// configure PIN MUX for GPT10 (11)	
-
+#if USE_PWM
+	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M2)) /* GPT10 */
+	struct gptimer *gpt_base = (struct gptimer *)OMAP34XX_GPT10; // use GPT11 for GTA04
+	// 	writel(value, &gpt_base->registername);
+	// program registers
+#else
 	omap_request_gpio(GPIO_BACKLIGHT);
 	omap_set_gpio_direction(GPIO_BACKLIGHT, 1);		// output
 
 	//	omap_free_gpio(GPIO_BACKLIGHT);
+#endif
 	printf("did backlight_init()\n");
 
 	return 0;
