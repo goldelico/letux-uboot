@@ -20,6 +20,16 @@
  * MA 02111-1307 USA
  *
  */
+
+#include <common.h>
+#include <asm/errno.h>
+#include <asm/io.h>
+#include <asm/arch/mux.h>
+#include <asm/arch/sys_proto.h>
+#include <asm/arch/gpio.h>
+#include <asm/mach-types.h>
+#include <asm/arch/dss.h>
+
 #define DVI_BACKGROUND_COLOR		0x00fadc29	// rgb(250, 220, 41)
 
 // configure beagle board DSS for the TD28TTEC1
@@ -88,7 +98,7 @@ struct gfx_regs
 
 #define OMAP3_GFX_BASE (0x48050480)
 
-static int omap3_dss_enable_fb(int flag)
+int omap3_dss_enable_fb(int flag)
 {
 	struct gfx_regs *gfx = (struct gfx_regs *) OMAP3_GFX_BASE;
 	u32 l = readl(&gfx->gfx_attributes);
@@ -104,7 +114,7 @@ static int omap3_dss_enable_fb(int flag)
 	return 0;
 }
 
-static int omap3_dss_set_fb(void *addr)
+int omap3_dss_set_fb(void *addr)
 { // set framebuffer address
 	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
 	struct gfx_regs *gfx = (struct gfx_regs *) OMAP3_GFX_BASE;
@@ -153,7 +163,7 @@ static int omap3_dss_set_fb(void *addr)
 	return 0;
 }
 
-static int omap3_set_color(long color)
+int omap3_set_color(u32 color)
 {
 	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
 	writel(color, &dispc->default_color0);

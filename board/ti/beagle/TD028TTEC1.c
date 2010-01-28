@@ -22,22 +22,19 @@
  */
 
 /* modified by hns@goldelico.com
- * now is just a SPI driver to the serial interface of the TD028TTEC1
+ * now is just a SPI/GPIO driver to the serial interface of the TD028TTEC1
  
  *** should all this code be moved to drivers/misc or drivers/video ?
  
  */
 
 #include <common.h>
-#include <spi.h>
-#include <video_fb.h>
 #include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
-#include <twl4030.h>
 #include "TD028TTEC1.h"
 
 #if 0

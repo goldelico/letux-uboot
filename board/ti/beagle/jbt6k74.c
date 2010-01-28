@@ -26,9 +26,6 @@
  */
 
 #include <common.h>
-#include <command.h>
-#include <spi.h>
-#include <video_fb.h>
 #include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/arch/mux.h>
@@ -36,7 +33,6 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <asm/arch/dss.h>
-#include <twl4030.h>
 #include "jbt6k74.h"
 
 #if 1

@@ -22,16 +22,12 @@
  */
 
 #include <common.h>
-#include <command.h>
-#include <spi.h>
-#include <video_fb.h>
 #include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
-#include <twl4030.h>
 #include "led.h"
 
 // Note: on GTA04 the LEDs will be connected to GPIOs of TPS65950

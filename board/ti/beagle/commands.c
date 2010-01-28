@@ -20,6 +20,23 @@
  * MA 02111-1307 USA
  *
  */
+
+#include <common.h>
+#include <command.h>
+#include <asm/errno.h>
+#include <asm/io.h>
+#include <asm/arch/mux.h>
+#include <asm/arch/sys_proto.h>
+#include <asm/arch/gpio.h>
+#include <asm/mach-types.h>
+#include "backlight.h"
+#include "dssfb.h"
+#include "jbt6k74.h"
+#include "led.h"
+#include "tsc2007.h"
+
+/* LCM commands */
+
 static int do_lcd_color(int argc, char *argv[])
 {
 	unsigned int color;
@@ -130,6 +147,8 @@ U_BOOT_CMD(lcm, 3, 0, do_lcd, "LCM sub-system",
 		   "fb address - set framebuffer address (can be used without init)\n"
 		   );
 
+/** LED commands */
+
 static int do_led_init(int argc, char *argv[])
 {
 	led_init();
@@ -227,6 +246,8 @@ U_BOOT_CMD(led, 3, 0, do_led, "LED and Buttons sub-system",
 		   "mirror - read buttons and mirror to LEDs\n"
 		   "blink - blink LEDs\n"
 		   );
+
+/* TSC commands */
 
 static int do_tsc_init(int argc, char *argv[])
 {
