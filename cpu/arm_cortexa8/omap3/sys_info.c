@@ -39,7 +39,10 @@ static char *rev_s[CPU_3XX_MAX_REV] = {
 				"2.0",
 				"2.1",
 				"3.0",
-				"3.1"};
+				"3.1",
+				"UNKNOWN",
+				"UNKNOWN",
+				"3.1.2"};
 
 /*****************************************************************
  * dieid_num_r(void) - read and set die ID
@@ -103,6 +106,16 @@ u32 get_cpu_rev(void)
 		return cpuid;
 	}
 }
+
+/*****************************************************************
+ * get_sku_id(void) - read sku_id to get info on max clock rate
+ *****************************************************************/
+u32 get_sku_id(void)
+{
+	struct ctrl_id *id_base = (struct ctrl_id *)OMAP34XX_ID_L4_IO_BASE;
+	return (readl(&id_base->sku_id) & SKUID_CLK_MASK);
+}
+
 
 /****************************************************
  * is_mem_sdr() - return 1 if mem type in use is SDR
@@ -291,8 +304,13 @@ int print_cpuinfo (void)
 		sec_s = "?";
 	}
 
-	printf("OMAP%s-%s ES%s, CPU-OPP2 L3-165MHz\n",
+	printf("OMAP%s-%s ES%s, CPU-OPP2, L3-165MHz, ",
 			cpu_s, sec_s, rev_s[get_cpu_rev()]);
+
+	printf("Max clock-");
+	if ((get_cpu_rev() >= CPU_3XX_ES31) && (get_sku_id() == SKUID_CLK_720MHZ))
+		printf("720Mhz\n");
+	else	printf("600Mhz\n");
 
 	return 0;
 }
