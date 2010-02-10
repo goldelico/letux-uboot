@@ -61,11 +61,97 @@ int board_init(void)
 }
 
 /*
+ * Routine: get_sdio2_config
+ * Description: Return information about the wifi module connection
+ *              Returns 0 if the module connects though a level translator
+ *              Returns 1 if the module connects directly
+ */
+int get_sdio2_config(void) {
+	int sdio_direct;
+
+	if (!omap_request_gpio(130) && !omap_request_gpio(139)){
+
+		omap_set_gpio_direction(130, 0);
+		omap_set_gpio_direction(139, 1);
+
+		sdio_direct = 1;
+		omap_set_gpio_dataout(130, 0);
+		if (omap_get_gpio_datain(139) == 0) {
+			omap_set_gpio_dataout(130, 1);
+			if (omap_get_gpio_datain(139) == 1)
+				sdio_direct = 0;
+		}
+
+		omap_free_gpio(130);
+		omap_free_gpio(139);
+	} else {
+		printf("Error: unable to acquire sdio2 clk GPIOs\n");
+		sdio_direct=-1;
+	}
+
+	return sdio_direct;
+}
+
+/*
+ * Routine: get_board_revision
+ * Description: Returns the board revision
+ */
+int get_board_revision(void) {
+	int revision;
+
+	if (!omap_request_gpio(127) && !omap_request_gpio(128) &&
+	    !omap_request_gpio(129)){
+
+		omap_set_gpio_direction(127, 1);
+		omap_set_gpio_direction(128, 1);
+		omap_set_gpio_direction(129, 1);
+
+		revision = 0;
+		if (omap_get_gpio_datain(127) == 0)
+			revision += 1;
+		if (omap_get_gpio_datain(128) == 0)
+			revision += 2;
+		if (omap_get_gpio_datain(129) == 0)
+			revision += 4;
+
+		omap_free_gpio(127);
+		omap_free_gpio(128);
+		omap_free_gpio(129);
+	} else {
+		printf("Error: unable to acquire board revision GPIOs\n");
+		revision=-1;
+	}
+
+	return revision;
+}
+
+/*
  * Routine: misc_init_r
  * Description: Configure board specific parts
  */
 int misc_init_r(void)
 {
+	printf("Board revision: ");
+	switch (get_board_revision()) {
+		case 0:
+		case 1:
+			switch (get_sdio2_config()) {
+				case 0:
+					printf(" 0\n");
+					MUX_OVERO_SDIO2_TRANSCEIVER();
+					break;
+				case 1:
+					printf(" 1\n");
+					MUX_OVERO_SDIO2_DIRECT();
+					break;
+				default:
+					printf(" unknown\n");
+			}
+			break;
+		default:
+			printf(" unsupported\n");
+	}
+
 	twl4030_power_init();
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
 
