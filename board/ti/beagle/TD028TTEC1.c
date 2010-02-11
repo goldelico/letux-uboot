@@ -40,11 +40,11 @@
 #if 0
 #define DEBUGP(x, args...) printf("%s: " x, __FUNCTION__, ## args);
 #define DEBUGPC(x, args...) printf(x, ## args);
-#define VERIFY(VAL) if(SPI_READ != (VAL)) printf("expected: %d found: %d\n", VAL, SPI_READ)
+#define VERIFY(VAL) if(SPI_READ != (VAL)) { printf("expected: %d found: %d\n", VAL, SPI_READ); return 1; }
 #else
 #define DEBUGP(x, args...) do { } while (0)
 #define DEBUGPC(x, args...) do { } while (0)
-#define VERIFY(VAL)
+#define VERIFY(VAL) if(SPI_READ != (VAL)) { return 1; }
 #endif
 
 #if defined(_BEAGLE_)

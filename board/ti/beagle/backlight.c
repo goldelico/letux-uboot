@@ -31,7 +31,7 @@
 #include "backlight.h"
 
 #define GPIO_BACKLIGHT		145
-#define USE_PWM	1
+#define USE_PWM	0
 
 void backlight_set_level(int level)	// 0..255
 {
@@ -48,13 +48,15 @@ void backlight_set_level(int level)	// 0..255
 int backlight_init(void)
 {
 #if USE_PWM
-	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M2)) /* GPT10 */
 	struct gptimer *gpt_base = (struct gptimer *)OMAP34XX_GPT10; // use GPT11 for GTA04
+	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M2)) /* switch to GPT10 */
 	// 	writel(value, &gpt_base->registername);
 	// program registers
+#error todo
 #else
+	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M4)) /*GPIO_145*/
 	omap_request_gpio(GPIO_BACKLIGHT);
-	omap_set_gpio_direction(GPIO_BACKLIGHT, 1);		// output
+	omap_set_gpio_direction(GPIO_BACKLIGHT, 0);		// output
 
 	//	omap_free_gpio(GPIO_BACKLIGHT);
 #endif

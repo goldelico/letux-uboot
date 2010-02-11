@@ -159,6 +159,18 @@ static void print_buttons(int status)
 	printf("AUX: %s Power: %s Antenna: %s Pen: %s", (status&0x01)?"on":"off", (status&0x04)?"on":"off", (status&0x02)?"EXT":"INT", (status&0x08)?"1":"0");
 }
 
+static int do_led_check(int argc, char *argv[])
+{ // can be used in if construct
+	int state=led_get_buttons();
+	if (argc < 3)
+		{
+			printf ("led check: missing mask.\n");
+			return (-1);
+		}
+	state &= simple_strtoul(argv[2], NULL, 16);
+	return (state != 0)?0:1;
+}
+
 static int do_led_get(int argc, char *argv[])
 {
 	int status=led_get_buttons();
@@ -230,6 +242,8 @@ static int do_led(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		return do_led_blink (argc, argv);
 	} else if (strncmp ("in", argv[1], 2) == 0) {
 		return do_led_init (argc, argv);
+	} else if (strncmp ("ch", argv[1], 2) == 0) {
+		return do_led_check (argc, argv);
 	} else {
 		printf ("led: unknown operation: %s\n", argv[1]);
 	}
@@ -240,7 +254,8 @@ static int do_led(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(led, 3, 0, do_led, "LED and Buttons sub-system",
 		   "init - initialize GPIOs\n"
-		   "get - read button status\n"
+		   "get - print button status\n"
+		   "check - check button status\n"
 		   "set value - set LEDs state\n"
 		   "mirror - read buttons and mirror to LEDs\n"
 		   "blink - blink LEDs\n"
@@ -275,18 +290,48 @@ static int do_tsc_loop(int argc, char *argv[])
 	return 0;
 }
 
+static int tsc_choice=0;
+
+static int do_tsc_selection(int argc, char *argv[])
+{ // tsc selection number
+	if (argc != 3)
+		{
+			printf ("tsc selection: missing number of selection to check for.\n");
+			return (-1);
+		}
+	return tsc_choice == simple_strtoul(argv[2], NULL, 10)?0:1;
+}
+
 static int do_tsc_choose(int argc, char *argv[])
-{
-	int value=0;
-	printf("choosing by waiting for touch.\n"
+{ // tsc choose cols rows
+	tsc_choice=0;	// reset choice
+	if (argc != 4)
+		{
+			printf ("tsc choose: missing number of cols and rows.\n");
+			return (-1);
+		}
+	printf("Choosing by waiting for touch.\n"
 		   "Press any key to stop\n\n");
 	while (!tstc())
 		{
-			int x=read_adc(0);
-			int y=read_adc(1);
-			// check if pressed - then print receptive field (e.g. 1 of 8 or 16) and return 0
-			printf("did choose %d/%d\n", x, y);
-			return 0;
+			int z=read_adc(2);	// read Z
+			if(z < 0)
+				return 1;	// read error
+			if(z > 50)
+				{ // has been pressed
+					int x=read_adc(0);
+					int y=read_adc(1);
+					int cols=simple_strtoul(argv[2], NULL, 10);
+					int rows=simple_strtoul(argv[3], NULL, 10);
+					x=(x*cols)/4096;
+					y=((4095-y)*rows)/4096;	// (0,0) is lower left corner in our hardware
+					tsc_choice=x+y*cols;
+#if 1
+					printf("did choose %d/%d -> %d\n", x, y, tsc_choice);
+#endif
+					return 0;
+				}
+			udelay(10000);	// reduce I2C traffic...
 		}
 	getc();
 	return 0;
@@ -308,6 +353,8 @@ static int do_tsc(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		return do_tsc_loop (argc, argv);
 	} else if (strncmp ("ch", argv[1], 2) == 0) {
 		return do_tsc_choose (argc, argv);
+	} else if (strncmp ("se", argv[1], 2) == 0) {
+		return do_tsc_selection (argc, argv);
 	} else if (strncmp ("in", argv[1], 2) == 0) {
 		return do_tsc_init (argc, argv);
 	} else {
@@ -318,9 +365,10 @@ static int do_tsc(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 }
 
 
-U_BOOT_CMD(tsc, 3, 0, do_tsc, "TSC2007 sub-system",
+U_BOOT_CMD(tsc, 4, 0, do_tsc, "TSC2007 sub-system",
 		   "in[it] - initialize TSC2007\n"
 		   "ge[t] - read ADCs\n"
 		   "lo[op] - loop and display x/y coordinates\n"
-		   "ch[oose] - chosse item\n"
+		   "ch[oose] cols rows - choose item\n"
+		   "se[lection] p - check if item p (1 .. cols*rows) was selected\n"
 		   );

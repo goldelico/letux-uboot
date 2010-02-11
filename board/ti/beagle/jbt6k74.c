@@ -33,7 +33,6 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <asm/arch/dss.h>
-#include <video_fb.h>
 #include "dssfb.h"
 #include "jbt6k74.h"
 
@@ -107,7 +106,7 @@ static const char *jbt_state_names[] = {
 
 static struct jbt_info _jbt, *jbt = &_jbt;
 
-char *jbt_state(void)
+const char *jbt_state(void)
 {
 	return jbt_state_names[jbt->state];
 }
@@ -169,7 +168,10 @@ static int jbt_init_regs(struct jbt_info *jbt)
 	rc |= jbt_reg_write16(jbt, JBT_REG_HCLOCK_QVGA, 0x00ff);
 #endif
 
-	printf("did jbt_init_regs()\n");
+	if(rc)
+		printf("did jbt_init_regs() failed\n");
+	else
+		printf("did jbt_init_regs()\n");
 	return rc;
 }
 
@@ -292,7 +294,8 @@ int jbt6k74_enter_state(enum jbt_state new_state)
 		}
 		break;
 	}
-
+	if(rc)
+		printf("jbt6k74_enter_state() failed.\n");
 	return rc;
 }
 
