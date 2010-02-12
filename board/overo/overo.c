@@ -39,6 +39,32 @@
 #include <asm/mach-types.h>
 #include "overo.h"
 
+static struct {
+	unsigned int device_vendor;
+	unsigned char revision;
+	unsigned char content;
+	unsigned char fab_revision[8];
+	unsigned char env_var[16];
+	unsigned char env_setting[64];
+} expansion_config;
+
+#define TWL4030_I2C_BUS			0
+
+#define EXPANSION_EEPROM_I2C_BUS	2
+#define EXPANSION_EEPROM_I2C_ADDRESS	0x51
+
+#define GUMSTIX_VENDORID		0x0200
+
+#define GUMSTIX_SUMMIT			0x01000200
+#define GUMSTIX_TOBI			0x02000200
+#define GUMSTIX_TOBI_DUO		0x03000200
+#define GUMSTIX_PALO35			0x04000200
+#define GUMSTIX_PALO43			0x05000200
+#define GUMSTIX_CHESTNUT43		0x06000200
+#define GUMSTIX_PINTO			0x07000200
+
+#define GUMSTIX_NO_EEPROM		0xffffffff
+
 #if defined(CONFIG_CMD_NET)
 static void setup_net_chip(void);
 #endif
@@ -126,6 +152,28 @@ int get_board_revision(void) {
 }
 
 /*
+ * Routine: get_expansion_id
+ * Description: This function checks for expansion board by checking I2C
+ *		bus 2 for the availability of an AT24C01B serial EEPROM.
+ *		returns the device_vendor field from the EEPROM
+ */
+unsigned int get_expansion_id(void)
+{
+	i2c_set_bus_num(EXPANSION_EEPROM_I2C_BUS);
+
+	/* return GUMSTIX_NO_EEPROM if eeprom doesn't respond */
+	if (i2c_probe(EXPANSION_EEPROM_I2C_ADDRESS) == 1)
+		return GUMSTIX_NO_EEPROM;
+
+	/* read configuration data */
+	i2c_read(EXPANSION_EEPROM_I2C_ADDRESS, 0, 1, (u8 *)&expansion_config,
+		 sizeof(expansion_config));
+
+	return expansion_config.device_vendor;
+}
+
+
+/*
  * Routine: misc_init_r
  * Description: Configure board specific parts
  */
@@ -152,6 +200,51 @@ int misc_init_r(void)
 			printf(" unsupported\n");
 	}
 
+	switch (get_expansion_id()) {
+		case GUMSTIX_SUMMIT:
+			printf("Recognized Summit expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			setenv("defaultdisplay", "dvi");
+			break;
+		case GUMSTIX_TOBI:
+			printf("Recognized Tobi expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			setenv("defaultdisplay", "dvi");
+			break;
+		case GUMSTIX_TOBI_DUO:
+			printf("Recognized Tobi Duo expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			break;
+		case GUMSTIX_PALO35:
+			printf("Recognized Palo 35 expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			setenv("defaultdisplay", "lcd35");
+			break;
+		case GUMSTIX_PALO43:
+			printf("Recognized Palo 43 expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			setenv("defaultdisplay", "lcd43");
+			break;
+		case GUMSTIX_CHESTNUT43:
+			printf("Recognized Chestnut 43 expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			setenv("defaultdisplay", "lcd43");
+			break;
+		case GUMSTIX_PINTO:
+			printf("Recognized Pinto expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			break;
+		case GUMSTIX_NO_EEPROM:
+			printf("No EEPROM on expansion board\n");
+			break;
+		default:
+			printf("Unrecognized expansion board\n");
+	}
+
+	if (expansion_config.content == 1)
+		setenv(expansion_config.env_var, expansion_config.env_setting);
+
+	i2c_set_bus_num(TWL4030_I2C_BUS);
 	twl4030_power_init();
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
 
