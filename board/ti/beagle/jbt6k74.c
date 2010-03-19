@@ -308,10 +308,14 @@ int jbt6k74_display_onoff(int on)
 		return jbt_reg_write_nodata(jbt, JBT_REG_DISPLAY_OFF);
 }
 
-void board_video_init(GraphicDevice *pGD)
+int board_video_init(GraphicDevice *pGD)
 {
+	if(jbt_reg_init())	// initialize SPI
+		{
+		printf("No LCM connected\n");
+		return 1;
+		}
 	dssfb_init();
-	jbt_reg_init();		// initialize SPI
 	backlight_init();	// initialize backlight
 	
 #if !defined(_BEAGLE_)
@@ -326,5 +330,6 @@ void board_video_init(GraphicDevice *pGD)
 	lcd->LPCSEL  = 0x00000000;
 #endif
 	printf("did board_video_init()\n");
+	return 0;
 }
 

@@ -101,8 +101,7 @@ static int do_lcd_onoff(int argc, char *argv[], int flag)
 
 static int do_lcd_init(int argc, char *argv[])
 {
-	board_video_init(NULL);
-	return 0;
+	return board_video_init(NULL);
 }
 
 static int do_lcd(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])

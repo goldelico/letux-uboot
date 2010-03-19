@@ -40,11 +40,11 @@
 #if 0
 #define DEBUGP(x, args...) printf("%s: " x, __FUNCTION__, ## args);
 #define DEBUGPC(x, args...) printf(x, ## args);
-#define VERIFY(VAL) if(SPI_READ != (VAL)) { printf("expected: %d found: %d\n", VAL, SPI_READ); return 1; }
+#define VERIFY(VAL) if(SPI_READ() != (VAL)) { printf("expected: %d found: %d\n", VAL, SPI_READ()); return 1; }
 #else
 #define DEBUGP(x, args...) do { } while (0)
 #define DEBUGPC(x, args...) do { } while (0)
-#define VERIFY(VAL) if(SPI_READ != (VAL)) { return 1; }
+#define VERIFY(VAL) if(SPI_READ() != (VAL)) { return 1; }
 #endif
 
 #if defined(_BEAGLE_)
@@ -54,12 +54,12 @@
 #define GPIO_DIN	159
 #define GPIO_DOUT	158
 
-#define SPI_READ        (omap_get_gpio_datain(GPIO_DIN))
+#define SPI_READ()      (omap_get_gpio_datain(GPIO_DIN))
 #define SPI_CS(bit) 	(omap_set_gpio_dataout(GPIO_CS, bit))
 #define SPI_SDA(bit)    (omap_set_gpio_dataout(GPIO_DOUT, bit))
 #define SPI_SCL(bit)    (omap_set_gpio_dataout(GPIO_SCL, bit))
 
-#elif !defined(CONFIG_GTA02_REVISION)
+#elif !defined(CONFIG_GTA02_REVISION)	/* GTA01 */
 
 #define GTA01_SCLK	(1 << 7) 	/* GPG7 */
 #define GTA01_MOSI	(1 << 6)	/* GPG6 */
@@ -94,7 +94,7 @@ extern void smedia3362_lcm_reset(int);
 
 /* 150uS minimum clock cycle, we have two of this plus our other
  * instructions */
-#define SPI_DELAY	udelay(100)	/* 200uS */
+#define SPI_DELAY()	udelay(100)	/* 200uS */
 
 static int jbt_spi_xfer(int wordnum, int bitlen, u_int16_t *dout)
 {
@@ -123,9 +123,9 @@ static int jbt_spi_xfer(int wordnum, int bitlen, u_int16_t *dout)
 				DEBUGPC("0");
 				VERIFY(0);
 			}
-			SPI_DELAY;
+			SPI_DELAY();
 			SPI_SCL(1);
-			SPI_DELAY;
+			SPI_DELAY();
 			tmpdout <<= 1;
 		}
 		DEBUGPC(" ");
@@ -180,23 +180,40 @@ int jbt_reg_write16(struct jbt_info *jbt, u_int8_t reg, u_int16_t data)
 int jbt_reg_init(void)
 {
 #if defined(_BEAGLE_)
+	int i;
 	
-	omap_request_gpio(GPIO_DIN);
-	omap_request_gpio(GPIO_DOUT);
+	printf("jbt_reg_init()\n");
 	omap_request_gpio(GPIO_CS);
 	SPI_CS(1);	// unselect
 	omap_request_gpio(GPIO_SCL);
+	SPI_SCL(0);
+	omap_request_gpio(GPIO_DOUT);
+	SPI_SDA(0);
+	omap_request_gpio(GPIO_DIN);
 	
-	omap_set_gpio_direction(GPIO_DIN, 1);	// input
-	omap_set_gpio_direction(GPIO_DOUT, 0);	// output
 	omap_set_gpio_direction(GPIO_CS, 0);	// output
 	omap_set_gpio_direction(GPIO_SCL, 0);	// output
+	omap_set_gpio_direction(GPIO_DOUT, 0);	// output
+	omap_set_gpio_direction(GPIO_DIN, 1);	// input (for read back)
 
+	SPI_DELAY();
+	for(i=0; i<4; i++)
+		{
+			int bit=i&1;
+			SPI_SDA(bit);	// write bit
+			SPI_DELAY();
+			printf("%d -> %d %d\n", bit, omap_get_gpio_datain(GPIO_DIN), omap_get_gpio_datain(GPIO_DOUT));
+			if(SPI_READ() != bit)	// did not read back
+				{
+					printf("jbt_reg_init() - no response\n");
+					return 1;
+				}
+		}	
 	//	omap_free_gpio(GPIO_DIN);
 	//	omap_free_gpio(GPIO_DOUT);
 	//	omap_free_gpio(GPIO_CS);
 	//	omap_free_gpio(GPIO_SCL);
-	
+		
 #endif
 	
 	/* according to data sheet: wait 50ms (Tpos of LCM). However, 50ms

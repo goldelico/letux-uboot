@@ -356,7 +356,7 @@ void start_armboot (void)
 	serial_initialize();
 #endif
 
-#if defined(CONFIG_CMD_NET) 
+#if defined(CONFIG_CMD_NET)
 	/* IP Address */
 	gd->bd->bi_ip_addr = getenv_IPaddr ("ipaddr");
 #endif
