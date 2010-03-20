@@ -94,7 +94,8 @@ extern void smedia3362_lcm_reset(int);
 
 /* 150uS minimum clock cycle, we have two of this plus our other
  * instructions */
-#define SPI_DELAY()	udelay(100)	/* 200uS */
+
+#define SPI_DELAY()	udelay(150)
 
 static int jbt_spi_xfer(int wordnum, int bitlen, u_int16_t *dout)
 {
@@ -181,34 +182,23 @@ int jbt_reg_init(void)
 {
 #if defined(_BEAGLE_)
 	int i;
+	int failed=0;
 	
 	printf("jbt_reg_init()\n");
 	omap_request_gpio(GPIO_CS);
 	SPI_CS(1);	// unselect
 	omap_request_gpio(GPIO_SCL);
-	SPI_SCL(0);
+	SPI_SCL(1);	// default
 	omap_request_gpio(GPIO_DOUT);
 	SPI_SDA(0);
 	omap_request_gpio(GPIO_DIN);
-	
+#if 1		// should have been done by MUX settings!
 	omap_set_gpio_direction(GPIO_CS, 0);	// output
 	omap_set_gpio_direction(GPIO_SCL, 0);	// output
 	omap_set_gpio_direction(GPIO_DOUT, 0);	// output
 	omap_set_gpio_direction(GPIO_DIN, 1);	// input (for read back)
+#endif
 
-	SPI_DELAY();
-	for(i=0; i<4; i++)
-		{
-			int bit=i&1;
-			SPI_SDA(bit);	// write bit
-			SPI_DELAY();
-			printf("%d -> %d %d\n", bit, omap_get_gpio_datain(GPIO_DIN), omap_get_gpio_datain(GPIO_DOUT));
-			if(SPI_READ() != bit)	// did not read back
-				{
-					printf("jbt_reg_init() - no response\n");
-					return 1;
-				}
-		}	
 	//	omap_free_gpio(GPIO_DIN);
 	//	omap_free_gpio(GPIO_DOUT);
 	//	omap_free_gpio(GPIO_CS);
@@ -219,8 +209,27 @@ int jbt_reg_init(void)
 	/* according to data sheet: wait 50ms (Tpos of LCM). However, 50ms
 	 * seems unreliable with later LCM batches, increasing to 90ms */
 	udelay(90000);
-	printf("did jbt_reg_init()\n");
 
+#if defined(_BEAGLE_)
+	for(i=0; i<16; i++)
+		{ // check for connection between GPIO158 -> GPIO159; since we have 10 kOhm pse. make sure that the PUP/PDN is disabled in the MUX config!
+			int bit=i&1;
+			SPI_SDA(bit);	// write bit
+			SPI_DELAY();
+#if 1
+			printf("bit: %d out: %d in: %d (%d)\n", bit, omap_get_gpio_datain(GPIO_DOUT), omap_get_gpio_datain(GPIO_DIN), SPI_READ());
+#endif
+			if(SPI_READ() != bit)	// did not read back
+				failed++;
+		}	
+	if(failed > 0)
+		{
+			printf("jbt_reg_init() - no correct response, assuming no connection between GPIO158 and GPIO159\n");
+			return 1;
+		}
+#endif
+	
+	printf("did jbt_reg_init()\n");
 	return 0;
 }
 

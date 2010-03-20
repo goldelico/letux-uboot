@@ -235,10 +235,10 @@ const omap3_sysinfo sysinfo = {
 	MUX_VAL(CP(MCBSP4_DR),		(IEN  | PTD | DIS | M1)) /*SSI1_FLAG_RX*/\
 	MUX_VAL(CP(MCBSP4_DX),		(IEN  | PTD | DIS | M1)) /*SSI1_RDY_RX*/\
 	MUX_VAL(CP(MCBSP4_FSX),		(IEN  | PTD | DIS | M1)) /*SSI1_WAKE*/\
-	MUX_VAL(CP(MCBSP1_CLKR),	(IDIS | PTD | DIS | M4)) /*GPIO_156*/\
-	MUX_VAL(CP(MCBSP1_FSR),		(IDIS | PTU | EN  | M4)) /*GPIO_157*/\
+	MUX_VAL(CP(MCBSP1_CLKR),	(IDIS | PTD | DIS | M4)) /*GPIO_156 - GPS ON(0)/OFF(1)*/\
+	MUX_VAL(CP(MCBSP1_FSR),		(IEN  | PTU | EN  | M4)) /*GPIO_157 - PENIRQ */\
 	MUX_VAL(CP(MCBSP1_DX),		(IDIS | PTD | EN  | M4)); /*GPIO_158 - DOUT */\
-	MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTU | EN  | M4)); /*GPIO_159 - DIN - pulled up */\
+	MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTU | DIS | M4)); /*GPIO_159 - DIN - pulled up */\
 	MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | DIS | M0)) /*McBSP_CLKS*/\
 	MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTU | EN  | M4)); /*GPIO_161 - CS */\
 	MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTD | EN  | M4)); /*GPIO_162 - SCL */\

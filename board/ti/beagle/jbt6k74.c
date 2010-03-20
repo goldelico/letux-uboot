@@ -169,7 +169,7 @@ static int jbt_init_regs(struct jbt_info *jbt)
 #endif
 
 	if(rc)
-		printf("did jbt_init_regs() failed\n");
+		printf("jbt_init_regs() failed\n");
 	else
 		printf("did jbt_init_regs()\n");
 	return rc;
@@ -296,6 +296,8 @@ int jbt6k74_enter_state(enum jbt_state new_state)
 	}
 	if(rc)
 		printf("jbt6k74_enter_state() failed.\n");
+	else
+		jbt->state=new_state;
 	return rc;
 }
 
@@ -318,17 +320,6 @@ int board_video_init(GraphicDevice *pGD)
 	dssfb_init();
 	backlight_init();	// initialize backlight
 	
-#if !defined(_BEAGLE_)
-	S3C24X0_LCD * const lcd = S3C24X0_GetBase_LCD();
-
-	lcd->LCDCON1 = 0x00000178; /* CLKVAL=1, BPPMODE=16bpp, TFT, ENVID=0 */
-
-	lcd->LCDCON2 = 0x019fc3c1;
-	lcd->LCDCON3 = 0x0039df67;
-	lcd->LCDCON4 = 0x00000007;
-	lcd->LCDCON5 = 0x0001cf09;
-	lcd->LPCSEL  = 0x00000000;
-#endif
 	printf("did board_video_init()\n");
 	return 0;
 }
