@@ -232,6 +232,7 @@ void s_init(void)
 
 	per_clocks_enable();
 
+	/* FIXME: u-boot's sdrc setup is broken	*/
 	if (!in_sdram)
 		sdrc_init();
 }
@@ -281,16 +282,14 @@ int dram_init(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
 	unsigned int size0 = 0, size1 = 0;
+	struct sdrc *sdrc_base = (struct sdrc *)OMAP34XX_SDRC_BASE;
+	struct sdrc_actim *sdrc_actim_base = (struct sdrc_actim *)SDRC_ACTIM_CTRL1_BASE;
 
-	/*
-	 * If a second bank of DDR is attached to CS1 this is
-	 * where it can be started.  Early init code will init
-	 * memory on CS0.
-	 */
-	if ((sysinfo.mtype == DDR_COMBO) || (sysinfo.mtype == DDR_STACKED)) {
-		do_sdrc_init(CS1, NOT_EARLY);
-		make_cs1_contiguous();
-	}
+	/* x-load sets up the second bank but */
+	/* doesn't test to see if it is there */
+	/* do so now, disable if not present  */
+	if (!mem_ok(CS1))
+		writel(0, &sdrc_base->cs[1].mcfg);
 
 	size0 = get_sdr_cs_size(CS0);
 	size1 = get_sdr_cs_size(CS1);
