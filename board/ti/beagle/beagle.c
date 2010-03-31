@@ -150,6 +150,9 @@ int misc_init_r(void)
 	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 
 	beagle_identify();
+
+	printf("\nProbing for expansion boards, if none are connected you'll see a harmless I2C error.\n");
+
 	switch (get_expansion_id()) {
 		case TINCANTOOLS_ZIPPY:
 			printf("Recognized Tincantools Zippy expansion board (rev %d %s)\n",
