@@ -141,6 +141,16 @@ unsigned int get_expansion_id(void)
 }
 
 /*
+ * Configure DSS to display background color on DVID
+ * Configure VENC to display color bar on S-Video
+ */
+void display_init(void)
+{
+	omap3_dss_venc_config(&venc_config_std_tv, VENC_HEIGHT, VENC_WIDTH);
+	omap3_dss_panel_config(&dvid_cfg);
+}
+
+/*
  * Routine: misc_init_r
  * Description: Configure board specific parts
  */
@@ -188,6 +198,7 @@ int misc_init_r(void)
 
 	twl4030_power_init();
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
+	display_init();
 
 	switch (beagle_revision) {
 	case REVISION_AXBX:
@@ -233,6 +244,7 @@ int misc_init_r(void)
 		GPIO15 | GPIO14 | GPIO13 | GPIO12, &gpio5_base->setdataout);
 
 	dieid_num_r();
+	omap3_dss_enable();
 
 	return 0;
 }
