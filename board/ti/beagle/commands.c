@@ -145,6 +145,156 @@ U_BOOT_CMD(lcm, 3, 0, do_lcd, "LCM sub-system",
 		   "fb address - set framebuffer address (can be used without init)\n"
 		   );
 
+/* TSC commands */
+
+static int do_tsc_init(int argc, char *argv[])
+{
+	tsc2007_init();
+	return 0;
+}
+
+static int do_tsc_get(int argc, char *argv[])
+{
+	print_adc();
+	printf("\n");
+	return 0;
+}
+
+static int do_tsc_loop(int argc, char *argv[])
+{
+	printf("permanently reading ADCs of TSC.\n"
+		   "Press any key to stop\n\n");
+	while (!tstc())
+		{
+			print_adc();
+			printf("\r");
+		}
+	getc();
+	printf("\n");
+	return 0;
+}
+
+static int tsc_choice=0;
+
+static int do_tsc_selection(int argc, char *argv[])
+{ // tsc selection number
+	if (argc != 3)
+		{
+			printf ("tsc selection: missing number of selection to check for.\n");
+			return (-1);
+		}
+	return tsc_choice == simple_strtoul(argv[2], NULL, 10)?0:1;
+}
+
+static int pendown(int *x, int *y)
+{
+#if 1
+	int z;
+	int xx;
+	int yy;
+	xx=read_adc(0);
+	yy=read_adc(1);
+	z=read_adc(2);	// read Z
+	if(z < 0)
+		return 0;	// read error
+#if 0
+	printf("z=%04d x:%04d y:%04d\n", z, xx, yy);
+#endif
+	if(x) *x=xx;
+	if(y) *y=yy;
+	udelay(10000);	// reduce I2C traffic and debounce...
+	return z > 50;	// was pressed
+#else
+	// must be in PENIRQ mode...
+	return (led_get_buttons() & 0x08) == 0;
+#endif
+}
+
+static int do_tsc_choose(int argc, char *argv[])
+{ // tsc choose cols rows
+	int cols;
+	int rows;
+	int x;
+	int y;
+	tsc_choice=0;	// reset choice
+	if (argc != 4)
+		{
+			printf ("tsc choose: missing number of cols and rows.\n");
+			return (-1);
+		}
+	cols=simple_strtoul(argv[2], NULL, 10);
+	rows=simple_strtoul(argv[3], NULL, 10);
+	printf("Choosing by waiting for touch.\n");
+	for(y=0; y<rows; y++)
+		for(x=0; x<cols; x++)
+			printf("%d%s", 1+x+y*cols, (x+1==cols)?"\n":" ");
+	printf("Press touch or any key to stop\n\n");
+	while (!tstc())
+		{
+			if(pendown(NULL, NULL) && pendown(&x, &y))
+				{ // still pressed - should now be stable
+#if 0
+					printf("xy: %d/%d\n", x, y);
+					printf("xy: %d/%d\n", x*cols, y*rows);
+#endif
+					x=(x*cols)/4096;
+					y=((4095-y)*rows)/4096;	// (0,0) is lower left corner in our hardware
+					tsc_choice=1+x+y*cols;	// return 1..rows*cols
+#if 0
+					while(pendown(NULL, NULL))
+						{ // wait for pen-up
+							if(tstc())
+								break;
+						}
+#endif
+					if(tstc())
+						break;
+#if 1
+					printf("did choose %d/%d -> %d\n", x, y, tsc_choice);
+#endif
+					return 0;
+				}
+		}
+	getc();
+	return 0;
+}
+
+static int do_tsc(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	int len;
+	
+	if (argc < 2) {
+		printf ("led: missing subcommand.\n");
+		return (-1);
+	}
+	
+	len = strlen (argv[1]);
+	if (strncmp ("ge", argv[1], 2) == 0) {
+		return do_tsc_get (argc, argv);
+	} else if (strncmp ("lo", argv[1], 2) == 0) {
+		return do_tsc_loop (argc, argv);
+	} else if (strncmp ("ch", argv[1], 2) == 0) {
+		return do_tsc_choose (argc, argv);
+	} else if (strncmp ("se", argv[1], 2) == 0) {
+		return do_tsc_selection (argc, argv);
+	} else if (strncmp ("in", argv[1], 2) == 0) {
+		return do_tsc_init (argc, argv);
+	} else {
+		printf ("tsc: unknown operation: %s\n", argv[1]);
+	}
+	
+	return (0);
+}
+
+
+U_BOOT_CMD(tsc, 4, 0, do_tsc, "TSC2007 sub-system",
+		   "in[it] - initialize TSC2007\n"
+		   "ge[t] - read ADCs\n"
+		   "lo[op] - loop and display x/y coordinates\n"
+		   "ch[oose] cols rows - choose item\n"
+		   "se[lection] p - check if item p (1 .. cols*rows) was selected\n"
+		   );
+
 /** LED commands */
 
 static int do_led_init(int argc, char *argv[])
@@ -194,7 +344,7 @@ static int do_led_loop(int argc, char *argv[])
 {
 	printf("mirroring buttons to LEDs.\n"
 		   "Press any key to stop\n\n");
-	while (!tstc())
+	while (!tstc() && !pendown(NULL, NULL))
 		{
 			int state=led_get_buttons();
 			print_buttons(state);
@@ -202,7 +352,8 @@ static int do_led_loop(int argc, char *argv[])
 			led_set_led(state);	// mirror to LEDs
 			udelay(100000);	// 0.1 seconds
 		}
-	getc();
+	if(tstc())
+		getc();
 	printf("\n");
 	return 0;
 }
@@ -212,12 +363,13 @@ static int do_led_blink(int argc, char *argv[])
 	int value=0;
 	printf("blinking LEDs.\n"
 		   "Press any key to stop\n\n");
-	while (!tstc())
+	while (!tstc() && !pendown(NULL, NULL))
 		{
 			led_set_led(value++);	// mirror to LEDs
 			udelay(500000);	// 0.5 seconds
 		}
-	getc();
+	if(tstc())
+		getc();
 	return 0;
 }
 
@@ -260,114 +412,3 @@ U_BOOT_CMD(led, 3, 0, do_led, "LED and Buttons sub-system",
 		   "blink - blink LEDs\n"
 		   );
 
-/* TSC commands */
-
-static int do_tsc_init(int argc, char *argv[])
-{
-	tsc2007_init();
-	return 0;
-}
-
-static int do_tsc_get(int argc, char *argv[])
-{
-	print_adc();
-	printf("\n");
-	return 0;
-}
-
-static int do_tsc_loop(int argc, char *argv[])
-{
-	printf("permanently reading ADCs of TSC.\n"
-		   "Press any key to stop\n\n");
-	while (!tstc())
-		{
-			print_adc();
-			printf("\r");
-		}
-	getc();
-	printf("\n");
-	return 0;
-}
-
-static int tsc_choice=0;
-
-static int do_tsc_selection(int argc, char *argv[])
-{ // tsc selection number
-	if (argc != 3)
-		{
-			printf ("tsc selection: missing number of selection to check for.\n");
-			return (-1);
-		}
-	return tsc_choice == simple_strtoul(argv[2], NULL, 10)?0:1;
-}
-
-static int do_tsc_choose(int argc, char *argv[])
-{ // tsc choose cols rows
-	tsc_choice=0;	// reset choice
-	if (argc != 4)
-		{
-			printf ("tsc choose: missing number of cols and rows.\n");
-			return (-1);
-		}
-	printf("Choosing by waiting for touch.\n"
-		   "Press any key to stop\n\n");
-	while (!tstc())
-		{
-			int z=read_adc(2);	// read Z
-			if(z < 0)
-				return 1;	// read error
-			if(z > 50)
-				{ // has been pressed
-					int x=read_adc(0);
-					int y=read_adc(1);
-					int cols=simple_strtoul(argv[2], NULL, 10);
-					int rows=simple_strtoul(argv[3], NULL, 10);
-					x=(x*cols)/4096;
-					y=((4095-y)*rows)/4096;	// (0,0) is lower left corner in our hardware
-					tsc_choice=x+y*cols;
-#if 1
-					printf("did choose %d/%d -> %d\n", x, y, tsc_choice);
-#endif
-					return 0;
-				}
-			udelay(10000);	// reduce I2C traffic...
-		}
-	getc();
-	return 0;
-}
-
-static int do_tsc(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
-{
-	int len;
-	
-	if (argc < 2) {
-		printf ("led: missing subcommand.\n");
-		return (-1);
-	}
-	
-	len = strlen (argv[1]);
-	if (strncmp ("ge", argv[1], 2) == 0) {
-		return do_tsc_get (argc, argv);
-	} else if (strncmp ("lo", argv[1], 2) == 0) {
-		return do_tsc_loop (argc, argv);
-	} else if (strncmp ("ch", argv[1], 2) == 0) {
-		return do_tsc_choose (argc, argv);
-	} else if (strncmp ("se", argv[1], 2) == 0) {
-		return do_tsc_selection (argc, argv);
-	} else if (strncmp ("in", argv[1], 2) == 0) {
-		return do_tsc_init (argc, argv);
-	} else {
-		printf ("tsc: unknown operation: %s\n", argv[1]);
-	}
-	
-	return (0);
-}
-
-
-U_BOOT_CMD(tsc, 4, 0, do_tsc, "TSC2007 sub-system",
-		   "in[it] - initialize TSC2007\n"
-		   "ge[t] - read ADCs\n"
-		   "lo[op] - loop and display x/y coordinates\n"
-		   "ch[oose] cols rows - choose item\n"
-		   "se[lection] p - check if item p (1 .. cols*rows) was selected\n"
-		   );
