@@ -226,7 +226,6 @@ int misc_init_r(void)
 					TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
 					TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
 					TWL4030_PM_RECEIVER_DEV_GRP_P1);
-		setenv("mpurate", "720");
 		break;
 	default:
 		printf("Beagle unknown 0x%02x\n", beagle_revision);
