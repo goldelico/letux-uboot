@@ -55,11 +55,15 @@ static struct {
 #define TINCANTOOLS_VENDORID	0x0100
 #define GUMSTIX_VENDORID		0x0200
 #define SPECIALCOMP_VENDORID	0x0300
+#define HYR_VENDORID			0x0400
+#define MENTOREL_VENDORID		0x0500
+#define KBADC_VENDORID			0x0600
 
 #define TINCANTOOLS_ZIPPY		0x01000100
 #define TINCANTOOLS_ZIPPY2		0x02000100
 #define TINCANTOOLS_TRAINER		0x04000100
 #define TINCANTOOLS_SHOWDOG		0x03000100
+#define KBADC_BEAGLEFPGA		0x01000600
 
 #define BEAGLE_NO_EEPROM		0xffffffff
 
@@ -183,6 +187,10 @@ int misc_init_r(void)
 				expansion_config.revision, expansion_config.fab_revision);
 			/* Place holder for DSS2 definition for showdog lcd */
 			setenv("defaultdisplay", "showdoglcd");
+			break;
+		case KBADC_BEAGLEFPGA:
+			printf("Recognized KBADC Beagle FPGA board\n");
+			MUX_KBADC_BEAGLEFPGA();
 			break;
 		case BEAGLE_NO_EEPROM:
 			printf("No EEPROM on expansion board\n");
