@@ -211,10 +211,12 @@ int misc_init_r(void)
 	switch (beagle_revision) {
 	case REVISION_AXBX:
 		printf("Beagle Rev Ax/Bx\n");
+		setenv("mpurate", "600");
 		break;
 	case REVISION_CX:
 		printf("Beagle Rev C1/C2/C3\n");
 		MUX_BEAGLE_C();
+		setenv("mpurate", "600");
 		break;
 	case REVISION_C4:
 		printf("Beagle Rev C4\n");
