@@ -181,6 +181,8 @@ int misc_init_r(void)
 		case TINCANTOOLS_TRAINER:
 			printf("Recognized Tincantools Trainer expansion board (rev %d %s)\n",
 				expansion_config.revision, expansion_config.fab_revision);
+			MUX_TINCANTOOLS_ZIPPY();
+			MUX_TINCANTOOLS_TRAINER();
 			break;
 		case TINCANTOOLS_SHOWDOG:
 			printf("Recognized Tincantools Showdow expansion board (rev %d %s)\n",
