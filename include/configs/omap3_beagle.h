@@ -185,6 +185,7 @@
 	"usbtty=cdc_acm\0" \
 	"console=ttyS2,115200n8\0" \
 	"mpurate=500\0" \
+	"buddy=none\0" \
 	"vram=12M\0" \
 	"dvimode=640x480MR-16@60\0" \
 	"defaultdisplay=dvi\0" \
@@ -195,6 +196,7 @@
 	"nandrootfstype=jffs2\0" \
 	"mmcargs=setenv bootargs console=${console} " \
 		"mpurate=${mpurate} " \
+		"buddy=${buddy} "\
 		"vram=${vram} " \
 		"omapfb.mode=dvi:${dvimode} " \
 		"omapdss.def_disp=${defaultdisplay} " \
@@ -202,6 +204,7 @@
 		"rootfstype=${mmcrootfstype}\0" \
 	"nandargs=setenv bootargs console=${console} " \
 		"mpurate=${mpurate} " \
+		"buddy=${buddy} "\
 		"vram=${vram} " \
 		"omapfb.mode=dvi:${dvimode} " \
 		"omapdss.def_disp=${defaultdisplay} " \

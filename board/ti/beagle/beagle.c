@@ -172,33 +172,40 @@ int misc_init_r(void)
 			printf("Recognized Tincantools Zippy expansion board (rev %d %s)\n",
 				expansion_config.revision, expansion_config.fab_revision);
 			MUX_TINCANTOOLS_ZIPPY();
+			setenv("buddy", "zippy");
 			break;
 		case TINCANTOOLS_ZIPPY2:
 			printf("Recognized Tincantools Zippy2 expansion board (rev %d %s)\n",
 				expansion_config.revision, expansion_config.fab_revision);
 			MUX_TINCANTOOLS_ZIPPY();
+			setenv("buddy", "zippy2");
 			break;
 		case TINCANTOOLS_TRAINER:
 			printf("Recognized Tincantools Trainer expansion board (rev %d %s)\n",
 				expansion_config.revision, expansion_config.fab_revision);
 			MUX_TINCANTOOLS_ZIPPY();
 			MUX_TINCANTOOLS_TRAINER();
+			setenv("buddy", "trainer");
 			break;
 		case TINCANTOOLS_SHOWDOG:
 			printf("Recognized Tincantools Showdow expansion board (rev %d %s)\n",
 				expansion_config.revision, expansion_config.fab_revision);
 			/* Place holder for DSS2 definition for showdog lcd */
 			setenv("defaultdisplay", "showdoglcd");
+			setenv("buddy", "showdog");
 			break;
 		case KBADC_BEAGLEFPGA:
 			printf("Recognized KBADC Beagle FPGA board\n");
 			MUX_KBADC_BEAGLEFPGA();
+			setenv("buddy", "beaglefpga");
 			break;
 		case BEAGLE_NO_EEPROM:
 			printf("No EEPROM on expansion board\n");
+			setenv("buddy", "none");
 			break;
 		default:
 			printf("Unrecognized expansion board: %x\n", expansion_config.device_vendor);
+			setenv("buddy", "unknown");
 	}
 
 	if (expansion_config.content == 1)
