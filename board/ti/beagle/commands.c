@@ -33,6 +33,7 @@
 #include "dssfb.h"
 #include "jbt6k74.h"
 #include "led.h"
+#include "gps.h"
 #include "tsc2007.h"
 
 /* LCM commands */
@@ -410,5 +411,68 @@ U_BOOT_CMD(led, 3, 0, do_led, "LED and Buttons sub-system",
 		   "set value - set LEDs state\n"
 		   "mirror - read buttons and mirror to LEDs\n"
 		   "blink - blink LEDs\n"
+		   );
+
+/** GPS commands */
+
+static int do_gps_init(int argc, char *argv[])
+{
+	return gps_init();
+}
+
+static int do_gps_on(int argc, char *argv[])
+{
+	gps_on();
+	printf("GPS on\n");
+	return 0;
+}
+
+static int do_gps_off(int argc, char *argv[])
+{
+	gps_off();
+	printf("GPS off\n");
+	return 0;
+}
+
+static int do_gps_echo(int argc, char *argv[])
+{
+	gps_echo();
+	return 0;
+}
+
+// FIXME: gps cmd
+
+static int do_gps(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	int len;
+	
+	if (argc < 2) {
+		printf ("gps: missing subcommand.\n");
+		return (-1);
+	}
+	
+	len = strlen (argv[1]);
+	if (strncmp ("on", argv[1], 2) == 0) {
+		return do_gps_on (argc, argv);
+	} else if (strncmp ("of", argv[1], 2) == 0) {
+		return do_gps_off (argc, argv);
+	} else if (strncmp ("in", argv[1], 2) == 0) {
+		return do_gps_init (argc, argv);
+	} else if (strncmp ("ec", argv[1], 2) == 0) {
+		return do_gps_echo (argc, argv);
+	} else {
+		printf ("gps: unknown operation: %s\n", argv[1]);
+	}
+	
+	return (0);
+}
+
+
+U_BOOT_CMD(gps, 3, 0, do_gps, "GPS sub-system",
+		   "init - initialize GPIOs\n"
+		   "on - enable GPS\n"
+		   "off - disable GPS\n"
+		   "cmd string - send string\n"
+		   "echo - echo GPS out to console\n"
 		   );
 

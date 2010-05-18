@@ -88,6 +88,8 @@
 #define CONFIG_SYS_NS16550_COM3		OMAP34XX_UART3
 #define CONFIG_SERIAL3			3	/* UART3 on Beagle Rev 2 */
 
+#define CONFIG_SYS_NS16550_COM2		OMAP34XX_UART2
+
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_BAUDRATE			115200
