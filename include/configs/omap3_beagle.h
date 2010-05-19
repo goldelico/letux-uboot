@@ -98,6 +98,18 @@
 #define CONFIG_SYS_MMC_SET_DEV		1
 #define CONFIG_DOS_PARTITION		1
 
+/* Status LED */
+#define CONFIG_STATUS_LED		1
+#define CONFIG_BOARD_SPECIFIC_LED	1
+#define STATUS_LED_BIT			0x01
+#define STATUS_LED_STATE		STATUS_LED_ON
+#define STATUS_LED_PERIOD		(CONFIG_SYS_HZ / 2)
+#define STATUS_LED_BIT1			0x02
+#define STATUS_LED_STATE1		STATUS_LED_ON
+#define STATUS_LED_PERIOD1		(CONFIG_SYS_HZ / 2)
+#define STATUS_LED_BOOT			STATUS_LED_BIT
+#define STATUS_LED_GREEN		STATUS_LED_BIT1
+
 /* DDR - I use Micron DDR */
 #define CONFIG_OMAP3_MICRON_DDR		1
 
@@ -132,6 +144,7 @@
 #define CONFIG_CMD_I2C		/* I2C serial bus support	*/
 #define CONFIG_CMD_MMC		/* MMC support			*/
 #define CONFIG_CMD_NAND		/* NAND support			*/
+#define CONFIG_CMD_LED		/* LED support			*/
 #define CONFIG_VIDEO_OMAP3	/* DSS Support			*/
 
 #undef CONFIG_CMD_FLASH		/* flinfo, erase, protect	*/
