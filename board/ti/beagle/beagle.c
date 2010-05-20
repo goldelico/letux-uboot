@@ -30,6 +30,9 @@
  * MA 02111-1307 USA
  */
 #include <common.h>
+#ifdef CONFIG_STATUS_LED
+#include <status_led.h>
+#endif
 #include <twl4030.h>
 #include <asm/io.h>
 #include <asm/arch/mux.h>
@@ -82,6 +85,10 @@ int board_init(void)
 	gd->bd->bi_arch_number = MACH_TYPE_OMAP3_BEAGLE;
 	/* boot param addr */
 	gd->bd->bi_boot_params = (OMAP34XX_SDRC_CS0 + 0x100);
+
+#if defined(CONFIG_STATUS_LED) && defined(STATUS_LED_BOOT)
+	status_led_set (STATUS_LED_BOOT, STATUS_LED_ON);
+#endif
 
 	return 0;
 }
@@ -282,3 +289,4 @@ void set_muxconf_regs(void)
 {
 	MUX_BEAGLE();
 }
+
