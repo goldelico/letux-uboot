@@ -221,14 +221,17 @@ int misc_init_r(void)
 	case REVISION_AXBX:
 		printf("Beagle Rev Ax/Bx\n");
 		setenv("mpurate", "600");
+		setenv("beaglerev", "AxBx");
 		break;
 	case REVISION_CX:
 		printf("Beagle Rev C1/C2/C3\n");
 		MUX_BEAGLE_C();
 		setenv("mpurate", "600");
+		setenv("beaglerev", "Cx");
 		break;
 	case REVISION_C4:
 		printf("Beagle Rev C4\n");
+		setenv("beaglerev", "Cx");
 		MUX_BEAGLE_C();
 		/* Set VAUX2 to 1.8V for EHCI PHY */
 		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
@@ -239,6 +242,7 @@ int misc_init_r(void)
 		break;
 	case REVISION_XM:
 		printf("Beagle xM Rev A\n");
+		setenv("beaglerev", "xMA");
 		MUX_BEAGLE_XM();
 		/* Set VAUX2 to 1.8V for EHCI PHY */
 		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
