@@ -195,9 +195,12 @@
 #define CONFIG_BOOTDELAY		3
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"loadaddr=0x82000000\0" \
+	"loadaddr=0x80200000\0" \
+	"rdaddr=0x81600000\0" \
 	"usbtty=cdc_acm\0" \
 	"console=ttyS2,115200n8\0" \
+	"optargs=\0" \
+	"bootscr=boot.scr\0" \
 	"mpurate=500\0" \
 	"buddy=none\0" \
 	"vram=12M\0" \
@@ -209,6 +212,7 @@
 	"nandroot=/dev/mtdblock4 rw\0" \
 	"nandrootfstype=jffs2\0" \
 	"mmcargs=setenv bootargs console=${console} " \
+		"${optargs} " \
 		"mpurate=${mpurate} " \
 		"buddy=${buddy} "\
 		"vram=${vram} " \
@@ -217,6 +221,7 @@
 		"root=${mmcroot} " \
 		"rootfstype=${mmcrootfstype}\0" \
 	"nandargs=setenv bootargs console=${console} " \
+		"${optargs} " \
 		"mpurate=${mpurate} " \
 		"buddy=${buddy} "\
 		"vram=${vram} " \
@@ -224,7 +229,18 @@
 		"omapdss.def_disp=${defaultdisplay} " \
 		"root=${nandroot} " \
 		"rootfstype=${nandrootfstype}\0" \
-	"loadbootscript=fatload mmc ${mmcdev} ${loadaddr} boot.scr\0" \
+	"loadbootscript=fatload mmc ${mmcdev} ${loadaddr} ${bootscr}\0" \
+	"ramargs=setenv bootargs console=${console} " \
+		"${optargs} " \
+		"mpurate=${mpurate} " \
+		"buddy=${buddy} "\
+		"vram=${vram} " \
+		"omapfb.mode=dvi:${dvimode} " \
+		"omapdss.def_disp=${defaultdisplay} " \
+		"root=/dev/ram0 rw ramdisk_size=65536 " \
+		"initrd=${rdaddr},64M " \
+		"rootfstype=\0" \
+	"loadramdisk=fatload mmc ${mmcdev} ${rdaddr} ramdisk.gz\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source ${loadaddr}\0" \
 	"loaduimage=fatload mmc ${mmcdev} ${loadaddr} uImage\0" \
@@ -235,15 +251,30 @@
 		"run nandargs; " \
 		"nand read ${loadaddr} 280000 400000; " \
 		"bootm ${loadaddr}\0" \
+	"ramboot=echo Booting from ramdisk ...; " \
+		"run ramargs; " \
+		"bootm ${loadaddr}\0" \
 
 #define CONFIG_BOOTCOMMAND \
 	"if mmc init ${mmcdev}; then " \
-		"if run loadbootscript; then " \
-			"run bootscript; " \
+		"if userbutton; then " \
+			"setenv bootscr boot.scr; " \
+			"if run loadbootscript; then " \
+				"run bootscript; " \
+			"else " \
+				"if run loaduimage; then " \
+					"run mmcboot; " \
+				"else run nandboot; " \
+				"fi; " \
+			"fi; " \
 		"else " \
+			"setenv bootscr user.scr;" \
 			"if run loaduimage; then " \
-				"run mmcboot; " \
-			"else run nandboot; " \
+				"if run loadramdisk; then " \
+					"run ramboot; " \
+				"else " \
+					"run mmcboot; " \
+				"fi; " \
 			"fi; " \
 		"fi; " \
 	"else run nandboot; fi"
