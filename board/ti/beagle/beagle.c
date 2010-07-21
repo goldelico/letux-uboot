@@ -40,6 +40,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include "beagle.h"
+#include <command.h>
 
 static struct {
 	unsigned int device_vendor;
@@ -289,4 +290,57 @@ void set_muxconf_regs(void)
 {
 	MUX_BEAGLE();
 }
+
+/*
+ * This command returns the status of the user button on beagle xM
+ * Input - none
+ * Returns - 	1 if button is held down
+ *		0 if button is not held down
+ */
+int do_userbutton (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	int     button = 0;
+	int	gpio;
+
+	/*
+	 * pass address parameter as argv[0] (aka command name),
+	 * and all remaining args
+	 */
+	switch (beagle_revision) {
+	case REVISION_AXBX:
+	case REVISION_CX:
+	case REVISION_C4:
+		gpio = 7;
+		break;
+	case REVISION_XM:
+	default:
+		gpio = 4;
+		break;
+	}
+	omap_request_gpio(gpio);
+	omap_set_gpio_direction(gpio, 1);
+	printf("The user button is currently ");
+	if(omap_get_gpio_datain(gpio))
+	{
+		button = 1;
+		printf("PRESSED.\n");
+	}
+	else
+	{
+		button = 0;
+		printf("NOT pressed.\n");
+	}
+
+	omap_free_gpio(gpio);
+
+	return !button;
+}
+
+/* -------------------------------------------------------------------- */
+
+U_BOOT_CMD(
+	userbutton, CONFIG_SYS_MAXARGS, 1,	do_userbutton,
+	"Return the status of the BeagleBoard USER button",
+	""
+);
 
