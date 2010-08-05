@@ -171,6 +171,8 @@ int misc_init_r(void)
 	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
 	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 
+	/* Enable i22 pullup resisters */
+	*(ulong *)(CONTROL_PROG_IO1) &= ~(PRG_I2C2_PULLUPRESX);
 	beagle_identify();
 
 	printf("\nProbing for expansion boards, if none are connected you'll see a harmless I2C error.\n\n");
