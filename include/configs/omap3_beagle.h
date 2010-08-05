@@ -208,6 +208,7 @@
 	"bootscr=boot.scr\0" \
 	"mpurate=500\0" \
 	"buddy=none\0" \
+	"camera=lbcm3m1\0" \
 	"vram=12M\0" \
 	"dvimode=640x480MR-16@60\0" \
 	"defaultdisplay=dvi\0" \
@@ -222,6 +223,7 @@
 		"${optargs} " \
 		"mpurate=${mpurate} " \
 		"buddy=${buddy} "\
+		"camera=${camera} "\
 		"vram=${vram} " \
 		"omapfb.mode=dvi:${dvimode} " \
 		"omapdss.def_disp=${defaultdisplay} " \
@@ -231,6 +233,7 @@
 		"${optargs} " \
 		"mpurate=${mpurate} " \
 		"buddy=${buddy} "\
+		"camera=${camera} "\
 		"vram=${vram} " \
 		"omapfb.mode=dvi:${dvimode} " \
 		"omapdss.def_disp=${defaultdisplay} " \
@@ -241,6 +244,7 @@
 		"${optargs} " \
 		"mpurate=${mpurate} " \
 		"buddy=${buddy} "\
+		"camera=${camera} "\
 		"vram=${vram} " \
 		"omapfb.mode=dvi:${dvimode} " \
 		"omapdss.def_disp=${defaultdisplay} " \
