@@ -217,7 +217,7 @@
 	"mmcrootfstype=ext3 rootwait\0" \
 	"nandroot=/dev/mtdblock4 rw\0" \
 	"nandrootfstype=jffs2\0" \
-	"ramroot=/dev/ram0 rw\0" \
+	"ramroot=/dev/ram0 rw ramdisk_size=65536 initrd=${rdaddr},64M\0" \
 	"ramrootfstype=ext2\0" \
 	"mmcargs=setenv bootargs console=${console} " \
 		"${optargs} " \
@@ -248,8 +248,7 @@
 		"vram=${vram} " \
 		"omapfb.mode=dvi:${dvimode} " \
 		"omapdss.def_disp=${defaultdisplay} " \
-		"root=${ramroot} rw ramdisk_size=65536 " \
-		"initrd=${rdaddr},64M " \
+		"root=${ramroot} " \
 		"rootfstype=${ramrootfstype}\0" \
 	"loadramdisk=fatload mmc ${mmcdev} ${rdaddr} ramdisk.gz\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
