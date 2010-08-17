@@ -139,7 +139,7 @@ unsigned char mmc_clock_config(unsigned int iclk, unsigned short clk_div)
 		val = MMC_400kHz_CLK;
 		break;
 	case CLK_MISC:
-		val = clk_div;
+		val = 4; /* always use 48MHz (hack, but works so far) */
 		break;
 	default:
 		return 0;
