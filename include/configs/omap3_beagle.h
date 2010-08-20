@@ -272,27 +272,26 @@
 			"setenv bootscr user.scr;" \
 			"if run loadbootscript; then " \
 				"run bootscript; " \
-			"else " \
-				"if run loaduimage; then " \
-					"if run loadramdisk; then " \
-						"run ramboot; " \
-					"else " \
-						"run mmcboot; " \
-					"fi; " \
-				"fi; " \
 			"fi; " \
-		"else " \
-			"setenv bootscr boot.scr; " \
-			"if run loadbootscript; then " \
-				"run bootscript; " \
-			"else " \
-				"if run loaduimage; then " \
-					"run mmcboot; " \
-				"else run nandboot; " \
+			"if run loaduimage; then " \
+				"if run loadramdisk; then " \
+					"run ramboot; " \
 				"fi; " \
+				"run mmcboot; " \
 			"fi; " \
 		"fi; " \
-	"else run nandboot; fi"
+		"if run loadbootscript; then " \
+			"run bootscript; " \
+		"fi; " \
+		"setenv bootscr user.scr;" \
+		"if run loadbootscript; then " \
+			"run bootscript; " \
+		"fi; " \
+		"if run loaduimage; then " \
+			"run mmcboot; " \
+		"fi; " \
+	"fi; " \
+	"run nandboot;"
 
 #define CONFIG_AUTO_COMPLETE		1
 /*
