@@ -215,7 +215,7 @@ const omap3_sysinfo sysinfo = {
 	MUX_VAL(CP(MMC2_DAT3),		(IEN  | PTU | EN  | M0)) /*GPIO_135 -> MMC2_DAT3*/\
 	MUX_VAL(CP(MMC2_DAT4),		(IEN  | PTU | EN  | M4)) /*GPIO_136 - AUX */\
 	MUX_VAL(CP(MMC2_DAT5),		(IEN  | PTU | EN  | M4)) /*GPIO_137 - POWER */\
-	MUX_VAL(CP(MMC2_DAT6),		(IEN  | PTU | EN  | M4)) /*GPIO_138 - EXT-ANT */\
+	MUX_VAL(CP(MMC2_DAT6),		(IEN  | PTU | DIS  | M4)) /*GPIO_138 - EXT-ANT */\
 	MUX_VAL(CP(MMC2_DAT7),		(IEN  | PTU | EN  | M4)) /*GPIO_139 - RS232 EXT */\
  /*Bluetooth*/\
 	MUX_VAL(CP(MCBSP3_DX),		(IEN  | PTD | DIS | M1)) /*UART2_CTS*/\

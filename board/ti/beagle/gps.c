@@ -36,6 +36,7 @@
 
 int gps_init(void)
 {
+//	MUX_VAL(CP(MMC2_DAT6),		(IEN  | PTU | EN  | M4)) /*GPIO_138 - EXT-ANT */\
 //	MUX_VAL(CP(UART2_CTS),		(IEN  | PTD | DIS | M4)) /*GPIO_144*/\
 //	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M4)) /*GPIO_145*/\
 //	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M0)) /*GPIO_146*/\
@@ -51,6 +52,10 @@ int gps_init(void)
 void gps_on(void)
 {
 	omap_set_gpio_dataout(GPIO_GPS_ON, 1);
+	if(omap_get_gpio_datain(GPIO_GPSEXT))
+		printf("external antenna\n");
+	else
+		printf("internal antenna\n");
 }
 
 void gps_off(void)
@@ -58,69 +63,27 @@ void gps_off(void)
 	omap_set_gpio_dataout(GPIO_GPS_ON, 0);
 }
 
-/*
- _serial_putc(const char c,const int port)
- {
- if (c == '\n')
- NS16550_putc(PORT, '\r');
- 
- NS16550_putc(PORT, c);
- }
- 
- void
- _serial_putc_raw(const char c,const int port)
- {
- NS16550_putc(PORT, c);
- }
- 
- void
- _serial_puts (const char *s,const int port)
- {
- while (*s) {
- _serial_putc (*s++,port);
- }
- }
- 
- 
- int
- _serial_getc(const int port)
- {
- return NS16550_getc(PORT);
- }
- 
- int
- _serial_tstc(const int port)
- {
- return NS16550_tstc(PORT);
- }
- 
- void
- _serial_setbrg (const int port)
- {
- int clock_divisor;
- 
- clock_divisor = calc_divisor(PORT);
- NS16550_reinit(PORT, clock_divisor);
- }
-*/
-
 void gps_echo(void)
 {
 	#define MODE_X_DIV 16
 	int baudrate=9600;
 	int divisor=(CONFIG_SYS_NS16550_CLK + (baudrate * (MODE_X_DIV / 2))) / (MODE_X_DIV * baudrate);
-	if(omap_get_gpio_datain(GPIO_GPSEXT))
-		printf("external antenna\n");
-	else
-		printf("internal antenna\n");
-	NS16550_reinit((NS16550_t)CONFIG_SYS_NS16550_COM2, divisor);
-	// initialize UART
-	// echo in both directions
-	// until we press ctl-C
+	NS16550_reinit((NS16550_t)CONFIG_SYS_NS16550_COM2, divisor);	// initialize UART
 	while (1)
-		{
+		{ // echo in both directions
+			int ant=omap_get_gpio_datain(GPIO_GPSEXT);
+			static lastant=-1;
+			if(ant != lastant)
+				{ // changed
+					if(ant)
+						printf("external antenna\n");
+					else
+						printf("internal antenna\n");
+					lastant=ant;
+				}
 			if(NS16550_tstc((NS16550_t)CONFIG_SYS_NS16550_COM2))
 				putc(NS16550_getc((NS16550_t)CONFIG_SYS_NS16550_COM2));	// from GPS to console
+			// fixme: until we press ctl-C
 			if(tstc())
 				break;	// NS16550_putc((NS16550_t)CONFIG_SYS_NS16550_COM2, getc());
 		}
