@@ -473,18 +473,17 @@
 /*
  * Voltage Selection in PM Receiver Module
  */
-#define VAUX2_VSEL_18		0x05
-#define VDD1_VSEL_14		0x40
-#define VAUX3_VSEL_28		0x03
-#define VPLL2_VSEL_18		0x05
-#define VDAC_VSEL_18		0x03
-#define VMMC1_VSEL_30		0x02
+#define TWL4030_PM_RECEIVER_VAUX2_VSEL_18		0x05
+#define TWL4030_PM_RECEIVER_VAUX3_VSEL_28		0x03
+#define TWL4030_PM_RECEIVER_VPLL2_VSEL_18		0x05
+#define TWL4030_PM_RECEIVER_VDAC_VSEL_18		0x03
+#define TWL4030_PM_RECEIVER_VMMC1_VSEL_30		0x02
 
 /*
- * Device Selection
+ * Device Selection in PM Receiver Module
  */
-#define DEV_GRP_P1		0x20
-#define DEV_GRP_ALL		0xE0
+#define TWL4030_PM_RECEIVER_DEV_GRP_P1			0x20
+#define TWL4030_PM_RECEIVER_DEV_GRP_ALL			0xE0
 
 /*
  * Convience functions to read and write from TWL4030

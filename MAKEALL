@@ -213,7 +213,6 @@ LIST_4xx="		\
 	DU440		\
 	ebony		\
 	ERIC		\
-	EXBITGEN	\
 	fx12mm		\
 	G2000		\
 	gdppc440etx	\
@@ -239,7 +238,6 @@ LIST_4xx="		\
 	MIP405		\
 	MIP405T		\
 	ML2		\
-	ml300		\
 	ml507		\
 	ml507_flash	\
 	neo		\
@@ -313,7 +311,6 @@ LIST_824x="		\
 	Sandpoint8240	\
 	Sandpoint8245	\
 	sbc8240		\
-	SL8245		\
 	utx8245		\
 "
 
@@ -403,6 +400,8 @@ LIST_85xx="		\
 	MPC8560ADS	\
 	MPC8568MDS	\
 	MPC8569MDS	\
+	MPC8569MDS_ATM	\
+	MPC8569MDS_NAND \
 	MPC8572DS	\
 	MPC8572DS_36BIT	\
 	P2020DS		\
@@ -554,6 +553,14 @@ LIST_ARM9="			\
 	cp946es			\
 	cp966			\
 	da830evm		\
+	edb9301			\
+	edb9302			\
+	edb9302a		\
+	edb9307			\
+	edb9307a		\
+	edb9312			\
+	edb9315			\
+	edb9315a		\
 	imx27lite		\
 	lpd7a400		\
 	mv88f6281gtw_ge		\
@@ -574,6 +581,11 @@ LIST_ARM9="			\
 	sheevaplug		\
 	smdk2400		\
 	smdk2410		\
+	spear300		\
+	spear310		\
+	spear320		\
+	spear600		\
+	suen3			\
 	trab			\
 	VCMA9			\
 	versatile		\
@@ -586,6 +598,7 @@ LIST_ARM9="			\
 	davinci_sonata		\
 	davinci_dm355evm	\
 	davinci_dm355leopard	\
+	davinci_dm365evm	\
 	davinci_dm6467evm	\
 "
 
@@ -619,6 +632,7 @@ LIST_ARM11="			\
 #########################################################################
 LIST_ARM_CORTEX_A8="		\
 	devkit8000		\
+	mx51evk			\
 	omap3_beagle		\
 	omap3_overo		\
 	omap3_evm		\
@@ -650,10 +664,12 @@ LIST_at91="			\
 	CPU9260			\
 	CPU9G20			\
 	csb637			\
+	eb_cpux9k2		\
 	kb9202			\
 	meesc			\
 	mp2usb			\
 	m501sk			\
+	otc570			\
 	pm9261			\
 	pm9263			\
 	SBC35_A9G20		\
@@ -871,6 +887,7 @@ LIST_blackfin="		\
 	bf518f-ezbrd	\
 	bf526-ezbrd	\
 	bf527-ezkit	\
+	bf527-ezkit-v2	\
 	bf533-ezkit	\
 	bf533-stamp	\
 	bf537-minotaur	\
@@ -879,6 +896,7 @@ LIST_blackfin="		\
 	bf537-stamp	\
 	bf538f-ezkit	\
 	bf548-ezkit	\
+	bf561-acvilon	\
 	bf561-ezkit	\
 	blackstamp	\
 	cm-bf527	\
@@ -888,6 +906,7 @@ LIST_blackfin="		\
 	cm-bf548	\
 	cm-bf561	\
 	ibf-dsp561	\
+	tcm-bf518	\
 	tcm-bf537	\
 "
 

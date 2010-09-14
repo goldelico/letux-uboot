@@ -33,6 +33,13 @@
 /* include common defines/options for all Keymile boards */
 #include "keymile-common.h"
 
+#define CONFIG_KM_UBI_PARTITION_NAME	"ubi0"
+
+#define MTDIDS_DEFAULT		"nor0=boot"
+#define MTDPARTS_DEFAULT	\
+	"mtdparts=boot:768k(u-boot),128k(env),128k(envred),"	\
+	"-(" CONFIG_KM_UBI_PARTITION_NAME ")"
+
 #define CONFIG_MISC_INIT_R	1
 /*
  * System Clock Setup
@@ -152,7 +159,6 @@
  */
 #define CONFIG_SYS_MONITOR_BASE	TEXT_BASE /* start of monitor */
 #define CONFIG_SYS_FLASH_BASE		0xF0000000
-#define CONFIG_SYS_FLASH_BASE_1		0xF2000000
 #define CONFIG_SYS_PIGGY_BASE		0xE8000000
 #define	CONFIG_SYS_PIGGY_SIZE		128
 #define CONFIG_SYS_PAXE_BASE		0xA0000000
@@ -213,9 +219,9 @@
 				OR_GPCM_SCY_5 | \
 				OR_GPCM_TRLX | OR_GPCM_EAD)
 
-#define CONFIG_SYS_MAX_FLASH_BANKS	2	/* max num of flash banks	*/
+#define CONFIG_SYS_MAX_FLASH_BANKS	1	/* max num of flash banks	*/
 #define CONFIG_SYS_MAX_FLASH_SECT	512	/* max num of sects on one chip */
-#define CONFIG_SYS_FLASH_BANKS_LIST { CONFIG_SYS_FLASH_BASE, CONFIG_SYS_FLASH_BASE_1 }
+#define CONFIG_SYS_FLASH_BANKS_LIST { CONFIG_SYS_FLASH_BASE }
 
 #undef	CONFIG_SYS_FLASH_CHECKSUM
 
@@ -289,7 +295,8 @@
 #define CONFIG_SYS_UEC1_TX_CLK		QE_CLK17
 #define CONFIG_SYS_UEC1_ETH_TYPE	FAST_ETH
 #define CONFIG_SYS_UEC1_PHY_ADDR	0
-#define CONFIG_SYS_UEC1_INTERFACE_MODE ENET_100_RMII
+#define CONFIG_SYS_UEC1_INTERFACE_TYPE RMII
+#define CONFIG_SYS_UEC1_INTERFACE_SPEED 100
 #endif
 
 /*
@@ -444,11 +451,6 @@
 #define BOOTFLASH_START	F0000000
 
 #define CONFIG_PRAM	512	/* protected RAM [KBytes] */
-
-#define MTDIDS_DEFAULT		"nor2=app"
-#define MTDPARTS_DEFAULT \
-	"mtdparts=app:256k(u-boot),128k(env),128k(envred),"	\
-	"1536k(esw0),8704k(rootfs0),1536k(esw1),2432k(rootfs1),640k(var),768k(cfg)"
 
 /*
  * Environment Configuration

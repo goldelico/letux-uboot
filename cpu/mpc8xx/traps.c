@@ -34,11 +34,8 @@
 
 #include <common.h>
 #include <command.h>
+#include <kgdb.h>
 #include <asm/processor.h>
-
-#if defined(CONFIG_CMD_KGDB)
-int (*debugger_exception_handler)(struct pt_regs *) = 0;
-#endif
 
 #if defined(CONFIG_CMD_BEDBUG)
 extern void do_bedbug_breakpoint(struct pt_regs *);

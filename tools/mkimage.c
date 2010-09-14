@@ -37,6 +37,7 @@ struct mkimage_params params = {
 	.type = IH_TYPE_KERNEL,
 	.comp = IH_COMP_GZIP,
 	.dtc = MKIMAGE_DEFAULT_DTC_OPTIONS,
+	.imagename = "",
 };
 
 /*
@@ -150,6 +151,8 @@ main (int argc, char **argv)
 
 	/* Init Kirkwood Boot image generation/list support */
 	init_kwb_image_type ();
+	/* Init Freescale imx Boot image generation/list support */
+	init_imx_image_type ();
 	/* Init FIT image generation/list support */
 	init_fit_image_type ();
 	/* Init Default image generation/list support */
@@ -279,20 +282,6 @@ NXTARG:		;
 		/* If XIP, entry point must be after the U-Boot header */
 		if (params.xflag)
 			params.ep += tparams->header_size;
-	}
-
-	/*
-	 * If XIP, ensure the entry point is equal to the load address plus
-	 * the size of the U-Boot header.
-	 */
-	if (params.xflag) {
-		if (params.ep != params.addr + tparams->header_size) {
-			fprintf (stderr,
-				"%s: For XIP, the entry point must be the load addr + %lu\n",
-				params.cmdname,
-				(unsigned long)tparams->header_size);
-			exit (EXIT_FAILURE);
-		}
 	}
 
 	params.imagefile = *argv;

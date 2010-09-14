@@ -38,6 +38,15 @@ endif
 #
 include $(TOPDIR)/config.mk
 
+# Enable all the config-independent tools
+ifneq ($(HOST_TOOLS_ALL),)
+CONFIG_LCD_LOGO = y
+CONFIG_CMD_NET = y
+CONFIG_INCA_IP = y
+CONFIG_NETCONSOLE = y
+CONFIG_SHA1_CHECK_UB_IMG = y
+endif
+
 # Generated executable files
 BIN_FILES-$(CONFIG_LCD_LOGO) += bmp_logo$(SFX)
 BIN_FILES-$(CONFIG_VIDEO_LOGO) += bmp_logo$(SFX)
@@ -73,6 +82,7 @@ OBJ_FILES-$(CONFIG_CMD_NET) += gen_eth_addr.o
 OBJ_FILES-$(CONFIG_CMD_LOADS) += img2srec.o
 OBJ_FILES-$(CONFIG_INCA_IP) += inca-swap-bytes.o
 NOPED_OBJ_FILES-y += kwbimage.o
+NOPED_OBJ_FILES-y += imximage.o
 NOPED_OBJ_FILES-y += mkimage.o
 OBJ_FILES-$(CONFIG_NETCONSOLE) += ncb.o
 NOPED_OBJ_FILES-y += os_support.o
@@ -101,6 +111,9 @@ LOGO_BMP= logos/denx.bmp
 endif
 ifeq ($(VENDOR),atmel)
 LOGO_BMP= logos/atmel.bmp
+endif
+ifeq ($(VENDOR),esd)
+LOGO_BMP= logos/esd.bmp
 endif
 ifeq ($(VENDOR),ronetix)
 LOGO_BMP= logos/ronetix.bmp
@@ -158,6 +171,7 @@ $(obj)mkimage$(SFX):	$(obj)crc32.o \
 			$(obj)default_image.o \
 			$(obj)fit_image.o \
 			$(obj)image.o \
+			$(obj)imximage.o \
 			$(obj)kwbimage.o \
 			$(obj)md5.o \
 			$(obj)mkimage.o \
@@ -185,7 +199,7 @@ $(obj)%.o: $(SRCTREE)/common/%.c
 $(obj)%.o: $(SRCTREE)/lib_generic/%.c
 	$(HOSTCC) -g $(HOSTCFLAGS) -c -o $@ $<
 
-$(LIBFDT_OBJS):
+$(obj)%.o: $(SRCTREE)/libfdt/%.c
 	$(HOSTCC) -g $(HOSTCFLAGS_NOPED) -c -o $@ $<
 
 subdirs:

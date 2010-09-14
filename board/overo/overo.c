@@ -39,6 +39,32 @@
 #include <asm/mach-types.h>
 #include "overo.h"
 
+static struct {
+	unsigned int device_vendor;
+	unsigned char revision;
+	unsigned char content;
+	unsigned char fab_revision[8];
+	unsigned char env_var[16];
+	unsigned char env_setting[64];
+} expansion_config;
+
+#define TWL4030_I2C_BUS			0
+
+#define EXPANSION_EEPROM_I2C_BUS	2
+#define EXPANSION_EEPROM_I2C_ADDRESS	0x51
+
+#define GUMSTIX_VENDORID		0x0200
+
+#define GUMSTIX_SUMMIT			0x01000200
+#define GUMSTIX_TOBI			0x02000200
+#define GUMSTIX_TOBI_DUO		0x03000200
+#define GUMSTIX_PALO35			0x04000200
+#define GUMSTIX_PALO43			0x05000200
+#define GUMSTIX_CHESTNUT43		0x06000200
+#define GUMSTIX_PINTO			0x07000200
+
+#define GUMSTIX_NO_EEPROM		0xffffffff
+
 #if defined(CONFIG_CMD_NET)
 static void setup_net_chip(void);
 #endif
@@ -61,11 +87,164 @@ int board_init(void)
 }
 
 /*
+ * Routine: get_sdio2_config
+ * Description: Return information about the wifi module connection
+ *              Returns 0 if the module connects though a level translator
+ *              Returns 1 if the module connects directly
+ */
+int get_sdio2_config(void) {
+	int sdio_direct;
+
+	if (!omap_request_gpio(130) && !omap_request_gpio(139)){
+
+		omap_set_gpio_direction(130, 0);
+		omap_set_gpio_direction(139, 1);
+
+		sdio_direct = 1;
+		omap_set_gpio_dataout(130, 0);
+		if (omap_get_gpio_datain(139) == 0) {
+			omap_set_gpio_dataout(130, 1);
+			if (omap_get_gpio_datain(139) == 1)
+				sdio_direct = 0;
+		}
+
+		omap_free_gpio(130);
+		omap_free_gpio(139);
+	} else {
+		printf("Error: unable to acquire sdio2 clk GPIOs\n");
+		sdio_direct=-1;
+	}
+
+	return sdio_direct;
+}
+
+/*
+ * Routine: get_board_revision
+ * Description: Returns the board revision
+ */
+int get_board_revision(void) {
+	int revision;
+
+	if (!omap_request_gpio(127) && !omap_request_gpio(128) &&
+	    !omap_request_gpio(129)){
+
+		omap_set_gpio_direction(127, 1);
+		omap_set_gpio_direction(128, 1);
+		omap_set_gpio_direction(129, 1);
+
+		revision = 0;
+		if (omap_get_gpio_datain(127) == 0)
+			revision += 1;
+		if (omap_get_gpio_datain(128) == 0)
+			revision += 2;
+		if (omap_get_gpio_datain(129) == 0)
+			revision += 4;
+
+		omap_free_gpio(127);
+		omap_free_gpio(128);
+		omap_free_gpio(129);
+	} else {
+		printf("Error: unable to acquire board revision GPIOs\n");
+		revision=-1;
+	}
+
+	return revision;
+}
+
+/*
+ * Routine: get_expansion_id
+ * Description: This function checks for expansion board by checking I2C
+ *		bus 2 for the availability of an AT24C01B serial EEPROM.
+ *		returns the device_vendor field from the EEPROM
+ */
+unsigned int get_expansion_id(void)
+{
+	i2c_set_bus_num(EXPANSION_EEPROM_I2C_BUS);
+
+	/* return GUMSTIX_NO_EEPROM if eeprom doesn't respond */
+	if (i2c_probe(EXPANSION_EEPROM_I2C_ADDRESS) == 1)
+		return GUMSTIX_NO_EEPROM;
+
+	/* read configuration data */
+	i2c_read(EXPANSION_EEPROM_I2C_ADDRESS, 0, 1, (u8 *)&expansion_config,
+		 sizeof(expansion_config));
+
+	return expansion_config.device_vendor;
+}
+
+
+/*
  * Routine: misc_init_r
  * Description: Configure board specific parts
  */
 int misc_init_r(void)
 {
+	printf("Board revision: ");
+	switch (get_board_revision()) {
+		case 0:
+		case 1:
+			switch (get_sdio2_config()) {
+				case 0:
+					printf(" 0\n");
+					MUX_OVERO_SDIO2_TRANSCEIVER();
+					break;
+				case 1:
+					printf(" 1\n");
+					MUX_OVERO_SDIO2_DIRECT();
+					break;
+				default:
+					printf(" unknown\n");
+			}
+			break;
+		default:
+			printf(" unsupported\n");
+	}
+
+	switch (get_expansion_id()) {
+		case GUMSTIX_SUMMIT:
+			printf("Recognized Summit expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			setenv("defaultdisplay", "dvi");
+			break;
+		case GUMSTIX_TOBI:
+			printf("Recognized Tobi expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			setenv("defaultdisplay", "dvi");
+			break;
+		case GUMSTIX_TOBI_DUO:
+			printf("Recognized Tobi Duo expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			break;
+		case GUMSTIX_PALO35:
+			printf("Recognized Palo 35 expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			setenv("defaultdisplay", "lcd35");
+			break;
+		case GUMSTIX_PALO43:
+			printf("Recognized Palo 43 expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			setenv("defaultdisplay", "lcd43");
+			break;
+		case GUMSTIX_CHESTNUT43:
+			printf("Recognized Chestnut 43 expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			setenv("defaultdisplay", "lcd43");
+			break;
+		case GUMSTIX_PINTO:
+			printf("Recognized Pinto expansion board (rev %d %s)\n",
+				expansion_config.revision, expansion_config.fab_revision);
+			break;
+		case GUMSTIX_NO_EEPROM:
+			printf("No EEPROM on expansion board\n");
+			break;
+		default:
+			printf("Unrecognized expansion board\n");
+	}
+
+	if (expansion_config.content == 1)
+		setenv(expansion_config.env_var, expansion_config.env_setting);
+
+	i2c_set_bus_num(TWL4030_I2C_BUS);
 	twl4030_power_init();
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
 
@@ -100,13 +279,13 @@ static void setup_net_chip(void)
 	struct ctrl *ctrl_base = (struct ctrl *)OMAP34XX_CTRL_BASE;
 
 	/* Configure GPMC registers */
-	writel(NET_GPMC_CONFIG1, &gpmc_cfg->cs[5].config1);
-	writel(NET_GPMC_CONFIG2, &gpmc_cfg->cs[5].config2);
-	writel(NET_GPMC_CONFIG3, &gpmc_cfg->cs[5].config3);
-	writel(NET_GPMC_CONFIG4, &gpmc_cfg->cs[5].config4);
-	writel(NET_GPMC_CONFIG5, &gpmc_cfg->cs[5].config5);
-	writel(NET_GPMC_CONFIG6, &gpmc_cfg->cs[5].config6);
-	writel(NET_GPMC_CONFIG7, &gpmc_cfg->cs[5].config7);
+	writel(NET_LAN9221_GPMC_CONFIG1, &gpmc_cfg->cs[5].config1);
+	writel(NET_LAN9221_GPMC_CONFIG2, &gpmc_cfg->cs[5].config2);
+	writel(NET_LAN9221_GPMC_CONFIG3, &gpmc_cfg->cs[5].config3);
+	writel(NET_LAN9221_GPMC_CONFIG4, &gpmc_cfg->cs[5].config4);
+	writel(NET_LAN9221_GPMC_CONFIG5, &gpmc_cfg->cs[5].config5);
+	writel(NET_LAN9221_GPMC_CONFIG6, &gpmc_cfg->cs[5].config6);
+	writel(NET_LAN9221_GPMC_CONFIG7, &gpmc_cfg->cs[5].config7);
 
 	/* Enable off mode for NWE in PADCONF_GPMC_NWE register */
 	writew(readw(&ctrl_base ->gpmc_nwe) | 0x0E00, &ctrl_base->gpmc_nwe);

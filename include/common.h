@@ -123,6 +123,11 @@ typedef volatile unsigned char	vu_char;
 #define debugX(level,fmt,args...)
 #endif	/* DEBUG */
 
+#define error(fmt, args...) do {					\
+		printf("ERROR: " fmt "\nat %s:%d/%s()\n",		\
+			##args, __FILE__, __LINE__, __func__);		\
+} while (0)
+
 #ifndef BUG
 #define BUG() do { \
 	printf("BUG: failure at %s:%d/%s()!\n", __FILE__, __LINE__, __FUNCTION__); \
@@ -336,7 +341,9 @@ extern void  pic_write (uchar reg, uchar val);
 #if defined(CONFIG_SPI) || !defined(CONFIG_SYS_I2C_EEPROM_ADDR)
 # define CONFIG_SYS_DEF_EEPROM_ADDR 0
 #else
+#if !defined(CONFIG_ENV_EEPROM_IS_ON_I2C)
 # define CONFIG_SYS_DEF_EEPROM_ADDR CONFIG_SYS_I2C_EEPROM_ADDR
+#endif
 #endif /* CONFIG_SPI || !defined(CONFIG_SYS_I2C_EEPROM_ADDR) */
 
 #if defined(CONFIG_SPI)
@@ -500,7 +507,8 @@ ulong	get_PCI_freq (void);
 #endif
 #if defined(CONFIG_S3C24X0) || \
     defined(CONFIG_LH7A40X) || \
-    defined(CONFIG_S3C6400)
+    defined(CONFIG_S3C6400) || \
+    defined(CONFIG_EP93XX)
 ulong	get_FCLK (void);
 ulong	get_HCLK (void);
 ulong	get_PCLK (void);
@@ -617,6 +625,13 @@ int gunzip(void *, int, unsigned char *, unsigned long *);
 int zunzip(void *dst, int dstlen, unsigned char *src, unsigned long *lenp,
 						int stoponerr, int offset);
 
+/* lib_generic/net_utils.c */
+#include <net.h>
+static inline IPaddr_t getenv_IPaddr (char *var)
+{
+	return (string_to_ip(getenv(var)));
+}
+
 /* lib_generic/time.c */
 void	udelay        (unsigned long);
 
@@ -703,6 +718,7 @@ void show_boot_progress(int val);
 #ifdef CONFIG_MP
 int cpu_status(int nr);
 int cpu_reset(int nr);
+int cpu_disable(int nr);
 int cpu_release(int nr, int argc, char *argv[]);
 #endif
 

@@ -97,7 +97,20 @@
 					115200}
 #define CONFIG_MMC			1
 #define CONFIG_OMAP3_MMC		1
+#define CONFIG_SYS_MMC_SET_DEV		1
 #define CONFIG_DOS_PARTITION		1
+
+/* Status LED */
+#define CONFIG_STATUS_LED		1
+#define CONFIG_BOARD_SPECIFIC_LED	1
+#define STATUS_LED_BIT			0x01
+#define STATUS_LED_STATE		STATUS_LED_ON
+#define STATUS_LED_PERIOD		(CONFIG_SYS_HZ / 2)
+#define STATUS_LED_BIT1			0x02
+#define STATUS_LED_STATE1		STATUS_LED_ON
+#define STATUS_LED_PERIOD1		(CONFIG_SYS_HZ / 2)
+#define STATUS_LED_BOOT			STATUS_LED_BIT
+#define STATUS_LED_GREEN		STATUS_LED_BIT1
 
 /* DDR - I use Micron DDR */
 #define CONFIG_OMAP3_MICRON_DDR		1
@@ -139,7 +152,9 @@
 #define CONFIG_CMD_I2C		/* I2C serial bus support	*/
 #define CONFIG_CMD_MMC		/* MMC support			*/
 #define CONFIG_CMD_NAND		/* NAND support			*/
+#define CONFIG_CMD_LED		/* LED support			*/
 #define CONFIG_VIDEO_OMAP3	/* DSS Support			*/
+#define CONFIG_CMD_SETEXPR	/* Evaluate expressions		*/
 
 #undef CONFIG_CMD_FLASH		/* flinfo, erase, protect	*/
 #undef CONFIG_CMD_FPGA		/* FPGA configuration Support	*/
@@ -165,6 +180,7 @@
 /*
  * Board NAND Info.
  */
+#define CONFIG_SYS_NAND_QUIET_TEST	1
 #define CONFIG_NAND_OMAP_GPMC
 #define CONFIG_SYS_NAND_ADDR		NAND_BASE	/* physical address */
 							/* to access nand */
@@ -184,37 +200,63 @@
 							/* partition */
 
 /* Environment information */
-#define CONFIG_BOOTDELAY		10
+#define CONFIG_BOOTDELAY		3
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"loadaddr=0x82000000\0" \
+	"loadaddr=0x80200000\0" \
+	"rdaddr=0x81000000\0" \
 	"usbtty=cdc_acm\0" \
 	"console=ttyS2,115200n8\0" \
+	"optargs=\0" \
+	"bootscr=boot.scr\0" \
+	"mpurate=500\0" \
+	"buddy=none\0" \
+	"camera=lbcm3m1\0" \
 	"vram=12M\0" \
-	"dvimode=1024x768MR-16@60\0" \
+	"dvimode=640x480MR-16@60\0" \
 	"defaultdisplay=dvi\0" \
+	"mmcdev=1\0" \
 	"mmcroot=/dev/mmcblk0p2 rw\0" \
 	"mmcrootfstype=ext3 rootwait\0" \
 	"nandroot=/dev/mtdblock4 rw\0" \
 	"nandrootfstype=jffs2\0" \
+	"ramroot=/dev/ram0 rw ramdisk_size=65536 initrd=0x81000000,64M\0" \
+	"ramrootfstype=ext2\0" \
 	"mmcargs=setenv bootargs console=${console} " \
+		"${optargs} " \
+		"mpurate=${mpurate} " \
+		"buddy=${buddy} "\
+		"camera=${camera} "\
 		"vram=${vram} " \
 		"omapfb.mode=dvi:${dvimode} " \
-		"omapfb.debug=y " \
 		"omapdss.def_disp=${defaultdisplay} " \
 		"root=${mmcroot} " \
 		"rootfstype=${mmcrootfstype}\0" \
 	"nandargs=setenv bootargs console=${console} " \
+		"${optargs} " \
+		"mpurate=${mpurate} " \
+		"buddy=${buddy} "\
+		"camera=${camera} "\
 		"vram=${vram} " \
 		"omapfb.mode=dvi:${dvimode} " \
-		"omapfb.debug=y " \
 		"omapdss.def_disp=${defaultdisplay} " \
 		"root=${nandroot} " \
 		"rootfstype=${nandrootfstype}\0" \
-	"loadbootscript=fatload mmc 0 ${loadaddr} boot.scr\0" \
+	"loadbootscript=fatload mmc ${mmcdev} ${loadaddr} ${bootscr}\0" \
+	"ramargs=setenv bootargs console=${console} " \
+		"${optargs} " \
+		"mpurate=${mpurate} " \
+		"buddy=${buddy} "\
+		"camera=${camera} "\
+		"vram=${vram} " \
+		"omapfb.mode=dvi:${dvimode} " \
+		"omapdss.def_disp=${defaultdisplay} " \
+		"root=${ramroot} " \
+		"rootfstype=${ramrootfstype}\0" \
+	"loadramdisk=fatload mmc ${mmcdev} ${rdaddr} ramdisk.gz\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source ${loadaddr}\0" \
-	"loaduimage=fatload mmc 0 ${loadaddr} uImage\0" \
+	"loaduimage=fatload mmc ${mmcdev} ${loadaddr} uImage\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
 		"bootm ${loadaddr}\0" \
@@ -222,18 +264,36 @@
 		"run nandargs; " \
 		"nand read ${loadaddr} 280000 400000; " \
 		"bootm ${loadaddr}\0" \
+	"ramboot=echo Booting from ramdisk ...; " \
+		"run ramargs; " \
+		"bootm ${loadaddr}\0" \
 
 #define CONFIG_BOOTCOMMAND \
-	"if mmc init; then " \
-		"if run loadbootscript; then " \
-			"run bootscript; " \
-		"else " \
+	"if mmc init ${mmcdev}; then " \
+		"if userbutton; then " \
+			"setenv bootscr user.scr;" \
+			"if run loadbootscript; then " \
+				"run bootscript; " \
+			"fi; " \
 			"if run loaduimage; then " \
+				"if run loadramdisk; then " \
+					"run ramboot; " \
+				"fi; " \
 				"run mmcboot; " \
-			"else run nandboot; " \
 			"fi; " \
 		"fi; " \
-	"else run nandboot; fi"
+		"if run loadbootscript; then " \
+			"run bootscript; " \
+		"fi; " \
+		"setenv bootscr user.scr;" \
+		"if run loadbootscript; then " \
+			"run bootscript; " \
+		"fi; " \
+		"if run loaduimage; then " \
+			"run mmcboot; " \
+		"fi; " \
+	"fi; " \
+	"run nandboot;"
 
 #define CONFIG_AUTO_COMPLETE		1
 /*
@@ -243,18 +303,19 @@
 #define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser */
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_PROMPT		"OMAP3 beagleboard.org # "
-#define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
+#define CONFIG_SYS_CBSIZE		512	/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
 					sizeof(CONFIG_SYS_PROMPT) + 16)
-#define CONFIG_SYS_MAXARGS		16	/* max number of command args */
+#define CONFIG_SYS_MAXARGS		32	/* max number of command args */
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE		(CONFIG_SYS_CBSIZE)
 
-#define CONFIG_SYS_MEMTEST_START	(OMAP34XX_SDRC_CS0)	/* memtest */
-								/* works on */
-#define CONFIG_SYS_MEMTEST_END		(OMAP34XX_SDRC_CS0 + \
-					0x01F00000) /* 31MB */
+#define CONFIG_SYS_ALT_MEMTEST		1
+#define CONFIG_SYS_MEMTEST_START	(0x82000000)		/* memtest */
+								/* defaults */
+#define CONFIG_SYS_MEMTEST_END		(0x87FFFFFF) 		/* 128MB */
+#define CONFIG_SYS_MEMTEST_SCRATCH	(0x81000000)	/* dummy address */
 
 #define CONFIG_SYS_LOAD_ADDR		(OMAP34XX_SDRC_CS0)	/* default */
 							/* load address */
@@ -335,7 +396,6 @@
 #define CONFIG_SYS_JFFS2_NUM_BANKS	1
 
 #ifndef __ASSEMBLY__
-extern struct gpmc *gpmc_cfg;
 extern unsigned int boot_flash_base;
 extern volatile unsigned int boot_flash_env_addr;
 extern unsigned int boot_flash_off;

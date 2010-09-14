@@ -51,7 +51,7 @@
 /*
  * Set up GOT: Global Offset Table
  *
- * Use r14 to access the GOT
+ * Use r12 to access the GOT
  */
 	START_GOT
 	GOT_ENTRY(_GOT2_TABLE_)
@@ -108,13 +108,41 @@ _start_e500:
 	mtspr	L1CSR2,r2
 #endif
 
-	lis	r2,L1CSR0_CPE@H	/* enable parity */
-	ori	r2,r2,L1CSR0_DCE
-	mtspr	L1CSR0,r2	/* enable L1 Dcache */
+	/* Enable/invalidate the I-Cache */
+	lis	r2,(L1CSR1_ICFI|L1CSR1_ICLFR)@h
+	ori	r2,r2,(L1CSR1_ICFI|L1CSR1_ICLFR)@l
+	mtspr	SPRN_L1CSR1,r2
+1:
+	mfspr	r3,SPRN_L1CSR1
+	and.	r1,r3,r2
+	bne	1b
+
+	lis	r3,(L1CSR1_CPE|L1CSR1_ICE)@h
+	ori	r3,r3,(L1CSR1_CPE|L1CSR1_ICE)@l
+	mtspr	SPRN_L1CSR1,r3
 	isync
-	mtspr	L1CSR1,r2	/* enable L1 Icache */
+2:
+	mfspr	r3,SPRN_L1CSR1
+	andi.	r1,r3,L1CSR1_ICE@l
+	beq	2b
+
+	/* Enable/invalidate the D-Cache */
+	lis	r2,(L1CSR0_DCFI|L1CSR0_DCLFR)@h
+	ori	r2,r2,(L1CSR0_DCFI|L1CSR0_DCLFR)@l
+	mtspr	SPRN_L1CSR0,r2
+1:
+	mfspr	r3,SPRN_L1CSR0
+	and.	r1,r3,r2
+	bne	1b
+
+	lis	r3,(L1CSR0_CPE|L1CSR0_DCE)@h
+	ori	r3,r3,(L1CSR0_CPE|L1CSR0_DCE)@l
+	mtspr	SPRN_L1CSR0,r3
 	isync
-	msync
+2:
+	mfspr	r3,SPRN_L1CSR0
+	andi.	r1,r3,L1CSR0_DCE@l
+	beq	2b
 
 	/* Setup interrupt vectors */
 	lis	r1,TEXT_BASE@h
@@ -415,28 +443,15 @@ Alignment:
 	mfspr	r5,DSISR
 	stw	r5,_DSISR(r21)
 	addi	r3,r1,STACK_FRAME_OVERHEAD
-	li	r20,MSR_KERNEL
-	rlwimi	r20,r23,0,16,16		/* copy EE bit from saved MSR */
-	lwz	r6,GOT(transfer_to_handler)
-	mtlr	r6
-	blrl
-.L_Alignment:
-	.long	AlignmentException - _start + _START_OFFSET
-	.long	int_return - _start + _START_OFFSET
+	EXC_XFER_TEMPLATE(Alignment, AlignmentException, MSR_KERNEL, COPY_EE)
 
 /* Program check exception */
 	. = 0x0700
 ProgramCheck:
 	EXCEPTION_PROLOG(SRR0, SRR1)
 	addi	r3,r1,STACK_FRAME_OVERHEAD
-	li	r20,MSR_KERNEL
-	rlwimi	r20,r23,0,16,16		/* copy EE bit from saved MSR */
-	lwz	r6,GOT(transfer_to_handler)
-	mtlr	r6
-	blrl
-.L_ProgramCheck:
-	.long	ProgramCheckException - _start + _START_OFFSET
-	.long	int_return - _start + _START_OFFSET
+	EXC_XFER_TEMPLATE(ProgramCheck, ProgramCheckException,
+		MSR_KERNEL, COPY_EE)
 
 	/* No FPU on MPC85xx.  This exception is not supposed to happen.
 	*/
@@ -884,6 +899,7 @@ relocate_code:
 	mr	r9,r4		/* Save copy of Init Data pointer	*/
 	mr	r10,r5		/* Save copy of Destination Address	*/
 
+	GET_GOT
 	mr	r3,r5				/* Destination Address	*/
 	lis	r4,CONFIG_SYS_MONITOR_BASE@h		/* Source      Address	*/
 	ori	r4,r4,CONFIG_SYS_MONITOR_BASE@l
@@ -901,7 +917,7 @@ relocate_code:
 	sub	r15,r10,r4
 
 	/* First our own GOT */
-	add	r14,r14,r15
+	add	r12,r12,r15
 	/* the the one used by the C code */
 	add	r30,r30,r15
 
@@ -971,7 +987,7 @@ relocate_code:
 in_ram:
 
 	/*
-	 * Relocation Function, r14 point to got2+0x8000
+	 * Relocation Function, r12 point to got2+0x8000
 	 *
 	 * Adjust got2 pointers, no need to check for 0, this code
 	 * already puts a few entries in the table.
@@ -1037,6 +1053,8 @@ clear_bss:
 	 */
 	.globl	trap_init
 trap_init:
+	mflr	r4			/* save link register		*/
+	GET_GOT
 	lwz	r7,GOT(_start_of_vectors)
 	lwz	r8,GOT(_end_of_vectors)
 
@@ -1044,8 +1062,6 @@ trap_init:
 
 	cmplw	0,r7,r8
 	bgelr				/* return if r7>=r8 - just in case */
-
-	mflr	r4			/* save link register		*/
 1:
 	lwz	r0,0(r7)
 	stw	r0,0(r9)
@@ -1087,20 +1103,6 @@ trap_init:
 	mtspr	IVPR,r7
 
 	mtlr	r4			/* restore link register	*/
-	blr
-
-	/*
-	 * Function: relocate entries for one exception vector
-	 */
-trap_reloc:
-	lwz	r0,0(r7)		/* hdlr ...			*/
-	add	r0,r0,r3		/*  ... += dest_addr		*/
-	stw	r0,0(r7)
-
-	lwz	r0,4(r7)		/* int_return ...		*/
-	add	r0,r0,r3		/*  ... += dest_addr		*/
-	stw	r0,4(r7)
-
 	blr
 
 .globl unlock_ram_in_cache

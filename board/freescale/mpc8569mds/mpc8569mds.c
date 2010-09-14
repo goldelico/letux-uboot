@@ -39,6 +39,9 @@
 #include <fsl_esdhc.h>
 
 #include "bcsr.h"
+#if defined(CONFIG_PQ_MDS_PIB)
+#include "../common/pq-mds-pib.h"
+#endif
 
 phys_size_t fixed_sdram(void);
 
@@ -545,6 +548,10 @@ void pci_init_board(void)
 
 	debug ("   pci_init_board: devdisr=%x, io_sel=%x\n", devdisr, io_sel);
 
+#if defined(CONFIG_PQ_MDS_PIB)
+	pib_init();
+#endif
+
 #ifdef CONFIG_PCIE1
 	pcie_configured = is_fsl_pci_cfg(LAW_TRGT_IF_PCIE_1, io_sel);
 
@@ -552,7 +559,7 @@ void pci_init_board(void)
 		SET_STD_PCIE_INFO(pci_info[num], 1);
 		pcie_ep = fsl_setup_hose(&pcie1_hose, pci_info[num].regs);
 		printf ("    PCIE1 connected to Slot as %s (base addr %lx)\n",
-				pcie_ep ? "End Point" : "Root Complex",
+				pcie_ep ? "Endpoint" : "Root Complex",
 				pci_info[num].regs);
 		first_free_busno = fsl_pci_init_port(&pci_info[num++],
 					&pcie1_hose, first_free_busno);

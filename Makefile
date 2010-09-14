@@ -21,8 +21,8 @@
 # MA 02111-1307 USA
 #
 
-VERSION = 2009
-PATCHLEVEL = 11
+VERSION = 2010
+PATCHLEVEL = 03
 SUBLEVEL =
 EXTRAVERSION =
 ifneq "$(SUBLEVEL)" ""
@@ -218,7 +218,6 @@ LIBS += drivers/mtd/ubi/libubi.a
 LIBS += drivers/mtd/spi/libspi_flash.a
 LIBS += drivers/net/libnet.a
 LIBS += drivers/net/phy/libphy.a
-LIBS += drivers/net/sk98lin/libsk98lin.a
 LIBS += drivers/pci/libpci.a
 LIBS += drivers/pcmcia/libpcmcia.a
 LIBS += drivers/power/libpower.a
@@ -308,7 +307,7 @@ $(obj)u-boot.bin:	$(obj)u-boot
 		$(OBJCOPY) ${OBJCFLAGS} -O binary $< $@
 
 $(obj)u-boot.ldr:	$(obj)u-boot
-		$(obj)tools/envcrc --binary > $(obj)env-ldr.o
+		$(CREATE_LDR_ENV)
 		$(LDR) -T $(CONFIG_BFIN_CPU) -c $@ $< $(LDR_FLAGS)
 
 $(obj)u-boot.ldr.hex:	$(obj)u-boot.ldr
@@ -323,6 +322,10 @@ $(obj)u-boot.img:	$(obj)u-boot.bin
 		-n $(shell sed -n -e 's/.*U_BOOT_VERSION//p' $(VERSION_FILE) | \
 			sed -e 's/"[	 ]*$$/ for $(BOARD) board"/') \
 		-d $< $@
+
+$(obj)u-boot.imx:       $(obj)u-boot.bin
+		$(obj)tools/mkimage -n $(IMX_CONFIG) -T imximage \
+		-e $(TEXT_BASE) -d $< $@
 
 $(obj)u-boot.kwb:       $(obj)u-boot.bin
 		$(obj)tools/mkimage -n $(KWD_CONFIG) -T kwbimage \
@@ -398,8 +401,11 @@ updater:
 env:
 		$(MAKE) -C tools/env all MTD_VERSION=${MTD_VERSION} || exit 1
 
+# Explicitly make _depend in subdirs containing multiple targets to prevent
+# parallel sub-makes creating .depend files simultaneously.
 depend dep:	$(TIMESTAMP_FILE) $(VERSION_FILE) $(obj)include/autoconf.mk
-		for dir in $(SUBDIRS) ; do $(MAKE) -C $$dir _depend ; done
+		for dir in $(SUBDIRS) cpu/$(CPU) $(dir $(LDSCRIPT)) ; do \
+			$(MAKE) -C $$dir _depend ; done
 
 TAG_SUBDIRS = $(SUBDIRS)
 TAG_SUBDIRS += $(dir $(__LIBS))
@@ -448,10 +454,15 @@ $(obj)include/autoconf.mk: $(obj)include/config.h
 else	# !config.mk
 all $(obj)u-boot.hex $(obj)u-boot.srec $(obj)u-boot.bin \
 $(obj)u-boot.img $(obj)u-boot.dis $(obj)u-boot \
-$(SUBDIRS) $(TIMESTAMP_FILE) $(VERSION_FILE) gdbtools updater env depend \
-dep tags ctags etags cscope $(obj)System.map:
+$(filter-out tools,$(SUBDIRS)) $(TIMESTAMP_FILE) $(VERSION_FILE) gdbtools \
+updater env depend dep tags ctags etags cscope $(obj)System.map:
 	@echo "System not configured - see README" >&2
 	@ exit 1
+
+tools:
+	$(MAKE) -C tools
+tools-all:
+	$(MAKE) -C tools HOST_TOOLS_ALL=y
 endif	# config.mk
 
 .PHONY : CHANGELOG
@@ -1324,9 +1335,6 @@ ebony_config:	unconfig
 ERIC_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx eric
 
-EXBITGEN_config:	unconfig
-	@$(MKCONFIG) $(@:_config=) ppc ppc4xx exbitgen
-
 fx12mm_flash_config: unconfig
 	@mkdir -p $(obj)include $(obj)board/xilinx/ppc405-generic
 	@mkdir -p $(obj)include $(obj)board/avnet/fx12mm
@@ -1426,9 +1434,6 @@ MIP405T_config:	unconfig
 
 ML2_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc ppc4xx ml2
-
-ml300_config:	unconfig
-	@$(MKCONFIG) $(@:_config=) ppc ppc4xx ml300 xilinx
 
 ml507_flash_config: unconfig
 	@mkdir -p $(obj)include $(obj)board/xilinx/ppc440-generic
@@ -1731,9 +1736,6 @@ Sandpoint8245_config: unconfig
 
 sbc8240_config: unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc824x sbc8240
-
-SL8245_config: unconfig
-	@$(MKCONFIG) $(@:_config=) ppc mpc824x sl8245
 
 utx8245_config: unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc824x utx8245
@@ -2263,9 +2265,6 @@ MPC8313ERDB_NAND_66_config: unconfig
 
 MPC8315ERDB_NAND_config \
 MPC8315ERDB_config: unconfig
-	@if [ "$(findstring _NAND_,$@)" ] ; then \
-		ln -sf mpc8313erdb nand_spl/board/freescale/mpc8315erdb ; \
-	fi ;
 	@$(MKCONFIG) -t $(@:_config=) MPC8315ERDB ppc mpc83xx mpc8315erdb freescale
 
 MPC8323ERDB_config:	unconfig
@@ -2404,6 +2403,16 @@ caddy2_config \
 vme8349_config:		unconfig
 	@$(MKCONFIG) -t $(@:_config=) vme8349 ppc mpc83xx vme8349 esd
 
+edb9301_config \
+edb9302_config \
+edb9302a_config \
+edb9307_config \
+edb9307a_config \
+edb9312_config \
+edb9315_config \
+edb9315a_config: unconfig
+	@$(MKCONFIG) -t $(@:_config=) edb93xx arm arm920t edb93xx NULL ep93xx
+
 #########################################################################
 ## MPC85xx Systems
 #########################################################################
@@ -2477,8 +2486,10 @@ MPC8555CDS_config:	unconfig
 MPC8568MDS_config:	unconfig
 	@$(MKCONFIG) $(@:_config=) ppc mpc85xx mpc8568mds freescale
 
+MPC8569MDS_ATM_config \
+MPC8569MDS_NAND_config \
 MPC8569MDS_config:	unconfig
-	@$(MKCONFIG) $(@:_config=) ppc mpc85xx mpc8569mds freescale
+	@$(MKCONFIG) -t $(@:_config=) MPC8569MDS ppc mpc85xx mpc8569mds freescale
 
 MPC8572DS_36BIT_config \
 MPC8572DS_config:       unconfig
@@ -2693,6 +2704,9 @@ CPUAT91_config	:	unconfig
 csb637_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t csb637 NULL at91rm9200
 
+eb_cpux9k2_config	:	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm920t eb_cpux9k2 BuS at91
+
 kb9202_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t kb9202 NULL at91rm9200
 
@@ -2703,7 +2717,7 @@ mp2usb_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t mp2usb NULL at91rm9200
 
 #########################################################################
-## Atmel ARM926EJ-S Systems
+## ARM926EJ-S Systems
 #########################################################################
 
 afeb9260_config:	unconfig
@@ -2858,6 +2872,9 @@ at91sam9g45ekes_config	:	unconfig
 		$(XECHO) "... with environment variable in SPI DATAFLASH CS0" ; \
 	fi;
 	@$(MKCONFIG) -a at91sam9m10g45ek arm arm926ejs at91sam9m10g45ek atmel at91
+
+otc570_config	:	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs otc570 esd at91
 
 pm9263_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm926ejs pm9263 ronetix at91
@@ -3028,6 +3045,17 @@ smdk2400_config	:	unconfig
 smdk2410_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t smdk2410 samsung s3c24x0
 
+spear300_config \
+spear310_config \
+spear320_config :	unconfig
+	@$(MKCONFIG) -n $@ -t $(@:_config=) spear3xx arm arm926ejs $(@:_config=) spear spear
+
+spear600_config :	unconfig
+	@$(MKCONFIG) -n $@ -t $(@:_config=) spear6xx arm arm926ejs $(@:_config=) spear spear
+
+suen3_config:	unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs km_arm keymile kirkwood
+
 SX1_stdout_serial_config \
 SX1_config:		unconfig
 	@mkdir -p $(obj)include
@@ -3067,6 +3095,10 @@ trab_old_config:	unconfig
 		  echo "TEXT_BASE = 0x0CF40000" >$(obj)board/trab/config.tmp ; \
 		}
 	@$(MKCONFIG) -a $(call xtract_trab,$@) arm arm920t trab NULL s3c24x0
+
+tx25_config	: unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm926ejs tx25 karo mx25
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 
 VCMA9_config	:	unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm920t vcma9 mpl s3c24x0
@@ -3267,6 +3299,9 @@ mx31pdk_nand_config	: unconfig
 		echo "#define CONFIG_SKIP_RELOCATE_UBOOT" >> $(obj)include/config.h;	\
 	fi
 	@$(MKCONFIG) -a mx31pdk arm arm1136 mx31pdk freescale mx31
+
+mx51evk_config	: unconfig
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx51evk freescale mx51
 
 omap2420h4_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 omap2420h4 ti omap24xx
@@ -3528,16 +3563,21 @@ BFIN_BOARDS = bf518f-ezbrd bf526-ezbrd bf527-ezkit bf533-ezkit bf533-stamp \
 	bf537-pnav bf537-stamp bf538f-ezkit bf548-ezkit bf561-ezkit
 
 # Bluetechnix tinyboards
-BFIN_BOARDS += cm-bf527 cm-bf533 cm-bf537e cm-bf537u cm-bf548 cm-bf561 tcm-bf537
+BFIN_BOARDS += cm-bf527 cm-bf533 cm-bf537e cm-bf537u cm-bf548 cm-bf561 \
+	tcm-bf518 tcm-bf537
 
 # Misc third party boards
-BFIN_BOARDS += bf537-minotaur bf537-srv1 blackstamp
+BFIN_BOARDS += bf537-minotaur bf537-srv1 bf561-acvilon blackstamp
 
 # I-SYST Micromodule
 BFIN_BOARDS += ibf-dsp561
 
 $(BFIN_BOARDS:%=%_config)	: unconfig
 	@$(MKCONFIG) $(@:_config=) blackfin blackfin $(@:_config=)
+
+bf527-ezkit-v2_config	: unconfig
+	@$(MKCONFIG) -t BF527_EZKIT_REV_2_1 \
+		bf527-ezkit blackfin blackfin bf527-ezkit
 
 #========================================================================
 # AVR32
@@ -3734,6 +3774,7 @@ clobber:	clean
 		$(obj)cscope.* $(obj)*.*~
 	@rm -f $(obj)u-boot $(obj)u-boot.map $(obj)u-boot.hex $(ALL)
 	@rm -f $(obj)u-boot.kwb
+	@rm -f $(obj)u-boot.imx
 	@rm -f $(obj)tools/{env/crc32.c,inca-swap-bytes}
 	@rm -f $(obj)cpu/mpc824x/bedbug_603e.c
 	@rm -f $(obj)include/asm/proc $(obj)include/asm/arch $(obj)include/asm

@@ -122,35 +122,6 @@ void secureworld_exit()
 }
 
 /******************************************************************************
- * Routine: setup_auxcr()
- * Description: Write to AuxCR desired value using SMI.
- *              general use.
- *****************************************************************************/
-void setup_auxcr()
-{
-	unsigned long i;
-	volatile unsigned int j;
-	/* Save r0, r12 and restore them after usage */
-	__asm__ __volatile__("mov %0, r12":"=r"(j));
-	__asm__ __volatile__("mov %0, r0":"=r"(i));
-
-	/*
-	 * GP Device ROM code API usage here
-	 * r12 = AUXCR Write function and r0 value
-	 */
-	__asm__ __volatile__("mov r12, #0x3");
-	__asm__ __volatile__("mrc p15, 0, r0, c1, c0, 1");
-	/* Enabling ASA */
-	__asm__ __volatile__("orr r0, r0, #0x10");
-	/* Enable L1NEON */
-	__asm__ __volatile__("orr r0, r0, #1 << 5");
-	/* SMI instruction to call ROM Code API */
-	__asm__ __volatile__(".word 0xE1600070");
-	__asm__ __volatile__("mov r0, %0":"=r"(i));
-	__asm__ __volatile__("mov r12, %0":"=r"(j));
-}
-
-/******************************************************************************
  * Routine: try_unlock_sram()
  * Description: If chip is GP/EMU(special) type, unlock the SRAM for
  *              general use.
@@ -226,6 +197,7 @@ void s_init(void)
 
 	per_clocks_enable();
 
+	/* FIXME: u-boot's sdrc setup is broken	*/
 	if (!in_sdram)
 		sdrc_init();
 }
@@ -275,16 +247,14 @@ int dram_init(void)
 {
 	DECLARE_GLOBAL_DATA_PTR;
 	unsigned int size0 = 0, size1 = 0;
+	struct sdrc *sdrc_base = (struct sdrc *)OMAP34XX_SDRC_BASE;
+	struct sdrc_actim *sdrc_actim_base = (struct sdrc_actim *)SDRC_ACTIM_CTRL1_BASE;
 
-	/*
-	 * If a second bank of DDR is attached to CS1 this is
-	 * where it can be started.  Early init code will init
-	 * memory on CS0.
-	 */
-	if ((sysinfo.mtype == DDR_COMBO) || (sysinfo.mtype == DDR_STACKED)) {
-		do_sdrc_init(CS1, NOT_EARLY);
-		make_cs1_contiguous();
-	}
+	/* x-load sets up the second bank but */
+	/* doesn't test to see if it is there */
+	/* do so now, disable if not present  */
+	if (!mem_ok(CS1))
+		writel(0, &sdrc_base->cs[1].mcfg);
 
 	size0 = get_sdr_cs_size(CS0);
 	size1 = get_sdr_cs_size(CS1);

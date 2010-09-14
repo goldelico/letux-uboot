@@ -66,6 +66,11 @@
 # error CONFIG_PLL_BYPASS: Invalid value: must be 0 or 1
 #endif
 
+/* If we are using KGDB, make sure we defer exceptions */
+#ifdef CONFIG_CMD_KGDB
+# define CONFIG_EXCEPTION_DEFER	1
+#endif
+
 /* Using L1 scratch pad makes sense for everyone by default. */
 #ifndef CONFIG_LINUX_CMDLINE_ADDR
 # define CONFIG_LINUX_CMDLINE_ADDR L1_SRAM_SCRATCH
@@ -79,6 +84,11 @@
 # define CONFIG_ENV_SPI_CS BFIN_BOOT_SPI_SSEL
 #endif
 
+/* We need envcrc to embed the env into LDRs */
+#ifdef CONFIG_ENV_IS_EMBEDDED_IN_LDR
+# define CONFIG_BUILD_ENVCRC
+#endif
+
 /* Default/common Blackfin memory layout */
 #ifndef CONFIG_SYS_SDRAM_BASE
 # define CONFIG_SYS_SDRAM_BASE 0
@@ -87,7 +97,11 @@
 # define CONFIG_SYS_MAX_RAM_SIZE (CONFIG_MEM_SIZE * 1024 * 1024)
 #endif
 #ifndef CONFIG_SYS_MONITOR_BASE
-# define CONFIG_SYS_MONITOR_BASE (CONFIG_SYS_MAX_RAM_SIZE - CONFIG_SYS_MONITOR_LEN)
+# if CONFIG_SYS_MAX_RAM_SIZE
+#  define CONFIG_SYS_MONITOR_BASE (CONFIG_SYS_MAX_RAM_SIZE - CONFIG_SYS_MONITOR_LEN)
+# else
+#  define CONFIG_SYS_MONITOR_BASE 0
+# endif
 #endif
 #ifndef CONFIG_SYS_MALLOC_BASE
 # define CONFIG_SYS_MALLOC_BASE (CONFIG_SYS_MONITOR_BASE - CONFIG_SYS_MALLOC_LEN)
@@ -109,7 +123,8 @@
 #endif
 
 /* Check to make sure everything fits in external RAM */
-#if ((CONFIG_SYS_MONITOR_BASE + CONFIG_SYS_MONITOR_LEN) > CONFIG_SYS_MAX_RAM_SIZE)
+#if CONFIG_SYS_MAX_RAM_SIZE && \
+    ((CONFIG_SYS_MONITOR_BASE + CONFIG_SYS_MONITOR_LEN) > CONFIG_SYS_MAX_RAM_SIZE)
 # error Memory Map does not fit into configuration
 #endif
 
@@ -128,6 +143,8 @@
 #endif
 #ifndef CONFIG_SYS_CBSIZE
 # define CONFIG_SYS_CBSIZE 1024
+#elif defined(CONFIG_CMD_KGDB) && CONFIG_SYS_CBSIZE < 1024
+# error "kgdb needs cbsize to be >= 1024"
 #endif
 #ifndef CONFIG_SYS_BARGSIZE
 # define CONFIG_SYS_BARGSIZE CONFIG_SYS_CBSIZE
