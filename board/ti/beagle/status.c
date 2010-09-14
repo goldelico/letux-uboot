@@ -28,7 +28,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
-#include "led.h"
+#include "status.h"
 
 // Note: on GTA04 the LEDs will be connected to GPIOs of TPS65950
 #define GPIO_LED_AUX_RED		70		// AUX

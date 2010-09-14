@@ -32,7 +32,7 @@
 #include "backlight.h"
 #include "dssfb.h"
 #include "jbt6k74.h"
-#include "led.h"
+#include "status.h"
 #include "gps.h"
 #include "tsc2007.h"
 
@@ -404,7 +404,7 @@ static int do_led(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 }
 
 
-U_BOOT_CMD(led, 3, 0, do_led, "LED and Buttons sub-system",
+U_BOOT_CMD(status, 3, 0, do_led, "LED and Buttons sub-system",
 		   "init - initialize GPIOs\n"
 		   "get - print button status\n"
 		   "check - check button status\n"
