@@ -254,6 +254,11 @@ int misc_init_r(void)
 		printf("Beagle xM Rev A\n");
 		setenv("beaglerev", "xMA");
 		MUX_BEAGLE_XM();
+		/* Set VAUX1 to 1.8V for GTA04E display board */
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,
+					/*TWL4030_PM_RECEIVER_VAUX1_VSEL_33*/ 0x07,
+					TWL4030_PM_RECEIVER_VAUX1_DEV_GRP,
+					TWL4030_PM_RECEIVER_DEV_GRP_P1);
 		/* Set VAUX2 to 1.8V for EHCI PHY */
 		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
 					TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
