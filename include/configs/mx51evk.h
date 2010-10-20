@@ -30,8 +30,8 @@
 #define CONFIG_MX51	/* in a mx51 */
 #define CONFIG_SKIP_RELOCATE_UBOOT
 
-#define CONFIG_MX51_HCLK_FREQ		24000000	/* RedBoot says 26MHz */
-#define CONFIG_MX51_CLK32		32768
+#define CONFIG_SYS_MX5_HCLK	24000000
+#define CONFIG_SYS_MX5_CLK32		32768
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
 
@@ -54,11 +54,26 @@
 /* size in bytes reserved for initial data */
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 
+#define BOARD_LATE_INIT
+
 /*
  * Hardware drivers
  */
 #define CONFIG_MXC_UART
 #define CONFIG_SYS_MX51_UART1
+
+/*
+ * SPI Configs
+ * */
+#define CONFIG_CMD_SPI
+
+#define CONFIG_MXC_SPI
+
+#define CONFIG_FSL_PMIC
+#define CONFIG_FSL_PMIC_BUS	0
+#define CONFIG_FSL_PMIC_CS	0
+#define CONFIG_FSL_PMIC_CLK	2500000
+#define CONFIG_FSL_PMIC_MODE	(SPI_MODE_0 | SPI_CS_HIGH)
 
 /*
  * MMC Configs
@@ -159,6 +174,9 @@
 #define CONFIG_NR_DRAM_BANKS	1
 #define PHYS_SDRAM_1		CSD0_BASE_ADDR
 #define PHYS_SDRAM_1_SIZE	(512 * 1024 * 1024)
+
+#define CONFIG_SYS_DDR_CLKSEL	0
+#define CONFIG_SYS_CLKTL_CBCDR	0x59E35100
 
 /*-----------------------------------------------------------------------
  * FLASH and environment organization

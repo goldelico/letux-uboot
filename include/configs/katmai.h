@@ -37,8 +37,11 @@
 #define CONFIG_4xx			1	/* ... PPC4xx family	*/
 #define CONFIG_440			1	/* ... PPC440 family	*/
 #define CONFIG_440SPE			1	/* Specifc SPe support	*/
+#define CONFIG_440SPE_REVA		1	/* Support old Rev A.	*/
 #define CONFIG_SYS_CLK_FREQ	33333333	/* external freq to pll	*/
 #define CONFIG_SYS_4xx_RESET_TYPE	0x2	/* use chip reset on this board	*/
+
+#define	CONFIG_SYS_TEXT_BASE	0xFFFA0000
 
 /*
  * Enable this board for more than 2GB of SDRAM
@@ -52,13 +55,6 @@
 #define CONFIG_HOSTNAME		katmai
 #include "amcc-common.h"
 
-/*
- * For booting 256K-paged Linux we should have 16MB of memory
- * for Linux initial memory map
- */
-#undef CONFIG_SYS_BOOTMAPSZ
-#define CONFIG_SYS_BOOTMAPSZ	(16 << 20)
-
 #define CONFIG_BOARD_EARLY_INIT_F 1	/* Call board_pre_init		*/
 #undef  CONFIG_SHOW_BOOT_PROGRESS
 
@@ -67,7 +63,6 @@
  * actual resources get mapped (not physical addresses)
  *----------------------------------------------------------------------*/
 #define CONFIG_SYS_FLASH_BASE		0xff000000	/* start of FLASH	*/
-#define CONFIG_SYS_PERIPHERAL_BASE	0xa0000000	/* internal peripherals	*/
 #define CONFIG_SYS_ISRAM_BASE		0x90000000	/* internal SRAM	*/
 
 #define CONFIG_SYS_PCI_MEMBASE		0x80000000	/* mapped PCI memory	*/
@@ -105,13 +100,12 @@
 #define CONFIG_SYS_GBL_DATA_SIZE	128		/* num bytes initial data */
 
 #define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
-#define CONFIG_SYS_POST_WORD_ADDR	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
-#define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_POST_WORD_ADDR
+#define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
 
 /*-----------------------------------------------------------------------
  * Serial Port
  *----------------------------------------------------------------------*/
-#undef CONFIG_UART1_CONSOLE
+#define CONFIG_CONS_INDEX	1	/* Use UART0			*/
 #undef CONFIG_SYS_EXT_SERIAL_CLOCK
 
 /*-----------------------------------------------------------------------
@@ -187,11 +181,10 @@
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 	CONFIG_AMCC_DEF_ENV						\
 	CONFIG_AMCC_DEF_ENV_POWERPC					\
-	CONFIG_AMCC_DEF_ENV_PPC_OLD					\
 	CONFIG_AMCC_DEF_ENV_NOR_UPD					\
-	"kernel_addr=fff10000\0"					\
-	"ramdisk_addr=fff20000\0"					\
-	"kozio=bootm ffc60000\0"					\
+	"kernel_addr=ff000000\0"					\
+	"fdt_addr=ff1e0000\0"						\
+	"ramdisk_addr=ff200000\0"					\
 	"pciconfighost=1\0"						\
 	"pcie_mode=RP:RP:RP\0"						\
 	""
@@ -201,6 +194,7 @@
  */
 #define CONFIG_CMD_CHIP_CONFIG
 #define CONFIG_CMD_DATE
+#define CONFIG_CMD_ECCTEST
 #define CONFIG_CMD_EXT2
 #define CONFIG_CMD_FAT
 #define CONFIG_CMD_PCI

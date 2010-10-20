@@ -102,6 +102,7 @@
 /* Network & Ethernet Configuration */
 /*==================================*/
 #define CONFIG_DRIVER_TI_EMAC
+#define CONFIG_EMAC_MDIO_PHY_NUM	1
 #define CONFIG_MII
 #define CONFIG_BOOTP_DEFAULT
 #define CONFIG_BOOTP_DNS
@@ -117,6 +118,7 @@
 #define CONFIG_SYS_NAND_CS		2
 #undef CONFIG_ENV_IS_IN_FLASH
 #define CONFIG_SYS_NO_FLASH
+#define CONFIG_ENV_OVERWRITE		/* instead if obsoleted forceenv() */
 #define CONFIG_ENV_IS_IN_NAND		/* U-Boot env in NAND Flash  */
 #define CONFIG_ENV_SECT_SIZE	512	/* Env sector Size */
 #define CONFIG_ENV_SIZE		(16 << 10)	/* 16 KiB */

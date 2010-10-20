@@ -35,6 +35,8 @@
 #define CONFIG_MPC860
 #define CONFIG_GEN860T
 
+#define	CONFIG_SYS_TEXT_BASE		0x40000000
+
 /*
  * Identify the board
  */
@@ -723,12 +725,6 @@
 						  BR_MS_GPCM				| \
 						  BR_V						  \
 						)
-
-/*
- * Boot Flags
- */
-#define	BOOTFLAG_COLD	0x01	/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02	/* Software reboot					*/
 
 /*
  * FEC interrupt assignment

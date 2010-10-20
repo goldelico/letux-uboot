@@ -39,6 +39,10 @@
 #define CONFIG_405EX		1		/* Specifc 405EX support*/
 #define CONFIG_SYS_CLK_FREQ	33333333	/* ext frequency to pll	*/
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFFFA0000
+#endif
+
 /*
  * Include common defines/options for all AMCC eval boards
  */
@@ -57,7 +61,6 @@
 #define CONFIG_SYS_FLASH_BASE		0xFC000000
 #define CONFIG_SYS_NAND_ADDR		0xF8000000
 #define CONFIG_SYS_FPGA_BASE		0xF0000000
-#define CONFIG_SYS_PERIPHERAL_BASE	0xEF600000      /* internal peripherals*/
 
 /*-----------------------------------------------------------------------
  * Initial RAM & Stack Pointer Configuration Options
@@ -103,11 +106,10 @@
 
 #if defined(CONFIG_SYS_INIT_DCACHE_CS)
 # define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
-# define CONFIG_SYS_POST_ALT_WORD_ADDR	(CONFIG_SYS_PERIPHERAL_BASE + GPT0_COMP6)
+# define CONFIG_SYS_POST_WORD_ADDR	(CONFIG_SYS_PERIPHERAL_BASE + GPT0_COMP6)
 #else
 # define CONFIG_SYS_INIT_EXTRA_SIZE	16
 # define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - CONFIG_SYS_INIT_EXTRA_SIZE)
-# define CONFIG_SYS_POST_WORD_ADDR	(CONFIG_SYS_GBL_DATA_OFFSET - 4)
 # define CONFIG_SYS_OCM_DATA_ADDR	CONFIG_SYS_INIT_RAM_ADDR
 #endif /* defined(CONFIG_SYS_INIT_DCACHE_CS) */
 
@@ -115,8 +117,7 @@
  * Serial Port
  *----------------------------------------------------------------------*/
 #define CONFIG_SYS_EXT_SERIAL_CLOCK	11059200	/* ext. 11.059MHz clk	*/
-/* define this if you want console on UART1 */
-#undef CONFIG_UART1_CONSOLE
+#define CONFIG_CONS_INDEX	1	/* Use UART0			*/
 
 /*-----------------------------------------------------------------------
  * Environment
@@ -230,7 +231,7 @@
  *       SDRAM Controller DDR autocalibration values and takes a lot longer
  *       to run than Method_B.
  * (See the Method_A and Method_B algorithm discription in the file:
- *	cpu/ppc4xx/4xx_ibm_ddr2_autocalib.c)
+ *	arch/powerpc/cpu/ppc4xx/4xx_ibm_ddr2_autocalib.c)
  * Define CONFIG_PPC4xx_DDR_METHOD_A to use DDR autocalibration Method_A
  *
  * DDR Autocalibration Method_B is the default.
@@ -460,7 +461,8 @@
 				 CONFIG_SYS_POST_UART)
 
 /* Define here the base-addresses of the UARTs to test in POST */
-#define CONFIG_SYS_POST_UART_TABLE	{UART0_BASE, UART1_BASE}
+#define CONFIG_SYS_POST_UART_TABLE	{ CONFIG_SYS_NS16550_COM1, \
+			CONFIG_SYS_NS16550_COM2 }
 
 #define CONFIG_LOGBUFFER
 #define CONFIG_SYS_POST_CACHE_ADDR	0x00800000 /* free virtual address	*/

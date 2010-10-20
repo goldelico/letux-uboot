@@ -3,7 +3,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static void dummy(void)
+__attribute__((unused)) static void dummy(void)
 {
 }
 
@@ -33,9 +33,6 @@ unsigned long get_version(void)
 # define spi_claim_bus     dummy
 # define spi_release_bus   dummy
 # define spi_xfer          dummy
-#endif
-#ifndef CONFIG_HAS_UID
-# define forceenv          dummy
 #endif
 
 void jumptable_init(void)

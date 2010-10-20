@@ -23,7 +23,7 @@
 
 #include <common.h>
 #include <asm/processor.h>
-#include <4xx_i2c.h>
+#include <asm/ppc4xx-i2c.h>
 #include <command.h>
 #include <rtc.h>
 #include <post.h>
@@ -245,7 +245,7 @@ int testdram (void)
 	uint *pend = (uint *) L1_MEMSIZE;
 	uint *p;
 
-	if (getenv_r("booted",NULL,0) <= 0)
+	if (getenv_f("booted",NULL,0) <= 0)
 	{
 		printf ("testdram..");
 	/*AA*/

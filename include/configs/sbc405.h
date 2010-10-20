@@ -36,6 +36,8 @@
 #define CONFIG_4xx		1	/* ...member of PPC4xx family	*/
 #define CONFIG_SBC405		1	/* ...on a WR SBC405 board	*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFFC0000
+
 #define CONFIG_BOARD_EARLY_INIT_F 1	/* call board_early_init_f()	*/
 #define CONFIG_MISC_INIT_R	1	/* call misc_init_r()		*/
 
@@ -147,6 +149,12 @@
 #define CONFIG_SYS_MEMTEST_START	0x0400000	/* memtest works on	*/
 #define CONFIG_SYS_MEMTEST_END		0x0C00000	/* 4 ... 12 MB in DRAM	*/
 
+#define CONFIG_CONS_INDEX	1	/* Use UART0			*/
+#define CONFIG_SYS_NS16550
+#define CONFIG_SYS_NS16550_SERIAL
+#define CONFIG_SYS_NS16550_REG_SIZE	1
+#define CONFIG_SYS_NS16550_CLK		get_serial_clock()
+
 #undef CONFIG_SYS_EXT_SERIAL_CLOCK		/* no external serial clock used */
 #define CONFIG_SYS_BASE_BAUD		691200
 
@@ -166,6 +174,7 @@
 
 #define CONFIG_HARD_I2C		1	/* I2C with hardware support	*/
 #undef  CONFIG_SOFT_I2C			/* I2C bit-banged		*/
+#define CONFIG_PPC4XX_I2C		/* use PPC4xx driver		*/
 #define CONFIG_SYS_I2C_SPEED		400000	/* I2C speed and slave address	*/
 #define CONFIG_SYS_I2C_SLAVE		0x7F
 
@@ -266,13 +275,5 @@
  */
 #define SPD_EEPROM_ADDRESS	0x50
 #define CONFIG_SPD_EEPROM	1	/* use SPD EEPROM for setup		*/
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #endif	/* __CONFIG_H */

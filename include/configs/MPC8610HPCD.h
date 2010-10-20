@@ -19,14 +19,19 @@
 #define CONFIG_MPC8610HPCD	1	/* MPC8610HPCD board specific */
 #define CONFIG_LINUX_RESET_VEC	0x100	/* Reset vector used by Linux */
 
+#define	CONFIG_SYS_TEXT_BASE	0xfff00000
+
 #define CONFIG_FSL_DIU_FB	1	/* FSL DIU */
 
 /* video */
 #undef CONFIG_VIDEO
 
-#if defined(CONFIG_VIDEO)
+#ifdef CONFIG_VIDEO
+#define CONFIG_CMD_BMP
 #define CONFIG_CFB_CONSOLE
 #define CONFIG_VGA_AS_SINGLE_DEVICE
+#define CONFIG_VIDEO_LOGO
+#define CONFIG_VIDEO_BMP_LOGO
 #endif
 
 #ifdef RUN_DIAG
@@ -50,6 +55,7 @@
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_INTERRUPTS		/* enable pci, srio, ddr interrupts */
 
+#define CONFIG_BAT_RW		1	/* Use common BAT rw code */
 #define CONFIG_HIGH_BATS	1	/* High BATs supported & enabled */
 #define CONFIG_ALTIVEC		1
 
@@ -81,10 +87,6 @@
 #define CONFIG_SYS_CCSRBAR_PHYS_LOW	CONFIG_SYS_CCSRBAR
 #define CONFIG_SYS_CCSRBAR_PHYS_HIGH	0x0
 #define CONFIG_SYS_CCSRBAR_PHYS		CONFIG_SYS_CCSRBAR_PHYS_LOW
-
-#define CONFIG_SYS_PCI1_ADDR		(CONFIG_SYS_CCSRBAR+0x8000)
-#define CONFIG_SYS_PCIE1_ADDR		(CONFIG_SYS_CCSRBAR+0xa000)
-#define CONFIG_SYS_PCIE2_ADDR		(CONFIG_SYS_CCSRBAR+0x9000)
 
 #define CONFIG_SYS_DIU_ADDR		(CONFIG_SYS_CCSRBAR+0x2c000)
 
@@ -177,7 +179,7 @@
 #define PIXIS_VSPEED1		0x18	/* VELA VSpeed 1 */
 #define PIXIS_VCLKH		0x19	/* VELA VCLKH register */
 #define PIXIS_VCLKL		0x1A	/* VELA VCLKL register */
-#define CONFIG_SYS_PIXIS_VBOOT_MASK	0x0C    /* Reset altbank mask*/
+#define CONFIG_SYS_PIXIS_VBOOT_MASK	0xC0    /* Reset altbank mask */
 
 #define CONFIG_SYS_MAX_FLASH_BANKS	2		/* number of banks */
 #define CONFIG_SYS_MAX_FLASH_SECT	1024		/* sectors per device */
@@ -185,7 +187,7 @@
 #undef	CONFIG_SYS_FLASH_CHECKSUM
 #define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 #define CONFIG_SYS_MONITOR_BASE_EARLY   0xfff00000	/* early monitor loc */
 
 #define CONFIG_FLASH_CFI_DRIVER
@@ -222,7 +224,6 @@
 
 /* Serial Port */
 #define CONFIG_CONS_INDEX	1
-#undef	CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
@@ -425,7 +426,7 @@
 /* Map the last 1M of flash where we're running from reset */
 #define CONFIG_SYS_DBAT6L_EARLY	(CONFIG_SYS_MONITOR_BASE_EARLY | BATL_PP_RW \
 				 | BATL_CACHEINHIBIT | BATL_GUARDEDSTORAGE)
-#define CONFIG_SYS_DBAT6U_EARLY	(TEXT_BASE | BATU_BL_1M | BATU_VS | BATU_VP)
+#define CONFIG_SYS_DBAT6U_EARLY	(CONFIG_SYS_TEXT_BASE | BATU_BL_1M | BATU_VS | BATU_VP)
 #define CONFIG_SYS_IBAT6L_EARLY	(CONFIG_SYS_MONITOR_BASE_EARLY | BATL_PP_RW \
 				 | BATL_MEMCOHERENCE)
 #define CONFIG_SYS_IBAT6U_EARLY	CONFIG_SYS_DBAT6U_EARLY
@@ -521,14 +522,6 @@
  */
 #define CONFIG_SYS_BOOTMAPSZ	(8 << 20)	/* Initial Memory map for Linux*/
 
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02		/* Software reboot */
-
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */
 #define CONFIG_KGDB_SER_INDEX	2	/* which serial port to use */
@@ -607,11 +600,11 @@
  "netdev=eth0\0"						\
  "uboot=" MK_STR(CONFIG_UBOOTPATH) "\0"				\
  "tftpflash=tftpboot $loadaddr $uboot; "			\
-	"protect off " MK_STR(TEXT_BASE) " +$filesize; "	\
-	"erase " MK_STR(TEXT_BASE) " +$filesize; "		\
-	"cp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize; "	\
-	"protect on " MK_STR(TEXT_BASE) " +$filesize; "	\
-	"cmp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize\0"	\
+	"protect off " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
+	"erase " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
+	"cp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize; "	\
+	"protect on " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
+	"cmp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize\0"	\
  "consoledev=ttyS0\0"						\
  "ramdiskaddr=2000000\0"					\
  "ramdiskfile=8610hpcd/ramdisk.uboot\0"				\

@@ -23,11 +23,13 @@
 /*
  * High Level Configuration Options
  */
-#define CONFIG_ARMCORTEXA8	1	/* This is an ARM V7 CPU core */
+#define CONFIG_ARMV7		1	/* This is an ARM V7 CPU core */
 #define CONFIG_OMAP		1	/* in a TI OMAP core */
 #define CONFIG_OMAP34XX		1	/* which is a 34XX */
 #define CONFIG_OMAP3430		1	/* which is in a 3430 */
 #define CONFIG_OMAP3_OVERO	1	/* working with overo */
+
+#define CONFIG_SDRC	/* The chip has SDRC controller */
 
 #include <asm/arch/cpu.h>	/* get chip and board defs */
 #include <asm/arch/omap3.h>
@@ -85,9 +87,9 @@
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{4800, 9600, 19200, 38400, 57600, \
 					115200}
+#define CONFIG_GENERIC_MMC		1
 #define CONFIG_MMC			1
-#define CONFIG_OMAP3_MMC		1
-#define CONFIG_SYS_MMC_SET_DEV		1
+#define CONFIG_OMAP_HSMMC		1
 #define CONFIG_DOS_PARTITION		1
 
 /* DDR - I use Micron DDR */
@@ -96,6 +98,7 @@
 /* commands to include */
 #include <config_cmd_default.h>
 
+#define CONFIG_CMD_CACHE
 #define CONFIG_CMD_EXT2		/* EXT2 Support			*/
 #define CONFIG_CMD_FAT		/* FAT support			*/
 #define CONFIG_CMD_JFFS2	/* JFFS2 Support		*/
@@ -113,7 +116,7 @@
 
 #define CONFIG_SYS_NO_FLASH
 #define CONFIG_HARD_I2C			1
-#define CONFIG_SYS_I2C_SPEED		400000
+#define CONFIG_SYS_I2C_SPEED		100000
 #define CONFIG_SYS_I2C_SLAVE		1
 #define CONFIG_SYS_I2C_BUS		0
 #define CONFIG_SYS_I2C_BUS_SELECT	1
@@ -128,6 +131,7 @@
 /*
  * Board NAND Info.
  */
+#define CONFIG_SYS_NAND_QUIET_TEST	1
 #define CONFIG_NAND_OMAP_GPMC
 #define CONFIG_SYS_NAND_ADDR		NAND_BASE	/* physical address */
 							/* to access nand */
@@ -156,7 +160,7 @@
 	"vram=12M\0" \
 	"dvimode=1024x768MR-16@60\0" \
 	"defaultdisplay=dvi\0" \
-	"mmcdev=1\0" \
+	"mmcdev=0\0" \
 	"mmcroot=/dev/mmcblk0p2 rw\0" \
 	"mmcrootfstype=ext3 rootwait\0" \
 	"nandroot=/dev/mtdblock4 rw\0" \
@@ -165,6 +169,7 @@
 		"mpurate=${mpurate} " \
 		"vram=${vram} " \
 		"omapfb.mode=dvi:${dvimode} " \
+		"omapfb.debug=y " \
 		"omapdss.def_disp=${defaultdisplay} " \
 		"root=${mmcroot} " \
 		"rootfstype=${mmcrootfstype}\0" \
@@ -172,6 +177,7 @@
 		"mpurate=${mpurate} " \
 		"vram=${vram} " \
 		"omapfb.mode=dvi:${dvimode} " \
+		"omapfb.debug=y " \
 		"omapdss.def_disp=${defaultdisplay} " \
 		"root=${nandroot} " \
 		"rootfstype=${nandrootfstype}\0" \
@@ -188,7 +194,7 @@
 		"bootm ${loadaddr}\0" \
 
 #define CONFIG_BOOTCOMMAND \
-	"if mmc init; then " \
+	"if mmc rescan ${mmcdev}; then " \
 		"if run loadbootscript; then " \
 			"run bootscript; " \
 		"else " \
@@ -317,5 +323,8 @@ extern unsigned int boot_flash_type;
 #define CONFIG_SMC911X_BASE     0x2C000000
 
 #endif /* (CONFIG_CMD_NET) */
+
+#define CONFIG_SYS_SDRAM_BASE		PHYS_SDRAM_1
+#define CONFIG_SYS_INIT_SP_ADDR		(LOW_LEVEL_SRAM_STACK - CONFIG_SYS_GBL_DATA_SIZE)
 
 #endif				/* __CONFIG_H */

@@ -20,6 +20,22 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+/*
+ * Valid values for CONFIG_SYS_TEXT_BASE are:
+ *
+ * Standard configuration - all models
+ * 0xFFF00000	boot from flash
+ *
+ * Test configuration (boot from RAM using uloader.o)
+ * LinkStation HD-HLAN and KuroBox Standard
+ * 0x03F00000	boot from RAM
+ * LinkStation HD-HGLAN and KuroBox HG
+ * 0x07F00000	boot from RAM
+ */
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFFF00000
+#endif
+
 #if 0
 #define DEBUG
 #endif
@@ -217,7 +233,7 @@
 
 #define CONFIG_SYS_FLASH_BASE		0xFFC00000
 #define CONFIG_SYS_FLASH_SIZE		0x00400000
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 
 #define CONFIG_SYS_RESET_ADDRESS	0xFFF00100
 #define CONFIG_SYS_EUMB_ADDR		0x80000000
@@ -240,7 +256,7 @@
 #endif
 
 /*-----------------------------------------------------------------------
- * Change TEXT_BASE in bord/linkstation/config.mk to get a RAM build
+ * Change CONFIG_SYS_TEXT_BASE in bord/linkstation/config.mk to get a RAM build
  *
  * RAM based builds are for testing purposes. A Linux module, uloader.o,
  * exists to load U-Boot and pass control to it
@@ -290,7 +306,7 @@
  * taken from the orignal Linkstation boot code
  *
  * Most of the low level configuration setttings are normally used
- * in cpu/mpc824x/cpu_init.c which is NOT used by this implementation.
+ * in arch/powerpc/cpu/mpc824x/cpu_init.c which is NOT used by this implementation.
  * Low level initialisation is done in board/linkstation/early_init.S
  * The values below are included for reference purpose only
  */
@@ -494,13 +510,5 @@
  * Partitions and file system
  */
 #define CONFIG_DOS_PARTITION
-
-/*-----------------------------------------------------------------------
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM		0x02	/* Software reboot			*/
 
 #endif	/* __CONFIG_H */

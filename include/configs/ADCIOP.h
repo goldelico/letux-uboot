@@ -36,6 +36,8 @@
 #define CONFIG_IOP480		1	/* This is a IOP480 CPU		*/
 #define CONFIG_ADCIOP		1	/* ...on a ADCIOP board		*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFFD0000
+
 #define CONFIG_BOARD_EARLY_INIT_F 1	/* call board_early_init_f()	*/
 
 #define CONFIG_CLOCKS_IN_MHZ	1	/* clocks passsed to Linux in MHz */
@@ -199,14 +201,5 @@
 
 #define FLASH_BASE0_PRELIM	0xFFC00000	/* FLASH bank #0	*/
 #define FLASH_BASE1_PRELIM	0xFFE00000	/* FLASH bank #1	*/
-
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #endif	/* __CONFIG_H */

@@ -29,9 +29,6 @@
  * (easy to change)
  */
 
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM		0x02	/* Software reboot			*/
-
 #define CONFIG_BOARD_EARLY_INIT_R
 
 /* Partitions */
@@ -54,6 +51,11 @@
 #define CONFIG_CMD_NFS
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_SNTP
+
+/*
+ * 8-symbol LED display (can be accessed with 'display' command)
+ */
+#define CONFIG_PDSP188x
 
 #define	CONFIG_TIMESTAMP	1	/* Print image info with timestamp */
 
@@ -101,11 +103,11 @@
 	"u-boot=" xstr(CONFIG_HOSTNAME) "/u-boot.bin \0" 		\
 	"u-boot_addr_r=200000\0"					\
 	"load=tftp ${u-boot_addr_r} ${u-boot}\0"			\
-	"update=protect off " xstr(TEXT_BASE) " +${filesize};"		\
-		"erase " xstr(TEXT_BASE) " +${filesize};"		\
-		"cp.b ${u-boot_addr_r} " xstr(TEXT_BASE) 		\
+	"update=protect off " xstr(CONFIG_SYS_TEXT_BASE) " +${filesize};"		\
+		"erase " xstr(CONFIG_SYS_TEXT_BASE) " +${filesize};"		\
+		"cp.b ${u-boot_addr_r} " xstr(CONFIG_SYS_TEXT_BASE) 		\
 		" ${filesize};"						\
-		"protect on " xstr(TEXT_BASE) " +${filesize}\0"		\
+		"protect on " xstr(CONFIG_SYS_TEXT_BASE) " +${filesize}\0"		\
 	""
 
 #define CONFIG_BOOTCOMMAND	"run net_nfs"
@@ -126,7 +128,6 @@
 #define CONFIG_SYS_MAXARGS		16	/* max number of command args*/
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
 #define CONFIG_CMDLINE_EDITING		1	/* add command line history */
-#define CONFIG_COMMAND_HISTORY		1
 #define CONFIG_AUTO_COMPLETE		/* add autocompletion support	*/
 
 /* Enable an alternate, more extensive memory test */

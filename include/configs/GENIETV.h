@@ -38,6 +38,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define	CONFIG_SYS_TEXT_BASE	0x00000000
+
 #define	CONFIG_ETHADDR		08:00:22:50:70:63	/* Ethernet address */
 #define CONFIG_ENV_OVERWRITE	1	/* Overwrite the environment */
 
@@ -330,14 +332,6 @@
 #define CONFIG_SYS_MBMR_8COL	((CONFIG_SYS_MBMR_PTB << MAMR_PTA_SHIFT)  | MAMR_PTAE | \
 			MAMR_G0CLA_A11 | MAMR_RLFA_1X | MAMR_WLFA_1X \
 			| MAMR_TLFA_4X)	/* 0x5d802114 */
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD			0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM			0x02		/* Software reboot			*/
 
 /* values according to the manual */
 

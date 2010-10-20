@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2006
+ * (C) Copyright 2006-2010
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
  * See file CREDITS for list of people who contributed to this
@@ -38,8 +38,10 @@
 #define CONFIG_MPC8349		1	/* MPC8349 specific */
 #define CONFIG_MPC8349EMDS	1	/* MPC8349EMDS board specific */
 
-#define PCI_66M
-#ifdef PCI_66M
+#define	CONFIG_SYS_TEXT_BASE	0xFE000000
+
+#define CONFIG_PCI_66M
+#ifdef CONFIG_PCI_66M
 #define CONFIG_83XX_CLKIN	66000000	/* in Hz */
 #else
 #define CONFIG_83XX_CLKIN	33000000	/* in Hz */
@@ -51,7 +53,7 @@
 #endif /* CONFIG_PCISLAVE */
 
 #ifndef CONFIG_SYS_CLK_FREQ
-#ifdef PCI_66M
+#ifdef CONFIG_PCI_66M
 #define CONFIG_SYS_CLK_FREQ	66000000
 #define HRCWL_CSB_TO_CLKIN	HRCWL_CSB_TO_CLKIN_4X1
 #else
@@ -172,7 +174,7 @@
 #define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #define CONFIG_SYS_RAMBOOT
@@ -283,7 +285,6 @@
  * Serial Port
  */
 #define CONFIG_CONS_INDEX     1
-#undef CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE    1
@@ -296,6 +297,7 @@
 #define CONFIG_SYS_NS16550_COM2        (CONFIG_SYS_IMMR+0x4600)
 
 #define CONFIG_CMDLINE_EDITING	1	/* add command line history	*/
+#define CONFIG_AUTO_COMPLETE		/* add autocompletion support   */
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
 #ifdef  CONFIG_SYS_HUSH_PARSER
@@ -495,10 +497,10 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 8 MB of memory, since this is
+ * have to be in the first 256 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ	(8 << 20)	/* Initial Memory map for Linux*/
+#define CONFIG_SYS_BOOTMAPSZ	(256 << 20)	/* Initial Memory map for Linux*/
 
 #define CONFIG_SYS_RCWH_PCIHOST 0x80000000 /* PCIHOST  */
 
@@ -597,7 +599,8 @@
 #define CONFIG_SYS_SICRL SICRL_LDP_A
 
 #define CONFIG_SYS_HID0_INIT	0x000000000
-#define CONFIG_SYS_HID0_FINAL	HID0_ENABLE_MACHINE_CHECK
+#define CONFIG_SYS_HID0_FINAL	(HID0_ENABLE_MACHINE_CHECK | \
+				 HID0_ENABLE_INSTRUCTION_CACHE)
 
 /* #define CONFIG_SYS_HID0_FINAL		(\
 	HID0_ENABLE_INSTRUCTION_CACHE |\
@@ -665,14 +668,6 @@
 #define CONFIG_SYS_DBAT6U	CONFIG_SYS_IBAT6U
 #define CONFIG_SYS_DBAT7L	CONFIG_SYS_IBAT7L
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01	/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02	/* Software reboot */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed of kgdb serial port */

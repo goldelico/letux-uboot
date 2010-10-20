@@ -35,6 +35,8 @@
  * (easy to change)
  */
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+
 /* these hardware addresses are pretty bogus, please change them to
    suit your needs */
 
@@ -269,6 +271,7 @@
  * PCI stuff
  */
 #define CONFIG_PCI                                /* include pci support */
+#define CONFIG_SYS_EARLY_PCI_INIT
 #define CONFIG_PCI_PNP                            /* pci plug-and-play */
 #define CONFIG_PCI_HOST         PCI_HOST_AUTO
 #undef  CONFIG_PCI_SCAN_SHOW
@@ -436,9 +439,8 @@ extern unsigned char   scsi_sym53c8xx_ccf;
 extern  unsigned long           bab7xx_get_bus_freq (void);
 extern  unsigned long           bab7xx_get_gclk_freq (void);
 #endif
-#define CONFIG_SYS_BUS_HZ              bab7xx_get_bus_freq()
-#define CONFIG_SYS_BUS_CLK             CONFIG_SYS_BUS_HZ
-#define CONFIG_SYS_CPU_CLK             bab7xx_get_gclk_freq()
+#define CONFIG_SYS_BUS_CLK	bab7xx_get_bus_freq()
+#define CONFIG_SYS_CPU_CLK	bab7xx_get_gclk_freq()
 
 /*
  * For booting Linux, the board info and command line data
@@ -465,15 +467,6 @@ extern  unsigned long           bab7xx_get_gclk_freq (void);
 #define L2_ENABLE   (L2_INIT | L2CR_L2E)
 
 #define CONFIG_SYS_L2_BAB7xx
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD           0x01    /* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM           0x02    /* Software reboot */
-
 
 #define CONFIG_NET_MULTI                /* Multi ethernet cards support */
 #define CONFIG_TULIP

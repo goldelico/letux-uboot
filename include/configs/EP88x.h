@@ -30,6 +30,8 @@
 
 #define CONFIG_EP88X				/* Embedded Planet EP88x board	*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFC000000
+
 #define CONFIG_BOARD_EARLY_INIT_F		/* Call board_early_init_f	*/
 
 /* Allow serial number (serial#) and MAC address (ethaddr) to be overwritten */
@@ -125,7 +127,7 @@
  */
 #define CONFIG_SYS_BOOTMAPSZ		(8 << 20)	/* Initial Memory map for Linux */
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 256 KB for Monitor   */
 #ifdef CONFIG_BZIP2
 #define CONFIG_SYS_MALLOC_LEN		(4096 << 10)	/* Reserve ~4 MB for malloc()   */
@@ -204,13 +206,5 @@
  * Cache Configuration
  */
 #define CONFIG_SYS_CACHELINE_SIZE	16	/* For all MPC8xx chips			*/
-
-/*-----------------------------------------------------------------------
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from flash	*/
-#define BOOTFLAG_WARM		0x02	/* Software reboot			*/
 
 #endif /* __CONFIG_H */

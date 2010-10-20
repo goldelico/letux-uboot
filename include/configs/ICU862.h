@@ -39,6 +39,8 @@
 #define CONFIG_ICU862		1
 #define CONFIG_MPC862		1
 
+#define	CONFIG_SYS_TEXT_BASE	0x40F00000
+
 #define	CONFIG_8xx_CONS_SMC1	1	/* Console is on SMC1		*/
 #undef	CONFIG_8xx_CONS_SMC2
 #undef	CONFIG_8xx_CONS_NONE
@@ -210,7 +212,7 @@
 #else
 #define CONFIG_SYS_MONITOR_LEN (256 << 10) /* Reserve 256 kB for Monitor */
 #endif
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define	CONFIG_SYS_MALLOC_LEN		(256 << 10)	/* Reserve 256 kB for malloc()	*/
 
 /*
@@ -448,13 +450,6 @@
 			 MAMR_RLFA_1X	 | MAMR_WLFA_1X	   | MAMR_TLFA_4X)
 
 #define CONFIG_SYS_MAMR		0x13a01114
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #ifdef CONFIG_MPC860T
 

@@ -38,6 +38,10 @@
 #define CONFIG_SYS_BOARD_NAME	"XPedite5200"
 #define CONFIG_BOARD_EARLY_INIT_R	/* Call board_pre_init */
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xfff80000
+#endif
+
 #define CONFIG_PCI		1	/* Enable PCI/PCIE */
 #define CONFIG_PCI_PNP		1	/* do pci plug-and-play */
 #define CONFIG_PCI_SCAN_SHOW	1	/* show pci devices on startup */
@@ -81,7 +85,6 @@
 #define CONFIG_SYS_CCSRBAR		0xef000000	/* relocated CCSRBAR */
 #define CONFIG_SYS_CCSRBAR_PHYS	CONFIG_SYS_CCSRBAR	/* physical addr of CCSRBAR */
 #define CONFIG_SYS_IMMR		CONFIG_SYS_CCSRBAR	/* PQII uses CONFIG_SYS_IMMR */
-#define CONFIG_SYS_PCI1_ADDR	(CONFIG_SYS_CCSRBAR + 0x8000)
 
 /*
  * Diagnostics
@@ -131,7 +134,7 @@
 #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 #define CONFIG_SYS_FLASH_AUTOPROTECT_LIST	{ {0xfff40000, 0xc0000}, \
 						  {0xfbf40000, 0xc0000} }
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 
 /*
  * Chip select configuration
@@ -338,6 +341,7 @@
 #define CONFIG_CMD_PCI
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_SNTP
+#define CONFIG_CMD_REGINFO
 
 /*
  * Miscellaneous configurable options
@@ -351,6 +355,7 @@
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
 #define CONFIG_SYS_HZ		1000		/* decrementer freq: 1ms ticks */
 #define CONFIG_CMDLINE_EDITING	1		/* add command line history	*/
+#define CONFIG_AUTO_COMPLETE	1		/* add autocompletion support */
 #define CONFIG_LOADADDR		0x1000000	/* default location for tftp and bootm */
 #define CONFIG_BOOTDELAY	3		/* -1 disables auto-boot */
 #define CONFIG_PANIC_HANG			/* do not reset board on panic */
@@ -367,12 +372,6 @@
  */
 #define CONFIG_SYS_BOOTMAPSZ	(16 << 20)	/* Initial Memory map for Linux*/
 #define CONFIG_SYS_BOOTM_LEN	(16 << 20)	/* Increase max gunzip size */
-
-/*
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM		0x02		/* Software reboot */
 
 /*
  * Environment Configuration

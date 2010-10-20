@@ -25,7 +25,7 @@
 #include <asm/processor.h>
 #include <i2c.h>
 #include <miiphy.h>
-#include <ppc4xx_enet.h>
+#include <asm/ppc4xx-emac.h>
 
 void sdram_init(void);
 
@@ -97,7 +97,7 @@ phys_size_t initdram (int board_type)
 	/*
 	 * ToDo: Move the asm init routine sdram_init() to this C file,
 	 * or even better use some common ppc4xx code available
-	 * in cpu/ppc4xx
+	 * in arch/powerpc/cpu/ppc4xx
 	 */
 	sdram_init();
 

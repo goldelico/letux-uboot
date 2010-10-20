@@ -35,6 +35,8 @@
  * (easy to change)
  */
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+
 /* these hardware addresses are pretty bogus, please change them to
    suit your needs */
 
@@ -314,9 +316,8 @@
 /*
  * Speed settings are board specific
  */
-#define CONFIG_SYS_BUS_HZ              100000000
-#define CONFIG_SYS_CPU_CLK             400000000
-#define CONFIG_SYS_BUS_CLK             CONFIG_SYS_BUS_HZ
+#define CONFIG_SYS_BUS_CLK	100000000
+#define CONFIG_SYS_CPU_CLK	400000000
 
 /*
  * For booting Linux, the board info and command line data
@@ -347,14 +348,6 @@
 		     L2CR_L2OH_5   | L2CR_L2CTL | L2CR_L2WT)
 #endif
 #define L2_ENABLE   (L2_INIT | L2CR_L2E)
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD           0x01    /* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM           0x02    /* Software reboot */
 
 #define CONFIG_NET_MULTI        /* Multi ethernet cards support */
 #define CONFIG_EEPRO100

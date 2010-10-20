@@ -107,7 +107,7 @@
  *
  * Setting #if 0: u-boot will start from flash and relocate itself to RAM
  *
- * Please do not forget to modify the setting of TEXT_BASE
+ * Please do not forget to modify the setting of CONFIG_SYS_TEXT_BASE
  * in board/cobra5272/config.mk accordingly (#if 0: 0xffe00000; #if 1: 0x20000)
  *
  * ---
@@ -330,6 +330,19 @@ from which user programs will be started */
  * Cache Configuration
  */
 #define CONFIG_SYS_CACHELINE_SIZE	16
+
+#define ICACHE_STATUS			(CONFIG_SYS_INIT_RAM_ADDR + \
+					 CONFIG_SYS_INIT_RAM_END - 8)
+#define DCACHE_STATUS			(CONFIG_SYS_INIT_RAM_ADDR + \
+					 CONFIG_SYS_INIT_RAM_END - 4)
+#define CONFIG_SYS_ICACHE_INV		(CF_CACR_CINV | CF_CACR_INVI)
+#define CONFIG_SYS_CACHE_ACR0		(CONFIG_SYS_SDRAM_BASE | \
+					 CF_ADDRMASK(CONFIG_SYS_SDRAM_SIZE) | \
+					 CF_ACR_EN | CF_ACR_SM_ALL)
+#define CONFIG_SYS_CACHE_ICACR		(CF_CACR_CENB | CF_CACR_CINV | \
+					 CF_CACR_DISD | CF_CACR_INVI | \
+					 CF_CACR_CEIB | CF_CACR_DCM | \
+					 CF_CACR_EUSP)
 
 /*-----------------------------------------------------------------------
  * Memory bank definitions

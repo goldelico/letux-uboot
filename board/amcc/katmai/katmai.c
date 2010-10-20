@@ -23,14 +23,14 @@
  */
 
 #include <common.h>
-#include <ppc4xx.h>
+#include <asm/ppc4xx.h>
 #include <i2c.h>
 #include <libfdt.h>
 #include <fdt_support.h>
 #include <netdev.h>
 #include <asm/processor.h>
 #include <asm/io.h>
-#include <asm/gpio.h>
+#include <asm/ppc4xx-gpio.h>
 #include <asm/4xx_pcie.h>
 #include <asm/errno.h>
 
@@ -249,7 +249,7 @@ int checkboard (void)
 }
 
 /*
- * Override the default functions in cpu/ppc4xx/44x_spd_ddr2.c with
+ * Override the default functions in arch/powerpc/cpu/ppc4xx/44x_spd_ddr2.c with
  * board specific values.
  */
 u32 ddr_wrdtr(u32 default_val) {

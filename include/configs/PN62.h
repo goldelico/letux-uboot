@@ -39,6 +39,8 @@
 #define CONFIG_MPC8240		1
 #define CONFIG_PN62		1
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+
 #define CONFIG_CONS_INDEX	1
 
 
@@ -148,7 +150,7 @@
 
 #undef	CONFIG_SYS_RAMBOOT
 #define CONFIG_SYS_MONITOR_LEN		0x00030000
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 
 /*#define CONFIG_SYS_GBL_DATA_SIZE    256*/
 #define CONFIG_SYS_GBL_DATA_SIZE	128
@@ -300,15 +302,5 @@
 #if defined(CONFIG_CMD_KGDB)
 #  define CONFIG_SYS_CACHELINE_SHIFT	5	/* log base 2 of the above value */
 #endif
-
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM		0x02	/* Software reboot			*/
-
 
 #endif	/* __CONFIG_H */

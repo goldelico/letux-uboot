@@ -43,6 +43,8 @@
 
 #define CONFIG_PCIPPC2		1	/* this is a PCIPPC2 board	*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xfff00000
+
 #define CONFIG_BOARD_EARLY_INIT_F 1
 #define CONFIG_MISC_INIT_R	1
 
@@ -117,7 +119,7 @@
 
 #define CONFIG_SYS_RESET_ADDRESS   0xFFF00100
 
-#define CONFIG_SYS_MONITOR_BASE    TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE    CONFIG_SYS_TEXT_BASE
 
 #define CONFIG_SYS_MONITOR_LEN	    (256 << 10) /* Reserve 256 kB for Monitor	*/
 #define CONFIG_SYS_MALLOC_LEN	    (128 << 10) /* Reserve 128 kB for malloc()	*/
@@ -194,9 +196,8 @@
  * For the detail description refer to the PCIPPC2 user's manual.
  */
 #define CONFIG_SYS_HZ		      1000
-#define CONFIG_SYS_BUS_HZ            100000000 /* bus speed - 100 mhz          */
+#define CONFIG_SYS_BUS_CLK            100000000 /* bus speed - 100 mhz          */
 #define CONFIG_SYS_CPU_CLK	      300000000
-#define CONFIG_SYS_BUS_CLK	      100000000
 
 /*
  * For booting Linux, the board info and command line data
@@ -238,14 +239,6 @@
 #define L2_INIT   (L2CR_L2SIZ_2M | L2CR_L2CLK_3 | L2CR_L2RAM_BURST | \
 		   L2CR_L2OH_5 | L2CR_L2CTL | L2CR_L2WT)
 #define L2_ENABLE (L2_INIT | L2CR_L2E)
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM		0x02	/* Software reboot			*/
 
 /*-----------------------------------------------------------------------
   RTC m48t59

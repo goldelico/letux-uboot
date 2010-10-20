@@ -28,6 +28,8 @@
 #define CONFIG_MPC860T		1
 #define CONFIG_MBX		1
 
+#define	CONFIG_SYS_TEXT_BASE	0xfe000000
+
 #define CONFIG_8xx_CPUCLOCK	40
 #define CONFIG_8xx_BUSCLOCK	(CONFIG_8xx_CPUCLOCK)
 #define TARGET_SYSTEM_FREQUENCY 40
@@ -282,14 +284,6 @@
 			 MAMR_RLFA_1X	 | MAMR_WLFA_1X	   | MAMR_TLFA_4X)
 
 #define CONFIG_SYS_MAMR		0x13821000
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD			0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM			0x02		/* Software reboot			*/
-
 
 /* values according to the manual */
 

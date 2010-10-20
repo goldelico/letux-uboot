@@ -57,9 +57,11 @@
 
 #define CONFIG_CPCI750		1	/* this is an CPCI750 board	*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xfff00000
+
 #define CONFIG_BAUDRATE		9600	/* console baudrate = 9600	*/
 
-#undef	CONFIG_ECC			/* enable ECC support */
+#define CONFIG_MV64360_ECC		/* enable ECC support */
 
 #define CONFIG_HIGH_BATS	1	/* High BATs supported */
 
@@ -234,8 +236,7 @@
 #define CONFIG_SYS_LOAD_ADDR		0x00300000	/* default load address */
 
 #define CONFIG_SYS_HZ			1000		/* decr freq: 1ms ticks */
-#define CONFIG_SYS_BUS_HZ		133000000	/* 133 MHz (CPU = 5*Bus = 666MHz)		*/
-#define CONFIG_SYS_BUS_CLK		CONFIG_SYS_BUS_HZ
+#define CONFIG_SYS_BUS_CLK		133000000	/* 133 MHz (CPU = 5*Bus = 666MHz)		*/
 
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200, 230400 }
 
@@ -617,16 +618,10 @@
 
 #define L2_ENABLE	(L2_INIT | L2CR_L2E)
 
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02		/* Software reboot		    */
-
 #define CONFIG_SYS_BOARD_ASM_INIT	1
 
 #define CPCI750_SLAVE_TEST	(((in8(0xf0300000) & 0x80) == 0) ? 0 : 1)
+#define CPCI750_ECC_TEST	(((in8(0xf0300000) & 0x02) == 0) ? 1 : 0)
+#define CONFIG_SYS_PLD_VER	0xf0e00000
 
 #endif	/* __CONFIG_H */

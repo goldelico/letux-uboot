@@ -40,6 +40,8 @@
 #define CONFIG_MPC850		1	/* This is a MPC850 CPU		*/
 #define CONFIG_LANTEC		2	/* ...on a Lantec rev.2 board	*/
 
+#define	CONFIG_SYS_TEXT_BASE	0x40000000
+
 /*
  *  Port assignments (CONFIG_LANTEC == 1):
  *  - SMC1: J11 (MDB) ?
@@ -338,14 +340,6 @@
 			((CONFIG_SYS_MAMR_PTA << MAMR_PTA_SHIFT)  | MAMR_PTAE      |	\
 			 MAMR_AMA_TYPE_0 | MAMR_DSA_1_CYCL | MAMR_G0CLA_A11 |	\
 			 MAMR_RLFA_1X    | MAMR_WLFA_1X    | MAMR_TLFA_4X)
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 /*
  * JFFS2 partitions

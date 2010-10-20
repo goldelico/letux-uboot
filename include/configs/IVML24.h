@@ -36,6 +36,8 @@
 #define CONFIG_MPC860		1	/* This is a MPC860 CPU		*/
 #define CONFIG_IVML24		1	/* ...on a IVML24 board		*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFF000000
+
 #if defined (CONFIG_IVML24_16M)
 # define CONFIG_IDENT_STRING     " IVML24"
 #elif defined (CONFIG_IVML24_32M)
@@ -473,13 +475,4 @@
 			 MBMR_AMB_TYPE_1 | MBMR_DSB_1_CYCL | MBMR_G0CLB_A10 |	\
 			 MBMR_RLFB_1X	 | MBMR_WLFB_1X	   | MBMR_TLFB_4X)
 #endif
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
-
 #endif	/* __CONFIG_H */

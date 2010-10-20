@@ -35,6 +35,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define	CONFIG_SYS_TEXT_BASE	0x40000000
+
 /* Enable debug prints */
 #undef DEBUG_BOOTP_EXT	      /* Debug received vendor fields */
 
@@ -84,7 +86,7 @@
 #define CONFIG_SYS_SBC_BOOT_LOW 1
 
 /* What should the base address of the main FLASH be and how big is
- * it (in MBytes)? This must contain TEXT_BASE from board/sbc8260/config.mk
+ * it (in MBytes)? This must contain CONFIG_SYS_TEXT_BASE from board/sbc8260/config.mk
  * The main FLASH is whichever is connected to *CS0. U-Boot expects
  * this to be the SIMM.
  */
@@ -1076,13 +1078,4 @@
 			   ORxG_TRLX		       |\
 			   ORxG_EHTR)
 #endif /* CONFIG_SYS_LED_BASE */
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01	/* Normal Power-On: Boot from FLASH  */
-#define BOOTFLAG_WARM	0x02	/* Software reboot		     */
-
 #endif	/* __CONFIG_H */

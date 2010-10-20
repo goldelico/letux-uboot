@@ -34,6 +34,8 @@
 #define CONFIG_MPC850SAR	1
 #define CONFIG_FADS			1
 
+#define	CONFIG_SYS_TEXT_BASE	0xFE000000
+
 #define	CONFIG_8xx_CONS_SMC1	1	/* Console is on SMC1		*/
 #undef	CONFIG_8xx_CONS_SMC2
 #undef	CONFIG_8xx_CONS_NONE
@@ -295,14 +297,6 @@
 			 MAMR_RLFA_1X	 | MAMR_WLFA_1X	   | MAMR_TLFA_4X)
 
 #define CONFIG_SYS_MAMR		0x13a01114
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD			0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM			0x02		/* Software reboot			*/
-
 
 /* values according to the manual */
 

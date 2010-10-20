@@ -38,6 +38,12 @@
 #define CONFIG_PCI
 #define CONFIG_CPM2		1	/* Has a CPM2 */
 
+#ifdef CONFIG_BOOT_ROM
+#define CONFIG_SYS_TEXT_BASE	0xFF800000
+#else
+#define	CONFIG_SYS_TEXT_BASE	0xFF000000
+#endif
+
 /*
  * select serial console configuration
  *
@@ -319,7 +325,7 @@
  */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 #define CONFIG_SYS_SDRAM_MAX_SIZE	0x08000000	/* max. 128 MB		*/
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 256 kB for Monitor */
 #define CONFIG_SYS_MALLOC_LEN		(128 << 10)	/* Reserve 128 kB for malloc()*/
 
@@ -353,15 +359,6 @@
 #define CONFIG_ENV_OFFSET		512
 #define CONFIG_ENV_SIZE		(2048 - 512)
 #endif
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH*/
-#define BOOTFLAG_WARM		0x02	/* Software reboot		   */
-
 
 /*-----------------------------------------------------------------------
  * Cache Configuration

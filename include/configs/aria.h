@@ -51,6 +51,8 @@
 #define CONFIG_FSL_DIU_FB	1	/* FSL DIU */
 #define CONFIG_FSL_DIU_LOGO_BMP	1	/* Don't include FSL DIU binary bmp */
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+
 /* video */
 #undef CONFIG_VIDEO
 
@@ -78,6 +80,9 @@
 #define CONFIG_SYS_DDR_SIZE		256		/* MB */
 #define CONFIG_SYS_DDR_BASE		0x00000000
 #define CONFIG_SYS_SDRAM_BASE		CONFIG_SYS_DDR_BASE
+#define CONFIG_SYS_MAX_RAM_SIZE		0x20000000
+
+#define CONFIG_SYS_IOCTRL_MUX_DDR	0x00000036
 
 /* DDR Controller Configuration
  *
@@ -190,7 +195,7 @@
 
 /*
  * Backward compatible definitions,
- * so we do not have to change cpu/mpc512x/fixed_sdram.c
+ * so we do not have to change arch/powerpc/cpu/mpc512x/fixed_sdram.c
  */
 #define	CONFIG_SYS_DDRCMD_EM2		(CONFIG_SYS_MICRON_EMR2)
 #define CONFIG_SYS_DDRCMD_EM3		(CONFIG_SYS_MICRON_EMR3)
@@ -302,7 +307,7 @@
 					 CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
-#define CONFIG_SYS_MONITOR_BASE		TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(384 * 1024)
 
 #ifdef	CONFIG_FSL_DIU_FB
@@ -318,7 +323,6 @@
  * Serial Port
  */
 #define CONFIG_CONS_INDEX		1
-#undef CONFIG_SERIAL_SOFTWARE_FIFO
 
 /*
  * Serial console configuration
@@ -504,10 +508,10 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 8 MB of memory, since this is
+ * have to be in the first 256 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ	(8 << 20)
+#define CONFIG_SYS_BOOTMAPSZ	(256 << 20)
 
 /* Cache Configuration */
 #define CONFIG_SYS_DCACHE_SIZE		32768
@@ -522,14 +526,6 @@
 #define CONFIG_SYS_HID2	HID2_HBE
 
 #define CONFIG_HIGH_BATS		1	/* High BATs supported */
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD			0x01
-#define BOOTFLAG_WARM			0x02
 
 #ifdef CONFIG_CMD_KGDB
 #define CONFIG_KGDB_BAUDRATE		230400	/* speed of kgdb serial port */

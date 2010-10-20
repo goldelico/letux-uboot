@@ -24,12 +24,12 @@
 #
 
 NAND_SPL := y
-TEXT_BASE := 0xfff00000
+CONFIG_SYS_TEXT_BASE := 0xfff00000
 
 include $(TOPDIR)/config.mk
 
 LDSCRIPT= $(TOPDIR)/nand_spl/board/$(BOARDDIR)/u-boot.lds
-LDFLAGS	= -Bstatic -T $(nandobj)u-boot.lds -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
+LDFLAGS	= -Bstatic -T $(nandobj)u-boot.lds -Ttext $(CONFIG_SYS_TEXT_BASE) $(PLATFORM_LDFLAGS)
 AFLAGS	+= -DCONFIG_NAND_SPL
 CFLAGS	+= -DCONFIG_NAND_SPL
 
@@ -66,7 +66,7 @@ $(nandobj)u-boot.lds: $(LDSCRIPT)
 
 $(obj)start.S:
 	@rm -f $@
-	ln -s $(SRCTREE)/cpu/mpc83xx/start.S $@
+	ln -s $(SRCTREE)/arch/powerpc/cpu/mpc83xx/start.S $@
 
 $(obj)nand_boot_fsl_elbc.c:
 	@rm -f $@
@@ -86,19 +86,19 @@ $(obj)ns16550.c:
 
 $(obj)nand_init.c:
 	@rm -f $@
-	ln -s $(SRCTREE)/cpu/mpc83xx/nand_init.c $@
+	ln -s $(SRCTREE)/arch/powerpc/cpu/mpc83xx/nand_init.c $@
 
 $(obj)cache.c:
 	@rm -f $@
-	ln -s $(SRCTREE)/lib_ppc/cache.c $@
+	ln -s $(SRCTREE)/arch/powerpc/lib/cache.c $@
 
 $(obj)time.c:
 	@rm -f $@
-	ln -s $(SRCTREE)/lib_ppc/time.c $@
+	ln -s $(SRCTREE)/arch/powerpc/lib/time.c $@
 
 $(obj)ticks.S:
 	@rm -f $@
-	ln -s $(SRCTREE)/lib_ppc/ticks.S $@
+	ln -s $(SRCTREE)/arch/powerpc/lib/ticks.S $@
 
 #########################################################################
 

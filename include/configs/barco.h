@@ -62,6 +62,8 @@
 #define CONFIG_MPC8245		1
 #define CONFIG_BARCOBCD_STREAMING	1
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+
 #undef USE_DINK32
 
 #define CONFIG_CONS_INDEX     3               /* set to '3' for on-chip DUART */
@@ -136,6 +138,8 @@
 #define CONFIG_LOGBUFFER
 #ifdef	CONFIG_LOGBUFFER
 #define CONFIG_SYS_STDOUT_ADDR		0x1FFC000
+#define CONFIG_SYS_POST_WORD_ADDR	\
+		(CONFIG_SYS_SDRAM_BASE + CONFIG_SYS_MAX_RAM_SIZE - 4)
 #else
 #define CONFIG_SYS_STDOUT_ADDR		0x2B9000
 #endif
@@ -154,7 +158,7 @@
 #else
 #undef	CONFIG_SYS_RAMBOOT
 #define CONFIG_SYS_MONITOR_LEN		0x00030000
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 
 #define CONFIG_SYS_GBL_DATA_SIZE	128
 
@@ -350,15 +354,6 @@
 #if defined(CONFIG_CMD_KGDB)
 #  define CONFIG_SYS_CACHELINE_SHIFT	5	/* log base 2 of the above value */
 #endif
-
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM		0x02	/* Software reboot			*/
 
 /* values according to the manual */
 

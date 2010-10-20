@@ -40,6 +40,8 @@
 #define CONFIG_MPC8245		1
 #define CONFIG_EXALION		1
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+
 #if defined (CONFIG_MPC8240)
     /* #warning	 ---------- eXalion with MPC8240 --------------- */
 #elif defined (CONFIG_MPC8245)
@@ -109,7 +111,7 @@
 
 #undef	CONFIG_SYS_RAMBOOT
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 256 kB for Monitor	    */
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 
 /*-----------------------------------------------------------------------
  * Definitions for initial stack pointer and data area
@@ -411,16 +413,6 @@
 #if defined(CONFIG_CMD_KGDB)
 #  define CONFIG_SYS_CACHELINE_SHIFT	5	/* log base 2 of the above value */
 #endif
-
-
-/*-----------------------------------------------------------------------
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM		0x02	/* Software reboot			*/
-
 
 /* values according to the manual */
 #define CONFIG_DRAM_50MHZ	1

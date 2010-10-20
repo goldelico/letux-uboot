@@ -37,6 +37,8 @@
 #define CONFIG_TQM855M		1	/* ...on a TQM8xxM module	*/
 #define CONFIG_NSCU		1
 
+#define	CONFIG_SYS_TEXT_BASE	0x40000000
+
 #define	CONFIG_8xx_CONS_SCC1	1	/* Console is on SMC1		*/
 #define CONFIG_SYS_SMC_RXBUFLEN	128
 #define CONFIG_SYS_MAXIDLE	10
@@ -474,18 +476,8 @@
 			 MAMR_AMA_TYPE_1 | MAMR_DSA_1_CYCL | MAMR_G0CLA_A10 |	\
 			 MAMR_RLFA_1X	 | MAMR_WLFA_1X	   | MAMR_TLFA_4X)
 
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
-
 #undef CONFIG_SCC1_ENET
 #define CONFIG_FEC_ENET
-/* #define CONFIG_ETHPRIME		"FEC ETHERNET" */
 
 /* pass open firmware flat tree */
 #define CONFIG_OF_LIBFDT	1

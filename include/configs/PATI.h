@@ -33,6 +33,9 @@
 
 #define CONFIG_MPC555		1		/* This is an MPC555 CPU		*/
 #define CONFIG_PATI		1		/* ...On a PATI board	*/
+
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+
 /* Serial Console Configuration */
 #define	CONFIG_5xx_CONS_SCI1
 #undef	CONFIG_5xx_CONS_SCI2
@@ -144,7 +147,7 @@
 #define PLD_CONFIG_BASE		0x04001000	/* PLD  (CS3) */
 
 #define	CONFIG_SYS_MONITOR_BASE	0xFFF00000
-/* CONFIG_SYS_FLASH_BASE	*/ /* TEXT_BASE is defined in the board config.mk file.	*/
+/* CONFIG_SYS_FLASH_BASE	*/ /* CONFIG_SYS_TEXT_BASE is defined in the board config.mk file.	*/
 						/* This adress is given to the linker with -Ttext to	*/
 						/* locate the text section at this adress.		*/
 #define	CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 192 kB for Monitor				*/
@@ -282,16 +285,6 @@
  * Initialise to zero
  */
 #define CONFIG_SYS_DER			0x00000000
-
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD	0x01			/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02			/* Software reboot			*/
-
 
 #define VERSION_TAG "released"
 #define CONFIG_ISO_STRING "MEV-10084-001"

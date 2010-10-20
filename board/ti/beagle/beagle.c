@@ -35,6 +35,7 @@
 #endif
 #include <twl4030.h>
 #include <asm/io.h>
+#include <asm/arch/mmc_host_def.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
@@ -42,36 +43,6 @@
 #include "beagle.h"
 #include <command.h>
 
-static struct {
-	unsigned int device_vendor;
-	unsigned char revision;
-	unsigned char content;
-	unsigned char fab_revision[8];
-	unsigned char env_var[16];
-	unsigned char env_setting[64];
-} expansion_config;
-
-#define TWL4030_I2C_BUS			0
-
-#define EXPANSION_EEPROM_I2C_BUS	1
-#define EXPANSION_EEPROM_I2C_ADDRESS	0x50
-
-#define TINCANTOOLS_VENDORID	0x0100
-#define GUMSTIX_VENDORID		0x0200
-#define SPECIALCOMP_VENDORID	0x0300
-#define HYR_VENDORID			0x0400
-#define MENTOREL_VENDORID		0x0500
-#define KBADC_VENDORID			0x0600
-
-#define TINCANTOOLS_ZIPPY		0x01000100
-#define TINCANTOOLS_ZIPPY2		0x02000100
-#define TINCANTOOLS_TRAINER		0x04000100
-#define TINCANTOOLS_SHOWDOG		0x03000100
-#define KBADC_BEAGLEFPGA		0x01000600
-
-#define BEAGLE_NO_EEPROM		0xffffffff
-
-static int beagle_revision;
 
 /*
  * Routine: board_init
@@ -98,68 +69,31 @@ int board_init(void)
  * Routine: beagle_get_revision
  * Description: Return the revision of the BeagleBoard this code is running on.
  */
-int beagle_get_revision(void)
+int get_board_revision(void)
 {
-	return beagle_revision;
-}
+	int revision;
 
-/*
- * Routine: beagle_identify
- * Description: Detect if we are running on a Beagle revision Ax/Bx,
- *		C1/2/3, C4 or D. This can be done by reading
- *		the level of GPIO173, GPIO172 and GPIO171. This should
- *		result in
- *		GPIO173, GPIO172, GPIO171: 1 1 1 => Ax/Bx
- *		GPIO173, GPIO172, GPIO171: 1 1 0 => C1/2/3
- *		GPIO173, GPIO172, GPIO171: 1 0 1 => C4
- *		GPIO173, GPIO172, GPIO171: 0 0 0 => XM
- */
-void beagle_identify(void)
-{
-	omap_request_gpio(171);
-	omap_request_gpio(172);
-	omap_request_gpio(173);
-	omap_set_gpio_direction(171, 1);
-	omap_set_gpio_direction(172, 1);
-	omap_set_gpio_direction(173, 1);
+	if (!omap_request_gpio(171) &&
+	    !omap_request_gpio(172) &&
+	    !omap_request_gpio(173)) {
 
-	beagle_revision = omap_get_gpio_datain(173) << 2 |
-			  omap_get_gpio_datain(172) << 1 |
-			  omap_get_gpio_datain(171);
-	omap_free_gpio(171);
-	omap_free_gpio(172);
-	omap_free_gpio(173);
-}
+		omap_set_gpio_direction(171, 1);
+		omap_set_gpio_direction(172, 1);
+		omap_set_gpio_direction(173, 1);
 
-/*
- * Routine: get_expansion_id
- * Description: This function checks for expansion board by checking I2C
- *		bus 2 for the availability of an AT24C01B serial EEPROM.
- *		returns the device_vendor field from the EEPROM
- */
-unsigned int get_expansion_id(void)
-{
-	i2c_set_bus_num(EXPANSION_EEPROM_I2C_BUS);
+		revision = omap_get_gpio_datain(173) << 2 |
+			   omap_get_gpio_datain(172) << 1 |
+			   omap_get_gpio_datain(171);
 
-	/* return BEAGLE_NO_EEPROM if eeprom doesn't respond */
-	if (i2c_probe(EXPANSION_EEPROM_I2C_ADDRESS) == 1)
-		return BEAGLE_NO_EEPROM;
+		omap_free_gpio(171);
+		omap_free_gpio(172);
+		omap_free_gpio(173);
+	} else {
+		printf("Error: unable to acquire board revision GPIOs\n");
+		revision = -1;
+	}
 
-	/* read configuration data */
-	i2c_read(EXPANSION_EEPROM_I2C_ADDRESS, 0, 1, (u8 *)&expansion_config,
-		 sizeof(expansion_config));
-
-	return expansion_config.device_vendor;
-}
-
-/*
- * Configure DSS to display background color on DVID
- * Configure VENC to display color bar on S-Video
- */
-void display_init(void)
-{
-	omap3_dss_venc_config(&venc_config_std_tv, VENC_HEIGHT, VENC_WIDTH);
-	omap3_dss_panel_config(&dvid_cfg);
+	return revision;
 }
 
 /*
@@ -171,104 +105,48 @@ int misc_init_r(void)
 	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
 	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 
-	/* Enable i22 pullup resisters */
-	*(ulong *)(CONTROL_PROG_IO1) &= ~(PRG_I2C2_PULLUPRESX);
-	beagle_identify();
 
-	printf("\nProbing for expansion boards, if none are connected you'll see a harmless I2C error.\n\n");
-
-	switch (get_expansion_id()) {
-		case TINCANTOOLS_ZIPPY:
-			printf("Recognized Tincantools Zippy expansion board (rev %d %s)\n",
-				expansion_config.revision, expansion_config.fab_revision);
-			MUX_TINCANTOOLS_ZIPPY();
-			setenv("buddy", "zippy");
-			break;
-		case TINCANTOOLS_ZIPPY2:
-			printf("Recognized Tincantools Zippy2 expansion board (rev %d %s)\n",
-				expansion_config.revision, expansion_config.fab_revision);
-			MUX_TINCANTOOLS_ZIPPY();
-			setenv("buddy", "zippy2");
-			break;
-		case TINCANTOOLS_TRAINER:
-			printf("Recognized Tincantools Trainer expansion board (rev %d %s)\n",
-				expansion_config.revision, expansion_config.fab_revision);
-			MUX_TINCANTOOLS_ZIPPY();
-			MUX_TINCANTOOLS_TRAINER();
-			setenv("buddy", "trainer");
-			break;
-		case TINCANTOOLS_SHOWDOG:
-			printf("Recognized Tincantools Showdow expansion board (rev %d %s)\n",
-				expansion_config.revision, expansion_config.fab_revision);
-			/* Place holder for DSS2 definition for showdog lcd */
-			setenv("defaultdisplay", "showdoglcd");
-			setenv("buddy", "showdog");
-			break;
-		case KBADC_BEAGLEFPGA:
-			printf("Recognized KBADC Beagle FPGA board\n");
-			MUX_KBADC_BEAGLEFPGA();
-			setenv("buddy", "beaglefpga");
-			break;
-		case BEAGLE_NO_EEPROM:
-			printf("No EEPROM on expansion board\n");
-			setenv("buddy", "none");
-			break;
-		default:
-			printf("Unrecognized expansion board: %x\n", expansion_config.device_vendor);
-			setenv("buddy", "unknown");
-	}
-
-	if (expansion_config.content == 1)
-		setenv(expansion_config.env_var, expansion_config.env_setting);
-
-	i2c_set_bus_num(TWL4030_I2C_BUS);
-
-	twl4030_power_init();
-	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
-	display_init();
-
-	switch (beagle_revision) {
+	switch (get_board_revision()) {
 	case REVISION_AXBX:
 		printf("Beagle Rev Ax/Bx\n");
-		setenv("mpurate", "600");
 		setenv("beaglerev", "AxBx");
+		setenv("mpurate", "600");
 		break;
 	case REVISION_CX:
 		printf("Beagle Rev C1/C2/C3\n");
-		MUX_BEAGLE_C();
-		setenv("mpurate", "600");
 		setenv("beaglerev", "Cx");
+		setenv("mpurate", "600");
+		MUX_BEAGLE_C();
 		break;
 	case REVISION_C4:
 		printf("Beagle Rev C4\n");
-		setenv("beaglerev", "Cx");
+		setenv("beaglerev", "C4");
+		setenv("mpurate", "720");
 		MUX_BEAGLE_C();
 		/* Set VAUX2 to 1.8V for EHCI PHY */
 		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
 					TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
 					TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
 					TWL4030_PM_RECEIVER_DEV_GRP_P1);
-		setenv("mpurate", "720");
 		break;
 	case REVISION_XM:
 		printf("Beagle xM Rev A\n");
 		setenv("beaglerev", "xMA");
+		setenv("mpurate", "1000");
 		MUX_BEAGLE_XM();
-		/* Set VAUX1 to 3.3V for GTA04E display board */
-		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,
-					/*TWL4030_PM_RECEIVER_VAUX1_VSEL_33*/ 0x07,
-					TWL4030_PM_RECEIVER_VAUX1_DEV_GRP,
-					TWL4030_PM_RECEIVER_DEV_GRP_P1);
 		/* Set VAUX2 to 1.8V for EHCI PHY */
 		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
 					TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
 					TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
 					TWL4030_PM_RECEIVER_DEV_GRP_P1);
-		setenv("mpurate", "1000");
 		break;
 	default:
-		printf("Beagle unknown 0x%02x\n", beagle_revision);
+		printf("Beagle unknown 0x%02x\n", get_board_revision());
 	}
+
+	twl4030_power_init();
+	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
+	display_init();
 
 	/* Configure GPIOs to output */
 	writel(~(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1), &gpio6_base->oe);
@@ -298,56 +176,10 @@ void set_muxconf_regs(void)
 	MUX_BEAGLE();
 }
 
-/*
- * This command returns the status of the user button on beagle xM
- * Input - none
- * Returns - 	1 if button is held down
- *		0 if button is not held down
- */
-int do_userbutton (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+#ifdef CONFIG_GENERIC_MMC
+int board_mmc_init(bd_t *bis)
 {
-	int     button = 0;
-	int	gpio;
-
-	/*
-	 * pass address parameter as argv[0] (aka command name),
-	 * and all remaining args
-	 */
-	switch (beagle_revision) {
-	case REVISION_AXBX:
-	case REVISION_CX:
-	case REVISION_C4:
-		gpio = 7;
-		break;
-	case REVISION_XM:
-	default:
-		gpio = 4;
-		break;
-	}
-	omap_request_gpio(gpio);
-	omap_set_gpio_direction(gpio, 1);
-	printf("The user button is currently ");
-	if(omap_get_gpio_datain(gpio))
-	{
-		button = 1;
-		printf("PRESSED.\n");
-	}
-	else
-	{
-		button = 0;
-		printf("NOT pressed.\n");
-	}
-
-	omap_free_gpio(gpio);
-
-	return !button;
+	omap_mmc_init(0);
+	return 0;
 }
-
-/* -------------------------------------------------------------------- */
-
-U_BOOT_CMD(
-	userbutton, CONFIG_SYS_MAXARGS, 1,	do_userbutton,
-	"Return the status of the BeagleBoard USER button",
-	""
-);
-
+#endif

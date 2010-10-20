@@ -26,6 +26,8 @@
 #define CONFIG_SPC1920			1	/* SPC1920 board */
 #define CONFIG_MPC885			1	/* MPC885 CPU */
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+
 #define	CONFIG_8xx_CONS_SMC1		/* Console is on SMC1 */
 #undef	CONFIG_8xx_CONS_SMC2
 #undef	CONFIG_8xx_CONS_NONE
@@ -161,7 +163,7 @@
  */
 #define	CONFIG_SYS_BOOTMAPSZ		(8 << 20)	/* Initial Memory map for Linux	*/
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define	CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 256 KB for monitor	*/
 
 #ifdef CONFIG_BZIP2
@@ -421,13 +423,5 @@
 					OR_TRLX)
 
 #define CONFIG_SYS_BR5_PRELIM ((CONFIG_SYS_SPC1920_PLD_BASE & BR_BA_MSK) | BR_PS_8 | BR_V)
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #endif	/* __CONFIG_H */

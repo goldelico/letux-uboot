@@ -36,6 +36,8 @@
 #define CONFIG_MPC866		1	/* This is a MPC866 CPU		*/
 #define CONFIG_TQM866M		1	/* ...on a TQM8xxM module	*/
 
+#define	CONFIG_SYS_TEXT_BASE	0x40000000
+
 #define CONFIG_8xx_OSCLK		10000000	/*  10 MHz - PLL input clock	*/
 #define CONFIG_SYS_8xx_CPUCLK_MIN		15000000	/*  15 MHz - CPU minimum clock	*/
 #define CONFIG_SYS_8xx_CPUCLK_MAX		133000000	/* 133 MHz - CPU maximum clock	*/
@@ -496,17 +498,9 @@
 			 MAMR_AMA_TYPE_2 | MAMR_DSA_1_CYCL | MAMR_G0CLA_A9  |	\
 			 MAMR_RLFA_1X	 | MAMR_WLFA_1X	   | MAMR_TLFA_4X)
 
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
-
 #define CONFIG_SCC1_ENET
 #define CONFIG_FEC_ENET
-#define CONFIG_ETHPRIME		"SCC ETHERNET"
+#define CONFIG_ETHPRIME		"SCC"
 
 /* pass open firmware flat tree */
 #define CONFIG_OF_LIBFDT	1

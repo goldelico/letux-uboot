@@ -26,7 +26,7 @@
  */
 
 #include <common.h>
-#include <ppc4xx.h>
+#include <asm/ppc4xx.h>
 #include <i2c.h>
 #include <netdev.h>
 #include <asm/processor.h>
@@ -555,7 +555,7 @@ int checkboard (void)
 }
 
 /*
- * Override the default functions in cpu/ppc4xx/44x_spd_ddr2.c with
+ * Override the default functions in arch/powerpc/cpu/ppc4xx/44x_spd_ddr2.c with
  * board specific values.
  */
 static int ppc440spe_rev_a(void)

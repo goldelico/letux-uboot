@@ -144,19 +144,28 @@ static void write_toggle(struct usb_device *dev, u8 ep, u8 dir_out)
 	u16 csr;
 
 	if (dir_out) {
-		if (!toggle)
-			writew(MUSB_TXCSR_CLRDATATOG, &musbr->txcsr);
-		else {
-			csr = readw(&musbr->txcsr);
+		csr = readw(&musbr->txcsr);
+		if (!toggle) {
+			if (csr & MUSB_TXCSR_MODE)
+				csr = MUSB_TXCSR_CLRDATATOG;
+			else
+				csr = 0;
+			writew(csr, &musbr->txcsr);
+		} else {
 			csr |= MUSB_TXCSR_H_WR_DATATOGGLE;
 			writew(csr, &musbr->txcsr);
 			csr |= (toggle << MUSB_TXCSR_H_DATATOGGLE_SHIFT);
 			writew(csr, &musbr->txcsr);
 		}
 	} else {
-		if (!toggle)
-			writew(MUSB_RXCSR_CLRDATATOG, &musbr->rxcsr);
-		else {
+		if (!toggle) {
+			csr = readw(&musbr->txcsr);
+			if (csr & MUSB_TXCSR_MODE)
+				csr = MUSB_RXCSR_CLRDATATOG;
+			else
+				csr = 0;
+			writew(csr, &musbr->rxcsr);
+		} else {
 			csr = readw(&musbr->rxcsr);
 			csr |= MUSB_RXCSR_H_WR_DATATOGGLE;
 			writew(csr, &musbr->rxcsr);
@@ -917,6 +926,13 @@ int submit_control_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 
 	dev->status = 0;
 	dev->act_len = len;
+
+#ifdef MUSB_NO_MULTIPOINT
+	/* Set device address to USB_FADDR register */
+	if (setup->request == USB_REQ_SET_ADDRESS)
+		writeb(dev->devnum, &musbr->faddr);
+#endif
+
 	return len;
 }
 
@@ -986,6 +1002,11 @@ int submit_bulk_msg(struct usb_device *dev, unsigned long pipe,
 		while (txlen < len) {
 			nextlen = ((len-txlen) < dev->epmaxpacketout[ep]) ?
 					(len-txlen) : dev->epmaxpacketout[ep];
+
+#ifdef CONFIG_USB_BLACKFIN
+			/* Set the transfer data size */
+			writew(nextlen, &musbr->txcount);
+#endif
 
 			/* Write the data to the FIFO */
 			write_fifo(MUSB_BULK_EP, nextlen,

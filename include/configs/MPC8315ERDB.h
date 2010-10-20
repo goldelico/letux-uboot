@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2007-2010 Freescale Semiconductor, Inc.
  *
  * Dave Liu <daveliu@freescale.com>
  *
@@ -25,9 +25,13 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#ifdef CONFIG_MK_NAND
+#ifdef CONFIG_NAND
 #define CONFIG_NAND_U_BOOT		1
-#define CONFIG_RAMBOOT_TEXT_BASE	0x00100000
+#define CONFIG_SYS_TEXT_BASE	0x00100000
+#endif
+
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFE000000
 #endif
 
 /*
@@ -177,7 +181,7 @@
 /*
  * The reserved memory
  */
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE /* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE /* start of monitor */
 
 #define CONFIG_SYS_MONITOR_LEN		(384 * 1024) /* Reserve 384 kB for Mon */
 #define CONFIG_SYS_MALLOC_LEN		(512 * 1024) /* Reserved for malloc */
@@ -197,6 +201,7 @@
 #define CONFIG_SYS_LCRR_DBYP	LCRR_DBYP
 #define CONFIG_SYS_LCRR_CLKDIV		LCRR_CLKDIV_2
 #define CONFIG_SYS_LBC_LBCR		0x00040000
+#define CONFIG_FSL_ELBC		1
 
 /*
  * FLASH on the Local Bus
@@ -241,6 +246,13 @@
 #else
 #define CONFIG_SYS_NAND_BASE		0xE0600000
 #endif
+
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITION
+#define CONFIG_CMD_MTDPARTS
+#define MTDIDS_DEFAULT			"nand0=e0600000.flash"
+#define MTDPARTS_DEFAULT 		\
+	"mtdparts=e0600000.flash:512k(uboot),128k(env),3m@1m(kernel),-(fs)"
 
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_MTD_NAND_VERIFY_WRITE	1
@@ -297,7 +309,6 @@
  * Serial Port
  */
 #define CONFIG_CONS_INDEX	1
-#undef CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
@@ -504,6 +515,7 @@
 #endif
 
 #define CONFIG_CMDLINE_EDITING	1	/* add command line history */
+#define CONFIG_AUTO_COMPLETE		/* add autocompletion support   */
 
 #undef CONFIG_WATCHDOG		/* watchdog disabled */
 
@@ -527,16 +539,17 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 8 MB of memory, since this is
+ * have to be in the first 256 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ		(8 << 20) /* Initial Memory map for Linux */
+#define CONFIG_SYS_BOOTMAPSZ		(256 << 20) /* Initial Memory map for Linux */
 
 /*
  * Core HID Setup
  */
-#define CONFIG_SYS_HID0_INIT		0x000000000
-#define CONFIG_SYS_HID0_FINAL		(HID0_ENABLE_MACHINE_CHECK | \
+#define CONFIG_SYS_HID0_INIT	0x000000000
+#define CONFIG_SYS_HID0_FINAL	(HID0_ENABLE_MACHINE_CHECK | \
+				 HID0_ENABLE_INSTRUCTION_CACHE | \
 				 HID0_ENABLE_DYNAMIC_POWER_MANAGMENT)
 #define CONFIG_SYS_HID2		HID2_HBE
 
@@ -594,14 +607,6 @@
 #define CONFIG_SYS_IBAT7U	0
 #define CONFIG_SYS_DBAT7L	CONFIG_SYS_IBAT7L
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01 /* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02 /* Software reboot */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed of kgdb serial port */

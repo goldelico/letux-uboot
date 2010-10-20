@@ -53,6 +53,9 @@
 #define CONFIG_MPC860	1	/* This is a MPC860 CPU		*/
 #define CONFIG_MPC860T	1	/* even better... an FEC!	*/
 #define CONFIG_TOP860	1	/* ...on a TOP860 module	*/
+
+#define	CONFIG_SYS_TEXT_BASE	0x80000000
+
 #undef	CONFIG_WATCHDOG			/* watchdog disabled		*/
 #define	CONFIG_IDENT_STRING " EMK TOP860"
 
@@ -212,7 +215,7 @@
  * adresses
  */
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 256 kB for Monitor	*/
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MALLOC_LEN		(128 << 10)	/* Reserve 128 kB for malloc()	*/
 
 /*-----------------------------------------------------------------------
@@ -245,14 +248,6 @@
 /* Interrupt level assignments.
 */
 #define FEC_INTERRUPT	SIU_LEVEL1	/* FEC interrupt */
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 /*-----------------------------------------------------------------------
  * Debug Enable Register

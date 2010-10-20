@@ -49,7 +49,7 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 115200, 57600, 38400, 19200, 9600 }
 
 #define CONFIG_SYS_MEMTEST_START	(CONFIG_SYS_SDRAM_BASE)
-#define CONFIG_SYS_MEMTEST_END		(TEXT_BASE - 0x100000)
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_TEXT_BASE - 0x100000)
 
 #define CONFIG_SYS_LOAD_ADDR		(CONFIG_SYS_SDRAM_BASE + 32 * 1024 * 1024)
 /* Address of u-boot image in Flash */
@@ -96,6 +96,7 @@
 #define CONFIG_SYS_ATA_DATA_OFFSET	0x1000	/* data reg offset */
 #define CONFIG_SYS_ATA_REG_OFFSET	0x1000	/* reg offset */
 #define CONFIG_SYS_ATA_ALT_OFFSET	0x800	/* alternate register offset */
+#define CONFIG_IDE_SWAP_IO
 
 /*
  * SuperH PCI Bridge Configration

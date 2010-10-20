@@ -183,13 +183,11 @@ int board_init(void)
 }
 
 #if defined(CONFIG_CMD_SF)
-int do_spi_toggle(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+int do_spi_toggle(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	u32 tmp;
-	if (argc < 2) {
-		cmd_usage(cmdtp);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
 
 	if ((strcmp(argv[1], "off") == 0)) {
 		printf("SPI FLASH disabled, NAND enabled\n");
@@ -214,8 +212,7 @@ int do_spi_toggle(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		tmp = readl(KW_GPIO0_BASE);
 		writel(tmp & (~FLASH_GPIO_PIN) , KW_GPIO0_BASE);
 	} else {
-		cmd_usage(cmdtp);
-		return 1;
+		return cmd_usage(cmdtp);
 	}
 
 	return 0;
@@ -228,6 +225,7 @@ U_BOOT_CMD(
 	);
 #endif
 
+#if defined(CONFIG_SYS_ARM_WITHOUT_RELOC)
 int dram_init(void)
 {
 	int i;
@@ -237,8 +235,31 @@ int dram_init(void)
 		gd->bd->bi_dram[i].size = get_ram_size((long *)kw_sdram_bar(i),
 						       kw_sdram_bs(i));
 	}
+
 	return 0;
 }
+#else
+int dram_init(void)
+{
+	/* dram_init must store complete ramsize in gd->ram_size */
+	/* Fix this */
+	gd->ram_size = get_ram_size((volatile void *)kw_sdram_bar(0),
+				kw_sdram_bs(0));
+	return 0;
+}
+
+void dram_init_banksize(void)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++) {
+		gd->bd->bi_dram[i].start = kw_sdram_bar(i);
+		gd->bd->bi_dram[i].size = kw_sdram_bs(i);
+		gd->bd->bi_dram[i].size = get_ram_size((long *)kw_sdram_bar(i),
+						       kw_sdram_bs(i));
+	}
+}
+#endif
 
 /* Configure and enable MV88E1118 PHY */
 void reset_phy(void)

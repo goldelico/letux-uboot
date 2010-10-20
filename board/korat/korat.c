@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2007-2009
+ * (C) Copyright 2007-2010
  * Larry Johnson, lrj@acm.org
  *
  * (C) Copyright 2006-2007
@@ -29,9 +29,9 @@
 #include <fdt_support.h>
 #include <i2c.h>
 #include <libfdt.h>
-#include <ppc440.h>
+#include <asm/ppc440.h>
 #include <asm/bitops.h>
-#include <asm/gpio.h>
+#include <asm/ppc4xx-gpio.h>
 #include <asm/io.h>
 #include <asm/ppc4xx-uic.h>
 #include <asm/processor.h>
@@ -417,7 +417,7 @@ int misc_init_r(void)
 		 * then connect the CompactFlash controller to the PowerPC USB
 		 * port.
 		 */
-		printf("Attaching CompactFalsh controller to PPC USB\n");
+		printf("Attaching CompactFlash controller to PPC USB\n");
 		out_8((u8 *) CONFIG_SYS_CPLD_BASE + 0x02,
 		      in_8((u8 *) CONFIG_SYS_CPLD_BASE + 0x02) | 0x10);
 	} else {
@@ -425,7 +425,7 @@ int misc_init_r(void)
 			printf("Warning: \"korat_usbcf\" is not set to a legal "
 			       "value (\"ppc\" or \"pci\")\n");
 
-		printf("Attaching CompactFalsh controller to PCI USB\n");
+		printf("Attaching CompactFlash controller to PCI USB\n");
 	}
 	if (act == NULL || strcmp(act, "hostdev") == 0) {
 		/* SDR Setting */
@@ -553,8 +553,8 @@ int misc_init_r(void)
 	 * This fix will make the MAL burst disabling patch for the Linux
 	 * EMAC driver obsolete.
 	 */
-	reg = mfdcr(PLB4_ACR) & ~PLB4_ACR_WRP;
-	mtdcr(PLB4_ACR, reg);
+	reg = mfdcr(PLB4A0_ACR) & ~PLB4Ax_ACR_WRP_MASK;
+	mtdcr(PLB4A0_ACR, reg);
 
 	set_serial_number();
 	set_mac_addresses();

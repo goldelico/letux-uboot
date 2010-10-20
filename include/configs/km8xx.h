@@ -271,16 +271,8 @@
 #define CONFIG_SYS_BR3_PRELIM	(0x30000401)
 #endif
 
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01	/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02	/* Software reboot		    */
-
 #define CONFIG_SCC3_ENET
-#define CONFIG_ETHPRIME		"SCC ETHERNET"
+#define CONFIG_ETHPRIME		"SCC"
 #define CONFIG_HAS_ETH0
 
 /* pass open firmware flat tree */

@@ -37,7 +37,7 @@
   /* JSE has a PPC405GPr */
 #define CONFIG_405GP 1
   /* ... which is a 4xxx series */
-#define CONFIG_4xx   1
+#define CONFIG_4x   1
   /* ... with a 33MHz OSC. connected to the SysCLK input */
 #define CONFIG_SYS_CLK_FREQ	33333333
   /* ... with on-chip memory here (4KBytes) */
@@ -45,6 +45,8 @@
 #define CONFIG_SYS_OCM_DATA_SIZE 0x00001000
   /* Do not set up locked dcache as init ram. */
 #undef CONFIG_SYS_INIT_DCACHE_CS
+
+#define	CONFIG_SYS_TEXT_BASE	0xFFF80000
 
   /* Map the SystemACE chip (CS#1) here. (Must be a multiple of 1Meg) */
 #define CONFIG_SYSTEMACE 1
@@ -95,17 +97,15 @@
 #define CONFIG_ENV_OFFSET	0x00
 #define CONFIG_ENV_SIZE	512
 
-
   /* The JSE connects UART1 to the console tap connector. */
-#define CONFIG_UART1_CONSOLE	1
+#define CONFIG_CONS_INDEX	2
+#define CONFIG_SYS_NS16550
+#define CONFIG_SYS_NS16550_SERIAL
+#define CONFIG_SYS_NS16550_REG_SIZE	1
+#define CONFIG_SYS_NS16550_CLK		get_serial_clock()
+
   /* Set console baudrate to 9600 */
 #define CONFIG_BAUDRATE		9600
-
-/* Size (bytes) of interrupt driven serial port buffer.
- * Set to 0 to use polling instead of interrupts.
- * Setting to 0 will also disable RTS/CTS handshaking.
- */
-#undef CONFIG_SERIAL_SOFTWARE_FIFO
 
 /*
  * Configuration related to auto-boot.
@@ -217,6 +217,7 @@
 
 #define CONFIG_HARD_I2C		1	/* I2C with hardware support	*/
 #undef	CONFIG_SOFT_I2C			/* I2C bit-banged		*/
+#define CONFIG_PPC4XX_I2C		/* use PPC4xx driver		*/
 #define CONFIG_SYS_I2C_SPEED		400000	/* I2C speed and slave address	*/
 #define CONFIG_SYS_I2C_SLAVE		0x7F
 
@@ -293,15 +294,6 @@
 
 /* Configuration Port location */
 #define CONFIG_PORT_ADDR	0xF0000500
-
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */

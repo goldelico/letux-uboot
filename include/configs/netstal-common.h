@@ -27,14 +27,19 @@
 #define __NETSTAL_COMMON_H
 
 #define CONFIG_SYS_SDRAM_BASE		0x00000000	/* _must_ be 0		*/
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* Start of U-Boot	*/
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* Start of U-Boot	*/
 #define CONFIG_SYS_MONITOR_LEN		(320 * 1024)	/* Reserve 320 kB for Monitor	*/
 #define CONFIG_SYS_MALLOC_LEN		(256 * 1024)	/* Reserve 256 kB for malloc() */
 
 /*
  * UART
  */
+#define CONFIG_CONS_INDEX	1	/* Use UART0			*/
 #define CONFIG_SERIAL_MULTI
+#define CONFIG_SYS_NS16550
+#define CONFIG_SYS_NS16550_SERIAL
+#define CONFIG_SYS_NS16550_REG_SIZE	1
+#define CONFIG_SYS_NS16550_CLK		get_serial_clock()
 #define CONFIG_SYS_BAUDRATE_TABLE  \
     {300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400}
 
@@ -42,6 +47,7 @@
  * I2C
  */
 #define CONFIG_HARD_I2C		1	/* I2C with hardware support */
+#define CONFIG_PPC4XX_I2C		/* use PPC4xx driver		*/
 #define CONFIG_SYS_I2C_SPEED		400000	/* I2C speed and slave address	*/
 #define CONFIG_SYS_I2C_SLAVE		0x7F
 

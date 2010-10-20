@@ -36,8 +36,11 @@
 #define CONFIG_SYS_BOARD_NAME	"XPedite5170"
 #define CONFIG_LINUX_RESET_VEC	0x100	/* Reset vector used by Linux */
 #define CONFIG_BOARD_EARLY_INIT_R	/* Call board_pre_init */
+#define CONFIG_BAT_RW		1	/* Use common BAT rw code */
 #define CONFIG_HIGH_BATS	1	/* High BATs supported and enabled */
 #define CONFIG_ALTIVEC		1
+
+#define	CONFIG_SYS_TEXT_BASE	0xfff00000
 
 #define CONFIG_PCI		1	/* Enable PCI/PCIE */
 #define CONFIG_PCI_PNP		1	/* do pci plug-and-play */
@@ -97,8 +100,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_CCSRBAR_PHYS_LOW	CONFIG_SYS_CCSRBAR
 #define CONFIG_SYS_CCSRBAR_PHYS_HIGH	0x0
 #define CONFIG_SYS_IMMR			CONFIG_SYS_CCSRBAR
-#define CONFIG_SYS_PCIE1_ADDR		(CONFIG_SYS_CCSRBAR + 0x8000)
-#define CONFIG_SYS_PCIE2_ADDR		(CONFIG_SYS_CCSRBAR + 0x9000)
 
 /*
  * Diagnostics
@@ -153,7 +154,7 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 #define CONFIG_SYS_FLASH_AUTOPROTECT_LIST	{ {0xfff00000, 0xc0000}, \
 						  {0xf7f00000, 0xc0000} }
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 #define CONFIG_SYS_MONITOR_BASE_EARLY	0xfff00000	/* early monitor loc */
 
 /*
@@ -493,7 +494,7 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
 				 BATL_PP_RW			|\
 				 BATL_CACHEINHIBIT		|\
 				 BATL_GUARDEDSTORAGE)
-#define CONFIG_SYS_DBAT6U_EARLY	(TEXT_BASE			|\
+#define CONFIG_SYS_DBAT6U_EARLY	(CONFIG_SYS_TEXT_BASE			|\
 				 BATU_BL_1M			|\
 				 BATU_VS			|\
 				 BATU_VP)
@@ -575,12 +576,6 @@ extern unsigned long get_board_sys_clk(unsigned long dummy);
  */
 #define CONFIG_SYS_BOOTMAPSZ	(16 << 20)	/* Initial Memory map for Linux*/
 #define CONFIG_SYS_BOOTM_LEN	(16 << 20)	/* Increase max gunzip size */
-
-/*
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM		0x02		/* Software reboot */
 
 /*
  * Environment Configuration

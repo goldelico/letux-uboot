@@ -53,9 +53,6 @@ HOSTSTRIP	= strip
 #
 # Mac OS X / Darwin's C preprocessor is Apple specific.  It
 # generates numerous errors and warnings.  We want to bypass it
-
-# hns: this may no longer be true...
-
 # and use GNU C's cpp.  To do this we pass the -traditional-cpp
 # option to the compiler.  Note that the -traditional-cpp flag
 # DOES NOT have the same semantics as GNU C's flag, all it does
@@ -67,9 +64,17 @@ HOSTSTRIP	= strip
 #
 
 ifeq ($(HOSTOS),darwin)
-HOSTCC		= cc
-# HOSTCFLAGS	+= -traditional-cpp
-HOSTLDFLAGS	+= -multiply_defined suppress
+# get major and minor product version (e.g. '10' and '6' for Snow Leopard)
+DARWIN_MAJOR_VERSION	= $(shell sw_vers -productVersion | cut -f 1 -d '.')
+DARWIN_MINOR_VERSION	= $(shell sw_vers -productVersion | cut -f 2 -d '.')
+
+os_x_before	= $(shell if [ $(DARWIN_MAJOR_VERSION) -le $(1) -a \
+	$(DARWIN_MINOR_VERSION) -le $(2) ] ; then echo "$(3)"; else echo "$(4)"; fi ;)
+
+# Snow Leopards build environment has no longer restrictions as described above
+HOSTCC		 = $(call os_x_before, 10, 5, "cc", "gcc")
+HOSTCFLAGS	+= $(call os_x_before, 10, 4, "-traditional-cpp")
+HOSTLDFLAGS	+= $(call os_x_before, 10, 5, "-multiply_defined suppress")
 else
 HOSTCC		= gcc
 endif
@@ -113,14 +118,20 @@ RANLIB	= $(CROSS_COMPILE)RANLIB
 # Load generated board configuration
 sinclude $(OBJTREE)/include/autoconf.mk
 
-ifdef	ARCH
-sinclude $(TOPDIR)/lib_$(ARCH)/config.mk	# include architecture dependend rules
+# Some architecture config.mk files need to know what CPUDIR is set to,
+# so calculate CPUDIR before including ARCH/SOC/CPU config.mk files.
+# Check if arch/$ARCH/cpu/$CPU exists, otherwise assume arch/$ARCH/cpu contains
+# CPU-specific code.
+CPUDIR=arch/$(ARCH)/cpu/$(CPU)
+ifneq ($(SRCTREE)/$(CPUDIR),$(wildcard $(SRCTREE)/$(CPUDIR)))
+CPUDIR=arch/$(ARCH)/cpu
 endif
-ifdef	CPU
-sinclude $(TOPDIR)/cpu/$(CPU)/config.mk		# include  CPU	specific rules
-endif
+
+sinclude $(TOPDIR)/arch/$(ARCH)/config.mk	# include architecture dependend rules
+sinclude $(TOPDIR)/$(CPUDIR)/config.mk		# include  CPU	specific rules
+
 ifdef	SOC
-sinclude $(TOPDIR)/cpu/$(CPU)/$(SOC)/config.mk	# include  SoC	specific rules
+sinclude $(TOPDIR)/$(CPUDIR)/$(SOC)/config.mk	# include  SoC	specific rules
 endif
 ifdef	VENDOR
 BOARDDIR = $(VENDOR)/$(BOARD)
@@ -155,8 +166,8 @@ gccincdir := $(shell $(CC) -print-file-name=include)
 
 CPPFLAGS := $(DBGFLAGS) $(OPTFLAGS) $(RELFLAGS)		\
 	-D__KERNEL__
-ifneq ($(TEXT_BASE),)
-CPPFLAGS += -DTEXT_BASE=$(TEXT_BASE)
+ifneq ($(CONFIG_SYS_TEXT_BASE),)
+CPPFLAGS += -DCONFIG_SYS_TEXT_BASE=$(CONFIG_SYS_TEXT_BASE)
 endif
 
 ifneq ($(RESET_VECTOR_ADDRESS),)
@@ -180,14 +191,6 @@ endif
 
 CFLAGS += $(call cc-option,-fno-stack-protector)
 
-# avoid trigraph warnings while parsing pci.h (produced by NIOS gcc-2.9)
-# this option have to be placed behind -Wall -- that's why it is here
-ifeq ($(ARCH),nios)
-ifeq ($(findstring 2.9,$(shell $(CC) --version)),2.9)
-CFLAGS := $(CPPFLAGS) -Wall -Wno-trigraphs
-endif
-endif
-
 # $(CPPFLAGS) sets -g, which causes gcc to pass a suitable -g<format>
 # option to the assembler.
 AFLAGS_DEBUG :=
@@ -202,8 +205,8 @@ endif
 AFLAGS := $(AFLAGS_DEBUG) -D__ASSEMBLY__ $(CPPFLAGS)
 
 LDFLAGS += -Bstatic -T $(obj)u-boot.lds $(PLATFORM_LDFLAGS)
-ifneq ($(TEXT_BASE),)
-LDFLAGS += -Ttext $(TEXT_BASE)
+ifneq ($(CONFIG_SYS_TEXT_BASE),)
+LDFLAGS += -Ttext $(CONFIG_SYS_TEXT_BASE)
 endif
 
 # Location of a usable BFD library, where we define "usable" as
@@ -233,21 +236,26 @@ endif
 
 export	HOSTCC HOSTCFLAGS HOSTLDFLAGS PEDCFLAGS HOSTSTRIP CROSS_COMPILE \
 	AS LD CC CPP AR NM STRIP OBJCOPY OBJDUMP MAKE
-export	TEXT_BASE PLATFORM_CPPFLAGS PLATFORM_RELFLAGS CPPFLAGS CFLAGS AFLAGS
+export	CONFIG_SYS_TEXT_BASE PLATFORM_CPPFLAGS PLATFORM_RELFLAGS CPPFLAGS CFLAGS AFLAGS
 
 #########################################################################
 
 # Allow boards to use custom optimize flags on a per dir/file basis
-BCURDIR := $(notdir $(CURDIR))
+BCURDIR = $(subst $(SRCTREE)/,,$(CURDIR:$(obj)%=%))
 $(obj)%.s:	%.S
-	$(CPP) $(AFLAGS) $(AFLAGS_$(@F)) $(AFLAGS_$(BCURDIR)) -o $@ $<
+	$(CPP) $(AFLAGS) $(AFLAGS_$(BCURDIR)/$(@F)) $(AFLAGS_$(BCURDIR)) \
+		-o $@ $<
 $(obj)%.o:	%.S
-	$(CC)  $(AFLAGS) $(AFLAGS_$(@F)) $(AFLAGS_$(BCURDIR)) -o $@ $< -c
+	$(CC)  $(AFLAGS) $(AFLAGS_$(BCURDIR)/$(@F)) $(AFLAGS_$(BCURDIR)) \
+		-o $@ $< -c
 $(obj)%.o:	%.c
-	$(CC)  $(CFLAGS) $(CFLAGS_$(@F)) $(CFLAGS_$(BCURDIR)) -o $@ $< -c
+	$(CC)  $(CFLAGS) $(CFLAGS_$(BCURDIR)/$(@F)) $(CFLAGS_$(BCURDIR)) \
+		-o $@ $< -c
 $(obj)%.i:	%.c
-	$(CPP) $(CFLAGS) $(CFLAGS_$(@F)) $(CFLAGS_$(BCURDIR)) -o $@ $< -c
+	$(CPP) $(CFLAGS) $(CFLAGS_$(BCURDIR)/$(@F)) $(CFLAGS_$(BCURDIR)) \
+		-o $@ $< -c
 $(obj)%.s:	%.c
-	$(CC)  $(CFLAGS) $(CFLAGS_$(@F)) $(CFLAGS_$(BCURDIR)) -o $@ $< -c -S
+	$(CC)  $(CFLAGS) $(CFLAGS_$(BCURDIR)/$(@F)) $(CFLAGS_$(BCURDIR)) \
+		-o $@ $< -c -S
 
 #########################################################################

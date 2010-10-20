@@ -205,7 +205,7 @@
  */
 #define	CONFIG_SYS_BOOTMAPSZ		(8 << 20)	/* Initial Memory map for Linux	*/
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define	CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 256 KB for monitor	*/
 
 #ifdef CONFIG_BZIP2
@@ -350,14 +350,6 @@
 /* BCSRx - Board Control and Status Registers */
 #define CONFIG_SYS_OR1_PRELIM	0xFFFF8110		/* 64Kbyte address space */
 #define CONFIG_SYS_BR1_PRELIM	((BCSR_ADDR) | BR_V)
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 /* values according to the manual */
 

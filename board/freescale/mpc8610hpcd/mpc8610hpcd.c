@@ -1,5 +1,5 @@
 /*
- * Copyright 2007,2009 Freescale Semiconductor, Inc.
+ * Copyright 2007,2009-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -34,11 +34,9 @@
 #include <spd_sdram.h>
 #include <netdev.h>
 
-#include "../common/pixis.h"
-
 void sdram_init(void);
 phys_size_t fixed_sdram(void);
-void mpc8610hpcd_diu_init(void);
+int mpc8610hpcd_diu_init(void);
 
 
 /* called before any console output */
@@ -85,10 +83,6 @@ int misc_init_r(void)
 	tmp_val = 0;
 	i2c_read(0x38, 0x0A, 1, &tmp_val, sizeof(tmp_val));
 	debug("DVI Encoder Read: 0x%02lx\n",tmp_val);
-
-#ifdef CONFIG_FSL_DIU_FB
-	mpc8610hpcd_diu_init();
-#endif
 
 	return 0;
 }
@@ -311,15 +305,7 @@ ft_board_setup(void *blob, bd_t *bd)
 {
 	ft_cpu_setup(blob, bd);
 
-#ifdef CONFIG_PCI1
-	ft_fsl_pci_setup(blob, "pci0", &pci1_hose);
-#endif
-#ifdef CONFIG_PCIE1
-	ft_fsl_pci_setup(blob, "pci1", &pcie1_hose);
-#endif
-#ifdef CONFIG_PCIE2
-	ft_fsl_pci_setup(blob, "pci2", &pcie2_hose);
-#endif
+	FT_FSL_PCI_SETUP;
 }
 #endif
 

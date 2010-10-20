@@ -37,6 +37,8 @@
 #define CONFIG_MPC8349		1	/* MPC8349 specific */
 #define CONFIG_TQM834X		1	/* TQM834X board specific */
 
+#define	CONFIG_SYS_TEXT_BASE	0x80000000
+
 /* IMMR Base Addres Register, use Freescale default: 0xff400000 */
 #define CONFIG_SYS_IMMR		0xff400000
 
@@ -101,10 +103,6 @@
  * defined as tqm834x_num_flash_banks.
  */
 #define CONFIG_SYS_MAX_FLASH_BANKS_DETECT	2
-#ifndef __ASSEMBLY__
-extern int tqm834x_num_flash_banks;
-#endif
-#define CONFIG_SYS_MAX_FLASH_BANKS (tqm834x_num_flash_banks)
 
 #define CONFIG_SYS_MAX_FLASH_SECT		512	/* max sectors per device */
 
@@ -143,7 +141,7 @@ extern int tqm834x_num_flash_banks;
 /*
  * Monitor config
  */
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 # define CONFIG_SYS_RAMBOOT
@@ -166,7 +164,6 @@ extern int tqm834x_num_flash_banks;
  * Serial Port
  */
 #define CONFIG_CONS_INDEX	1
-#undef CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
@@ -332,6 +329,8 @@ extern int tqm834x_num_flash_banks;
 #define CONFIG_SYS_PROMPT		"=> "		/* Monitor Command Prompt */
 
 #define CONFIG_CMDLINE_EDITING	1	/* add command line history	*/
+#define CONFIG_AUTO_COMPLETE		/* add autocompletion support   */
+
 #define CONFIG_SYS_HUSH_PARSER		1	/* Use the HUSH parser		*/
 #ifdef	CONFIG_SYS_HUSH_PARSER
 #define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
@@ -357,10 +356,10 @@ extern int tqm834x_num_flash_banks;
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 8 MB of memory, since this is
+ * have to be in the first 256 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ	(8 << 20)	/* Initial Memory map for Linux*/
+#define CONFIG_SYS_BOOTMAPSZ	(256 << 20)	/* Initial Memory map for Linux*/
 
 #define CONFIG_SYS_HRCW_LOW (\
 	HRCWL_LCL_BUS_TO_SCB_CLK_1X1 |\
@@ -403,7 +402,8 @@ extern int tqm834x_num_flash_banks;
 
 /* i-cache and d-cache disabled */
 #define CONFIG_SYS_HID0_INIT	0x000000000
-#define CONFIG_SYS_HID0_FINAL	CONFIG_SYS_HID0_INIT
+#define CONFIG_SYS_HID0_FINAL	(CONFIG_SYS_HID0_INIT | \
+				 HID0_ENABLE_INSTRUCTION_CACHE)
 #define CONFIG_SYS_HID2	HID2_HBE
 
 #define CONFIG_HIGH_BATS	1	/* High BATs supported */
@@ -459,14 +459,6 @@ extern int tqm834x_num_flash_banks;
 #define CONFIG_SYS_DBAT6U	CONFIG_SYS_IBAT6U
 #define CONFIG_SYS_DBAT7L	CONFIG_SYS_IBAT7L
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM		0x02	/* Software reboot */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed of kgdb serial port */

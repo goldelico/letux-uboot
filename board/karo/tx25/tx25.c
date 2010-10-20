@@ -145,6 +145,9 @@ int board_init()
 
 	mx25_uart_init_pins();
 #endif
+	/* board id for linux */
+	gd->bd->bi_arch_number = MACH_TYPE_TX25;
+	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
 	return 0;
 }
 
@@ -156,7 +159,14 @@ int board_late_init(void)
 
 int dram_init (void)
 {
+	/* dram_init must store complete ramsize in gd->ram_size */
+	gd->ram_size = get_ram_size((volatile void *)PHYS_SDRAM_1,
+				PHYS_SDRAM_1_SIZE);
+	return 0;
+}
 
+void dram_init_banksize(void)
+{
 	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
 	gd->bd->bi_dram[0].size = get_ram_size((volatile void *)PHYS_SDRAM_1,
 			PHYS_SDRAM_1_SIZE);
@@ -164,9 +174,9 @@ int dram_init (void)
 	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
 	gd->bd->bi_dram[1].size = get_ram_size((volatile void *)PHYS_SDRAM_2,
 			PHYS_SDRAM_2_SIZE);
-#endif
+#else
 
-	return 0;
+#endif
 }
 
 int checkboard(void)

@@ -53,6 +53,8 @@
 #define CONFIG_QS850		1	/* ...on a QS850 module */
 #define CONFIG_SCC2_ENET	1	/* SCC2 10BaseT ethernet */
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+
 /* Select the target clock speed */
 #undef CONFIG_CLOCK_16MHZ		/* cpu=16,777,216 Hz, mem=16Mhz */
 #undef CONFIG_CLOCK_33MHZ		/* cpu=33,554,432 Hz, mem=33Mhz */
@@ -561,14 +563,6 @@ MAMR_RLFA_1X | MAMR_WLFA_1X | MAMR_TLFA_4X)
  */
 #define CONFIG_SYS_OR7_PRELIM		0xFFF00000
 #define CONFIG_SYS_BR7_PRELIM		0xF0700000
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM		0x02	/* Software reboot */
 
 /*
  * Sanity checks

@@ -27,6 +27,7 @@
 #define WINBOND_ID_W25X16		0x3015
 #define WINBOND_ID_W25X32		0x3016
 #define WINBOND_ID_W25X64		0x3017
+#define WINBOND_ID_W25Q64		0x4017
 
 #define WINBOND_SR_WIP		(1 << 0)	/* Write-in-Progress */
 
@@ -76,6 +77,14 @@ static const struct winbond_spi_flash_params winbond_spi_flash_table[] = {
 		.sectors_per_block	= 16,
 		.nr_blocks		= 128,
 		.name			= "W25X64",
+	},
+	{
+		.id			= WINBOND_ID_W25Q64,
+		.l2_page_size		= 8,
+		.pages_per_sector	= 16,
+		.sectors_per_block	= 16,
+		.nr_blocks		= 128,
+		.name			= "W25Q64",
 	},
 };
 
@@ -289,7 +298,7 @@ out:
 struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode)
 {
 	const struct winbond_spi_flash_params *params;
-	unsigned long page_size;
+	unsigned page_size;
 	struct winbond_spi_flash *stm;
 	unsigned int i;
 
@@ -325,8 +334,9 @@ struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode)
 				* params->sectors_per_block
 				* params->nr_blocks;
 
-	debug("SF: Detected %s with page size %u, total %u bytes\n",
-			params->name, page_size, stm->flash.size);
+	printf("SF: Detected %s with page size %u, total ",
+	       params->name, page_size);
+	print_size(stm->flash.size, "\n");
 
 	return &stm->flash;
 }

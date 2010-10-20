@@ -26,18 +26,20 @@
 #define CONFIG_MPC8360		1 /* MPC8360 CPU specific */
 #define CONFIG_MPC8360ERDK	1 /* MPC8360ERDK board specific */
 
+#define	CONFIG_SYS_TEXT_BASE	0xFF800000
+
 /*
  * System Clock Setup
  */
 #ifdef CONFIG_CLKIN_33MHZ
 #define CONFIG_83XX_CLKIN		33333333
 #define CONFIG_SYS_CLK_FREQ		33333333
-#define PCI_33M				1
+#define CONFIG_PCI_33M				1
 #define HRCWL_CSB_TO_CLKIN_MPC8360ERDK	HRCWL_CSB_TO_CLKIN_10X1
 #else
 #define CONFIG_83XX_CLKIN		66000000
 #define CONFIG_SYS_CLK_FREQ		66000000
-#define PCI_66M				1
+#define CONFIG_PCI_66M				1
 #define HRCWL_CSB_TO_CLKIN_MPC8360ERDK	HRCWL_CSB_TO_CLKIN_5X1
 #endif /* CONFIG_CLKIN_33MHZ */
 
@@ -153,7 +155,7 @@
 /*
  * The reserved memory
  */
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE /* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE /* start of monitor */
 #define CONFIG_SYS_FLASH_BASE		0xFF800000 /* FLASH base address */
 
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
@@ -237,7 +239,6 @@
  * Serial Port
  */
 #define CONFIG_CONS_INDEX	1
-#undef	CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
@@ -250,6 +251,7 @@
 #define CONFIG_SYS_NS16550_COM2	(CONFIG_SYS_IMMR+0x4600)
 
 #define CONFIG_CMDLINE_EDITING	1	/* add command line history */
+#define CONFIG_AUTO_COMPLETE		/* add autocompletion support   */
 /* Use the HUSH parser */
 #define CONFIG_SYS_HUSH_PARSER
 #ifdef	CONFIG_SYS_HUSH_PARSER
@@ -308,7 +310,7 @@
  * QE UEC ethernet configuration
  */
 #define CONFIG_UEC_ETH
-#define CONFIG_ETHPRIME		"FSL UEC0"
+#define CONFIG_ETHPRIME		"UEC0"
 
 #define CONFIG_UEC_ETH1		/* GETH1 */
 
@@ -403,16 +405,17 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 8 MB of memory, since this is
+ * have to be in the first 256 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ		(8 << 20) /* Initial Memory map for Linux */
+#define CONFIG_SYS_BOOTMAPSZ		(256 << 20) /* Initial Memory map for Linux */
 
 /*
  * Core HID Setup
  */
-#define CONFIG_SYS_HID0_INIT		0x000000000
-#define CONFIG_SYS_HID0_FINAL		HID0_ENABLE_MACHINE_CHECK
+#define CONFIG_SYS_HID0_INIT	0x000000000
+#define CONFIG_SYS_HID0_FINAL	(HID0_ENABLE_MACHINE_CHECK | \
+				 HID0_ENABLE_INSTRUCTION_CACHE)
 #define CONFIG_SYS_HID2		HID2_HBE
 
 /*
@@ -482,14 +485,6 @@
 #define CONFIG_SYS_DBAT7L	CONFIG_SYS_IBAT7L
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
 #endif /* CONFIG_PCI */
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01 /* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02 /* Software reboot */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed of kgdb serial port */

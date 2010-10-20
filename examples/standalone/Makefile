@@ -72,6 +72,21 @@ gcclibdir := $(shell dirname `$(CC) -print-libgcc-file-name`)
 
 CPPFLAGS += -I..
 
+# For PowerPC there's no need to compile standalone applications as a
+# relocatable executable.  The relocation data is not needed, and
+# also causes the entry point of the standalone application to be
+# inconsistent.
+ifeq ($(ARCH),powerpc)
+AFLAGS := $(filter-out $(RELFLAGS),$(AFLAGS))
+CFLAGS := $(filter-out $(RELFLAGS),$(CFLAGS))
+CPPFLAGS := $(filter-out $(RELFLAGS),$(CPPFLAGS))
+endif
+
+# We don't want gcc reordering functions if possible.  This ensures that an
+# application's entry point will be the first function in the application's
+# source file.
+CFLAGS += $(call cc-option,-fno-toplevel-reorder)
+
 all:	$(obj).depend $(OBJS) $(LIB) $(SREC) $(BIN) $(ELF)
 
 #########################################################################

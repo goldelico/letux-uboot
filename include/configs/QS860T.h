@@ -54,6 +54,9 @@
 #define CONFIG_MPC860		1	/* This is a MPC860 CPU */
 #define CONFIG_QS860T		1	/* ...on a QS860T module */
 
+/* Start address of 512K Socketed Flash */
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+
 #define CONFIG_FEC_ENET		1	/* FEC 10/100BaseT ethernet */
 #define CONFIG_MII
 #define FEC_INTERRUPT		SIU_LEVEL1
@@ -399,15 +402,6 @@ CONFIG_SPI
 #define CONFIG_SYS_BR7_PRELIM		0xE8000000
 /* #define CONFIG_SYS_OR7		0xFF000000 */
 /* #define CONFIG_SYS_BR7		0xE8000000 */
-
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM		0x02	/* Software reboot */
 
 /*
  * Sanity checks

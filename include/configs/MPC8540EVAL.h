@@ -36,6 +36,8 @@
 #define CONFIG_MPC8540		1	    /* MPC8540 specific	        */
 #define CONFIG_MPC8540EVAL	1	    /* MPC8540EVAL board specific */
 
+#define	CONFIG_SYS_TEXT_BASE	0xfff80000
+
 #undef  CONFIG_PCI			    /* pci ethernet support	*/
 #define CONFIG_TSEC_ENET		    /* tsec ethernet support  */
 #define CONFIG_ENV_OVERWRITE
@@ -107,7 +109,7 @@
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Timeout for Flash Write (in ms)*/
 #define CONFIG_SYS_FLASH_CFI		1
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #define CONFIG_SYS_RAMBOOT
@@ -173,7 +175,6 @@
 
 /* Serial Port */
 #define CONFIG_CONS_INDEX     1
-#undef	CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE    1
@@ -294,6 +295,7 @@
 
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_I2C
+#define CONFIG_CMD_REGINFO
 
 #if defined(CONFIG_PCI)
     #define CONFIG_CMD_PCI
@@ -329,14 +331,6 @@
  * the maximum mapped by the Linux kernel during initialization.
  */
 #define CONFIG_SYS_BOOTMAPSZ	(8 << 20)	/* Initial Memory map for Linux */
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02		/* Software reboot		*/
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */

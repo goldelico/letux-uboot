@@ -37,15 +37,23 @@
 #define CONFIG_TQM5200		1	/* ... on TQM5200 module		*/
 #undef CONFIG_TQM5200_REV100		/*  define for revision 100 modules	*/
 
+/*
+ * Valid values for CONFIG_SYS_TEXT_BASE are:
+ * 0xFC000000	boot low (standard configuration with room for
+ *		max 64 MByte Flash ROM)
+ * 0xFFF00000	boot high (for a backup copy of U-Boot)
+ * 0x00100000	boot from RAM (for testing only)
+ */
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFC000000
+#endif
+
 /* On a Cameron or on a FO300 board or ...				*/
 #if !defined(CONFIG_CAM5200) && !defined(CONFIG_FO300)
 #define CONFIG_STK52XX		1	/* ... on a STK52XX board		*/
 #endif
 
 #define CONFIG_SYS_MPC5XXX_CLKIN	33000000 /* ... running at 33.000000MHz		*/
-
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM		0x02	/* Software reboot			*/
 
 #define CONFIG_HIGH_BATS	1	/* High BATs supported			*/
 
@@ -214,7 +222,7 @@
 
 #define	CONFIG_TIMESTAMP		/* display image timestamps */
 
-#if (TEXT_BASE != 0xFFF00000)
+#if (CONFIG_SYS_TEXT_BASE != 0xFFF00000)
 #   define CONFIG_SYS_LOWBOOT		1	/* Boot low */
 #endif
 
@@ -489,7 +497,7 @@
 #define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #   define CONFIG_SYS_RAMBOOT		1
 #endif
@@ -633,13 +641,8 @@
 /*
  * Various low-level settings
  */
-#if defined(CONFIG_MPC5200)
 #define CONFIG_SYS_HID0_INIT		HID0_ICE | HID0_ICFI
 #define CONFIG_SYS_HID0_FINAL		HID0_ICE
-#else
-#define CONFIG_SYS_HID0_INIT		0
-#define CONFIG_SYS_HID0_FINAL		0
-#endif
 
 #define CONFIG_SYS_BOOTCS_START	CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_BOOTCS_SIZE		CONFIG_SYS_FLASH_SIZE

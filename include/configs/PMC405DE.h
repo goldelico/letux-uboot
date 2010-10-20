@@ -28,6 +28,8 @@
 #define CONFIG_4xx		1	/* ...member of PPC4xx family	*/
 #define CONFIG_PMC405DE		1	/* ...on a PMC405DE board	*/
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFFC0000
+
 #define CONFIG_BOARD_EARLY_INIT_F 1	/* call board_early_init_f()	*/
 #define CONFIG_MISC_INIT_R	1	/* call misc_init_r()		*/
 #define CONFIG_BOARD_TYPES	1	/* support board types		*/
@@ -107,9 +109,14 @@
 #define CONFIG_SYS_MEMTEST_START	0x0100000 /* memtest works on */
 #define CONFIG_SYS_MEMTEST_END		0x3000000 /* 1 ... 48 MB in DRAM */
 
+#define CONFIG_CONS_INDEX	2	/* Use UART1			*/
+#define CONFIG_SYS_NS16550
+#define CONFIG_SYS_NS16550_SERIAL
+#define CONFIG_SYS_NS16550_REG_SIZE	1
+#define CONFIG_SYS_NS16550_CLK		get_serial_clock()
+
 #undef  CONFIG_SYS_EXT_SERIAL_CLOCK
 #define CONFIG_SYS_BASE_BAUD		691200
-#define CONFIG_UART1_CONSOLE
 
 /* The following table includes the supported baudrates */
 #define CONFIG_SYS_BAUDRATE_TABLE	\
@@ -200,8 +207,8 @@
  */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 #define CONFIG_SYS_FLASH_BASE		0xfe000000
-#define CONFIG_SYS_MONITOR_BASE		TEXT_BASE
-#define CONFIG_SYS_MONITOR_LEN		(~(TEXT_BASE) + 1)
+#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_MONITOR_LEN		(~(CONFIG_SYS_TEXT_BASE) + 1)
 #define CONFIG_SYS_MALLOC_LEN		(256 * 1024)
 
 /*
@@ -215,6 +222,7 @@
  * I2C EEPROM (24W16) for environment
  */
 #define CONFIG_HARD_I2C			/* I2c with hardware support */
+#define CONFIG_PPC4XX_I2C		/* use PPC4xx driver		*/
 #define CONFIG_SYS_I2C_SPEED		400000 /* I2C speed and slave address */
 #define CONFIG_SYS_I2C_SLAVE		0x7F
 

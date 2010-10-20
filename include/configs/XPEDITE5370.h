@@ -38,6 +38,10 @@
 #define CONFIG_SYS_BOARD_NAME	"XPedite5370"
 #define CONFIG_BOARD_EARLY_INIT_R	/* Call board_pre_init */
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xfff80000
+#endif
+
 #define CONFIG_PCI		1	/* Enable PCI/PCIE */
 #define CONFIG_PCI_PNP		1	/* do pci plug-and-play */
 #define CONFIG_PCI_SCAN_SHOW	1	/* show pci devices on startup */
@@ -47,6 +51,7 @@
 #define CONFIG_SYS_PCI_64BIT	1	/* enable 64-bit PCI resources */
 #define CONFIG_FSL_PCIE_RESET	1	/* need PCIe reset errata */
 #define CONFIG_FSL_LAW		1	/* Use common FSL init code */
+#define CONFIG_FSL_ELBC		1
 
 /*
  * Multicore config
@@ -98,8 +103,6 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_SYS_CCSRBAR		0xef000000	/* relocated CCSRBAR */
 #define CONFIG_SYS_CCSRBAR_PHYS	CONFIG_SYS_CCSRBAR	/* physical addr of CCSRBAR */
 #define CONFIG_SYS_IMMR		CONFIG_SYS_CCSRBAR	/* PQII uses CONFIG_SYS_IMMR */
-#define CONFIG_SYS_PCIE1_ADDR		(CONFIG_SYS_CCSRBAR + 0xa000)
-#define CONFIG_SYS_PCIE2_ADDR		(CONFIG_SYS_CCSRBAR + 0x9000)
 
 /*
  * Diagnostics
@@ -152,7 +155,7 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 #define CONFIG_SYS_FLASH_AUTOPROTECT_LIST	{ {0xfff40000, 0xc0000}, \
 						  {0xf7f40000, 0xc0000} }
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 
 /*
  * Chip select configuration
@@ -396,6 +399,7 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_SAVEENV
 #define CONFIG_CMD_SNTP
+#define CONFIG_CMD_REGINFO
 
 /*
  * Miscellaneous configurable options
@@ -409,6 +413,7 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
 #define CONFIG_SYS_HZ		1000		/* decrementer freq: 1ms ticks */
 #define CONFIG_CMDLINE_EDITING	1		/* add command line history	*/
+#define CONFIG_AUTO_COMPLETE	1		/* add autocompletion support */
 #define CONFIG_LOADADDR		0x1000000	/* default location for tftp and bootm */
 #define CONFIG_BOOTDELAY	3		/* -1 disables auto-boot */
 #define CONFIG_PANIC_HANG			/* do not reset board on panic */
@@ -424,12 +429,6 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
  */
 #define CONFIG_SYS_BOOTMAPSZ	(16 << 20)	/* Initial Memory map for Linux*/
 #define CONFIG_SYS_BOOTM_LEN	(16 << 20)	/* Increase max gunzip size */
-
-/*
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM		0x02		/* Software reboot */
 
 /*
  * Environment Configuration

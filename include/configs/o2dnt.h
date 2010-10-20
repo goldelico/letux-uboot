@@ -32,10 +32,9 @@
 #define CONFIG_MPC5200
 #define CONFIG_O2DNT		1	/* ... on O2DNT board */
 
-#define CONFIG_SYS_MPC5XXX_CLKIN	33000000 /* ... running at 33.000000MHz */
+#define	CONFIG_SYS_TEXT_BASE	0xFF000000	/* boot low for 16 MiB boards */
 
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH  */
-#define BOOTFLAG_WARM		0x02	/* Software reboot	     */
+#define CONFIG_SYS_MPC5XXX_CLKIN	33000000 /* ... running at 33.000000MHz */
 
 #define CONFIG_HIGH_BATS	1	/* High BATs supported */
 
@@ -102,10 +101,10 @@
 #define CONFIG_CMD_PCI
 
 
-#if (TEXT_BASE == 0xFF000000)		/* Boot low with 16 MB Flash */
+#if (CONFIG_SYS_TEXT_BASE == 0xFF000000)		/* Boot low with 16 MB Flash */
 #   define CONFIG_SYS_LOWBOOT		1
 #else
-#   error "TEXT_BASE must be 0xFF000000"
+#   error "CONFIG_SYS_TEXT_BASE must be 0xFF000000"
 #endif
 
 /*
@@ -138,7 +137,6 @@
 
 #define CONFIG_BOOTCOMMAND	"run flash_self"
 
-#if defined(CONFIG_MPC5200)
 /*
  * IPB Bus clocking configuration.
  */
@@ -153,7 +151,6 @@
  *  of 66 MHz yet hasn't been tested with a IPB Bus Clock of 66 MHz.
  */
 #define CONFIG_SYS_PCICLK_EQUALS_IPBCLK_DIV2	/* define for 66MHz speed */
-#endif
 #endif
 
 /*
@@ -224,7 +221,7 @@
 #define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(192 << 10)	/* Reserve 192 kB for Monitor	*/
 #define CONFIG_SYS_MALLOC_LEN		(128 << 10)	/* Reserve 128 kB for malloc()	*/
 #define CONFIG_SYS_BOOTMAPSZ		(8 << 20)	/* Initial Memory map for Linux */
@@ -276,13 +273,8 @@
 /*
  * Various low-level settings
  */
-#if defined(CONFIG_MPC5200)
 #define CONFIG_SYS_HID0_INIT		HID0_ICE | HID0_ICFI
 #define CONFIG_SYS_HID0_FINAL		HID0_ICE
-#else
-#define CONFIG_SYS_HID0_INIT		0
-#define CONFIG_SYS_HID0_FINAL		0
-#endif
 
 #define CONFIG_SYS_BOOTCS_START	CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_BOOTCS_SIZE		CONFIG_SYS_FLASH_SIZE

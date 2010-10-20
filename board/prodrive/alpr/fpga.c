@@ -30,8 +30,8 @@
 #include <altera.h>
 #include <ACEX1K.h>
 #include <command.h>
-#include <asm-ppc/processor.h>
-#include <ppc440.h>
+#include <asm/processor.h>
+#include <asm/ppc440.h>
 #include "fpga.h"
 
 DECLARE_GLOBAL_DATA_PTR;

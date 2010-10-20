@@ -41,6 +41,8 @@
 #define CONFIG_EVB64260		1	/* this is an EVB64260 board	*/
 #define CONFIG_ZUMA_V2		1	/* always define this for ZUMA v2 */
 
+#define	CONFIG_SYS_TEXT_BASE	0xfff00000
+
 /* #define CONFIG_ZUMA_V2_OLD	1 */	/* backwards compat for old V2 board */
 
 #define CONFIG_BAUDRATE		38400	/* console baudrate = 38400	*/
@@ -164,9 +166,7 @@
 
 #define CONFIG_SYS_HZ			1000		/* decr freq: 1ms ticks */
 
-#define CONFIG_SYS_BUS_HZ		133000000	/* 133 MHz		*/
-
-#define CONFIG_SYS_BUS_CLK		CONFIG_SYS_BUS_HZ
+#define CONFIG_SYS_BUS_CLK		133000000	/* 133 MHz		*/
 
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200, 230400 }
 
@@ -388,13 +388,5 @@
  * Galileo I2C driver
  */
 #define CONFIG_GT_I2C
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02		/* Software reboot		    */
 
 #endif	/* __CONFIG_H */

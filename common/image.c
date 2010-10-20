@@ -60,7 +60,7 @@ static int fit_check_ramdisk (const void *fit, int os_noffset,
 #endif
 
 #ifdef CONFIG_CMD_BDI
-extern int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+extern int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -84,7 +84,6 @@ static table_entry_t uimage_arch[] = {
 	{	IH_ARCH_MICROBLAZE,	"microblaze",	"MicroBlaze",	},
 	{	IH_ARCH_MIPS,		"mips",		"MIPS",		},
 	{	IH_ARCH_MIPS64,		"mips64",	"MIPS 64 Bit",	},
-	{	IH_ARCH_NIOS,		"nios",		"NIOS",		},
 	{	IH_ARCH_NIOS2,		"nios2",	"NIOS II",	},
 	{	IH_ARCH_PPC,		"powerpc",	"PowerPC",	},
 	{	IH_ARCH_PPC,		"ppc",		"PowerPC",	},
@@ -104,6 +103,7 @@ static table_entry_t uimage_os[] = {
 	{	IH_OS_LYNXOS,	"lynxos",	"LynxOS",		},
 #endif
 	{	IH_OS_NETBSD,	"netbsd",	"NetBSD",		},
+	{	IH_OS_OSE,	"ose",		"Enea OSE",		},
 	{	IH_OS_RTEMS,	"rtems",	"RTEMS",		},
 	{	IH_OS_U_BOOT,	"u-boot",	"U-Boot",		},
 #if defined(CONFIG_CMD_ELF) || defined(USE_HOSTCC)
@@ -434,22 +434,31 @@ ulong getenv_bootm_low(void)
 
 phys_size_t getenv_bootm_size(void)
 {
+	phys_size_t tmp;
 	char *s = getenv ("bootm_size");
 	if (s) {
-		phys_size_t tmp;
 		tmp = (phys_size_t)simple_strtoull (s, NULL, 16);
 		return tmp;
 	}
+	s = getenv("bootm_low");
+	if (s)
+		tmp = (phys_size_t)simple_strtoull (s, NULL, 16);
+	else
+		tmp = 0;
+
 
 #if defined(CONFIG_ARM)
-	return gd->bd->bi_dram[0].size;
+	return gd->bd->bi_dram[0].size - tmp;
 #else
-	return gd->bd->bi_memsize;
+	return gd->bd->bi_memsize - tmp;
 #endif
 }
 
 void memmove_wd (void *to, void *from, size_t len, ulong chunksz)
 {
+	if (to == from)
+		return;
+
 #if defined(CONFIG_HW_WATCHDOG) || defined(CONFIG_WATCHDOG)
 	while (len > 0) {
 		size_t tail = (len > chunksz) ? chunksz : len;
@@ -754,7 +763,7 @@ int genimg_has_config (bootm_headers_t *images)
  *     1, if ramdisk image is found but corrupted, or invalid
  *     rd_start and rd_end are set to 0 if no ramdisk exists
  */
-int boot_get_ramdisk (int argc, char *argv[], bootm_headers_t *images,
+int boot_get_ramdisk (int argc, char * const argv[], bootm_headers_t *images,
 		uint8_t arch, ulong *rd_start, ulong *rd_end)
 {
 	ulong rd_addr, rd_load;
@@ -983,7 +992,7 @@ int boot_get_ramdisk (int argc, char *argv[], bootm_headers_t *images,
 	return 0;
 }
 
-#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_SPARC)
+#ifdef CONFIG_SYS_BOOT_RAMDISK_HIGH
 /**
  * boot_ramdisk_high - relocate init ramdisk
  * @lmb: pointer to lmb handle, will be used for memory mgmt
@@ -1072,7 +1081,7 @@ int boot_ramdisk_high (struct lmb *lmb, ulong rd_data, ulong rd_len,
 error:
 	return -1;
 }
-#endif /* defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_SPARC) */
+#endif /* CONFIG_SYS_BOOT_RAMDISK_HIGH */
 
 #ifdef CONFIG_OF_LIBFDT
 static void fdt_error (const char *msg)
@@ -1176,6 +1185,7 @@ static int fit_check_fdt (const void *fit, int fdt_noffset, int verify)
  *      0 - success
  *      1 - failure
  */
+#if defined(CONFIG_SYS_BOOTMAPSZ)
 int boot_relocate_fdt (struct lmb *lmb, ulong bootmap_base,
 		char **of_flat_tree, ulong *of_size)
 {
@@ -1242,7 +1252,7 @@ int boot_relocate_fdt (struct lmb *lmb, ulong bootmap_base,
 		*of_size = of_len;
 	} else {
 		*of_flat_tree = fdt_blob;
-		of_len = (CONFIG_SYS_BOOTMAPSZ + bootmap_base) - (ulong)fdt_blob;
+		of_len = *of_size + CONFIG_SYS_FDT_PAD;
 		lmb_reserve(lmb, (ulong)fdt_blob, of_len);
 		fdt_set_totalsize(*of_flat_tree, of_len);
 
@@ -1255,6 +1265,7 @@ int boot_relocate_fdt (struct lmb *lmb, ulong bootmap_base,
 error:
 	return 1;
 }
+#endif /* CONFIG_SYS_BOOTMAPSZ */
 
 /**
  * boot_get_fdt - main fdt handling routine
@@ -1277,7 +1288,7 @@ error:
  *     1, if fdt image is found but corrupted
  *     of_flat_tree and of_size are set to 0 if no fdt exists
  */
-int boot_get_fdt (int flag, int argc, char *argv[], bootm_headers_t *images,
+int boot_get_fdt (int flag, int argc, char * const argv[], bootm_headers_t *images,
 		char **of_flat_tree, ulong *of_size)
 {
 	const image_header_t *fdt_hdr;
@@ -1550,7 +1561,7 @@ int boot_get_fdt (int flag, int argc, char *argv[], bootm_headers_t *images,
 				goto error;
 			}
 
-			if (be32_to_cpu (fdt_totalsize (fdt_blob)) != fdt_len) {
+			if (fdt_totalsize(fdt_blob) != fdt_len) {
 				fdt_error ("fdt size != image size");
 				goto error;
 			}
@@ -1564,7 +1575,7 @@ int boot_get_fdt (int flag, int argc, char *argv[], bootm_headers_t *images,
 	}
 
 	*of_flat_tree = fdt_blob;
-	*of_size = be32_to_cpu (fdt_totalsize (fdt_blob));
+	*of_size = fdt_totalsize(fdt_blob);
 	debug ("   of_flat_tree at 0x%08lx size 0x%08lx\n",
 			(ulong)*of_flat_tree, *of_size);
 
@@ -1577,7 +1588,7 @@ error:
 }
 #endif /* CONFIG_OF_LIBFDT */
 
-#if defined(CONFIG_PPC) || defined(CONFIG_M68K)
+#ifdef CONFIG_SYS_BOOT_GET_CMDLINE
 /**
  * boot_get_cmdline - allocate and initialize kernel cmdline
  * @lmb: pointer to lmb handle, will be used for memory mgmt
@@ -1619,7 +1630,9 @@ int boot_get_cmdline (struct lmb *lmb, ulong *cmd_start, ulong *cmd_end,
 
 	return 0;
 }
+#endif /* CONFIG_SYS_BOOT_GET_CMDLINE */
 
+#ifdef CONFIG_SYS_BOOT_GET_KBD
 /**
  * boot_get_kbd - allocate and initialize kernel copy of board info
  * @lmb: pointer to lmb handle, will be used for memory mgmt
@@ -1652,7 +1665,7 @@ int boot_get_kbd (struct lmb *lmb, bd_t **kbd, ulong bootmap_base)
 
 	return 0;
 }
-#endif /* CONFIG_PPC || CONFIG_M68K */
+#endif /* CONFIG_SYS_BOOT_GET_KBD */
 #endif /* !USE_HOSTCC */
 
 #if defined(CONFIG_FIT)

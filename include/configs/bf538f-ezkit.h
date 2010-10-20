@@ -11,7 +11,6 @@
 /*
  * Processor Settings
  */
-#define CONFIG_BFIN_CPU             bf538-0.4
 #define CONFIG_BFIN_BOOT_MODE       BFIN_BOOT_BYPASS
 
 
@@ -86,10 +85,7 @@
 #define CONFIG_ENV_SPI_MAX_HZ	30000000
 #define CONFIG_SF_DEFAULT_SPEED	30000000
 #define CONFIG_SPI_FLASH
-#define CONFIG_SPI_FLASH_ATMEL
-#define CONFIG_SPI_FLASH_SPANSION
-#define CONFIG_SPI_FLASH_STMICRO
-#define CONFIG_SPI_FLASH_WINBOND
+#define CONFIG_SPI_FLASH_ALL
 
 
 /*
@@ -119,11 +115,11 @@
  * it linked after the configuration sector.
  */
 # define LDS_BOARD_TEXT \
-	cpu/blackfin/traps.o		(.text .text.*); \
-	cpu/blackfin/interrupt.o	(.text .text.*); \
-	cpu/blackfin/serial.o		(.text .text.*); \
+	arch/blackfin/cpu/traps.o		(.text .text.*); \
+	arch/blackfin/cpu/interrupt.o	(.text .text.*); \
+	arch/blackfin/cpu/serial.o		(.text .text.*); \
 	common/dlmalloc.o		(.text .text.*); \
-	lib_generic/crc32.o		(.text .text.*); \
+	lib/crc32.o		(.text .text.*); \
 	. = DEFINED(env_offset) ? env_offset : .; \
 	common/env_embedded.o		(.text .text.*);
 #endif
@@ -134,8 +130,6 @@
  */
 #define CONFIG_BFIN_TWI_I2C	1
 #define CONFIG_HARD_I2C		1
-#define CONFIG_SYS_I2C_SPEED	50000
-#define CONFIG_SYS_I2C_SLAVE	0
 
 
 /*

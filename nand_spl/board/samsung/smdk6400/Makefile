@@ -30,7 +30,7 @@ include $(TOPDIR)/config.mk
 include $(TOPDIR)/nand_spl/board/$(BOARDDIR)/config.mk
 
 LDSCRIPT= $(TOPDIR)/nand_spl/board/$(BOARDDIR)/u-boot.lds
-LDFLAGS	= -Bstatic -T $(nandobj)u-boot.lds -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
+LDFLAGS	= -Bstatic -T $(nandobj)u-boot.lds -Ttext $(CONFIG_SYS_TEXT_BASE) $(PLATFORM_LDFLAGS)
 AFLAGS	+= -DCONFIG_NAND_SPL
 CFLAGS	+= -DCONFIG_NAND_SPL
 
@@ -67,12 +67,12 @@ $(nandobj)u-boot.lds: $(LDSCRIPT)
 # from cpu directory
 $(obj)start.S:
 	@rm -f $@
-	@ln -s $(TOPDIR)/cpu/arm1176/start.S $@
+	@ln -s $(TOPDIR)/arch/arm/cpu/arm1176/start.S $@
 
 # from SoC directory
 $(obj)cpu_init.S:
 	@rm -f $@
-	@ln -s $(TOPDIR)/cpu/arm1176/s3c64xx/cpu_init.S $@
+	@ln -s $(TOPDIR)/arch/arm/cpu/arm1176/s3c64xx/cpu_init.S $@
 
 # from board directory
 $(obj)lowlevel_init.S:

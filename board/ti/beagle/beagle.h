@@ -35,7 +35,10 @@ const omap3_sysinfo sysinfo = {
 #endif
 };
 
+<<<<<<< HEAD
 #define BOARD_REVISION_MASK	(0x1 << 11)
+=======
+>>>>>>> 11c8dd36edcc82564a19dbd0103302df66d66db0
 /* BeagleBoard revisions */
 #define REVISION_AXBX	0x7
 #define REVISION_CX	0x6
@@ -389,10 +392,17 @@ const omap3_sysinfo sysinfo = {
 	MUX_VAL(CP(UART2_TX),		(IDIS | PTD | DIS | M0)) /*UART2_TX*/
 
 #define MUX_BEAGLE_XM() \
+<<<<<<< HEAD
 	MUX_VAL(CP(GPMC_NCS5),		(IDIS | PTD | EN  | M4)) /*GPIO_56 - USB HUB reset*/\
 	MUX_VAL(CP(GPMC_WAIT0),		(IDIS | PTU | EN  | M4)) /*GPIO_63 - P8 USB HUB nreset*/\
 	MUX_VAL(CP(MMC1_DAT7),		(IDIS | PTU | EN  | M4)) /*GPIO_129 - DVI enable*/\
 	MUX_VAL(CP(HDQ_SIO),		(IDIS | PTU | EN  | M4)) /*GPIO_170 - P8 DVI enable*/\
+=======
+	MUX_VAL(CP(GPMC_NCS5),		(IDIS | PTD | EN  | M4)) /*GPIO_56*/\
+	MUX_VAL(CP(GPMC_WAIT0),		(IDIS | PTU | EN  | M4)) /*GPIO_63*/\
+	MUX_VAL(CP(MMC1_DAT7),		(IDIS | PTU | EN  | M4)) /*GPIO_129*/\
+	MUX_VAL(CP(HDQ_SIO),		(IDIS | PTU | EN  | M4)) /*GPIO_170*/\
+>>>>>>> 11c8dd36edcc82564a19dbd0103302df66d66db0
 	MUX_VAL(CP(MCBSP3_DX),		(IEN  | PTD | DIS | M4)) /*GPIO_140*/\
 	MUX_VAL(CP(MCBSP3_DR),		(IEN  | PTD | DIS | M4)) /*GPIO_142*/\
 	MUX_VAL(CP(MCBSP3_CLKX),	(IEN  | PTD | DIS | M4)) /*GPIO_141*/\
@@ -416,6 +426,7 @@ const omap3_sysinfo sysinfo = {
 	MUX_VAL(CP(SYS_BOOT3),		(IDIS | PTD | DIS | M3)) /*DSS_DATA20*/\
 	MUX_VAL(CP(SYS_BOOT4),		(IDIS | PTD | DIS | M3)) /*DSS_DATA21*/\
 	MUX_VAL(CP(SYS_BOOT5),		(IDIS | PTD | DIS | M3)) /*DSS_DATA22*/\
+<<<<<<< HEAD
 	MUX_VAL(CP(SYS_BOOT6),		(IDIS | PTD | DIS | M3)) /*DSS_DATA23*/ 
 
 #define MUX_TINCANTOOLS_ZIPPY() \
@@ -531,5 +542,8 @@ static const struct panel_config dvid_cfg = {
 	.load_mode	= 0x02, /* Frame Mode */
 	.panel_color	= DVI_BEAGLE_ORANGE_COL /* ORANGE */
 };
+=======
+	MUX_VAL(CP(SYS_BOOT6),		(IDIS | PTD | DIS | M3)) /*DSS_DATA23*/
+>>>>>>> 11c8dd36edcc82564a19dbd0103302df66d66db0
 
 #endif

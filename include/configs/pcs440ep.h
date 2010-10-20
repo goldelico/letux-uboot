@@ -40,6 +40,9 @@
 #define CONFIG_440EP		1	/* Specific PPC440EP support    */
 #define CONFIG_440		1	/* ... PPC440 family	        */
 #define CONFIG_4xx		1	/* ... PPC4xx family	        */
+
+#define	CONFIG_SYS_TEXT_BASE	0xFFFA0000
+
 #define CONFIG_SYS_CLK_FREQ	33333333    /* external freq to pll	*/
 
 #define CONFIG_BOARD_EARLY_INIT_F 1     /* Call board_early_init_f	*/
@@ -60,7 +63,6 @@
 #define CONFIG_SYS_PCI_MEMBASE3        CONFIG_SYS_PCI_MEMBASE2 + 0x10000000
 
 /*Don't change either of these*/
-#define CONFIG_SYS_PERIPHERAL_BASE     0xef600000	    /* internal peripherals*/
 #define CONFIG_SYS_PCI_BASE	        0xe0000000	    /* internal PCI regs*/
 /*Don't change either of these*/
 
@@ -80,11 +82,14 @@
 /*-----------------------------------------------------------------------
  * Serial Port
  *----------------------------------------------------------------------*/
+#define CONFIG_CONS_INDEX	1	/* Use UART0			*/
+#define CONFIG_SYS_NS16550
+#define CONFIG_SYS_NS16550_SERIAL
+#define CONFIG_SYS_NS16550_REG_SIZE	1
+#define CONFIG_SYS_NS16550_CLK		get_serial_clock()
 #undef CONFIG_SYS_EXT_SERIAL_CLOCK		/* no external clk used		*/
 #define CONFIG_BAUDRATE		115200
 #define CONFIG_SERIAL_MULTI     1
-/*define this if you want console on UART1*/
-#undef CONFIG_UART1_CONSOLE
 
 #define CONFIG_SYS_BAUDRATE_TABLE  \
     {300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200}
@@ -138,6 +143,7 @@
  *----------------------------------------------------------------------*/
 #define CONFIG_HARD_I2C		1	    /* I2C with hardware support	*/
 #undef	CONFIG_SOFT_I2C			    /* I2C bit-banged		*/
+#define CONFIG_PPC4XX_I2C		/* use PPC4xx driver		*/
 #define CONFIG_SYS_I2C_SPEED		100000	/* I2C speed and slave address	*/
 #define CONFIG_SYS_I2C_SLAVE		0x7F
 
@@ -439,14 +445,6 @@
 {GPIO1_BASE, GPIO_IN,  GPIO_SEL, GPIO_OUT_NO_CHG},  /* GPIO63  Unselect via TraceSelect Bit	*/	\
 }											\
 }
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */

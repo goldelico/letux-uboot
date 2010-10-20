@@ -45,6 +45,8 @@
 #define CONFIG_MPC8544		1
 #define CONFIG_SOCRATES		1
 
+#define	CONFIG_SYS_TEXT_BASE	0xfff80000
+
 #define CONFIG_PCI
 
 #define CONFIG_TSEC_ENET		/* tsec ethernet support	*/
@@ -159,7 +161,7 @@
 #define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms)	*/
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms)	*/
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor	*/
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor	*/
 
 #define CONFIG_SYS_LBC_LCRR		0x00030004    /* LB clock ratio reg	*/
 #define CONFIG_SYS_LBC_LBCR		0x00000000    /* LB config reg		*/
@@ -174,7 +176,7 @@
 #define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
-#define CONFIG_SYS_MONITOR_LEN		(256 * 1024)	/* Reserve 256kB for Mon */
+#define CONFIG_SYS_MONITOR_LEN		(384 * 1024)	/* Reserve 384KiB for Mon */
 #define CONFIG_SYS_MALLOC_LEN		(4 << 20)	/* Reserve 4 MB for malloc */
 
 /* FPGA and NAND */
@@ -218,7 +220,6 @@
 /* Serial Port */
 
 #define CONFIG_CONS_INDEX     1
-#undef	CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
@@ -233,6 +234,7 @@
 	{300, 600, 1200, 2400, 4800, 9600, 19200, 38400,115200}
 
 #define CONFIG_CMDLINE_EDITING	1	/* add command line history	*/
+#define CONFIG_AUTO_COMPLETE	1	/* add autocompletion support */
 #define CONFIG_SYS_HUSH_PARSER		1	/* Use the HUSH parser		*/
 #ifdef	CONFIG_SYS_HUSH_PARSER
 #define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
@@ -342,19 +344,20 @@
  */
 #include <config_cmd_default.h>
 
+#define CONFIG_CMD_BMP
 #define CONFIG_CMD_DATE
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_DTT
 #undef CONFIG_CMD_EEPROM
+#define CONFIG_CMD_EXT2		/* EXT2 Support			*/
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_SDRAM
 #define CONFIG_CMD_MII
-#define CONFIG_CMD_NFS
+#undef CONFIG_CMD_NFS
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_SNTP
 #define CONFIG_CMD_USB
-#define CONFIG_CMD_EXT2		/* EXT2 Support			*/
-#define CONFIG_CMD_BMP
+#define CONFIG_CMD_REGINFO
 
 #if defined(CONFIG_PCI)
     #define CONFIG_CMD_PCI
@@ -386,14 +389,6 @@
  * the maximum mapped by the Linux kernel during initialization.
  */
 #define CONFIG_SYS_BOOTMAPSZ	(8 << 20)	/* Initial Memory map for Linux	*/
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot		*/
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port*/

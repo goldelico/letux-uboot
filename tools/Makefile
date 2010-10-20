@@ -41,6 +41,7 @@ include $(TOPDIR)/config.mk
 # Enable all the config-independent tools
 ifneq ($(HOST_TOOLS_ALL),)
 CONFIG_LCD_LOGO = y
+CONFIG_CMD_LOADS = y
 CONFIG_CMD_NET = y
 CONFIG_INCA_IP = y
 CONFIG_NETCONSOLE = y
@@ -68,9 +69,9 @@ BIN_FILES-$(CONFIG_SHA1_CHECK_UB_IMG) += ubsha1$(SFX)
 # Source files which exist outside the tools directory
 EXT_OBJ_FILES-y += common/env_embedded.o
 EXT_OBJ_FILES-y += common/image.o
-EXT_OBJ_FILES-y += lib_generic/crc32.o
-EXT_OBJ_FILES-y += lib_generic/md5.o
-EXT_OBJ_FILES-y += lib_generic/sha1.o
+EXT_OBJ_FILES-y += lib/crc32.o
+EXT_OBJ_FILES-y += lib/md5.o
+EXT_OBJ_FILES-y += lib/sha1.o
 
 # Source files located in the tools directory
 OBJ_FILES-$(CONFIG_LCD_LOGO) += bmp_logo.o
@@ -115,14 +116,20 @@ endif
 ifeq ($(VENDOR),esd)
 LOGO_BMP= logos/esd.bmp
 endif
+ifeq ($(VENDOR),freescale)
+LOGO_BMP= logos/freescale.bmp
+endif
 ifeq ($(VENDOR),ronetix)
 LOGO_BMP= logos/ronetix.bmp
+endif
+ifeq ($(VENDOR),syteco)
+LOGO_BMP= logos/syteco.bmp
 endif
 
 # now $(obj) is defined
 HOSTSRCS += $(addprefix $(SRCTREE)/,$(EXT_OBJ_FILES-y:.o=.c))
 HOSTSRCS += $(addprefix $(SRCTREE)/tools/,$(OBJ_FILES-y:.o=.c))
-HOSTSRCS += $(addprefix $(SRCTREE)/libfdt/,$(LIBFDT_OBJ_FILES-y:.o=.c))
+HOSTSRCS += $(addprefix $(SRCTREE)/lib/libfdt/,$(LIBFDT_OBJ_FILES-y:.o=.c))
 BINS	:= $(addprefix $(obj),$(sort $(BIN_FILES-y)))
 LIBFDT_OBJS	:= $(addprefix $(obj),$(LIBFDT_OBJ_FILES-y))
 
@@ -136,9 +143,10 @@ NOPEDOBJS := $(addprefix $(obj),$(NOPED_OBJ_FILES-y))
 HOSTCPPFLAGS =	-idirafter $(SRCTREE)/include \
 		-idirafter $(OBJTREE)/include2 \
 		-idirafter $(OBJTREE)/include \
-	        -I $(SRCTREE)/libfdt \
+	        -I $(SRCTREE)/lib/libfdt \
 		-I $(SRCTREE)/tools \
-		-DTEXT_BASE=$(TEXT_BASE) -DUSE_HOSTCC \
+		-DCONFIG_SYS_TEXT_BASE=$(CONFIG_SYS_TEXT_BASE) \
+		-DUSE_HOSTCC \
 		-D__KERNEL_STRICT_NAMES
 
 
@@ -196,10 +204,10 @@ $(obj)ubsha1$(SFX):	$(obj)os_support.o $(obj)sha1.o $(obj)ubsha1.o
 $(obj)%.o: $(SRCTREE)/common/%.c
 	$(HOSTCC) -g $(HOSTCFLAGS_NOPED) -c -o $@ $<
 
-$(obj)%.o: $(SRCTREE)/lib_generic/%.c
+$(obj)%.o: $(SRCTREE)/lib/%.c
 	$(HOSTCC) -g $(HOSTCFLAGS) -c -o $@ $<
 
-$(obj)%.o: $(SRCTREE)/libfdt/%.c
+$(obj)%.o: $(SRCTREE)/lib/libfdt/%.c
 	$(HOSTCC) -g $(HOSTCFLAGS_NOPED) -c -o $@ $<
 
 subdirs:

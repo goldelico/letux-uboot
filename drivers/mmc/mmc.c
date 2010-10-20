@@ -92,6 +92,11 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 
 	blklen = mmc->write_bl_len;
 
+	if ((start + blkcnt) > mmc->block_dev.lba) {
+		printf("MMC: block number 0x%lx exceeds max(0x%lx)",
+			start + blkcnt, mmc->block_dev.lba);
+		return 0;
+	}
 	err = mmc_set_blocklen(mmc, mmc->write_bl_len);
 
 	if (err) {
@@ -219,6 +224,11 @@ static ulong mmc_bread(int dev_num, ulong start, lbaint_t blkcnt, void *dst)
 	if (!mmc)
 		return 0;
 
+	if ((start + blkcnt) > mmc->block_dev.lba) {
+		printf("MMC: block number 0x%lx exceeds max(0x%lx)",
+			start + blkcnt, mmc->block_dev.lba);
+		return 0;
+	}
 	/* We always do full block reads from the card */
 	err = mmc_set_blocklen(mmc, mmc->read_bl_len);
 
@@ -617,6 +627,7 @@ int mmc_startup(struct mmc *mmc)
 	uint mult, freq;
 	u64 cmult, csize;
 	struct mmc_cmd cmd;
+	char ext_csd[512];
 
 	/* Put the Card in Identify Mode */
 	cmd.cmdidx = MMC_CMD_ALL_SEND_CID;
@@ -731,6 +742,16 @@ int mmc_startup(struct mmc *mmc)
 
 	if (err)
 		return err;
+
+	if (!IS_SD(mmc) && (mmc->version >= MMC_VERSION_4)) {
+		/* check  ext_csd version and capacity */
+		err = mmc_send_ext_csd(mmc, ext_csd);
+		if (!err & (ext_csd[192] >= 2)) {
+			mmc->capacity = ext_csd[212] << 0 | ext_csd[213] << 8 |
+					ext_csd[214] << 16 | ext_csd[215] << 24;
+			mmc->capacity *= 512;
+		}
+	}
 
 	if (IS_SD(mmc))
 		err = sd_change_freq(mmc);

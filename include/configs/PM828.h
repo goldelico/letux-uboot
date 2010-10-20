@@ -39,6 +39,10 @@
 #define CONFIG_PM828		1	/* ...on a PM828 module */
 #define CONFIG_CPM2		1	/* Has a CPM2 */
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0x40000000	/* Standard: boot 64-bit flash */
+#endif
+
 #undef CONFIG_DB_CR826_J30x_ON		/* J30x jumpers on D.B. carrier */
 
 #define CONFIG_BOOTDELAY	5	/* autoboot after 5 seconds	*/
@@ -298,7 +302,7 @@
  */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 #define CONFIG_SYS_FLASH_BASE		CONFIG_SYS_FLASH0_BASE
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* Reserve 256 kB for Monitor */
 #define CONFIG_SYS_MALLOC_LEN		(128 << 10)	/* Reserve 128 kB for malloc()*/
 
@@ -311,15 +315,6 @@
 #define CONFIG_EEPRO100
 #define CONFIG_SYS_RX_ETH_BUFFER	8		/* use 8 rx buffer on eepro100	*/
 #endif
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH*/
-#define BOOTFLAG_WARM		0x02	/* Software reboot		   */
-
 
 /*-----------------------------------------------------------------------
  * Cache Configuration

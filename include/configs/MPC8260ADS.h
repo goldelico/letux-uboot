@@ -48,12 +48,16 @@
 
 #define CONFIG_MPC8260ADS	1	/* Motorola PQ2 ADS family board */
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFFF00000	/* Standard: boot high */
+#endif
+
 #define CONFIG_CPM2		1	/* Has a CPM2 */
 
 /*
  * Figure out if we are booting low via flash HRCW or high via the BCSR.
  */
-#if (TEXT_BASE != 0xFFF00000)		/* Boot low (flash HRCW) */
+#if (CONFIG_SYS_TEXT_BASE != 0xFFF00000)		/* Boot low (flash HRCW) */
 #   define CONFIG_SYS_LOWBOOT		1
 #endif
 
@@ -373,10 +377,8 @@
 #define CONFIG_SYS_HRCW_SLAVE6 0
 #define CONFIG_SYS_HRCW_SLAVE7 0
 
-#define BOOTFLAG_COLD	0x01	/* Normal Power-On: Boot from FLASH  */
-#define BOOTFLAG_WARM	0x02	/* Software reboot	     */
+#define CONFIG_SYS_MONITOR_BASE    CONFIG_SYS_TEXT_BASE
 
-#define CONFIG_SYS_MONITOR_BASE    TEXT_BASE
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #   define CONFIG_SYS_RAMBOOT
 #endif
@@ -537,11 +539,11 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"netdev=" MK_STR(CONFIG_NETDEV) "\0"				\
 	"tftpflash=tftpboot $loadaddr $uboot; "				\
-		"protect off " MK_STR(TEXT_BASE) " +$filesize; "	\
-		"erase " MK_STR(TEXT_BASE) " +$filesize; "		\
-		"cp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize; "	\
-		"protect on " MK_STR(TEXT_BASE) " +$filesize; "		\
-		"cmp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize\0"	\
+		"protect off " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
+		"erase " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
+		"cp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize; "	\
+		"protect on " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
+		"cmp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize\0"	\
 	"fdtaddr=400000\0"						\
 	"console=ttyCPM0\0"						\
 	"setbootargs=setenv bootargs "					\

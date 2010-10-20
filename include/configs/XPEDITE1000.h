@@ -39,6 +39,8 @@
 #define CONFIG_BOARD_EARLY_INIT_F 1		/* Call board_pre_init	*/
 #define CONFIG_SYS_CLK_FREQ	33333333	/* external freq to pll */
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF80000
+
 /*
  * DDR config
  */
@@ -52,9 +54,8 @@
  */
 #define CONFIG_SYS_SDRAM_BASE		0x00000000
 #define CONFIG_SYS_FLASH_BASE		0xff000000	/* start of FLASH */
-#define CONFIG_SYS_MONITOR_BASE		TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE	/* start of monitor */
 #define CONFIG_SYS_PCI_MEMBASE		0x80000000	/* mapped pci memory */
-#define CONFIG_SYS_PERIPHERAL_BASE	0xe0000000	/* internal peripherals */
 #define CONFIG_SYS_ISRAM_BASE		0xc0000000	/* internal SRAM */
 #define CONFIG_SYS_PCI_BASE		0xd0000000	/* internal PCI regs */
 #define CONFIG_SYS_NVRAM_BASE_ADDR	(CONFIG_SYS_PERIPHERAL_BASE + 0x08000000)
@@ -103,8 +104,7 @@ extern void out32(unsigned int, unsigned long);
 #define CONFIG_SYS_INIT_RAM_END		0x2000	/* End of used area in RAM */
 #define CONFIG_SYS_GBL_DATA_SIZE	128	/* num bytes initial data */
 #define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
-#define CONFIG_SYS_POST_WORD_ADDR	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
-#define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_POST_WORD_ADDR
+#define CONFIG_SYS_INIT_SP_OFFSET	(CONFIG_SYS_GBL_DATA_OFFSET - 0x4)
 
 #define CONFIG_SYS_MONITOR_LEN	(512 * 1024)	/* Reserve 512 KB for Mon */
 #define CONFIG_SYS_MALLOC_LEN	(1024 * 1024)	/* Reserved for malloc */
@@ -112,6 +112,12 @@ extern void out32(unsigned int, unsigned long);
 /*
  * Serial Port
  */
+#define CONFIG_CONS_INDEX	1	/* Use UART0			*/
+#define CONFIG_SYS_NS16550
+#define CONFIG_SYS_NS16550_SERIAL
+#define CONFIG_SYS_NS16550_REG_SIZE	1
+#define CONFIG_SYS_NS16550_CLK		get_serial_clock()
+
 #define CONFIG_SYS_BAUDRATE_TABLE \
 	{300, 600, 1200, 2400, 4800, 9600, 19200, 38400}
 #define CONFIG_BAUDRATE			115200
@@ -141,6 +147,7 @@ extern void out32(unsigned int, unsigned long);
  * I2C
  */
 #define CONFIG_HARD_I2C			1	/* I2C with hardware support */
+#define CONFIG_PPC4XX_I2C		/* use PPC4xx driver		*/
 #define CONFIG_SYS_I2C_SPEED		400000	/* I2C speed and slave address */
 #define CONFIG_SYS_I2C_SLAVE		0x7f
 #define CONFIG_I2C_MULTI_BUS
@@ -242,12 +249,6 @@ extern void out32(unsigned int, unsigned long);
 #define CONFIG_SYS_BOOTMAPSZ		(8 << 20)	/* Initial Memory map for Linux */
 
 /*
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02		/* Software reboot */
-
-/*
  * Environment Configuration
  */
 #define CONFIG_ENV_IS_IN_FLASH	1
@@ -264,7 +265,7 @@ extern void out32(unsigned int, unsigned long);
  * ff000000 - ffbfffff	OS Use/Filesystem (12MB)
  */
 
-#define CONFIG_UBOOT_ENV_ADDR	MK_STR(TEXT_BASE)
+#define CONFIG_UBOOT_ENV_ADDR	MK_STR(CONFIG_SYS_TEXT_BASE)
 #define CONFIG_FDT_ENV_ADDR	MK_STR(0xfff00000)
 #define CONFIG_OS_ENV_ADDR	MK_STR(0xffc00000)
 

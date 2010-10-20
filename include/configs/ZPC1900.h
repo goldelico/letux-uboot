@@ -29,6 +29,9 @@
 
 #define CONFIG_MPC8260		1	/* This is an MPC8260 CPU      */
 #define CONFIG_ZPC1900		1	/* ...on Zephyr ZPC.1900 board */
+
+#define	CONFIG_SYS_TEXT_BASE	0xFE000000
+
 #define CPU_ID_STR		"MPC8265"
 #define CONFIG_CPM2		1	/* Has a CPM2 */
 
@@ -212,10 +215,8 @@
 #define CONFIG_SYS_HRCW_SLAVE6		0
 #define CONFIG_SYS_HRCW_SLAVE7		0
 
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM		0x02	/* Software reboot                  */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #define CONFIG_SYS_RAMBOOT
 #endif

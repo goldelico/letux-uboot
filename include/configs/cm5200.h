@@ -31,6 +31,8 @@
 #define CONFIG_MPC5200		1	/* (more precisely an MPC5200 CPU) */
 #define CONFIG_CM5200		1	/* ... on CM5200 platform */
 
+#define	CONFIG_SYS_TEXT_BASE	0xfc000000
+
 #define CONFIG_HIGH_BATS	1	/* High BATs supported */
 
 /*
@@ -169,7 +171,7 @@
 
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(384 << 10)	/* 384 kB for Monitor */
 #define CONFIG_SYS_MALLOC_LEN		(256 << 10)	/* 256 kB for malloc() */
 #define CONFIG_SYS_BOOTMAPSZ		(8 << 20)	/* initial mem map for Linux */
@@ -316,9 +318,6 @@
  */
 #define CONFIG_SYS_HID0_INIT		HID0_ICE | HID0_ICFI
 #define CONFIG_SYS_HID0_FINAL		HID0_ICE
-
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM		0x02	/* Software reboot */
 
 #define CONFIG_SYS_XLB_PIPELINING	1	/* enable transaction pipeling */
 

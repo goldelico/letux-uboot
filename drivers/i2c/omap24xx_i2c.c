@@ -25,6 +25,10 @@
 #include <asm/arch/i2c.h>
 #include <asm/io.h>
 
+#include "omap24xx_i2c.h"
+
+#define I2C_TIMEOUT	10
+
 static void wait_for_bb (void);
 static u16 wait_for_pin (void);
 static void flush_fifo(void);
@@ -36,9 +40,11 @@ static unsigned int current_bus;
 
 void i2c_init (int speed, int slaveadd)
 {
+	DECLARE_GLOBAL_DATA_PTR;
 	int psc, fsscll, fssclh;
 	int hsscll = 0, hssclh = 0;
 	u32 scll, sclh;
+	int timeout = I2C_TIMEOUT;
 
 	/* Only handle standard, fast and high speeds */
 	if ((speed != OMAP_I2C_STANDARD) &&
@@ -100,15 +106,24 @@ void i2c_init (int speed, int slaveadd)
 		sclh = (unsigned int)fssclh;
 	}
 
-	writew(0x2, &i2c_base->sysc); /* for ES2 after soft reset */
-	udelay(1000);
-	writew(0x0, &i2c_base->sysc); /* will probably self clear but */
-
 	if (readw (&i2c_base->con) & I2C_CON_EN) {
 		writew (0, &i2c_base->con);
 		udelay (50000);
 	}
 
+	writew(0x2, &i2c_base->sysc); /* for ES2 after soft reset */
+	udelay(1000);
+
+	writew(I2C_CON_EN, &i2c_base->con);
+	while (!(readw(&i2c_base->syss) & I2C_SYSS_RDONE) && timeout--) {
+		if (timeout <= 0) {
+			printf("ERROR: Timeout in soft-reset\n");
+			return;
+		}
+		udelay(1000);
+	}
+
+	writew(0, &i2c_base->con);
 	writew(psc, &i2c_base->psc);
 	writew(scll, &i2c_base->scll);
 	writew(sclh, &i2c_base->sclh);
@@ -125,7 +140,8 @@ void i2c_init (int speed, int slaveadd)
 	writew (0xFFFF, &i2c_base->stat);
 	writew (0, &i2c_base->cnt);
 
-	bus_initialized[current_bus] = 1;
+	if (gd->flags & GD_FLG_RELOC)
+		bus_initialized[current_bus] = 1;
 }
 
 static int i2c_read_byte (u8 devaddr, u8 regoffset, u8 * value)
@@ -148,7 +164,7 @@ static int i2c_read_byte (u8 devaddr, u8 regoffset, u8 * value)
 	if (status & I2C_STAT_XRDY) {
 		/* Important: have to use byte access */
 		writeb (regoffset, &i2c_base->data);
-		udelay (2000);
+		udelay (20000);
 		if (readw (&i2c_base->stat) & I2C_STAT_NACK) {
 			i2c_error = 1;
 		}
@@ -157,15 +173,14 @@ static int i2c_read_byte (u8 devaddr, u8 regoffset, u8 * value)
 	}
 
 	if (!i2c_error) {
-		/* free bus, otherwise we can't use a combined transction */
-		writew (0, &i2c_base->con);
-		while (readw (&i2c_base->stat) || (readw (&i2c_base->con) & I2C_CON_MST)) {
-			udelay (1000);
+		writew (I2C_CON_EN, &i2c_base->con);
+		while (readw(&i2c_base->stat) &
+			(I2C_STAT_XRDY | I2C_STAT_ARDY)) {
+			udelay (10000);
 			/* Have to clear pending interrupt to clear I2C_STAT */
 			writew (0xFFFF, &i2c_base->stat);
 		}
 
-		wait_for_bb ();
 		/* set slave address */
 		writew (devaddr, &i2c_base->sa);
 		/* read one byte from slave */
@@ -176,21 +191,22 @@ static int i2c_read_byte (u8 devaddr, u8 regoffset, u8 * value)
 
 		status = wait_for_pin ();
 		if (status & I2C_STAT_RRDY) {
-#if defined(CONFIG_OMAP243X) || defined(CONFIG_OMAP34XX)
+#if defined(CONFIG_OMAP243X) || defined(CONFIG_OMAP34XX) || \
+    defined(CONFIG_OMAP44XX)
 			*value = readb (&i2c_base->data);
 #else
 			*value = readw (&i2c_base->data);
 #endif
-			udelay (2000);
+			udelay (20000);
 		} else {
 			i2c_error = 1;
 		}
 
 		if (!i2c_error) {
 			writew (I2C_CON_EN, &i2c_base->con);
-			while (readw (&i2c_base->stat)
-			       || (readw (&i2c_base->con) & I2C_CON_MST)) {
-				udelay (1000);
+			while (readw (&i2c_base->stat) &
+				(I2C_STAT_RRDY | I2C_STAT_ARDY)) {
+				udelay (10000);
 				writew (0xFFFF, &i2c_base->stat);
 			}
 		}
@@ -221,7 +237,8 @@ static int i2c_write_byte (u8 devaddr, u8 regoffset, u8 value)
 	status = wait_for_pin ();
 
 	if (status & I2C_STAT_XRDY) {
-#if defined(CONFIG_OMAP243X) || defined(CONFIG_OMAP34XX)
+#if defined(CONFIG_OMAP243X) || defined(CONFIG_OMAP34XX) || \
+    defined(CONFIG_OMAP44XX)
 		/* send out 1 byte */
 		writeb (regoffset, &i2c_base->data);
 		writew (I2C_STAT_XRDY, &i2c_base->stat);
@@ -274,7 +291,8 @@ static void flush_fifo(void)
 	while(1){
 		stat = readw(&i2c_base->stat);
 		if(stat == I2C_STAT_RRDY){
-#if defined(CONFIG_OMAP243X) || defined(CONFIG_OMAP34XX)
+#if defined(CONFIG_OMAP243X) || defined(CONFIG_OMAP34XX) || \
+    defined(CONFIG_OMAP44XX)
 			readb(&i2c_base->data);
 #else
 			readw(&i2c_base->data);

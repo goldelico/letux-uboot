@@ -68,7 +68,6 @@
 #define CONFIG_SYS_MAXARGS		16	/* max number of command args */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size  */
 #define CONFIG_CMDLINE_EDITING		1	/* add command line history     */
-#define CONFIG_COMMAND_HISTORY		1
 #define CONFIG_AUTO_COMPLETE		/* add autocompletion support	*/
 
 #define CONFIG_HUSH_INIT_VAR	1
@@ -86,6 +85,7 @@
 
 #define CONFIG_LOADS_ECHO	1	/* echo on for serial download */
 #define CONFIG_SYS_LOADS_BAUD_CHANGE	1	/* allow baudrate change */
+#define CONFIG_SYS_BOARD_DRAM_INIT	/* Used board specific dram_init */
 
 /*
  * How to get access to the slot ID.  Put this here to make it easy
@@ -140,8 +140,8 @@
 
 #ifdef CONFIG_IO_MUXING
 #define	CONFIG_KM_DEF_ENV_IOMUX \
-	"nc=setenv ethact HDLC ETHERNET \0" \
-	"nce=setenv ethact SCC ETHERNET \0"	\
+	"nc=setenv ethact HDLC \0" \
+	"nce=setenv ethact SCC \0"	\
 	"stderr=serial,nc \0"	\
 	"stdin=serial,nc \0" \
 	"stdout=serial,nc \0" \

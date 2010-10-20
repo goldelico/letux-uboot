@@ -36,6 +36,8 @@
 #define CONFIG_MPC850		1	/* This is a MPC850 CPU		*/
 #define CONFIG_ETX094		1	/* ...on a ETX_094 board	*/
 
+#define	CONFIG_SYS_TEXT_BASE	0x40000000
+
 #define	CONFIG_8xx_CONS_SMC1    1       /* Console is on SMC1           */
 #undef	CONFIG_8xx_CONS_SMC2
 #undef	CONFIG_8xx_CONS_NONE
@@ -354,14 +356,5 @@
 #define CONFIG_SYS_MAMR_9COL	((CONFIG_SYS_MAMR_PTA << MAMR_PTA_SHIFT)  | MAMR_PTAE	    |	\
 			 MAMR_AMA_TYPE_1 | MAMR_DSA_1_CYCL | MAMR_G0CLA_A10 |	\
 			 MAMR_RLFA_1X	 | MAMR_WLFA_1X	   | MAMR_TLFA_1X)
-
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM	0x02		/* Software reboot			*/
 
 #endif	/* __CONFIG_H */

@@ -36,7 +36,12 @@
 #define CONFIG_MPC831x			1
 #define CONFIG_MPC8313			1
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0x00100000
+#endif
+
 #define CONFIG_PCI
+#define CONFIG_FSL_ELBC			1
 
 #define CONFIG_MISC_INIT_R
 
@@ -90,7 +95,7 @@
  */
 #define CONFIG_SYS_NO_FLASH
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 
 #if !defined(CONFIG_NAND_SPL)
 #define CONFIG_SYS_RAMBOOT
@@ -126,6 +131,7 @@
 #else
 #define CONFIG_SYS_NAND_BASE		0xE2800000
 #endif
+#define CONFIG_SYS_FPGA_BASE		0xFF000000
 
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define NAND_MAX_CHIPS			1
@@ -183,6 +189,16 @@
 
 #define CONFIG_SYS_NAND_LBLAWBAR_PRELIM	CONFIG_SYS_LBLAWBAR0_PRELIM
 #define CONFIG_SYS_NAND_LBLAWAR_PRELIM	CONFIG_SYS_LBLAWAR0_PRELIM
+
+#define CONFIG_SYS_BR1_PRELIM		( CONFIG_SYS_FPGA_BASE \
+					| BR_PS_16 \
+					| BR_MS_UPMA \
+					| BR_V )
+#define CONFIG_SYS_OR1_PRELIM		( OR_AM_2MB \
+					| OR_UPM_BCTLD)
+
+#define CONFIG_SYS_LBLAWBAR1_PRELIM	CONFIG_SYS_FPGA_BASE
+#define CONFIG_SYS_LBLAWAR1_PRELIM	(LBLAWAR_EN | LBLAWAR_2MB)
 
 /*
  * JFFS2 configuration
@@ -342,7 +358,7 @@
 #endif
 
 #define CONFIG_CMDLINE_EDITING		1
-
+#define CONFIG_AUTO_COMPLETE		/* add autocompletion support   */
 
 /*
  * Miscellaneous configurable options
@@ -361,10 +377,10 @@
 
 /*
  * For booting Linux, the board info and command line data
- * have to be in the first 8 MB of memory, since this is
+ * have to be in the first 256 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ		(8 << 20)	/* Initial Memory map for Linux*/
+#define CONFIG_SYS_BOOTMAPSZ		(256 << 20)	/* Initial Memory map for Linux*/
 
 #define CONFIG_SYS_RCWH_PCIHOST		0x80000000	/* PCIHOST */
 
@@ -407,12 +423,14 @@
 				| SICRH_ETSEC2_G	\
 				| SICRH_TSOBI1		\
 				| SICRH_TSOBI2 )
-#define CONFIG_SYS_SICRL	(SICRL_USBDR		\
+#define CONFIG_SYS_SICRL	( SICRL_LBC		\
+				| SICRL_USBDR_10	\
 				| SICRL_ETSEC2_A )
 
 #define CONFIG_SYS_HID0_INIT	0x000000000
-#define CONFIG_SYS_HID0_FINAL	(HID0_ENABLE_MACHINE_CHECK	\
-				| HID0_ENABLE_DYNAMIC_POWER_MANAGMENT )
+#define CONFIG_SYS_HID0_FINAL	(HID0_ENABLE_MACHINE_CHECK | \
+				 HID0_ENABLE_INSTRUCTION_CACHE | \
+				 HID0_ENABLE_DYNAMIC_POWER_MANAGMENT )
 
 #define CONFIG_SYS_HID2		HID2_HBE
 
@@ -463,14 +481,6 @@
 #define CONFIG_SYS_DBAT7U	CONFIG_SYS_IBAT7U
 
 /*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01	/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02	/* Software reboot */
-
-/*
  * Environment Configuration
  */
 #define CONFIG_ENV_OVERWRITE
@@ -497,11 +507,11 @@
 	"ethprime=TSEC1\0"						\
 	"uboot=" MK_STR(CONFIG_UBOOTPATH) "\0"				\
 	"tftpflash=tftpboot $loadaddr $uboot; "				\
-		"protect off " MK_STR(TEXT_BASE) " +$filesize; "	\
-		"erase " MK_STR(TEXT_BASE) " +$filesize; "		\
-		"cp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize; "	\
-		"protect on " MK_STR(TEXT_BASE) " +$filesize; "		\
-		"cmp.b $loadaddr " MK_STR(TEXT_BASE) " $filesize\0"	\
+		"protect off " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "	\
+		"erase " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
+		"cp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize; "	\
+		"protect on " MK_STR(CONFIG_SYS_TEXT_BASE) " +$filesize; "		\
+		"cmp.b $loadaddr " MK_STR(CONFIG_SYS_TEXT_BASE) " $filesize\0"	\
 	"fdtaddr=ae0000\0"						\
 	"fdtfile=" MK_STR(CONFIG_FDTFILE) "\0"				\
 	"console=ttyS0\0"						\

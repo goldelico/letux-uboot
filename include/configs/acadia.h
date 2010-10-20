@@ -35,6 +35,10 @@
 #define CONFIG_4xx		1		/* ... PPC4xx family	*/
 #define CONFIG_405EZ		1		/* Specifc 405EZ support*/
 
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xFFF80000
+#endif
+
 /*
  * Include common defines/options for all AMCC eval boards
  */
@@ -89,6 +93,7 @@
 /*-----------------------------------------------------------------------
  * Serial Port
  *----------------------------------------------------------------------*/
+#define CONFIG_CONS_INDEX	1	/* Use UART0			*/
 #undef	CONFIG_SYS_EXT_SERIAL_CLOCK			/* external serial clock */
 #define CONFIG_SYS_BASE_BAUD		691200
 
@@ -120,7 +125,13 @@
 #define CONFIG_SYS_FLASH_EMPTY_INFO		/* print 'E' for empty sector on flinfo */
 
 #else
-#define	CONFIG_SYS_NO_FLASH		1	/* No NOR on Acadia when NAND-booting	*/
+/*
+ * No NOR-flash on Acadia when NAND-booting. We need to undef the
+ * NOR device-tree fixup code as well, since flash_info is not defined
+ * in this case.
+ */
+#define	CONFIG_SYS_NO_FLASH		1
+#undef CONFIG_FDT_FIXUP_NOR_FLASH_SIZE
 #endif
 
 #ifdef CONFIG_ENV_IS_IN_FLASH

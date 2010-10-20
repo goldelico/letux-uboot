@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Freescale Semiconductor, Inc.
+ * Copyright (C) 2009-2010 Freescale Semiconductor, Inc.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -51,7 +51,7 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_SYS_CLK_FREQ	66666666
 #define CONFIG_DDR_CLK_FREQ	CONFIG_SYS_CLK_FREQ
 
-#ifdef CONFIG_MK_ATM
+#ifdef CONFIG_ATM
 #define CONFIG_PQ_MDS_PIB
 #define CONFIG_PQ_MDS_PIB_ATM
 #endif
@@ -62,10 +62,14 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_L2_CACHE				/* toggle L2 cache	*/
 #define CONFIG_BTB				/* toggle branch predition */
 
-#ifdef CONFIG_MK_NAND
+#ifdef CONFIG_NAND
 #define CONFIG_NAND_U_BOOT		1
 #define CONFIG_RAMBOOT_NAND		1
-#define CONFIG_RAMBOOT_TEXT_BASE	0xf8f82000
+#define CONFIG_SYS_TEXT_BASE	0xf8f82000
+#endif
+
+#ifndef CONFIG_SYS_TEXT_BASE
+#define CONFIG_SYS_TEXT_BASE	0xfff80000
 #endif
 
 /*
@@ -74,6 +78,7 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_ENABLE_36BIT_PHYS	1
 
 #define CONFIG_BOARD_EARLY_INIT_F	1	/* Call board_pre_init */
+#define CONFIG_BOARD_EARLY_INIT_R	1
 #define CONFIG_HWCONFIG
 
 #define CONFIG_SYS_MEMTEST_START	0x00200000	/* memtest works on */
@@ -102,9 +107,6 @@ extern unsigned long get_clock_freq(void);
 #else
 #define CONFIG_SYS_CCSRBAR_DEFAULT	0xff700000	/* CCSRBAR Default */
 #endif
-
-#define CONFIG_SYS_PCI1_ADDR           (CONFIG_SYS_CCSRBAR+0x8000)
-#define CONFIG_SYS_PCIE1_ADDR          (CONFIG_SYS_CCSRBAR+0xa000)
 
 /* DDR Setup */
 #define CONFIG_FSL_DDR3
@@ -192,7 +194,7 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_SYS_FLASH_ERASE_TOUT	60000	/* Flash Erase Timeout (ms) */
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Flash Write Timeout (ms) */
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE	/* start of monitor */
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* start of monitor */
 
 #if defined(CONFIG_SYS_SPL) || defined(CONFIG_RAMBOOT_NAND)
 #define CONFIG_SYS_RAMBOOT
@@ -279,11 +281,13 @@ extern unsigned long get_clock_freq(void);
 /* Serial Port */
 #define CONFIG_CONS_INDEX		1
 #define CONFIG_SERIAL_MULTI		1
-#undef	CONFIG_SERIAL_SOFTWARE_FIFO
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE    1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
+#ifdef CONFIG_NAND_SPL
+#define CONFIG_NS16550_MIN_FUNCTIONS
+#endif
 
 #define CONFIG_SYS_BAUDRATE_TABLE  \
 	{300, 600, 1200, 2400, 4800, 9600, 19200, 38400,115200}
@@ -363,7 +367,7 @@ extern unsigned long get_clock_freq(void);
 
 #define CONFIG_MIIM_ADDRESS	(CONFIG_SYS_CCSRBAR + 0x82120)
 #define CONFIG_UEC_ETH
-#define CONFIG_ETHPRIME         "FSL UEC0"
+#define CONFIG_ETHPRIME         "UEC0"
 #define CONFIG_PHY_MODE_NEED_CHANGE
 
 #define CONFIG_UEC_ETH1         /* GETH1 */
@@ -506,8 +510,8 @@ extern unsigned long get_clock_freq(void);
 #else
 #define CONFIG_ENV_IS_IN_FLASH	1
 #define CONFIG_ENV_ADDR		(CONFIG_SYS_MONITOR_BASE - CONFIG_ENV_SECT_SIZE)
-#define CONFIG_ENV_SECT_SIZE	0x20000	/* 256K(one sector) for env */
-#define CONFIG_ENV_SIZE		CONFIG_ENV_SECT_SIZE
+#define CONFIG_ENV_SECT_SIZE	0x20000	/* 128K(one sector) for env */
+#define CONFIG_ENV_SIZE		0x2000
 #endif
 
 #define CONFIG_LOADS_ECHO	1	/* echo on for serial download */
@@ -536,6 +540,7 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_CMD_ELF
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_SETEXPR
+#define CONFIG_CMD_REGINFO
 
 #if defined(CONFIG_PCI)
     #define CONFIG_CMD_PCI
@@ -559,8 +564,9 @@ extern unsigned long get_clock_freq(void);
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP		/* undef to save memory	*/
-#define CONFIG_CMDLINE_EDITING		/* Command-line editing */
+#define CONFIG_SYS_LONGHELP			/* undef to save memory	*/
+#define CONFIG_CMDLINE_EDITING			/* Command-line editing */
+#define CONFIG_AUTO_COMPLETE			/* add autocompletion support */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
 #define CONFIG_SYS_PROMPT	"=> "		/* Monitor Command Prompt */
 #if defined(CONFIG_CMD_KGDB)
@@ -582,14 +588,6 @@ extern unsigned long get_clock_freq(void);
  */
 #define CONFIG_SYS_BOOTMAPSZ	(16 << 20)
 					/* Initial Memory map for Linux*/
-
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define BOOTFLAG_COLD	0x01		/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM	0x02		/* Software reboot */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */

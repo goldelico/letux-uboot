@@ -29,6 +29,10 @@ DECLARE_GLOBAL_DATA_PTR;
 int board_init (void)
 {
 	struct gpio_regs *regs = (struct gpio_regs *)IMX_GPIO_BASE;
+#if defined(CONFIG_SYS_NAND_LARGEPAGE)
+	struct system_control_regs *sc_regs =
+		(struct system_control_regs *)IMX_SYSTEM_CTL_BASE;
+#endif
 
 	gd->bd->bi_arch_number = MACH_TYPE_IMX27LITE;
 	gd->bd->bi_boot_params = PHYS_SDRAM_1 + 0x100;
@@ -43,31 +47,46 @@ int board_init (void)
 				&regs->port[PORTC].dr);
 #endif
 #ifdef CONFIG_MXC_MMC
+#if defined(CONFIG_MAGNESIUM)
+	mx27_sd1_init_pins();
+#else
 	mx27_sd2_init_pins();
 #endif
+#endif
 
+#if defined(CONFIG_SYS_NAND_LARGEPAGE)
+	/*
+	 * set in FMCR NF_FMS Bit(5) to 1
+	 * (NAND Flash with 2 Kbyte page size)
+	 */
+	writel(readl(&sc_regs->fmcr) | (1 << 5), &sc_regs->fmcr);
+#endif
 	return 0;
 }
 
 int dram_init (void)
 {
+	/* dram_init must store complete ramsize in gd->ram_size */
+	gd->ram_size = get_ram_size((volatile void *)CONFIG_SYS_SDRAM_BASE,
+				PHYS_SDRAM_1_SIZE);
+	return 0;
+}
 
-#if CONFIG_NR_DRAM_BANKS > 0
-	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
-	gd->bd->bi_dram[0].size = get_ram_size((volatile void *)PHYS_SDRAM_1,
+void dram_init_banksize(void)
+{
+	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
+	gd->bd->bi_dram[0].size = get_ram_size((volatile void *)CONFIG_SYS_SDRAM_BASE,
 			PHYS_SDRAM_1_SIZE);
-#endif
 #if CONFIG_NR_DRAM_BANKS > 1
 	gd->bd->bi_dram[1].start = PHYS_SDRAM_2;
 	gd->bd->bi_dram[1].size = get_ram_size((volatile void *)PHYS_SDRAM_2,
 			PHYS_SDRAM_2_SIZE);
 #endif
-
-	return 0;
 }
 
 int checkboard(void)
 {
-	printf("LogicPD imx27lite\n");
+	puts ("Board: ");
+	puts(CONFIG_BOARDNAME);
 	return 0;
 }

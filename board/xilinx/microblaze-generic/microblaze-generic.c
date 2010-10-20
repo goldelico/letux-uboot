@@ -27,6 +27,7 @@
 
 #include <common.h>
 #include <config.h>
+#include <netdev.h>
 #include <asm/microblaze_intc.h>
 #include <asm/asm.h>
 
@@ -60,10 +61,21 @@ void fsl_isr2 (void *arg) {
 	puts("*");
 }
 
-void fsl_init2 (void) {
+int fsl_init2 (void) {
 	puts("fsl_init2\n");
-	install_interrupt_handler (FSL_INTR_2,\
- fsl_isr2,\
- NULL);
+	install_interrupt_handler (FSL_INTR_2, fsl_isr2, NULL);
+	return 0;
 }
 #endif
+
+int board_eth_init(bd_t *bis)
+{
+	/*
+	 * This board either has PCI NICs or uses the CPU's TSECs
+	 * pci_eth_init() will return 0 if no NICs found, so in that case
+	 * returning -1 will force cpu_eth_init() to be called.
+	 */
+#ifdef CONFIG_XILINX_EMACLITE
+	return xilinx_emaclite_initialize(bis, XILINX_EMACLITE_BASEADDR);
+#endif
+}

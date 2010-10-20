@@ -37,6 +37,8 @@
 
 #define CONFIG_HIGH_BATS	1	/* High BATs supported */
 
+#define	CONFIG_SYS_TEXT_BASE	0xfff00000
+
 /*
  * BOOTP options
  */
@@ -192,12 +194,12 @@
  * (e.g., by the BDI). Otherwise we must specify the default boot-up value of
  * MBAR, as given in the doccumentation.
  */
-#if TEXT_BASE == 0x00100000
+#if CONFIG_SYS_TEXT_BASE == 0x00100000
 #define CONFIG_SYS_DEFAULT_MBAR	0xf0000000
-#else /* TEXT_BASE != 0x00100000 */
+#else /* CONFIG_SYS_TEXT_BASE != 0x00100000 */
 #define CONFIG_SYS_DEFAULT_MBAR	0x80000000
 #define CONFIG_SYS_LOWBOOT		1
-#endif /* TEXT_BASE == 0x00100000 */
+#endif /* CONFIG_SYS_TEXT_BASE == 0x00100000 */
 
 /* Use SRAM until RAM will be available */
 #define CONFIG_SYS_INIT_RAM_ADDR	MPC5XXX_SRAM
@@ -207,7 +209,7 @@
 #define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #define CONFIG_SYS_RAMBOOT		1
 #endif
@@ -410,9 +412,6 @@ extern void __led_set(led_id_t id, int state);
  */
 #define CONFIG_SYS_HID0_INIT		HID0_ICE | HID0_ICFI
 #define CONFIG_SYS_HID0_FINAL		HID0_ICE
-
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH  */
-#define BOOTFLAG_WARM		0x02	/* Software reboot */
 
 #define CONFIG_SYS_CACHELINE_SIZE	32	/* For MPC5xxx CPUs */
 

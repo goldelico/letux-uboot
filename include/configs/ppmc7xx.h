@@ -49,6 +49,7 @@
 #undef	CONFIG_ALTIVEC
 #define CONFIG_BUS_CLK	66000000
 
+#define	CONFIG_SYS_TEXT_BASE	0xFFF00000
 
 /*
  * Monitor configuration
@@ -240,7 +241,7 @@
  * CONFIG_SYS_MALLOC_LEN		- Size of malloc pool (128KB)
  */
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MALLOC_LEN		0x20000
 
 
@@ -355,12 +356,10 @@
 /*
  * Clocks config
  *
- * CONFIG_SYS_BUS_HZ			- Bus clock frequency in Hz
- * CONFIG_SYS_BUS_CLK			- As above (?)
+ * CONFIG_SYS_BUS_CLK			- Bus clock frequency in Hz
  * CONFIG_SYS_HZ			- Decrementer freq in Hz
  */
 
-#define CONFIG_SYS_BUS_HZ		CONFIG_BUS_CLK
 #define CONFIG_SYS_BUS_CLK		CONFIG_BUS_CLK
 #define CONFIG_SYS_HZ			1000
 
@@ -415,17 +414,5 @@
  */
 
 #define CONFIG_SYS_BOARD_ASM_INIT
-
-
-/*
- * Boot flags
- *
- * BOOTFLAG_COLD		- Indicates a power-on boot
- * BOOTFLAG_WARM		- Indicates a software reset
- */
-
-#define BOOTFLAG_COLD		0x01
-#define BOOTFLAG_WARM		0x02
-
 
 #endif /* __CONFIG_H */

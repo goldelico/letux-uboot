@@ -51,10 +51,10 @@ void inline __show_boot_progress (int val) {}
 void show_boot_progress (int val) __attribute__((weak, alias("__show_boot_progress")));
 
 #if defined(CONFIG_BOOT_RETRY_TIME) && defined(CONFIG_RESET_TO_RETRY)
-extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);		/* for do_reset() prototype */
+extern int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);		/* for do_reset() prototype */
 #endif
 
-extern int do_bootd (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[]);
+extern int do_bootd (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
 
 #if defined(CONFIG_UPDATE_TFTP)
 void update_tftp (void);
@@ -68,7 +68,7 @@ static int abortboot(int);
 
 #undef DEBUG_PARSER
 
-char        console_buffer[CONFIG_SYS_CBSIZE];		/* console I/O buffer	*/
+char        console_buffer[CONFIG_SYS_CBSIZE + 1];	/* console I/O buffer	*/
 
 static char * delete_char (char *buffer, char *p, int *colp, int *np, int plen);
 static char erase_seq[] = "\b \b";		/* erase sequence	*/
@@ -427,14 +427,7 @@ void main_loop (void)
 	    }
 	}
 #endif /* CONFIG_MENUKEY */
-#endif	/* CONFIG_BOOTDELAY */
-
-#ifdef CONFIG_AMIGAONEG3SE
-	{
-	    extern void video_banner(void);
-	    video_banner();
-	}
-#endif
+#endif /* CONFIG_BOOTDELAY */
 
 	/*
 	 * Main Loop for Monitor Command Processing
@@ -525,9 +518,6 @@ void reset_cmd_timeout(void)
 	} while (0)
 
 #define CTL_CH(c)		((c) - 'a' + 1)
-
-#define MAX_CMDBUF_SIZE		256
-
 #define CTL_BACKSPACE		('\b')
 #define DEL			((char)255)
 #define DEL7			((char)127)
@@ -538,7 +528,7 @@ void reset_cmd_timeout(void)
 #define getcmd_cbeep()		getcmd_putch('\a')
 
 #define HIST_MAX		20
-#define HIST_SIZE		MAX_CMDBUF_SIZE
+#define HIST_SIZE		CONFIG_SYS_CBSIZE
 
 static int hist_max = 0;
 static int hist_add_idx = 0;
@@ -546,7 +536,7 @@ static int hist_cur = -1;
 unsigned hist_num = 0;
 
 char* hist_list[HIST_MAX];
-char hist_lines[HIST_MAX][HIST_SIZE];
+char hist_lines[HIST_MAX][HIST_SIZE + 1];	 /* Save room for NULL */
 
 #define add_idx_minus_one() ((hist_add_idx == 0) ? hist_max : hist_add_idx-1)
 
@@ -650,12 +640,10 @@ static void cread_print_hist_list(void)
 
 #define ERASE_TO_EOL() {				\
 	if (num < eol_num) {				\
-		int tmp;				\
-		for (tmp = num; tmp < eol_num; tmp++)	\
-			getcmd_putch(' ');		\
-		while (tmp-- > num)			\
+		printf("%*s", (int)(eol_num - num), ""); \
+		do {					\
 			getcmd_putch(CTL_BACKSPACE);	\
-		eol_num = num;				\
+		} while (--eol_num > num);		\
 	}						\
 }
 
@@ -730,6 +718,7 @@ static int cread_line(const char *const prompt, char *buf, unsigned int *len)
 		while (!tstc()) {	/* while no incoming data */
 			if (retry_time >= 0 && get_ticks() > endtime)
 				return (-2);	/* timed out */
+			WATCHDOG_RESET();
 		}
 #endif
 
@@ -955,7 +944,7 @@ int readline_into_buffer (const char *const prompt, char * buffer)
 {
 	char *p = buffer;
 #ifdef CONFIG_CMDLINE_EDITING
-	unsigned int len=MAX_CMDBUF_SIZE;
+	unsigned int len = CONFIG_SYS_CBSIZE;
 	int rc;
 	static int initted = 0;
 
@@ -997,6 +986,7 @@ int readline_into_buffer (const char *const prompt, char * buffer)
 		while (!tstc()) {	/* while no incoming data */
 			if (retry_time >= 0 && get_ticks() > endtime)
 				return (-2);	/* timed out */
+			WATCHDOG_RESET();
 		}
 #endif
 		WATCHDOG_RESET();		/* Trigger watchdog, if needed */
@@ -1005,6 +995,7 @@ int readline_into_buffer (const char *const prompt, char * buffer)
 		while (!tstc()) {
 			extern void show_activity(int arg);
 			show_activity(0);
+			WATCHDOG_RESET();
 		}
 #endif
 		c = getc();
@@ -1418,14 +1409,12 @@ int run_command (const char *cmd, int flag)
 /****************************************************************************/
 
 #if defined(CONFIG_CMD_RUN)
-int do_run (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+int do_run (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	int i;
 
-	if (argc < 2) {
-		cmd_usage(cmdtp);
-		return 1;
-	}
+	if (argc < 2)
+		return cmd_usage(cmdtp);
 
 	for (i=1; i<argc; ++i) {
 		char *arg;

@@ -23,13 +23,13 @@
 #
 
 NAND_SPL := y
-TEXT_BASE := 0xfff00000
+CONFIG_SYS_TEXT_BASE := 0xfff00000
 PAD_TO := 0xfff04000
 
 include $(TOPDIR)/config.mk
 
 LDSCRIPT= $(TOPDIR)/nand_spl/board/$(BOARDDIR)/u-boot.lds
-LDFLAGS	= -Bstatic -T $(nandobj)u-boot.lds -Ttext $(TEXT_BASE) $(PLATFORM_LDFLAGS)
+LDFLAGS	= -Bstatic -T $(nandobj)u-boot.lds -Ttext $(CONFIG_SYS_TEXT_BASE) $(PLATFORM_LDFLAGS)
 AFLAGS	+= -DCONFIG_NAND_SPL
 CFLAGS	+= -DCONFIG_NAND_SPL
 
@@ -65,7 +65,7 @@ $(nandobj)u-boot.lds: $(LDSCRIPT)
 # create symbolic links for common files
 
 $(obj)start.S:
-	ln -sf $(SRCTREE)/cpu/mpc83xx/start.S $(obj)start.S
+	ln -sf $(SRCTREE)/arch/powerpc/cpu/mpc83xx/start.S $(obj)start.S
 
 $(obj)nand_boot_fsl_elbc.c:
 	ln -sf $(SRCTREE)/nand_spl/nand_boot_fsl_elbc.c \
@@ -81,16 +81,16 @@ $(obj)ns16550.c:
 	ln -sf $(SRCTREE)/drivers/serial/ns16550.c $(obj)ns16550.c
 
 $(obj)nand_init.c:
-	ln -sf $(SRCTREE)/cpu/mpc83xx/nand_init.c $(obj)nand_init.c
+	ln -sf $(SRCTREE)/arch/powerpc/cpu/mpc83xx/nand_init.c $(obj)nand_init.c
 
 $(obj)cache.c:
-	ln -sf $(SRCTREE)/lib_ppc/cache.c $(obj)cache.c
+	ln -sf $(SRCTREE)/arch/powerpc/lib/cache.c $(obj)cache.c
 
 $(obj)time.c:
-	ln -sf $(SRCTREE)/lib_ppc/time.c $(obj)time.c
+	ln -sf $(SRCTREE)/arch/powerpc/lib/time.c $(obj)time.c
 
 $(obj)ticks.S:
-	ln -sf $(SRCTREE)/lib_ppc/ticks.S $(obj)ticks.S
+	ln -sf $(SRCTREE)/arch/powerpc/lib/ticks.S $(obj)ticks.S
 
 #########################################################################
 

@@ -34,6 +34,8 @@
 #define CONFIG_MGCOGE		1
 #define CONFIG_HOSTNAME		mgcoge
 
+#define	CONFIG_SYS_TEXT_BASE	0xFE000000
+
 #define CONFIG_CPM2		1	/* Has a CPM2 */
 
 /* include common defines/options for all Keymile boards */
@@ -123,7 +125,7 @@
 					CONFIG_SYS_FLASH_BASE_1, \
 					CONFIG_SYS_FLASH_BASE_2 }
 
-#define CONFIG_SYS_MONITOR_BASE	TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #define CONFIG_SYS_RAMBOOT
 #endif
@@ -192,9 +194,6 @@
 #define CONFIG_SYS_HRCW_SLAVE5		0
 #define CONFIG_SYS_HRCW_SLAVE6		0
 #define CONFIG_SYS_HRCW_SLAVE7		0
-
-#define BOOTFLAG_COLD		0x01	/* Normal Power-On: Boot from FLASH */
-#define BOOTFLAG_WARM		0x02	/* Software reboot                  */
 
 #define CONFIG_SYS_BOOTMAPSZ		(8 << 20)	/* Initial Memory map for Linux */
 

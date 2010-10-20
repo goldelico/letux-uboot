@@ -33,7 +33,7 @@
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !!								      !!
    !!  This configuration requires JP3 to be in position 1-2 to work  !!
-   !!  To make it work for the default, the TEXT_BASE define in	      !!
+   !!  To make it work for the default, the CONFIG_SYS_TEXT_BASE define in	      !!
    !!  board/mpc8266ads/config.mk must be changed from 0xfe000000 to  !!
    !!  0xfff00000						      !!
    !!  The CONFIG_SYS_HRCW_MASTER define below must also be changed to match !!
@@ -52,6 +52,8 @@
 #define CONFIG_MPC8260		1	/* This is an MPC8260 CPU	*/
 #define CONFIG_MPC8266ADS	1	/* ...on motorola ADS board	*/
 #define CONFIG_CPM2		1	/* Has a CPM2 */
+
+#define	CONFIG_SYS_TEXT_BASE	0xfe000000
 
 #define CONFIG_BOARD_EARLY_INIT_F 1	/* Call board_early_init_f	*/
 #define CONFIG_RESET_PHY_R	1	/* Call reset_phy()		*/
@@ -419,10 +421,8 @@
 #define CONFIG_SYS_HRCW_SLAVE6 0
 #define CONFIG_SYS_HRCW_SLAVE7 0
 
-#define BOOTFLAG_COLD	0x01	/* Normal Power-On: Boot from FLASH  */
-#define BOOTFLAG_WARM	0x02	/* Software reboot	     */
+#define CONFIG_SYS_MONITOR_BASE    CONFIG_SYS_TEXT_BASE
 
-#define CONFIG_SYS_MONITOR_BASE    TEXT_BASE
 #if (CONFIG_SYS_MONITOR_BASE < CONFIG_SYS_FLASH_BASE)
 #   define CONFIG_SYS_RAMBOOT
 #endif

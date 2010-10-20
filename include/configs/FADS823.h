@@ -38,6 +38,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define	CONFIG_SYS_TEXT_BASE	0xFE000000
+
 #define	CONFIG_ETHADDR		08:00:22:50:70:63	/* Ethernet address */
 #define CONFIG_ENV_OVERWRITE	1	/* Overwrite the environment */
 
@@ -341,13 +343,6 @@
 			 MAMR_RLFA_1X	 | MAMR_WLFA_1X	   | MAMR_TLFA_4X)
 
 #define CONFIG_SYS_MAMR		0x13a01114
-/*
- * Internal Definitions
- *
- * Boot Flags
- */
-#define	BOOTFLAG_COLD			0x01		/* Normal Power-On: Boot from FLASH	*/
-#define BOOTFLAG_WARM			0x02		/* Software reboot			*/
 
 /* values according to the manual */
 

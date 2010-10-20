@@ -21,14 +21,13 @@
  * MA 02111-1307 USA
  */
 
+#include <asm/ibmpc.h>
 /*
  * board/config.h - configuration options, board specific
  */
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
-
-#define CONFIG_RELOC_FIXUP_WORKS
 
 /*
  * Stuff still to be dealt with -
@@ -52,7 +51,26 @@
  * bottom (processor) board MUST be removed!
  */
 #undef CONFIG_WATCHDOG
-#undef CONFIG_HW_WATCHDOG
+#define CONFIG_HW_WATCHDOG
+
+ /*-----------------------------------------------------------------------
+  * Serial Configuration
+  */
+#define CONFIG_SERIAL_MULTI
+#define CONFIG_CONS_INDEX		1
+#define CONFIG_SYS_NS16550
+#define CONFIG_SYS_NS16550_SERIAL
+#define CONFIG_SYS_NS16550_REG_SIZE	1
+#define CONFIG_SYS_NS16550_CLK		1843200
+#define CONFIG_BAUDRATE			9600
+#define CONFIG_SYS_BAUDRATE_TABLE	\
+	{300, 600, 1200, 2400, 4800, 9600, 19200, 38400,115200}
+
+#define CONFIG_SYS_NS16550_COM1		UART0_BASE
+#define CONFIG_SYS_NS16550_COM2		UART1_BASE
+#define CONFIG_SYS_NS16550_COM3		(0x1000 + UART0_BASE)
+#define CONFIG_SYS_NS16550_COM4		(0x1000 + UART1_BASE)
+#define CONFIG_SYS_NS16550_PORT_MAPPED
 
  /*-----------------------------------------------------------------------
   * Video Configuration
@@ -64,8 +82,6 @@
  * Size of malloc() pool
  */
 #define CONFIG_SYS_MALLOC_LEN	(CONFIG_ENV_SIZE + 128*1024)
-
-#define CONFIG_BAUDRATE		9600
 
 /*-----------------------------------------------------------------------
  * Command line configuration.
@@ -86,9 +102,10 @@
 #define CONFIG_CMD_LOADS	/* loads			*/
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
-#undef CONFIG_CMD_NET		/* bootp, tftpboot, rarpboot	*/
+#define CONFIG_CMD_NET		/* bootp, tftpboot, rarpboot	*/
 #undef CONFIG_CMD_NFS		/* NFS support			*/
 #define CONFIG_CMD_PCI		/* PCI support			*/
+#define CONFIG_CMD_PING		/* ICMP echo support		*/
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
 #define CONFIG_CMD_SAVEENV	/* saveenv			*/
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
@@ -121,10 +138,7 @@
 
 #define	CONFIG_SYS_LOAD_ADDR		0x100000	/* default load address	*/
 
-#define	CONFIG_SYS_HZ			1024		/* incrementer freq: 1kHz */
-
-						/* valid baudrates */
-#define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
+#define	CONFIG_SYS_HZ			1000		/* incrementer freq: 1kHz */
 
 /*-----------------------------------------------------------------------
  * SDRAM Configuration
@@ -143,7 +157,7 @@
  * CPU Features
  */
 #define CONFIG_SYS_SC520_HIGH_SPEED	0	/* 100 or 133MHz */
-#undef  CONFIG_SYS_SC520_RESET			/* use SC520 MMCR's to reset cpu */
+#define CONFIG_SYS_SC520_RESET			/* use SC520 MMCR's to reset cpu */
 #define CONFIG_SYS_SC520_TIMER			/* use SC520 swtimers */
 #undef  CONFIG_SYS_GENERIC_TIMER		/* use the i8254 PIT timers */
 #undef  CONFIG_SYS_TSC_TIMER			/* use the Pentium TSC timers */
@@ -158,7 +172,7 @@
 #define CONFIG_SYS_STACK_SIZE		0x8000  	/* Size of bootloader stack */
 #define CONFIG_SYS_BL_START_FLASH	0x38040000	/* Address of relocated code */
 #define CONFIG_SYS_BL_START_RAM		0x03fd0000	/* Address of relocated code */
-#define CONFIG_SYS_MONITOR_BASE		TEXT_BASE
+#define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(256 * 1024)    /* Reserve 256 kB for Mon	*/
 #define CONFIG_SYS_FLASH_BASE		0x38000000	/* Boot Flash */
 #define CONFIG_SYS_FLASH_BASE_1		0x10000000	/* StrataFlash 1 */
@@ -182,7 +196,7 @@
 					 CONFIG_SYS_FLASH_BASE_1, \
 					 CONFIG_SYS_FLASH_BASE_2}
 #define CONFIG_SYS_FLASH_EMPTY_INFO
-#define CONFIG_SYS_FLASH_USE_BUFFER_WRITE
+#undef CONFIG_SYS_FLASH_USE_BUFFER_WRITE
 #define CONFIG_SYS_MAX_FLASH_SECT	128	/* max number of sectors on one chip */
 #define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_8BIT
 #define CONFIG_SYS_FLASH_LEGACY_512Kx8
@@ -210,13 +224,11 @@
 #define CONFIG_SYS_THIRD_PCI_IRQ   11
 #define CONFIG_SYS_FORTH_PCI_IRQ   15
 
-/*-----------------------------------------------------------------------
- * Hardware watchdog configuration
+ /*
+ * Network device (TRL8100B) support
  */
-#define CONFIG_SYS_WATCHDOG_PIO_BIT  		0x8000
-#define CONFIG_SYS_WATCHDIG_PIO_DATA 		SC520_PIODATA15_0
-#define CONFIG_SYS_WATCHDIG_PIO_CLR  		SC520_PIOCLR15_0
-#define CONFIG_SYS_WATCHDIG_PIO_SET  		SC520_PIOSET15_0
+#define CONFIG_NET_MULTI
+#define CONFIG_RTL8139
 
 /*-----------------------------------------------------------------------
  * FPGA configuration
