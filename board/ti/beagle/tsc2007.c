@@ -130,7 +130,7 @@ int read_adc(int adcnum)
 
 void print_adc(void)
 {
-	printf("0: %04d 1:%04d 2:%04d 3:%04d 4: %04d 5:%04d 6:%04d 7:%04d",
+	printf("0:%04u 1:%04u 2:%04u 3:%04u 4:%04u 5:%04u 6:%04u 7:%04u",
 		   read_adc(0),
 		   read_adc(1),
 		   read_adc(2),

@@ -204,7 +204,7 @@ static int pendown(int *x, int *y)
 	if(x) *x=xx;
 	if(y) *y=yy;
 	udelay(10000);	// reduce I2C traffic and debounce...
-	return z > 50;	// was pressed
+	return z > 200;	// was pressed
 #else
 	// must be in PENIRQ mode...
 	return (led_get_buttons() & 0x08) == 0;
@@ -367,7 +367,7 @@ static int do_led_blink(int argc, char *argv[])
 	while (!tstc() && !pendown(NULL, NULL))
 		{
 			led_set_led(value++);	// mirror to LEDs
-			udelay(500000);	// 0.5 seconds
+			udelay(100000);	// 0.1 seconds
 		}
 	if(tstc())
 		getc();
@@ -475,4 +475,12 @@ U_BOOT_CMD(gps, 3, 0, do_gps, "GPS sub-system",
 		   "cmd string - send string\n"
 		   "echo - echo GPS out to console\n"
 		   );
+
+static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	// do mixture of gps_echo, tsc_loop, status mirror status blink
+	return (0);
+}
+
+U_BOOT_CMD(systest, 2, 0, do_systest, "System Test", "");
 

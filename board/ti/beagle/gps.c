@@ -36,12 +36,6 @@
 
 int gps_init(void)
 {
-//	MUX_VAL(CP(MMC2_DAT6),		(IEN  | PTU | EN  | M4)) /*GPIO_138 - EXT-ANT */\
-//	MUX_VAL(CP(UART2_CTS),		(IEN  | PTD | DIS | M4)) /*GPIO_144*/\
-//	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M4)) /*GPIO_145*/\
-//	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M0)) /*GPIO_146*/\
-//	MUX_VAL(CP(UART2_RX),		(IEN  | PTD | DIS | M0)) /*GPIO_147*/\
-	
 	omap_request_gpio(GPIO_GPS_ON);
 	omap_set_gpio_direction(GPIO_GPS_ON, 0);		// output
 	omap_request_gpio(GPIO_GPSEXT);
