@@ -46,9 +46,6 @@
 # include <byteswap.h>
 #elif defined(__MACH__)
 # include <machine/endian.h>
-#define __LITTLE_ENDIAN LITTLE_ENDIAN
-#define __BIG_ENDIAN BIG_ENDIAN
-#define __BYTE_ORDER BYTE_ORDER
 typedef unsigned long ulong;
 #endif
 

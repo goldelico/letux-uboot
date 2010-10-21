@@ -128,7 +128,7 @@ const omap3_sysinfo sysinfo = {
 	MUX_VAL(CP(GPMC_NCS6),		(IEN  | PTD | DIS | M0)) /*GPMC_nCS6*/\
 	MUX_VAL(CP(GPMC_NCS7),		(IEN  | PTU | EN  | M0)) /*GPMC_nCS7*/\
 	MUX_VAL(CP(GPMC_NBE1),		(IEN  | PTD | DIS | M0)) /*GPMC_nCS3*/\
-	MUX_VAL(CP(GPMC_CLK),		(IEN  | PTU | EN  | M0)) /*GPMC_CLK*/\
+	MUX_VAL(CP(GPMC_CLK),		(IDIS | PTU | EN  | M0)) /*GPMC_CLK*/\
 	MUX_VAL(CP(GPMC_NADV_ALE),	(IDIS | PTD | DIS | M0)) /*GPMC_nADV_ALE*/\
 	MUX_VAL(CP(GPMC_NOE),		(IDIS | PTD | DIS | M0)) /*GPMC_nOE*/\
 	MUX_VAL(CP(GPMC_NWE),		(IDIS | PTD | DIS | M0)) /*GPMC_nWE*/\
@@ -206,10 +206,10 @@ const omap3_sysinfo sysinfo = {
 	MUX_VAL(CP(MMC1_DAT1),		(IEN  | PTU | EN  | M0)) /*MMC1_DAT1*/\
 	MUX_VAL(CP(MMC1_DAT2),		(IEN  | PTU | EN  | M0)) /*MMC1_DAT2*/\
 	MUX_VAL(CP(MMC1_DAT3),		(IEN  | PTU | EN  | M0)) /*MMC1_DAT3*/\
-	MUX_VAL(CP(MMC1_DAT4),		(IEN  | PTU | EN  | M4)) /*GPIO_126*/\
-	MUX_VAL(CP(MMC1_DAT5),		(IEN  | PTU | EN  | M4)) /*GPIO_127*/\
-	MUX_VAL(CP(MMC1_DAT6),		(IEN  | PTU | EN  | M4)) /*GPIO_128*/\
-	MUX_VAL(CP(MMC1_DAT7),		(IEN  | PTU | EN  | M4)) /*GPIO_129*/\
+	MUX_VAL(CP(MMC1_DAT4),		(IEN  | PTU | EN  | M0)) /*MMC1_DAT4*/\
+	MUX_VAL(CP(MMC1_DAT5),		(IEN  | PTU | EN  | M0)) /*MMC1_DAT5*/\
+	MUX_VAL(CP(MMC1_DAT6),		(IEN  | PTU | EN  | M0)) /*MMC1_DAT6*/\
+	MUX_VAL(CP(MMC1_DAT7),		(IEN  | PTU | EN  | M0)) /*MMC1_DAT7*/\
  /*Wireless LAN */\
 	MUX_VAL(CP(MMC2_CLK),		(IEN  | PTU | EN  | M4)) /*GPIO_130*/\
 	MUX_VAL(CP(MMC2_CMD),		(IEN  | PTU | EN  | M0)) /*MMC2_CMD*/\

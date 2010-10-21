@@ -90,6 +90,8 @@
 #define CONFIG_SYS_NS16550_COM3		OMAP34XX_UART3
 #define CONFIG_SERIAL3			3	/* UART3 on Beagle Rev 2 */
 
+#define CONFIG_SYS_NS16550_COM2		OMAP34XX_UART2
+
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_BAUDRATE			115200
@@ -102,6 +104,12 @@
 
 /* DDR - I use Micron DDR */
 #define CONFIG_OMAP3_MICRON_DDR		1
+
+/* Enable Multi Bus support for I2C */
+#define CONFIG_I2C_MULTI_BUS		1
+
+/* Probe all devices */
+#define CONFIG_SYS_I2C_NOPROBES		{0x0, 0x0}
 
 /* USB */
 #define CONFIG_MUSB_UDC			1
@@ -130,6 +138,9 @@
 #define CONFIG_CMD_I2C		/* I2C serial bus support	*/
 #define CONFIG_CMD_MMC		/* MMC support			*/
 #define CONFIG_CMD_NAND		/* NAND support			*/
+#define CONFIG_CMD_LED		/* LED support			*/
+#define CONFIG_VIDEO_OMAP3	/* DSS Support			*/
+#define CONFIG_CMD_SETEXPR	/* Evaluate expressions		*/
 
 #undef CONFIG_CMD_FLASH		/* flinfo, erase, protect	*/
 #undef CONFIG_CMD_FPGA		/* FPGA configuration Support	*/

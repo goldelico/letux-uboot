@@ -23,8 +23,6 @@
 #ifndef _BEAGLE_H_
 #define _BEAGLE_H_
 
-#include <asm/arch/dss.h>
-
 const omap3_sysinfo sysinfo = {
 	DDR_STACKED,
 	"OMAP3 Beagle board",
@@ -35,10 +33,6 @@ const omap3_sysinfo sysinfo = {
 #endif
 };
 
-<<<<<<< HEAD
-#define BOARD_REVISION_MASK	(0x1 << 11)
-=======
->>>>>>> 11c8dd36edcc82564a19dbd0103302df66d66db0
 /* BeagleBoard revisions */
 #define REVISION_AXBX	0x7
 #define REVISION_CX	0x6
@@ -241,11 +235,11 @@ const omap3_sysinfo sysinfo = {
 	MUX_VAL(CP(MCBSP4_FSX),		(IEN  | PTD | DIS | M1)) /*SSI1_WAKE*/\
 	MUX_VAL(CP(MCBSP1_CLKR),	(IDIS | PTD | DIS | M4)) /*GPIO_156 - GPS ON(0)/OFF(1)*/\
 	MUX_VAL(CP(MCBSP1_FSR),		(IEN  | PTU | EN  | M4)) /*GPIO_157 - PENIRQ */\
-	MUX_VAL(CP(MCBSP1_DX),		(IDIS | PTD | EN  | M4)); /*GPIO_158 - DOUT */\
-	MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTU | DIS | M4)); /*GPIO_159 - DIN - pulled up */\
+	MUX_VAL(CP(MCBSP1_DX),		(IDIS | PTD | EN  | M4)) /*GPIO_158 - DOUT */\
+	MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTU | DIS | M4)) /*GPIO_159 - DIN - pulled up */\
 	MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | DIS | M0)) /*McBSP_CLKS*/\
-	MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTU | EN  | M4)); /*GPIO_161 - CS */\
-	MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTD | EN  | M4)); /*GPIO_162 - SCL */\
+	MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTU | EN  | M4)) /*GPIO_161 - CS */\
+	MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTD | EN  | M4)) /*GPIO_162 - SCL */\
  /*Serial Interface*/\
 	MUX_VAL(CP(UART3_CTS_RCTX),	(IEN  | PTD | EN  | M0)) /*UART3_CTS_RCTX*/\
 	MUX_VAL(CP(UART3_RTS_SD),	(IDIS | PTD | DIS | M0)) /*UART3_RTS_SD */\
@@ -392,17 +386,10 @@ const omap3_sysinfo sysinfo = {
 	MUX_VAL(CP(UART2_TX),		(IDIS | PTD | DIS | M0)) /*UART2_TX*/
 
 #define MUX_BEAGLE_XM() \
-<<<<<<< HEAD
 	MUX_VAL(CP(GPMC_NCS5),		(IDIS | PTD | EN  | M4)) /*GPIO_56 - USB HUB reset*/\
 	MUX_VAL(CP(GPMC_WAIT0),		(IDIS | PTU | EN  | M4)) /*GPIO_63 - P8 USB HUB nreset*/\
 	MUX_VAL(CP(MMC1_DAT7),		(IDIS | PTU | EN  | M4)) /*GPIO_129 - DVI enable*/\
 	MUX_VAL(CP(HDQ_SIO),		(IDIS | PTU | EN  | M4)) /*GPIO_170 - P8 DVI enable*/\
-=======
-	MUX_VAL(CP(GPMC_NCS5),		(IDIS | PTD | EN  | M4)) /*GPIO_56*/\
-	MUX_VAL(CP(GPMC_WAIT0),		(IDIS | PTU | EN  | M4)) /*GPIO_63*/\
-	MUX_VAL(CP(MMC1_DAT7),		(IDIS | PTU | EN  | M4)) /*GPIO_129*/\
-	MUX_VAL(CP(HDQ_SIO),		(IDIS | PTU | EN  | M4)) /*GPIO_170*/\
->>>>>>> 11c8dd36edcc82564a19dbd0103302df66d66db0
 	MUX_VAL(CP(MCBSP3_DX),		(IEN  | PTD | DIS | M4)) /*GPIO_140*/\
 	MUX_VAL(CP(MCBSP3_DR),		(IEN  | PTD | DIS | M4)) /*GPIO_142*/\
 	MUX_VAL(CP(MCBSP3_CLKX),	(IEN  | PTD | DIS | M4)) /*GPIO_141*/\
@@ -426,124 +413,6 @@ const omap3_sysinfo sysinfo = {
 	MUX_VAL(CP(SYS_BOOT3),		(IDIS | PTD | DIS | M3)) /*DSS_DATA20*/\
 	MUX_VAL(CP(SYS_BOOT4),		(IDIS | PTD | DIS | M3)) /*DSS_DATA21*/\
 	MUX_VAL(CP(SYS_BOOT5),		(IDIS | PTD | DIS | M3)) /*DSS_DATA22*/\
-<<<<<<< HEAD
 	MUX_VAL(CP(SYS_BOOT6),		(IDIS | PTD | DIS | M3)) /*DSS_DATA23*/ 
-
-#define MUX_TINCANTOOLS_ZIPPY() \
-	MUX_VAL(CP(MMC2_CLK),       (IEN  | PTU | EN  | M0)) /*MMC2_CLK*/\
-	MUX_VAL(CP(MMC2_CMD),       (IEN  | PTU | EN  | M0)) /*MMC2_CMD*/\
-	MUX_VAL(CP(MMC2_DAT0),      (IEN  | PTU | EN  | M0)) /*MMC2_DAT0*/\
-	MUX_VAL(CP(MMC2_DAT1),      (IEN  | PTU | EN  | M0)) /*MMC2_DAT1*/\
-	MUX_VAL(CP(MMC2_DAT2),      (IEN  | PTU | EN  | M0)) /*MMC2_DAT2*/\
-	MUX_VAL(CP(MMC2_DAT3),      (IEN  | PTU | EN  | M0)) /*MMC2_DAT3*/\
-	MUX_VAL(CP(MMC2_DAT4),      (IEN  | PTU | EN  | M1)) /*MMC2_DIR_DAT0*/\
-	MUX_VAL(CP(MMC2_DAT5),      (IEN  | PTU | EN  | M1)) /*MMC2_DIR_DAT1*/\
-	MUX_VAL(CP(MMC2_DAT6),      (IEN  | PTU | EN  | M1)) /*MMC2_DIR_CMD*/\
-	MUX_VAL(CP(MMC2_DAT7),      (IEN  | PTU | EN  | M1)) /*MMC2_CLKIN*/\
-	MUX_VAL(CP(MCBSP1_CLKR),    (IEN  | PTU | EN  | M1)) /*MCSPI4_CLK*/\
-	MUX_VAL(CP(MCBSP1_FSR),     (IEN  | PTU | EN  | M4)) /*GPIO_157*/\
-	MUX_VAL(CP(MCBSP1_DX),      (IEN  | PTD | EN  | M1)) /*MCSPI4_SIMO*/\
-	MUX_VAL(CP(MCBSP1_DR),      (IEN  | PTD | DIS | M1)) /*MCSPI4_SOMI*/\
-	MUX_VAL(CP(MCBSP1_FSX),     (IEN  | PTD | EN  | M1)) /*MCSPI4_CS0*/\
-	MUX_VAL(CP(MCBSP1_CLKX),    (IEN  | PTD | DIS | M4)) /*GPIO_162*/\
-	MUX_VAL(CP(MCBSP3_DX),      (IEN  | PTD | DIS | M4)) /*GPIO_140*/\
-	MUX_VAL(CP(MCBSP3_DR),      (IEN  | PTD | DIS | M4)) /*GPIO_142*/\
-	MUX_VAL(CP(MCBSP3_CLKX),    (IEN  | PTD | DIS | M4)) /*GPIO_141*/
-
-#define MUX_TINCANTOOLS_TRAINER() \
-	MUX_VAL(CP(MMC2_CLK),       (IEN  | PTU | EN  | M4)) /*GPIO_130*/\
-	MUX_VAL(CP(MMC2_CMD),       (IEN  | PTU | EN  | M4)) /*GPIO_131*/\
-	MUX_VAL(CP(MMC2_DAT0),      (IEN  | PTU | EN  | M4)) /*GPIO_132*/\
-	MUX_VAL(CP(MMC2_DAT1),      (IEN  | PTU | EN  | M4)) /*GPIO_133*/\
-	MUX_VAL(CP(MMC2_DAT2),      (IEN  | PTU | EN  | M4)) /*GPIO_134*/\
-	MUX_VAL(CP(MMC2_DAT3),      (IEN  | PTU | EN  | M4)) /*GPIO_135*/\
-	MUX_VAL(CP(MMC2_DAT4),      (IEN  | PTU | EN  | M4)) /*GPIO_136*/\
-	MUX_VAL(CP(MMC2_DAT5),      (IEN  | PTU | EN  | M4)) /*GPIO_137*/\
-	MUX_VAL(CP(MMC2_DAT6),      (IEN  | PTU | EN  | M4)) /*GPIO_138*/\
-	MUX_VAL(CP(MMC2_DAT7),      (IEN  | PTU | EN  | M4)) /*GPIO_139*/\
-	MUX_VAL(CP(MCBSP3_DX),      (IEN  | PTU | EN  | M4)) /*GPIO_140*/\
-	MUX_VAL(CP(MCBSP3_CLKX),    (IEN  | PTU | EN  | M4)) /*GPIO_141*/
-
-#define MUX_KBADC_BEAGLEFPGA() \
-	MUX_VAL(CP(MCBSP1_CLKR),    (IEN  | PTU | DIS | M1)) /*MCSPI4_CLK*/\
-	MUX_VAL(CP(MCBSP1_DX),      (IDIS | PTU | DIS | M1)) /*MCSPI4_SIMO*/\
-	MUX_VAL(CP(MCBSP1_DR),      (IEN  | PTU | EN  | M1)) /*MCSPI4_SOMI*/\
-	MUX_VAL(CP(MCBSP1_FSX),     (IDIS | PTU | DIS | M1)) /*MCSPI4_CS0*/\
-
-/*
- * Display Configuration
- */
-
-#define DVI_BEAGLE_ORANGE_COL		0x00FF8000
-#define VENC_HEIGHT			0x00ef
-#define VENC_WIDTH			0x027f
-
-/*
- * Configure VENC in DSS for Beagle to generate Color Bar
- *
- * Kindly refer to OMAP TRM for definition of these values.
- */
-static const struct venc_regs venc_config_std_tv = {
-	.status					= 0x0000001B,
-	.f_control				= 0x00000040,
-	.vidout_ctrl				= 0x00000000,
-	.sync_ctrl				= 0x00008000,
-	.llen					= 0x00008359,
-	.flens					= 0x0000020C,
-	.hfltr_ctrl				= 0x00000000,
-	.cc_carr_wss_carr			= 0x043F2631,
-	.c_phase				= 0x00000024,
-	.gain_u					= 0x00000130,
-	.gain_v					= 0x00000198,
-	.gain_y					= 0x000001C0,
-	.black_level				= 0x0000006A,
-	.blank_level				= 0x0000005C,
-	.x_color				= 0x00000000,
-	.m_control				= 0x00000001,
-	.bstamp_wss_data			= 0x0000003F,
-	.s_carr					= 0x21F07C1F,
-	.line21					= 0x00000000,
-	.ln_sel					= 0x00000015,
-	.l21__wc_ctl				= 0x00001400,
-	.htrigger_vtrigger			= 0x00000000,
-	.savid__eavid				= 0x069300F4,
-	.flen__fal				= 0x0016020C,
-	.lal__phase_reset			= 0x00060107,
-	.hs_int_start_stop_x			= 0x008D034E,
-	.hs_ext_start_stop_x			= 0x000F0359,
-	.vs_int_start_x				= 0x01A00000,
-	.vs_int_stop_x__vs_int_start_y		= 0x020501A0,
-	.vs_int_stop_y__vs_ext_start_x		= 0x01AC0024,
-	.vs_ext_stop_x__vs_ext_start_y		= 0x020D01AC,
-	.vs_ext_stop_y				= 0x00000006,
-	.avid_start_stop_x			= 0x03480079,
-	.avid_start_stop_y			= 0x02040024,
-	.fid_int_start_x__fid_int_start_y	= 0x0001008A,
-	.fid_int_offset_y__fid_ext_start_x	= 0x01AC0106,
-	.fid_ext_start_y__fid_ext_offset_y	= 0x01060006,
-	.tvdetgp_int_start_stop_x		= 0x00140001,
-	.tvdetgp_int_start_stop_y		= 0x00010001,
-	.gen_ctrl				= 0x00FF0000,
-	.output_control				= 0x0000000D,
-	.dac_b__dac_c				= 0x00000000
-};
-
-/*
- * Configure Timings for DVI D
- */
-static const struct panel_config dvid_cfg = {
-	.timing_h	= 0x0ff03f31, /* Horizantal timing */
-	.timing_v	= 0x01400504, /* Vertical timing */
-	.pol_freq	= 0x00007028, /* Pol Freq */
-	.divisor	= 0x00010006, /* 72Mhz Pixel Clock */
-	.lcd_size	= 0x02ff03ff, /* 1024x768 */
-	.panel_type	= 0x01, /* TFT */
-	.data_lines	= 0x03, /* 24 Bit RGB */
-	.load_mode	= 0x02, /* Frame Mode */
-	.panel_color	= DVI_BEAGLE_ORANGE_COL /* ORANGE */
-};
-=======
-	MUX_VAL(CP(SYS_BOOT6),		(IDIS | PTD | DIS | M3)) /*DSS_DATA23*/
->>>>>>> 11c8dd36edcc82564a19dbd0103302df66d66db0
 
 #endif

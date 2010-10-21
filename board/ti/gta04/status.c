@@ -34,6 +34,7 @@ static int isGTA04 = 0;
 
 // we can't include "beagle.h"
 /* BeagleBoard revisions */
+extern int get_board_revision(void); 
 #define REVISION_AXBX	0x7
 #define REVISION_CX	0x6
 #define REVISION_C4	0x5
@@ -87,7 +88,7 @@ int led_get_buttons(void)
 
 int led_init(void)
 {
-	isXM = (beagle_get_revision() == REVISION_XM);
+	isXM = (get_board_revision() == REVISION_XM);
 	
 	if(!isGTA04) {
 		if(isXM) { // XM has scrambled dss assignment with respect to default ball name

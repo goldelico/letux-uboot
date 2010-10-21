@@ -66,8 +66,15 @@ int board_init(void)
 }
 
 /*
- * Routine: beagle_get_revision
- * Description: Return the revision of the BeagleBoard this code is running on.
+ * Routine: get_board_revision
+ * Description: Detect if we are running on a Beagle revision Ax/Bx,
+ *		C1/2/3, C4 or xM. This can be done by reading
+ *		the level of GPIO173, GPIO172 and GPIO171. This should
+ *		result in
+ *		GPIO173, GPIO172, GPIO171: 1 1 1 => Ax/Bx
+ *		GPIO173, GPIO172, GPIO171: 1 1 0 => C1/2/3
+ *		GPIO173, GPIO172, GPIO171: 1 0 1 => C4
+ *		GPIO173, GPIO172, GPIO171: 0 0 0 => xM
  */
 int get_board_revision(void)
 {
@@ -104,7 +111,8 @@ int misc_init_r(void)
 {
 	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
 	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
-
+	
+	extern void display_init(void);
 
 	switch (get_board_revision()) {
 	case REVISION_AXBX:
@@ -139,6 +147,11 @@ int misc_init_r(void)
 					TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
 					TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
 					TWL4030_PM_RECEIVER_DEV_GRP_P1);
+		/* Set VAUX1 to 3.3V for GTA04E display board */
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,
+					/*TWL4030_PM_RECEIVER_VAUX1_VSEL_33*/ 0x07,
+					TWL4030_PM_RECEIVER_VAUX1_DEV_GRP,
+					TWL4030_PM_RECEIVER_DEV_GRP_P1);
 		break;
 	default:
 		printf("Beagle unknown 0x%02x\n", get_board_revision());
@@ -146,6 +159,7 @@ int misc_init_r(void)
 
 	twl4030_power_init();
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
+
 	display_init();
 
 	/* Configure GPIOs to output */
@@ -160,7 +174,6 @@ int misc_init_r(void)
 		GPIO15 | GPIO14 | GPIO13 | GPIO12, &gpio5_base->setdataout);
 
 	dieid_num_r();
-	omap3_dss_enable();
 
 	return 0;
 }
