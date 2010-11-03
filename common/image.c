@@ -520,7 +520,7 @@ char *get_table_entry_name (table_entry_t *table, char *msg, int id)
 {
 	for (; table->id >= 0; ++table) {
 		if (table->id == id)
-#if defined(USE_HOSTCC) || defined(CONFIG_RELOC_FIXUP_WORKS)
+#if defined(USE_HOSTCC) || !defined(CONFIG_NEEDS_MANUAL_RELOC)
 			return table->lname;
 #else
 			return table->lname + gd->reloc_off;
@@ -585,10 +585,10 @@ int get_table_entry_id (table_entry_t *table,
 	fprintf (stderr, "\n");
 #else
 	for (t = table; t->id >= 0; ++t) {
-#ifdef CONFIG_RELOC_FIXUP_WORKS
-		if (t->sname && strcmp(t->sname, name) == 0)
-#else
+#ifdef CONFIG_NEEDS_MANUAL_RELOC
 		if (t->sname && strcmp(t->sname + gd->reloc_off, name) == 0)
+#else
+		if (t->sname && strcmp(t->sname, name) == 0)
 #endif
 			return (t->id);
 	}
@@ -1176,8 +1176,10 @@ static int fit_check_fdt (const void *fit, int fdt_noffset, int verify)
  * @of_flat_tree: pointer to a char* variable, will hold fdt start address
  * @of_size: pointer to a ulong variable, will hold fdt length
  *
- * boot_relocate_fdt() determines if the of_flat_tree address is within
- * the bootmap and if not relocates it into that region
+ * boot_relocate_fdt() allocates a region of memory within the bootmap and
+ * relocates the of_flat_tree into that region, even if the fdt is already in
+ * the bootmap.  It also expands the size of the fdt by CONFIG_SYS_FDT_PAD
+ * bytes.
  *
  * of_flat_tree and of_size are set to final (after relocation) values
  *
@@ -1189,9 +1191,10 @@ static int fit_check_fdt (const void *fit, int fdt_noffset, int verify)
 int boot_relocate_fdt (struct lmb *lmb, ulong bootmap_base,
 		char **of_flat_tree, ulong *of_size)
 {
-	char	*fdt_blob = *of_flat_tree;
-	ulong	relocate = 0;
+	void	*fdt_blob = *of_flat_tree;
+	void	*of_start = 0;
 	ulong	of_len = 0;
+	int	err;
 
 	/* nothing to do */
 	if (*of_size == 0)
@@ -1202,62 +1205,32 @@ int boot_relocate_fdt (struct lmb *lmb, ulong bootmap_base,
 		goto error;
 	}
 
-#ifndef CONFIG_SYS_NO_FLASH
-	/* move the blob if it is in flash (set relocate) */
-	if (addr2info ((ulong)fdt_blob) != NULL)
-		relocate = 1;
-#endif
+	/* position on a 4K boundary before the alloc_current */
+	/* Pad the FDT by a specified amount */
+	of_len = *of_size + CONFIG_SYS_FDT_PAD;
+	of_start = (void *)(unsigned long)lmb_alloc_base(lmb, of_len, 0x1000,
+			(CONFIG_SYS_BOOTMAPSZ + bootmap_base));
 
-	/*
-	 * The blob needs to be inside the boot mapping.
-	 */
-	if (fdt_blob < (char *)bootmap_base)
-		relocate = 1;
-
-	if ((fdt_blob + *of_size + CONFIG_SYS_FDT_PAD) >=
-			((char *)CONFIG_SYS_BOOTMAPSZ + bootmap_base))
-		relocate = 1;
-
-	/* move flattend device tree if needed */
-	if (relocate) {
-		int err;
-		ulong of_start = 0;
-
-		/* position on a 4K boundary before the alloc_current */
-		/* Pad the FDT by a specified amount */
-		of_len = *of_size + CONFIG_SYS_FDT_PAD;
-		of_start = (unsigned long)lmb_alloc_base(lmb, of_len, 0x1000,
-				(CONFIG_SYS_BOOTMAPSZ + bootmap_base));
-
-		if (of_start == 0) {
-			puts("device tree - allocation error\n");
-			goto error;
-		}
-
-		debug ("## device tree at 0x%08lX ... 0x%08lX (len=%ld=0x%lX)\n",
-			(ulong)fdt_blob, (ulong)fdt_blob + *of_size - 1,
-			of_len, of_len);
-
-		printf ("   Loading Device Tree to %08lx, end %08lx ... ",
-			of_start, of_start + of_len - 1);
-
-		err = fdt_open_into (fdt_blob, (void *)of_start, of_len);
-		if (err != 0) {
-			fdt_error ("fdt move failed");
-			goto error;
-		}
-		puts ("OK\n");
-
-		*of_flat_tree = (char *)of_start;
-		*of_size = of_len;
-	} else {
-		*of_flat_tree = fdt_blob;
-		of_len = *of_size + CONFIG_SYS_FDT_PAD;
-		lmb_reserve(lmb, (ulong)fdt_blob, of_len);
-		fdt_set_totalsize(*of_flat_tree, of_len);
-
-		*of_size = of_len;
+	if (of_start == 0) {
+		puts("device tree - allocation error\n");
+		goto error;
 	}
+
+	debug ("## device tree at %p ... %p (len=%ld [0x%lX])\n",
+		fdt_blob, fdt_blob + *of_size - 1, of_len, of_len);
+
+	printf ("   Loading Device Tree to %p, end %p ... ",
+		of_start, of_start + of_len - 1);
+
+	err = fdt_open_into (fdt_blob, of_start, of_len);
+	if (err != 0) {
+		fdt_error ("fdt move failed");
+		goto error;
+	}
+	puts ("OK\n");
+
+	*of_flat_tree = of_start;
+	*of_size = of_len;
 
 	set_working_fdt_addr(*of_flat_tree);
 	return 0;
