@@ -25,8 +25,8 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).a
 
-COBJS	:= beagle.o 
-COBJS-y	:= $(BOARD).o ../../goldelico/gta04/TD028TTEC1.o ../../goldelico/gta04/jbt6k74.o ../../goldelico/gta04/backlight.o ../../goldelico/gta04/status.o ../../goldelico/gta04/tsc2007.o ../../goldelico/gta04/dssfb.o ../../goldelico/gta04/gps.o ../../goldelico/gta04/commands.o
+COBJS	:= gta04.0 
+COBJS-y	:= $(BOARD).o TD028TTEC1.o jbt6k74.o backlight.o status.o tsc2007.o dssfb.o gps.o commands.o
 
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)

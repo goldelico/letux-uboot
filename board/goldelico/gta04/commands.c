@@ -38,7 +38,7 @@
 
 /* LCM commands */
 
-static int do_lcd_color(int argc, char *argv[])
+static int do_lcd_color(int argc, char *const argv[])
 {
 	unsigned int color;
 	if (argc < 3) {
@@ -50,7 +50,7 @@ static int do_lcd_color(int argc, char *argv[])
 	return 0;
 }
 
-static int do_lcd_framebuffer(int argc, char *argv[])
+static int do_lcd_framebuffer(int argc, char *const argv[])
 {
 	void *addr;
 	if (argc < 3) {
@@ -62,7 +62,7 @@ static int do_lcd_framebuffer(int argc, char *argv[])
 	return 0;
 }
 
-static int do_lcd_backlight(int argc, char *argv[])
+static int do_lcd_backlight(int argc, char *const argv[])
 {
 	unsigned char level;
 	if (argc < 3) {
@@ -74,7 +74,7 @@ static int do_lcd_backlight(int argc, char *argv[])
 	return 0;
 }
 
-static int do_lcd_power(int argc, char *argv[])
+static int do_lcd_power(int argc, char *const argv[])
 {
 	int state=JBT_STATE_NORMAL;
 	if (argc < 3)
@@ -93,19 +93,19 @@ static int do_lcd_power(int argc, char *argv[])
 	return 0;
 }
 
-static int do_lcd_onoff(int argc, char *argv[], int flag)
+static int do_lcd_onoff(int argc, char *const argv[], int flag)
 {
 	jbt6k74_display_onoff(flag);
 	printf("display power %s\n", flag?"on":"off");
 	return 0;
 }
 
-static int do_lcd_init(int argc, char *argv[])
+static int do_lcd_init(int argc, char *const argv[])
 {
 	return board_video_init(NULL);
 }
 
-static int do_lcd(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int do_lcd(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int len;
 	
@@ -148,20 +148,20 @@ U_BOOT_CMD(lcm, 3, 0, do_lcd, "LCM sub-system",
 
 /* TSC commands */
 
-static int do_tsc_init(int argc, char *argv[])
+static int do_tsc_init(int argc, char *const argv[])
 {
 	tsc2007_init();
 	return 0;
 }
 
-static int do_tsc_get(int argc, char *argv[])
+static int do_tsc_get(int argc, char *const argv[])
 {
 	print_adc();
 	printf("\n");
 	return 0;
 }
 
-static int do_tsc_loop(int argc, char *argv[])
+static int do_tsc_loop(int argc, char *const argv[])
 {
 	printf("permanently reading ADCs of TSC.\n"
 		   "Press any key to stop\n\n");
@@ -177,7 +177,7 @@ static int do_tsc_loop(int argc, char *argv[])
 
 static int tsc_choice=0;
 
-static int do_tsc_selection(int argc, char *argv[])
+static int do_tsc_selection(int argc, char *const argv[])
 { // tsc selection number
 	if (argc != 3)
 		{
@@ -211,7 +211,7 @@ static int pendown(int *x, int *y)
 #endif
 }
 
-static int do_tsc_choose(int argc, char *argv[])
+static int do_tsc_choose(int argc, char *const argv[])
 { // tsc choose cols rows
 	int cols;
 	int rows;
@@ -260,7 +260,7 @@ static int do_tsc_choose(int argc, char *argv[])
 	return 0;
 }
 
-static int do_tsc(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int do_tsc(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int len;
 	
@@ -298,7 +298,7 @@ U_BOOT_CMD(tsc, 4, 0, do_tsc, "TSC2007 sub-system",
 
 /** LED commands */
 
-static int do_led_init(int argc, char *argv[])
+static int do_led_init(int argc, char *const argv[])
 {
 	led_init();
 	return 0;
@@ -309,7 +309,7 @@ static void print_buttons(int status)
 	printf("AUX: %s Power: %s Antenna: %s Pen: %s", (status&0x01)?"on":"off", (status&0x04)?"on":"off", (status&0x02)?"EXT":"INT", (status&0x08)?"1":"0");
 }
 
-static int do_led_check(int argc, char *argv[])
+static int do_led_check(int argc, char *const argv[])
 { // can be used in if construct
 	int state=led_get_buttons();
 	if (argc < 3)
@@ -321,7 +321,7 @@ static int do_led_check(int argc, char *argv[])
 	return (state != 0)?0:1;
 }
 
-static int do_led_get(int argc, char *argv[])
+static int do_led_get(int argc, char *const argv[])
 {
 	int status=led_get_buttons();
 	printf("button status: %01x\n", status);
@@ -330,7 +330,7 @@ static int do_led_get(int argc, char *argv[])
 	return 0;
 }
 
-static int do_led_set(int argc, char *argv[])
+static int do_led_set(int argc, char *const argv[])
 { // led set hh
 	static int state;
 	if(argc == 2)
@@ -341,7 +341,7 @@ static int do_led_set(int argc, char *argv[])
 	return 0;
 }
 
-static int do_led_loop(int argc, char *argv[])
+static int do_led_loop(int argc, char *const argv[])
 {
 	printf("mirroring buttons to LEDs.\n"
 		   "Press any key to stop\n\n");
@@ -359,7 +359,7 @@ static int do_led_loop(int argc, char *argv[])
 	return 0;
 }
 
-static int do_led_blink(int argc, char *argv[])
+static int do_led_blink(int argc, char *const argv[])
 {
 	int value=0;
 	printf("blinking LEDs.\n"
@@ -374,7 +374,7 @@ static int do_led_blink(int argc, char *argv[])
 	return 0;
 }
 
-static int do_led(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int do_led(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int len;
 	
@@ -415,34 +415,35 @@ U_BOOT_CMD(status, 3, 0, do_led, "LED and Buttons sub-system",
 
 /** GPS commands */
 
-static int do_gps_init(int argc, char *argv[])
+static int do_gps_init(int argc, char *const argv[])
 {
 	return gps_init();
 }
 
-static int do_gps_on(int argc, char *argv[])
+static int do_gps_on(int argc, char *const argv[])
 {
+	// should we better send a single ongoing pulse of at least 2 32 kHz cycles?
 	gps_on();
 	printf("GPS on\n");
 	return 0;
 }
 
-static int do_gps_off(int argc, char *argv[])
+static int do_gps_off(int argc, char *const argv[])
 {
 	gps_off();
 	printf("GPS off\n");
 	return 0;
 }
 
-static int do_gps_echo(int argc, char *argv[])
+static int do_gps_echo(int argc, char *const argv[])
 {
 	gps_echo();
 	return 0;
 }
 
-// FIXME: gps cmd
+// FIXME: "gps cmd" to send a string
 
-static int do_gps(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int do_gps(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int len;
 	
@@ -476,7 +477,7 @@ U_BOOT_CMD(gps, 3, 0, do_gps, "GPS sub-system",
 		   "echo - echo GPS out to console\n"
 		   );
 
-static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	// do mixture of gps_echo, tsc_loop, status mirror status blink
 	return (0);
@@ -484,3 +485,121 @@ static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 
 U_BOOT_CMD(systest, 2, 0, do_systest, "System Test", "");
 
+#ifndef CONFIG_OMAP3_GTA04
+static void shutdown(void)
+	{
+	printf("please switch off power supply\n");
+	while(1)
+		;
+	}
+#endif
+
+static int do_halt(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	backlight_set_level(0);
+	jbt6k74_enter_state(0);
+	jbt6k74_display_onoff(0);
+	shutdown();	// finally shut down power
+	printf ("failed to power off\n");
+	return (0);
+}
+
+U_BOOT_CMD(halt, 2, 0, do_halt, "Powerdown", "");
+
+
+static int do_mux(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	int cols=0;
+	char *addr=(char *) 0x48002030;
+	printf("%08x", (unsigned int) addr);					
+	while(addr <= (char *) 0x480025F8) {
+		unsigned mux=*(unsigned *) addr;
+		int i;
+		if(cols == 0)
+			printf("%08x", (unsigned int) addr);			
+		for(i=1; i <= 2; i++) {
+			printf(" %c%d%c", (mux&8)?((mux&0x10?'U':'D')):' ', (mux&7), (mux&0x100)?'I':'O');
+			mux >>= 16;
+		}
+		if(addr == (char *) 0x48002264) {
+			addr= (char *) 0x480025DC;
+			if(cols != 0)
+				printf("\n");
+			cols=0;
+		}
+		else {
+			addr+=4;
+			if(++cols == 8)
+				cols=0;
+		}
+	}
+	if(cols != 0)
+		printf("\n");
+	return (0);
+}
+
+U_BOOT_CMD(mux, 2, 0, do_mux, "Pinmux", "");
+
+
+static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	int i;
+	int n=10;
+#if MATERIAL
+	int len;
+	if (argc < 2) {
+		printf ("gpio: missing subcommand.\n");
+		return (-1);
+	}
+	
+	len = strlen (argv[1]);
+	if (strncmp ("on", argv[1], 2) == 0) {
+		return do_gps_on (argc, argv);
+#endif
+	// void omap_set_gpio_direction(int gpio, int is_input)
+	// int omap_get_gpio_datain(int gpio)
+	// void omap_set_gpio_dataout(int gpio, int enable)
+	if(argc == 1)
+		{
+		for(i=0; i<6*32; i++)
+			{
+			if(i%n == 0)
+				printf("%03d", i);
+			printf(" %d", omap_get_gpio_datain(i));
+			if((i+1)%n == 0)
+				printf("\n");
+			}
+		if((i+1)%n != 0)
+			printf("\n");	// last line		
+		}
+	else if (strncmp ("on", argv[1], 2) == 0) {
+		// void omap_set_gpio_dataout(int gpio, 1)
+	}
+	else if (strncmp ("of", argv[1], 2) == 0) {
+		// void omap_set_gpio_dataout(int gpio, 0)
+	}
+	else if (strncmp ("in", argv[1], 2) == 0) {
+		// void omap_set_gpio_direction(int gpio, 1)
+	}
+	else if (strncmp ("ou", argv[1], 2) == 0) {
+		// void omap_set_gpio_direction(int gpio, 0)
+	}
+	else if(argc == 3) {
+			
+	}
+	else {
+		printf ("gpio: unknown subcommand.\n");
+	return (-1);
+	}
+	return (0);
+}
+
+U_BOOT_CMD(gpio, 3, 0, do_gpio, "GPIO sub-system",
+		   " - print all\n"
+		   "n - print and return state\n"
+		   "m n - print state in given range\n"
+		   "on n - set to 1\n"
+		   "off n - set to 0\n"
+		   "in n - switch to input\n"
+		   "out n - switch to out (dangerous!)\n"
+		   );
