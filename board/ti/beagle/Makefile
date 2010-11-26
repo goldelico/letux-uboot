@@ -23,17 +23,15 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).a
+LIB	= $(obj)lib$(BOARD).o
 
-COBJS	:= beagle.o 
-COBJS-y	:= $(BOARD).o ../../goldelico/gta04/TD028TTEC1.o ../../goldelico/gta04/jbt6k74.o ../../goldelico/gta04/backlight.o ../../goldelico/gta04/status.o ../../goldelico/gta04/tsc2007.o ../../goldelico/gta04/dssfb.o ../../goldelico/gta04/gps.o ../../goldelico/gta04/commands.o
+COBJS	:= beagle.o
 
-COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 
 $(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 clean:
 	rm -f $(OBJS)
