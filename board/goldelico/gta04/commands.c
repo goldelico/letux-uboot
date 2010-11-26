@@ -537,54 +537,62 @@ U_BOOT_CMD(mux, 2, 0, do_mux, "Pinmux", "");
 
 static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	int i;
-	int n=10;
-#if MATERIAL
-	int len;
-	if (argc < 2) {
-		printf ("gpio: missing subcommand.\n");
-		return (-1);
-	}
-	
-	len = strlen (argv[1]);
-	if (strncmp ("on", argv[1], 2) == 0) {
-		return do_gps_on (argc, argv);
-#endif
-	// void omap_set_gpio_direction(int gpio, int is_input)
-	// int omap_get_gpio_datain(int gpio)
-	// void omap_set_gpio_dataout(int gpio, int enable)
-	if(argc == 1)
-		{
-		for(i=0; i<6*32; i++)
-			{
-			if(i%n == 0)
-				printf("%03d", i);
-			printf(" %d", omap_get_gpio_datain(i));
-			if((i+1)%n == 0)
-				printf("\n");
-			}
-		if((i+1)%n != 0)
-			printf("\n");	// last line		
+	if(argc == 3) {
+		if (strncmp ("on", argv[1], 2) == 0) {
+			omap_set_gpio_dataout(simple_strtoul(argv[2], NULL, 10), 1);
+			return 0;
 		}
-	else if (strncmp ("on", argv[1], 2) == 0) {
-		// void omap_set_gpio_dataout(int gpio, 1)
+		else if (strncmp ("of", argv[1], 2) == 0) {
+			omap_set_gpio_dataout(simple_strtoul(argv[2], NULL, 10), 0);
+			return 0;
+		}
+		else if (strncmp ("in", argv[1], 2) == 0) {
+			omap_set_gpio_direction(simple_strtoul(argv[2], NULL, 10), 1);
+			return 0;
+		}
+		else if (strncmp ("ou", argv[1], 2) == 0) {
+			omap_set_gpio_direction(simple_strtoul(argv[2], NULL, 10), 0);
+			return 0;
+		}
 	}
-	else if (strncmp ("of", argv[1], 2) == 0) {
-		// void omap_set_gpio_dataout(int gpio, 0)
-	}
-	else if (strncmp ("in", argv[1], 2) == 0) {
-		// void omap_set_gpio_direction(int gpio, 1)
-	}
-	else if (strncmp ("ou", argv[1], 2) == 0) {
-		// void omap_set_gpio_direction(int gpio, 0)
-	}
-	else if(argc == 3) {
-			
-	}
+	if(argc == 1 || argc == 3)
+		{ // no arguments or from..to
+			int i=0;
+			int end=6*32;
+			int n=10;	// number of columns
+			int col=0;
+			if(argc == 3) {
+				i=simple_strtoul(argv[1], NULL, 10);
+				end=simple_strtoul(argv[2], NULL, 10)+1;	// include
+			}
+			for(; i<end; i++)
+				{
+				if(col == 0)
+					printf("%03d", i);
+				printf(" %d", omap_get_gpio_datain(i));
+				if(++col == n)
+					printf("\n"), col=0;
+				}
+			if(col != 0)
+				printf("\n");	// last line		
+		}
+	else if(argc == 2) { // n only
+		if(omap_get_gpio_datain(simple_strtoul(argv[1], NULL, 10)))
+			{
+			printf("1\n");
+			return 1;
+			}
+		else
+			{
+			printf("0\n");
+			return 0;
+			}
+		}
 	else {
 		printf ("gpio: unknown subcommand.\n");
-	return (-1);
+		return (-1);
 	}
+
 	return (0);
 }
 
@@ -593,7 +601,7 @@ U_BOOT_CMD(gpio, 3, 0, do_gpio, "GPIO sub-system",
 		   "n - print and return state\n"
 		   "m n - print state in given range\n"
 		   "on n - set to 1\n"
-		   "off n - set to 0\n"
+		   "of[f] n - set to 0\n"
 		   "in n - switch to input\n"
-		   "out n - switch to out (dangerous!)\n"
+		   "ou[t] n - switch to out (dangerous!)\n"
 		   );
