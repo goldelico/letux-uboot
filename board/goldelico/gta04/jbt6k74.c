@@ -33,6 +33,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <asm/arch/dss.h>
+#include <twl4030.h>
 #include "dssfb.h"
 #include "jbt6k74.h"
 
@@ -312,6 +313,16 @@ int jbt6k74_display_onoff(int on)
 
 int board_video_init(GraphicDevice *pGD)
 {
+	extern int get_board_revision(void);
+#define REVISION_XM 0
+	if(get_board_revision() == REVISION_XM) {
+		/* Set VAUX1 to 3.3V for GTA04E display board */
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,
+								/*TWL4030_PM_RECEIVER_VAUX1_VSEL_33*/ 0x07,
+								TWL4030_PM_RECEIVER_VAUX1_DEV_GRP,
+								TWL4030_PM_RECEIVER_DEV_GRP_P1);
+		udelay(5000);
+	}
 	if(jbt_reg_init())	// initialize SPI
 		{
 		printf("No LCM connected\n");

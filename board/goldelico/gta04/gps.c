@@ -29,6 +29,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <ns16550.h>
+#include <twl4030.h>
 #include "gps.h"
 
 #define GPIO_GPSEXT		138		// external GPS antenna plugged in
@@ -36,6 +37,16 @@
 
 int gps_init(void)
 {
+	extern int get_board_revision(void);
+#define REVISION_XM 0
+	if(get_board_revision() == REVISION_XM) {
+		/* Set VAUX1 to 3.3V for GTA04E display board */
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,
+							/*TWL4030_PM_RECEIVER_VAUX1_VSEL_33*/ 0x07,
+							TWL4030_PM_RECEIVER_VAUX1_DEV_GRP,
+							TWL4030_PM_RECEIVER_DEV_GRP_P1);
+		udelay(5000);
+	}
 	omap_request_gpio(GPIO_GPS_ON);
 	omap_set_gpio_direction(GPIO_GPS_ON, 0);		// output
 	omap_request_gpio(GPIO_GPSEXT);
@@ -57,6 +68,8 @@ void gps_off(void)
 	omap_set_gpio_dataout(GPIO_GPS_ON, 0);
 }
 
+static int lastant=-1;
+
 void gps_echo(void)
 {
 	#define MODE_X_DIV 16
@@ -66,7 +79,6 @@ void gps_echo(void)
 	while (1)
 		{ // echo in both directions
 			int ant=omap_get_gpio_datain(GPIO_GPSEXT);
-			static int lastant=-1;
 			if(ant != lastant)
 				{ // changed
 					if(ant)
