@@ -23,17 +23,15 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	= $(obj)lib$(BOARD).a
+LIB	= $(obj)lib$(BOARD).o
 
 COBJS	:= beaglehyb.o ../gta04/TD028TTEC1.o ../gta04/jbt6k74.o ../gta04/backlight.o ../gta04/status.o ../gta04/tsc2007.o ../gta04/dssfb.o ../gta04/gps.o ../gta04/shutdown.o ../gta04/commands.o
 
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 
-#$(LIB):	$(obj).depend $(OBJS)
-#	$(call cmd_link_o_target, $(OBJS))
 $(LIB):	$(obj).depend $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
 clean:
 	rm -f $(OBJS)

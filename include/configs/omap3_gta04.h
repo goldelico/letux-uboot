@@ -25,7 +25,7 @@
 
 #define CONFIG_OMAP3_GTA04	1	/* working with BEAGLE and GTA04 */
 
-#include "omap3_beagle-hybrid.h"	/* share config */
+#include "omap3_beaglehyb.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT
 #define CONFIG_SYS_PROMPT		"GTA04 # "
