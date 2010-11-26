@@ -25,13 +25,13 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).a
 
-COBJS	:= gta04.0 
-COBJS-y	:= $(BOARD).o TD028TTEC1.o jbt6k74.o backlight.o status.o tsc2007.o dssfb.o gps.o commands.o
+COBJS	:= gta04.o ../gta04/TD028TTEC1.o ../gta04/jbt6k74.o ../gta04/backlight.o ../gta04/status.o ../gta04/tsc2007.o ../gta04/dssfb.o ../gta04/gps.o ../gta04/shutdown.o ../gta04/commands.o
 
-COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 
+#$(LIB):	$(obj).depend $(OBJS)
+#	$(call cmd_link_o_target, $(OBJS))
 $(LIB):	$(obj).depend $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 

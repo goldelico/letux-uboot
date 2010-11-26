@@ -1,10 +1,9 @@
 /*
- * (C) Copyright 2006-2008
- * Texas Instruments.
- * Richard Woodruff <r-woodruff2@ti.com>
- * Syed Mohammed Khasim <x0khasim@ti.com>
+ * (C) Copyright 2010
+ * Nikolaus Schaller <hns@goldelico.com>
  *
- * Configuration settings for the TI OMAP3530 Beagle board.
+ * Configuration settings for the TI OMAP3530 Beagle board with
+ *               Openmoko Hybrid Display extension.
  *
  * See file CREDITS for list of people who contributed to this
  * project.

@@ -35,6 +35,7 @@
 #include "status.h"
 #include "gps.h"
 #include "tsc2007.h"
+#include "shutdown.h"
 
 /* LCM commands */
 
@@ -485,14 +486,6 @@ static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 U_BOOT_CMD(systest, 2, 0, do_systest, "System Test", "");
 
-#ifndef CONFIG_OMAP3_GTA04
-static void shutdown(void)
-	{
-	printf("please switch off power supply\n");
-	while(1)
-		;
-	}
-#endif
 
 static int do_halt(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
@@ -511,7 +504,6 @@ static int do_mux(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int cols=0;
 	char *addr=(char *) 0x48002030;
-	printf("%08x", (unsigned int) addr);					
 	while(addr <= (char *) 0x480025F8) {
 		unsigned mux=*(unsigned *) addr;
 		int i;
@@ -522,15 +514,17 @@ static int do_mux(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 			mux >>= 16;
 		}
 		if(addr == (char *) 0x48002264) {
-			addr= (char *) 0x480025DC;
 			if(cols != 0)
 				printf("\n");
 			cols=0;
+			addr= (char *) 0x480025DC;
 		}
 		else {
 			addr+=4;
-			if(++cols == 8)
+			if(++cols == 8) {
+				printf("\n");
 				cols=0;
+			}
 		}
 	}
 	if(cols != 0)

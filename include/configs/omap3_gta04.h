@@ -1,10 +1,8 @@
 /*
- * (C) Copyright 2006-2008
- * Texas Instruments.
- * Richard Woodruff <r-woodruff2@ti.com>
- * Syed Mohammed Khasim <x0khasim@ti.com>
+ * (C) Copyright 2010
+ * Nikolaus Schaller <hns@goldelico.com>
  *
- * Configuration settings for the TI OMAP3530 Beagle board.
+ * Configuration settings for the GTA04.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -30,6 +28,6 @@
 #include "omap3_beagle-hybrid.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT		"Openmoko Beagle Hybrid # "
+#define CONFIG_SYS_PROMPT		"GTA04 # "
 
 /* __CONFIG_H */

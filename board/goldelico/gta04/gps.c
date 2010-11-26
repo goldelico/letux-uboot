@@ -66,7 +66,7 @@ void gps_echo(void)
 	while (1)
 		{ // echo in both directions
 			int ant=omap_get_gpio_datain(GPIO_GPSEXT);
-			static lastant=-1;
+			static int lastant=-1;
 			if(ant != lastant)
 				{ // changed
 					if(ant)
@@ -83,6 +83,5 @@ void gps_echo(void)
 		}
 	getc();
 	printf("\n");
-	return 0;
 }
 
