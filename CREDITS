@@ -22,10 +22,6 @@ N: Guillaume Alexandre
 E: guillaume.alexandre@gespac.ch
 D: Add PCIPPC6 configuration
 
-N: Swen Anderson
-E: sand@peppercon.de
-D: ERIC Support
-
 N: Pantelis Antoniou
 E: panto@intracom.gr
 D: NETVIA & NETPHONE board support, ARTOS support.
@@ -281,11 +277,6 @@ D  Support for Intrinsyc CERF PXA250 board.
 N: Thomas Lange
 E: thomas@corelatus.se
 D: Support for GTH, GTH2 and dbau1x00 boards; lots of PCMCIA fixes
-
-N: Marc Leeman
-E: marc.leeman@barco.com
-D: Support for Barco Streaming Video Card (SVC) and Sample Compress Network (SCN)
-W: www.barco.com
 
 N: The LEOX team
 E: team@leox.org

@@ -2,7 +2,8 @@
  * (C) Copyright 2010
  * Nikolaus Schaller <hns@goldelico.com>
  *
- * Configuration settings for the GTA04.
+ * Configuration settings for the TI OMAP3530 Beagle board with
+ *               Openmoko Hybrid Display extension.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -23,13 +24,12 @@
  * MA 02111-1307 USA
  */
 
-#define CONFIG_OMAP3_GTA04	1	/* working with BEAGLE and GTA04 */
+#define CONFIG_OMAP4_PANDA_HYBRID	1	/* working with PANDA and OMB Hybrid */
 
-#include "omap3_beaglehyb.h"	/* share config */
-
-//#define CONFIG_SKIP_LOWLEVEL_INIT
+#include "omap4_panda.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT		"GTA04 # "
+#define CONFIG_SYS_PROMPT		"Openmoko Panda Hybrid # "
+
 
 /* __CONFIG_H */

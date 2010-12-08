@@ -40,6 +40,7 @@
 #define CONFIG_SANDPOINT	1
 
 #define	CONFIG_SYS_TEXT_BASE	0xFFF00000
+#define CONFIG_SYS_LDSCRIPT	"board/sandpoint/u-boot.lds"
 
 #if 0
 #define USE_DINK32		1
@@ -234,7 +235,7 @@
  */
 
 
-#define CONFIG_WINBOND_83C553	1	/*has a winbond bridge			*/
+/* #define CONFIG_WINBOND_83C553	1	/ *has a winbond bridge			*/
 #define CONFIG_SYS_USE_WINBOND_IDE	0	/*use winbond 83c553 internal IDE ctrlr */
 #define CONFIG_SYS_WINBOND_ISA_CFG_ADDR    0x80005800	/*pci-isa bridge config addr	*/
 #define CONFIG_SYS_WINBOND_IDE_CFG_ADDR    0x80005900	/*ide config addr		*/
