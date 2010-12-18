@@ -42,6 +42,7 @@ endif
 # clean the slate ...
 PLATFORM_RELFLAGS =
 PLATFORM_CPPFLAGS =
+#PLATFORM_CPPFLAGS += -DDEBUG
 PLATFORM_LDFLAGS =
 
 #########################################################################
