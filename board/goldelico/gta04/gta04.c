@@ -37,7 +37,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
-#include "../../ti/beagle/beagle.h"
+// #include "../../ti/beagle/beagle.h"
 #include "gta04.h"
 
 #define TWL4030_I2C_BUS			0
@@ -60,6 +60,40 @@ static struct {
 	char env_var[16];
 	char env_setting[64];
 } expansion_config;
+
+#if 1	/* testing tool; you can call notify() anywhere even before initialization */
+
+/******************************************************************************
+ * Routine: delay
+ * Description: spinning delay to use before udelay works
+ *****************************************************************************/
+static inline void mydelay(unsigned long loops)
+{
+	__asm__ volatile ("1:\n" "subs %0, %1, #1\n"
+					  "bne 1b":"=r" (loops):"0"(loops));
+}
+
+static inline void myudelay(unsigned long us)
+{
+	mydelay(us * 200); /* approximate */
+}
+
+#define BLON()	MUX_VAL(CP(GPMC_NCS6),      (IEN | PTU | EN  | M4)) /*GPT_PWM11/GPIO57*/
+#define BLOFF()	MUX_VAL(CP(GPMC_NCS6),      (IEN | PTD | EN  | M4)) /*GPT_PWM11/GPIO57*/
+
+void notify(int number)
+{ // flash LCD backlight
+	int i;
+	BLOFF();
+	myudelay(200*1000);
+	BLON();
+	myudelay(50*1000);	// flash
+	BLOFF();
+	myudelay(1500*1000);
+}
+
+#endif
+
 
 /*
  * Routine: board_init
@@ -91,8 +125,10 @@ int board_init(void)
 int get_board_revision(void)
 {
 	int revision;
-//	udelay(5*1000*1000);
-//	return 6;
+
+	// check if really GTA04
+	
+	return 6;	// configure pinmux for C1/2/3
 	
 	if (!omap_request_gpio(171) &&
 	    !omap_request_gpio(172) &&
