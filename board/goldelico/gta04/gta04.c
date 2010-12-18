@@ -161,6 +161,8 @@ int get_board_revision(void)
  */
 unsigned int get_expansion_id(void)
 {
+	return BEAGLE_NO_EEPROM;
+	
 	i2c_set_bus_num(EXPANSION_EEPROM_I2C_BUS);
 	
 	/* return BEAGLE_NO_EEPROM if eeprom doesn't respond */

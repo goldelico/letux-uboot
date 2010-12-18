@@ -27,8 +27,6 @@
 
 #include "omap3_beaglehyb.h"	/* share config */
 
-//#define CONFIG_SKIP_LOWLEVEL_INIT
-
 #undef CONFIG_SYS_PROMPT
 #define CONFIG_SYS_PROMPT		"GTA04 # "
 

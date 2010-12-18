@@ -32,8 +32,17 @@
 #include <twl4030.h>
 #include "gps.h"
 
+#ifdef CONFIG_OMAP3_GTA04
+
+#define GPIO_GPSEXT		144		// external GPS antenna plugged in
+#define GPIO_GPS_ON		145
+
+#else /* Beagle Hybrid */
+
 #define GPIO_GPSEXT		138		// external GPS antenna plugged in
 #define GPIO_GPS_ON		156
+
+#endif
 
 int gps_init(void)
 {

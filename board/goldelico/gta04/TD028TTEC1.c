@@ -47,12 +47,23 @@
 #define VERIFY(VAL) if(SPI_READ() != (VAL)) { return 1; }
 #endif
 
-#if defined(_BEAGLE_)
+#ifdef CONFIG_OMAP3_BEAGLE
+
+#ifdef CONFIG_OMAP3_GTA04
+
+#define GPIO_CS		19
+#define GPIO_SCL	12
+#define GPIO_DIN	20
+#define GPIO_DOUT	18
+
+#else	/* Beagle Hybrid */
 
 #define GPIO_CS		161
 #define GPIO_SCL	162
 #define GPIO_DIN	159
 #define GPIO_DOUT	158
+
+#endif
 
 #define SPI_READ()      (omap_get_gpio_datain(GPIO_DIN))
 #define SPI_CS(bit) 	(omap_set_gpio_dataout(GPIO_CS, bit))

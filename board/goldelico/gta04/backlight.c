@@ -30,13 +30,20 @@
 #include <asm/mach-types.h>
 #include "backlight.h"
 
+#ifdef CONFIG_OMAP3_GTA04
+#define GPIO_BACKLIGHT		57	/* = GPT11_PWM */
+#define GPT_BACKLIGHT		OMAP34XX_GPT11
+#else /* Beagle Hybrid */
 #define GPIO_BACKLIGHT		145
+#define GPT_BACKLIGHT		OMAP34XX_GPT10
+#endif
+
 #define USE_PWM	0
 
 void backlight_set_level(int level)	// 0..255
 {
 #if USE_PWM
-	struct gptimer *gpt_base = (struct gptimer *)OMAP34XX_GPT10; // use GPT11 for GTA04
+	struct gptimer *gpt_base = (struct gptimer *)GPT_BACKLIGHT;
 	// 	writel(value, &gpt_base->registername);
 #else
 	omap_set_gpio_dataout(GPIO_BACKLIGHT, level >= 128);	// for simplicity we just have on/off
@@ -48,13 +55,15 @@ void backlight_set_level(int level)	// 0..255
 int backlight_init(void)
 {
 #if USE_PWM
-	struct gptimer *gpt_base = (struct gptimer *)OMAP34XX_GPT10; // use GPT11 for GTA04
+	struct gptimer *gpt_base = (struct gptimer *)GPT_BACKLIGHT;
 	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M2)) /* switch to GPT10 */
 	// 	writel(value, &gpt_base->registername);
 	// program registers
 #error todo
 #else
+#ifndef CONFIG_OMAP3_GTA04
 	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M4)) /*GPIO_145*/
+#endif
 	omap_request_gpio(GPIO_BACKLIGHT);
 	omap_set_gpio_direction(GPIO_BACKLIGHT, 0);		// output
 
