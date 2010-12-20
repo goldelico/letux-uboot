@@ -29,6 +29,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <i2c.h>
+#include <twl4030.h>
 #include "status.h"
 
 #ifdef CONFIG_OMAP3_GTA04
@@ -94,6 +95,7 @@ void led_set_led(int value)
 		}
 	else {
 		value &= 0x3f;	// 6 LEDs only - 7th is reserved to reset the WLAN/BT chip
+		i2c_set_bus_num(1);	// write I2C2
 		// we could write a autoincrement address and all 3 bytes in a single message
 		// we could set the TCA to do smooth transitions
 		i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
@@ -105,9 +107,12 @@ void led_set_led(int value)
 int led_get_buttons(void)
 { // convert button state into led state
 	if(isGTA04) {
-		// should read power button state from TPS65950
+		u8 val;
+		i2c_set_bus_num(0);	// read I2C1
+		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, TWL4030_PM_MASTER_STS_HW_CONDITIONS);	// read state of power button (bit 0) from TPS65950
 		return ((omap_get_gpio_datain(GPIO_AUX)) << 0) |
 			((omap_get_gpio_datain(GPIO_GPSEXT)) << 1) |
+			(((val&0x01) != 0) << 3) |
 			((omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
 	}
 	return

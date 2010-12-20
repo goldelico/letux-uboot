@@ -278,7 +278,9 @@ int misc_init_r(void)
 #endif
 
 	twl4030_power_init();
-//	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);	// we have no LEDs on TPS on GTA04
+#ifndef CONFIG_OMAP3_GTA04A2	// we have no LEDs on TPS on GTA04
+	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
+#endif
 	
 	/* Configure GPIOs to output */
 	writel(~(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1), &gpio6_base->oe);

@@ -210,7 +210,7 @@ static int pendown(int *x, int *y)
 	return z > 200;	// was pressed
 #else
 	// must be in PENIRQ mode...
-	return (led_get_buttons() & 0x08) == 0;
+	return (led_get_buttons() & (1 << 4)) == 0;
 #endif
 }
 
@@ -309,7 +309,7 @@ static int do_led_init(int argc, char *const argv[])
 
 static void print_buttons(int status)
 {
-	printf("AUX: %s Power: %s Antenna: %s Pen: %s", (status&0x01)?"on":"off", (status&0x04)?"on":"off", (status&0x02)?"EXT":"INT", (status&0x08)?"1":"0");
+	printf("AUX: %s Power: %s Antenna: %s Pen: %s", (status&0x01)?"on":"off", (status&0x08)?"on":"off", (status&0x02)?"EXT":"INT", (status&0x10)?"1":"0");
 }
 
 static int do_led_check(int argc, char *const argv[])
