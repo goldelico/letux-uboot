@@ -660,10 +660,13 @@ void per_clocks_enable(void)
 	sr32(&prcm_base->iclken2_core, 0, 32, ICK_CORE2_ON);
 	sr32(&prcm_base->fclken_wkup, 0, 32, FCK_WKUP_ON);
 	sr32(&prcm_base->iclken_wkup, 0, 32, ICK_WKUP_ON);
+	
+#ifndef CONFIG_OMAP3_GTA04A2	/* makes problems on GTA04A2 */
 	sr32(&prcm_base->fclken_dss, 0, 32, FCK_DSS_ON);
 	sr32(&prcm_base->iclken_dss, 0, 32, ICK_DSS_ON);
 	sr32(&prcm_base->fclken_cam, 0, 32, FCK_CAM_ON);
 	sr32(&prcm_base->iclken_cam, 0, 32, ICK_CAM_ON);
+#endif
 	sr32(&prcm_base->fclken_per, 0, 32, FCK_PER_ON);
 	sr32(&prcm_base->iclken_per, 0, 32, ICK_PER_ON);
 
