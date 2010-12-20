@@ -34,7 +34,7 @@
 #define GPIO_BACKLIGHT		57	/* = GPT11_PWM */
 #define GPT_BACKLIGHT		OMAP34XX_GPT11
 #else /* Beagle Hybrid */
-#define GPIO_BACKLIGHT		145
+#define GPIO_BACKLIGHT		145	/* = GPT10_PWM */
 #define GPT_BACKLIGHT		OMAP34XX_GPT10
 #endif
 
@@ -56,20 +56,35 @@ int backlight_init(void)
 {
 #if USE_PWM
 	struct gptimer *gpt_base = (struct gptimer *)GPT_BACKLIGHT;
-	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M2)) /* switch to GPT10 */
-	// 	writel(value, &gpt_base->registername);
-	// program registers
-#error todo
+#ifdef CONFIG_OMAP3_GTA04
+	MUX_VAL(CP(GPMC_NCS6),		(IEN | PTD | DIS | M3)) /* GPT_11 - Backlight enable*/\
 #else
-#ifndef CONFIG_OMAP3_GTA04
+	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M2)) /* switch to GPT10 */
+#endif
+	// 	writel(value, &gpt_base->registername);
+	// program registers for generating a 100-1000 Hz PWM signal
+	// or PWM synchronized to VSYNC (to avoid flicker)
+	printf("did backlight_init() on PWM\n");
+
+#error todo
+	
+#else
+#ifdef CONFIG_OMAP3_GTA04
+	MUX_VAL(CP(GPMC_NCS6),		(IEN | PTD | DIS | M4)) /*GPIO_57 - Backlight enable*/
+#else
 	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M4)) /*GPIO_145*/
 #endif
-	omap_request_gpio(GPIO_BACKLIGHT);
-	omap_set_gpio_direction(GPIO_BACKLIGHT, 0);		// output
+	if(omap_request_gpio(GPIO_BACKLIGHT) == 0)	// 0 == ok
+		{
+		omap_set_gpio_direction(GPIO_BACKLIGHT, 0);		// output
+		printf("did backlight_init() on GPIO_%d\n", GPIO_BACKLIGHT);		
+		}
+	else
+		{
+		printf("backlight_init() on GPIO_%d failed\n", GPIO_BACKLIGHT);		
+		}
 
-	//	omap_free_gpio(GPIO_BACKLIGHT);
 #endif
-	printf("did backlight_init()\n");
 
 	return 0;
 }
