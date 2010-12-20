@@ -27,6 +27,18 @@
 
 #include "omap24xx_i2c.h"
 
+#ifdef CONFIG_OMAP3_GTA04A2
+/* use special bit-bang driver for swapped I2C1 signals */
+void i2c_bitbang_init(struct i2c *base);
+int i2c_bitbang_probe(struct i2c *base, unchar devaddr);
+int i2c_bitbang_write_byte (struct i2c *base, u8 devaddr, u8 regoffset, u8 value);
+int i2c_bitbang_read_byte (struct i2c *base, u8 devaddr, u8 regoffset, u8 * value);
+void i2c_bitbang_close(struct i2c *base);
+
+#define bit_bang (i2c_base == (struct i2c *)I2C_BASE1)	/* bitbang on I2C2 or I2C1... */
+
+#endif
+
 #define I2C_TIMEOUT	1000
 
 static void wait_for_bb (void);
@@ -53,7 +65,7 @@ void i2c_init (int speed, int slaveadd)
 		printf("Error : I2C unsupported speed %d\n", speed);
 		return;
 	}
-
+	
 	psc = I2C_IP_CLK / I2C_INTERNAL_SAMPLING_CLK;
 	psc -= 1;
 	if (psc < I2C_PSC_MIN) {
@@ -139,7 +151,12 @@ void i2c_init (int speed, int slaveadd)
 	flush_fifo();
 	writew (0xFFFF, &i2c_base->stat);
 	writew (0, &i2c_base->cnt);
-
+	
+#ifdef CONFIG_OMAP3_GTA04A2
+	if(bit_bang)
+		i2c_bitbang_init(i2c_base);		/* run in system test mode */
+#endif
+	
 	if (gd->flags & GD_FLG_RELOC)
 		bus_initialized[current_bus] = 1;
 }
@@ -148,6 +165,11 @@ static int i2c_read_byte (u8 devaddr, u8 regoffset, u8 * value)
 {
 	int i2c_error = 0;
 	u16 status;
+
+#ifdef CONFIG_OMAP3_GTA04A2
+	if(bit_bang)
+		return i2c_bitbang_read_byte (i2c_base, devaddr, regoffset, value);
+#endif
 
 	/* wait until bus not busy */
 	wait_for_bb ();
@@ -220,6 +242,11 @@ static int i2c_write_byte (u8 devaddr, u8 regoffset, u8 value)
 	int i2c_error = 0;
 	u16 status;
 
+#ifdef CONFIG_OMAP3_GTA04A2
+	if(bit_bang)
+		return i2c_bitbang_write_byte(i2c_base, devaddr, regoffset, value);
+#endif
+		
 	/* wait until bus not busy */
 	wait_for_bb ();
 
@@ -313,6 +340,11 @@ int i2c_probe (uchar chip)
 	u16 status;
 	int res = 1; /* default = fail */
 
+#ifdef CONFIG_OMAP3_GTA04A2
+	if(bit_bang)
+		return i2c_bitbang_probe(i2c_base, chip);
+#endif
+		
 	if (chip == readw (&i2c_base->oa)) {
 		return res;
 	}
@@ -472,7 +504,7 @@ int i2c_set_bus_num(unsigned int bus)
 		i2c_base = (struct i2c *)I2C_BASE1;
 
 	current_bus = bus;
-
+	
 	if(!bus_initialized[current_bus])
 		i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 
