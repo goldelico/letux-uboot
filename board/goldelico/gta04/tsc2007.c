@@ -116,6 +116,11 @@ int read_adc(int adcnum)
 		TSC2007_AUX,
 		TSC2007_AUX
 	};
+	if(i2c_get_bus_num() != TSC2007_BUS-1 && i2c_set_bus_num(TSC2007_BUS-1))
+		{
+		printf ("could not select I2C2\n");
+		return -1;
+		}
 	c=cmd[adcnum%8] | TSC2007_ADC_ON | TSC2007_12Bit2MHz;
 //	printf("send %02x\n", c);
 	if (i2c_read(TSC2007_ADDRESS, c, 1, buf, 1))

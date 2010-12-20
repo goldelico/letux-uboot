@@ -191,19 +191,19 @@ int misc_init_r(void)
 	
 	switch (get_board_revision()) {
 		case REVISION_AXBX:
-			printf("Beagle Rev Ax/Bx\n");
-			setenv("beaglerev", "AxBx");
+//			printf("Beagle Rev Ax/Bx\n");
+//			setenv("beaglerev", "AxBx");
 			setenv("mpurate", "600");
 			break;
 		case REVISION_CX:
-			printf("Beagle Rev C1/C2/C3\n");
-			setenv("beaglerev", "Cx");
+//			printf("Beagle Rev C1/C2/C3\n");
+//			setenv("beaglerev", "Cx");
 			setenv("mpurate", "600");
 			MUX_BEAGLE_C();
 			break;
 		case REVISION_C4:
-			printf("Beagle Rev C4\n");
-			setenv("beaglerev", "C4");
+//			printf("Beagle Rev C4\n");
+//			setenv("beaglerev", "C4");
 			setenv("mpurate", "720");
 			MUX_BEAGLE_C();
 			/* Set VAUX2 to 1.8V for EHCI PHY */
@@ -213,8 +213,8 @@ int misc_init_r(void)
 									TWL4030_PM_RECEIVER_DEV_GRP_P1);
 			break;
 		case REVISION_XM:
-			printf("Beagle xM Rev A\n");
-			setenv("beaglerev", "xMA");
+//			printf("Beagle xM Rev A\n");
+//			setenv("beaglerev", "xMA");
 			setenv("mpurate", "1000");
 			MUX_BEAGLE_XM();
 			/* Set VAUX2 to 1.8V for EHCI PHY */
@@ -226,7 +226,7 @@ int misc_init_r(void)
 		default:
 			printf("Beagle unknown 0x%02x\n", get_board_revision());
 	}
-	
+#if UNUSED	
 	switch (get_expansion_id()) {
 		case TINCANTOOLS_ZIPPY:
 			printf("Recognized Tincantools Zippy board (rev %d %s)\n",
@@ -275,9 +275,10 @@ int misc_init_r(void)
 	
 	if (expansion_config.content == 1)
 		setenv(expansion_config.env_var, expansion_config.env_setting);
-	
+#endif
+
 	twl4030_power_init();
-	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
+//	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);	// we have no LEDs on TPS on GTA04
 	
 	/* Configure GPIOs to output */
 	writel(~(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1), &gpio6_base->oe);

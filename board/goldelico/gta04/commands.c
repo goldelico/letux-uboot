@@ -29,6 +29,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
+
 #include "backlight.h"
 #include "dssfb.h"
 #include "jbt6k74.h"
@@ -36,6 +37,7 @@
 #include "gps.h"
 #include "tsc2007.h"
 #include "shutdown.h"
+#include "systest.h"
 
 /* LCM commands */
 
@@ -480,8 +482,7 @@ U_BOOT_CMD(gps, 3, 0, do_gps, "GPS sub-system",
 
 static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	// do mixture of gps_echo, tsc_loop, status mirror status blink
-	return (0);
+	return systest();
 }
 
 U_BOOT_CMD(systest, 2, 0, do_systest, "System Test", "");
