@@ -505,27 +505,21 @@ static int do_mux(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int cols=0;
 	char *addr=(char *) 0x48002030;
-	while(addr <= (char *) 0x480025F8) {
-		unsigned mux=*(unsigned *) addr;
+	printf("PADCONF [0:15] [16:31]\n");
+	while(addr < (char *) 0x48002A28) {
+		u16 mux=*(u16 *) addr;
 		int i;
 		if(cols == 0)
 			printf("%08x", (unsigned int) addr);			
-		for(i=1; i <= 2; i++) {
-			printf(" %c%d%c", (mux&8)?((mux&0x10?'U':'D')):' ', (mux&7), (mux&0x100)?'I':'O');
-			mux >>= 16;
-		}
-		if(addr == (char *) 0x48002264) {
-			if(cols != 0)
-				printf("\n");
+		printf(" %c%d%c", (mux&8)?((mux&0x10?'U':'D')):' ', (mux&7), (mux&0x100)?'I':'O');
+		addr+=2;
+		if(addr == (char *) 0x48002262)
+			addr= (char *) 0x480025D8, cols=1;	// skip block and force new line
+		if(addr == (char *) 0x480025FC)
+			addr= (char *) 0x48002A00, cols=1;	// skip block and force new line
+		if(++cols == 2) {
+			printf("\n");
 			cols=0;
-			addr= (char *) 0x480025DC;
-		}
-		else {
-			addr+=4;
-			if(++cols == 8) {
-				printf("\n");
-				cols=0;
-			}
 		}
 	}
 	if(cols != 0)
