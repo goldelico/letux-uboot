@@ -98,6 +98,10 @@ int systest(void)
 	// Buttons
 	// Power
 	// Display communication
+	if(jbt_check())
+		printf("DISPLAY:     failed\n");
+	else
+	    printf("DISPLAY:     ok\n");
 	return (0);
 }
 
