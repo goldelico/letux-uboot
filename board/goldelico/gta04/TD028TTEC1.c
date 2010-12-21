@@ -53,8 +53,8 @@
 
 #define GPIO_CS		19
 #define GPIO_SCL	12
-#define GPIO_DIN	20
-#define GPIO_DOUT	18
+#define GPIO_DIN	18
+#define GPIO_DOUT	20
 
 #else	/* Beagle Hybrid */
 
@@ -189,41 +189,42 @@ int jbt_reg_write16(struct jbt_info *jbt, u_int8_t reg, u_int16_t data)
 	return rc;
 }
 
-int jbt_reg_init(void)
-{
+int jbt_check(void)
+{ // check if we have connectivity
 #if defined(_BEAGLE_)
+	int err;
 	int i;
 	int failed=0;
+	int cnt0 = 0;
+	int cnt1 = 0;
 	
 	printf("jbt_reg_init()\n");
-	omap_request_gpio(GPIO_CS);
+	err = omap_request_gpio(GPIO_CS);
 	SPI_CS(1);	// unselect
-	omap_request_gpio(GPIO_SCL);
+	err |= omap_request_gpio(GPIO_SCL);
 	SPI_SCL(1);	// default
-	omap_request_gpio(GPIO_DOUT);
+	err |= omap_request_gpio(GPIO_DOUT);
 	SPI_SDA(0);
-	omap_request_gpio(GPIO_DIN);
-#if 1		// should have been done by MUX settings!
+	err |= omap_request_gpio(GPIO_DIN);
+	if(err)
+		{
+		printf("jbt_reg_init() - could not get GPIOs\n");
+		return 1;
+		}
+#if 1		// should have already been done by MUX settings!
 	omap_set_gpio_direction(GPIO_CS, 0);	// output
 	omap_set_gpio_direction(GPIO_SCL, 0);	// output
 	omap_set_gpio_direction(GPIO_DOUT, 0);	// output
-	omap_set_gpio_direction(GPIO_DIN, 1);	// input (for read back)
+	omap_set_gpio_direction(GPIO_DIN, 1);	// input (for reading back)
 #endif
-
+	
 	//	omap_free_gpio(GPIO_DIN);
 	//	omap_free_gpio(GPIO_DOUT);
 	//	omap_free_gpio(GPIO_CS);
 	//	omap_free_gpio(GPIO_SCL);
-		
-#endif
 	
-	/* according to data sheet: wait 50ms (Tpos of LCM). However, 50ms
-	 * seems unreliable with later LCM batches, increasing to 90ms */
-	udelay(90000);
-
-#if defined(_BEAGLE_)
 	for(i=0; i<16; i++)
-		{ // check for connection between GPIO158 -> GPIO159; since we have 10 kOhm pse. make sure that the PUP/PDN is disabled in the MUX config!
+		{ // check for connection between GPIO158 -> GPIO159; since we have 10 kOhm pse. make sure that the PUP/PDN is disabled on DIN in the MUX config!
 			int bit=i&1;
 			SPI_SDA(bit);	// write bit
 			SPI_DELAY();
@@ -232,14 +233,32 @@ int jbt_reg_init(void)
 #endif
 			if(SPI_READ() != bit)	// did not read back
 				failed++;
+			if(SPI_READ())
+				cnt1++;
+			else
+				cnt0++;
 		}	
 	if(failed > 0)
 		{
-			printf("jbt_reg_init() - no correct response, assuming no connection between GPIO158 and GPIO159\n");
-			return 1;
+		printf("jbt_reg_init() - no correct response, assuming no connection between GPIO_%d and GPIO_%d\n", GPIO_DOUT, GPIO_DIN);
+		if(cnt0 == 0)
+			printf("  DIN stuck at 0\n");
+		if(cnt1 == 0)
+			printf("  DIN stuck at 1\n");
+		return 1;
 		}
 #endif
+	return 0;
+}
+
+int jbt_reg_init(void)
+{
 	
+	if(jbt_check())
+		return 1;	// some error
+	/* according to data sheet: wait 50ms (Tpos of LCM). However, 50ms
+	 * seems unreliable with later LCM batches, increasing to 90ms */
+	udelay(90000);
 	printf("did jbt_reg_init()\n");
 	return 0;
 }

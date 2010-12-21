@@ -314,6 +314,7 @@ int jbt6k74_display_onoff(int on)
 int board_video_init(GraphicDevice *pGD)
 {
 	extern int get_board_revision(void);
+	backlight_init();	// initialize backlight
 #define REVISION_XM 0
 	if(get_board_revision() == REVISION_XM) {
 		/* Set VAUX1 to 3.3V for GTA04E display board */
@@ -329,7 +330,6 @@ int board_video_init(GraphicDevice *pGD)
 		return 1;
 		}
 	dssfb_init();
-	backlight_init();	// initialize backlight
 	
 	printf("did board_video_init()\n");
 	return 0;

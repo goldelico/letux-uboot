@@ -29,6 +29,8 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <asm/arch/dss.h>
+#include <asm/arch/clocks.h>
+#include <asm/arch/clocks_omap3.h>
 
 #define DVI_BACKGROUND_COLOR		0x00fadc29	// rgb(250, 220, 41)
 
@@ -79,6 +81,7 @@ static const struct panel_config lcm_cfg =
 void omap3_dss_go(void)
 { // push changes from shadow register to display controller
 	struct dispc_regs *dispc = (struct dispc_regs *) OMAP3_DISPC_BASE;
+
 	u32 l = 0;
 	l = readl(&dispc->control);
 	l |= GO_LCD | GO_DIG;
@@ -255,7 +258,24 @@ static const struct panel_config dvid_cfg = {
 
 void dssfb_init(void)
 {
+#ifdef CONFIG_OMAP3_GTA04A2	/* delayed on GTA04A2 */
+	struct prcm *prcm_base = (struct prcm *)PRCM_BASE;
+	printf("prcm base = %08x\n", prcm_base);
+	printf("ick_dss_on\n");
+	sr32(&prcm_base->iclken_dss, 0, 32, ICK_DSS_ON);
+	sdelay(1000);
+	printf("fck_dss_on\n");
+	sr32(&prcm_base->fclken_dss, 0, 32, FCK_DSS_ON);
+	sdelay(1000);
+	printf("fck_cam_on\n");
+//	sr32(&prcm_base->fclken_cam, 0, 32, FCK_CAM_ON);
+	printf("ick_cam_on\n");
+//	sr32(&prcm_base->iclken_cam, 0, 32, ICK_CAM_ON);
+	sdelay(1000);
+#endif
+	printf("dss panel config\n");	
 	omap3_dss_panel_config(&lcm_cfg);	// set new config
+	printf("dss enable\n");
 	omap3_dss_enable();	// and (re)enable
 }
 

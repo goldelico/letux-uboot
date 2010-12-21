@@ -466,18 +466,18 @@ MUX_VAL(CP(MCBSP1_FSX),     (IDIS | PTU | DIS | M1)) /*MCSPI4_CS0*/
  * PTU  - Pull type Up
  * DIS  - Pull type selection is inactive
  * EN   - Pull type selection is active
- * M0   - Mode 0
+ * M0   - Mode 0 (as defined by pin name)
  * M4	- Mode 4 (GPIO)
  */
 
-// FIXME: GTA04A2 has different assignment from GTA04A3ff
+// FIXME: GTA04A3ff has some improved mux assignments
 
 #define MUX_BEAGLE_GTA04() \
 MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M4)) /*GPIO_12 - Display serial clock*/\
 MUX_VAL(CP(ETK_CTL_ES2),	(IDIS | PTU | EN  | M4)) /*GPIO_13 - IrDA FIR-SEL*/\
-MUX_VAL(CP(ETK_D4_ES2),		(IDIS | PTU | DIS | M4)) /*GPIO_18 - Display DIN*/\
-MUX_VAL(CP(ETK_D5_ES2),		(IDIS | PTU | DIS | M4)) /*GPIO_19 - Display select*/\
-MUX_VAL(CP(ETK_D6_ES2),		(IDIS | PTU | DIS | M4)) /*GPIO_20 - Display DOUT*/\
+MUX_VAL(CP(ETK_D4_ES2),		(IEN  | PTU | DIS | M4)) /*GPIO_18 - Display DIN*/\
+MUX_VAL(CP(ETK_D5_ES2),		(IDIS | PTU | EN  | M4)) /*GPIO_19 - Display chip select*/\
+MUX_VAL(CP(ETK_D6_ES2),		(IDIS | PTU | EN  | M4)) /*GPIO_20 - Display DOUT*/\
 MUX_VAL(CP(ETK_D7_ES2),		(IEN  | PTU | EN  | M4)) /*GPIO_21 - RS232 enable*/\
 MUX_VAL(CP(GPMC_NCS6),		(IDIS | PTD | DIS | M4)) /*GPIO_57/GPT_11 - Backlight enable*/\
 MUX_VAL(CP(GPMC_WAIT3),		(IDIS | PTU | DIS | M4)) /*GPIO_65 - AUX IN/OUT*/\
