@@ -37,38 +37,40 @@
 // command byte definitions:
 // channel selection and power down
 
-#define TSC2007_TEMP0 0x00
-#define TSC2007_AUX 0x20
-#define TSC2007_TEMP1 0x40
-#define TSC2007_ACTX 0x80
-#define TSC2007_ACTY 0x90
-#define TSC2007_ACTXY 0xA0
-#define TSC2007_X 0xc0
-#define TSC2007_Y 0xd0
-#define TSC2007_Z1 0xe0
-#define TSC2007_Z2 0xf0
+#define TSC2007_TEMP0	0x00
+#define TSC2007_AUX		0x20
+#define TSC2007_TEMP1	0x40
+#define TSC2007_ACTX	0x80
+#define TSC2007_ACTY	0x90
+#define TSC2007_ACTXY	0xA0
+#define TSC2007_X		0xc0
+#define TSC2007_Y		0xd0
+#define TSC2007_Z1		0xe0
+#define TSC2007_Z2		0xf0
 
-#define TSC2007_POWER_DOWN 0x00	// must be sent once after power up
-#define TSC2007_ADC_ON 0x04
-#define TSC2007_ADC_OFF_PENIRQ 0x08
+#define TSC2007_POWER_DOWN		0x00	// must be sent once after power up
+#define TSC2007_ADC_ON			0x04
+#define TSC2007_ADC_OFF_PENIRQ	0x08
 
-#define TSC2007_12Bit2MHz 0x00
-#define TSC2007_8Bit4MHz 0x02
+#define TSC2007_12Bit2MHz		0x00
+#define TSC2007_8Bit4MHz		0x02
 
 // setup command
 
-#define TSC2007_SETUP 0xb0
+#define TSC2007_SETUP		0xb0
 
-#define TSC2007_USE_MAV	0x00
+#define TSC2007_USE_MAV		0x00
 #define TSC2007_BYPASS_MAV	0x02
 
-#define TSC2007_50kPUP	0x00
-#define TSC2007_90kPUP	0x01
+#define TSC2007_50kPUP		0x00
+#define TSC2007_90kPUP		0x01
 
 /*
  int i2c_read(u_int8_t chip, u_int32_t addr, int alen, u_int8_t *buf, int len)
  int i2c_write(u_int8_t chip, u_int32_t addr, int alen, u_int8_t *buf, int len)
 */
+
+static int didNotInit=1;
 
 int tsc2007_cmd(int cmd)
 { // send command
@@ -84,17 +86,22 @@ int tsc2007_cmd(int cmd)
 
 int tsc2007_init(void)
 {
-	int rc=0;
 	if(i2c_set_bus_num(TSC2007_BUS-1))
 		{
 			printf ("could not select I2C2\n");
 			return 1;
 		}
 	
-	rc = tsc2007_cmd(TSC2007_SETUP|TSC2007_USE_MAV|TSC2007_50kPUP);
-	rc |= tsc2007_cmd(TSC2007_POWER_DOWN);
+	if(i2c_probe(TSC2007_ADDRESS))
+		{
+		printf ("could not probe TSC2007\n");
+		return 1;		
+		}
 	
-	if(rc)
+	didNotInit = tsc2007_cmd(TSC2007_SETUP|TSC2007_USE_MAV|TSC2007_50kPUP);
+	didNotInit |= tsc2007_cmd(TSC2007_POWER_DOWN);
+	
+	if(didNotInit)
 		printf("did tsc2007_init() failed.\n");
 	else
 		printf("did tsc2007_init()\n");
@@ -116,6 +123,8 @@ int read_adc(int adcnum)
 		TSC2007_AUX,
 		TSC2007_AUX
 	};
+	if(didNotInit)
+		return -1;
 	if(i2c_get_bus_num() != TSC2007_BUS-1 && i2c_set_bus_num(TSC2007_BUS-1))
 		{
 		printf ("could not select I2C2\n");

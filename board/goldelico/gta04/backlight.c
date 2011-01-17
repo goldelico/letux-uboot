@@ -30,8 +30,11 @@
 #include <asm/mach-types.h>
 #include "backlight.h"
 
-#ifdef CONFIG_OMAP3_GTA04
+#if defined(CONFIG_OMAP3_GTA04)
 #define GPIO_BACKLIGHT		57	/* = GPT11_PWM */
+#define GPT_BACKLIGHT		OMAP34XX_GPT11
+#elif defined(CONFIG_OMAP3_BEAGLE_EXPANDER)
+#define GPIO_BACKLIGHT		146	/* = GPT11_PWM (instead of UART2-TX) */
 #define GPT_BACKLIGHT		OMAP34XX_GPT11
 #else /* Beagle Hybrid */
 #define GPIO_BACKLIGHT		145	/* = GPT10_PWM */
@@ -56,8 +59,10 @@ int backlight_init(void)
 {
 #if USE_PWM
 	struct gptimer *gpt_base = (struct gptimer *)GPT_BACKLIGHT;
-#ifdef CONFIG_OMAP3_GTA04
+#if defined(CONFIG_OMAP3_GTA04)
 	MUX_VAL(CP(GPMC_NCS6),		(IEN | PTD | DIS | M3)) /* GPT_11 - Backlight enable*/\
+#elif defined(CONFIG_OMAP3_BEAGLE_EXPANDER)
+	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M2)) /* switch to GPT11 */
 #else
 	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M2)) /* switch to GPT10 */
 #endif
@@ -69,8 +74,10 @@ int backlight_init(void)
 #error todo
 	
 #else
-#ifdef CONFIG_OMAP3_GTA04
+#if defined(CONFIG_OMAP3_GTA04)
 	MUX_VAL(CP(GPMC_NCS6),		(IEN | PTD | DIS | M4)) /*GPIO_57 - Backlight enable*/
+#elif defined(CONFIG_OMAP3_BEAGLE_EXPANDER)
+	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #else
 	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M4)) /*GPIO_145*/
 #endif

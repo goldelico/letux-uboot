@@ -260,7 +260,7 @@ void dssfb_init(void)
 {
 #ifdef CONFIG_OMAP3_GTA04A2	/* delayed on GTA04A2 */
 	struct prcm *prcm_base = (struct prcm *)PRCM_BASE;
-	printf("prcm base = %08x\n", prcm_base);
+	printf("prcm base = %08x\n", (void *) prcm_base);
 	printf("ick_dss_on\n");
 	sr32(&prcm_base->iclken_dss, 0, 32, ICK_DSS_ON);
 	sdelay(1000);

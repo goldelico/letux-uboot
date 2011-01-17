@@ -32,10 +32,19 @@
 #include <twl4030.h>
 #include "status.h"
 
-#ifdef CONFIG_OMAP3_GTA04
-static int isGTA04 = 1;
-#define TCA6507 2	// I2C2
-#define TCA6507_ADDRESS 0x45
+#if defined(CONFIG_OMAP3_GTA04)
+
+// no need to probe for LED controller (compiler should optimize unnecessary code)
+#define hasTCA6507 (1==1)
+
+#else
+
+static int hasTCA6507=0;
+
+#endif
+
+#define TCA6507_BUS			2	// I2C2
+#define TCA6507_ADDRESS		0x45
 
 /* register numbers */
 #define TCA6507_SELECT0						0
@@ -52,10 +61,6 @@ static int isGTA04 = 1;
 
 #define TCA6507_AUTO_INCREMENT				16
 
-#else
-static int isGTA04 = 0;
-#endif
-
 // we can't include "beagle.h"
 /* BeagleBoard revisions */
 extern int get_board_revision(void); 
@@ -66,8 +71,28 @@ extern int get_board_revision(void);
 
 static int isXM = 0;
 
-// Note: on GTA04 the LEDs will be connected to TCA8418 and controlled through I2C
-// Note: BB-XM has scrambled DSS assignment
+#if defined(CONFIG_OMAP3_GTA04)
+
+#define GPIO_AUX		7		// AUX/User button
+#define GPIO_POWER		-1		// N/A on GTA04 (access through TPS65950)
+#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		160		// TSC must be set up to provide PENIRQ
+
+#elif defined(CONFIG_OMAP3_BEAGLE_EXPANDER)
+
+#define GPIO_AUX		136		// AUX/User button
+#define GPIO_POWER		137		// POWER button
+#define GPIO_GPSEXT		138		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+
+#else
+
+#define GPIO_AUX		136		// AUX/User button
+#define GPIO_POWER		137		// N/A on GTA04
+#define GPIO_GPSEXT		138		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+
+#endif
 
 #define GPIO_LED_AUX_RED		(isXM?88:70)		// AUX
 #define GPIO_LED_AUX_GREEN		(isXM?89:71)		// AUX
@@ -76,16 +101,9 @@ static int isXM = 0;
 #define GPIO_LED_VIBRA			(isXM?2:88)			// Vibracall motor
 #define GPIO_LED_UNUSED			(isXM?3:89)			// unused
 
-// Note: on GTA04 the GPIOs will be assigned differently and the state of the POWER button is only available through the TPS65950
-
-#define GPIO_AUX		(isGTA04?7:136)			// AUX/User button
-#define GPIO_POWER		(isGTA04?-1:137)		// N/A on GTA04
-#define GPIO_GPSEXT		(isGTA04?144:138)		// external GPS antenna is plugged in
-#define GPIO_PENIRQ		(isGTA04?160:157)		// TSC must be set up to provide PENIRQ
-
 void led_set_led(int value)
 {
-	if(!isGTA04) {
+	if(!hasTCA6507) {
 		omap_set_gpio_dataout(GPIO_LED_AUX_RED, (value&(1 << 0)));
 		omap_set_gpio_dataout(GPIO_LED_AUX_GREEN, (value&(1 << 1)));
 		omap_set_gpio_dataout(GPIO_LED_POWER_RED, (value&(1 << 3)));
@@ -106,27 +124,42 @@ void led_set_led(int value)
 
 int led_get_buttons(void)
 { // convert button state into led state
-	if(isGTA04) {
-		u8 val;
-		i2c_set_bus_num(0);	// read I2C1
-		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, TWL4030_PM_MASTER_STS_HW_CONDITIONS);	// read state of power button (bit 0) from TPS65950
-		return ((omap_get_gpio_datain(GPIO_AUX)) << 0) |
-			((omap_get_gpio_datain(GPIO_GPSEXT)) << 1) |
-			(((val&0x01) != 0) << 3) |
-			((omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
-	}
+#if defined(CONFIG_OMAP3_GTA04)
+	u8 val;
+	i2c_set_bus_num(0);	// read I2C1
+	twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, TWL4030_PM_MASTER_STS_HW_CONDITIONS);	// read state of power button (bit 0) from TPS65950
+	return ((omap_get_gpio_datain(GPIO_AUX)) << 0) |
+		((omap_get_gpio_datain(GPIO_GPSEXT)) << 1) |
+		(((val&0x01) != 0) << 3) |
+		((omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
+#elif defined(CONFIG_OMAP3_BEAGLE_EXPANDER)
+	return
+		((omap_get_gpio_datain(GPIO_AUX)) << 0) |
+		((0) << 1) |
+		((!omap_get_gpio_datain(GPIO_POWER)) << 3) |
+		((omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
+#else
 	return
 		((!omap_get_gpio_datain(GPIO_AUX)) << 0) |
 		((omap_get_gpio_datain(GPIO_GPSEXT)) << 1) |
 		((!omap_get_gpio_datain(GPIO_POWER)) << 3) |
 		((omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
+#endif
 }
 
 int led_init(void)
 {
 	isXM = (get_board_revision() == REVISION_XM);
+#if !defined(CONFIG_OMAP3_GTA04)
+	if(i2c_set_bus_num(TCA6507_BUS-1))
+		{
+		printf ("could not select I2C2\n");
+		return 1;
+		}
+	hasTCA6507 = !i2c_probe(TCA6507_ADDRESS);
+#endif
 	
-	if(!isGTA04) {
+	if(!hasTCA6507) {
 		if(isXM) { // XM has scrambled dss assignment with respect to default ball name
 			MUX_VAL(CP(DSS_DATA18),		(IEN | PTD | EN | M4)); /*GPIO */
 			MUX_VAL(CP(DSS_DATA19),		(IEN | PTD | EN | M4)); /*GPIO */
@@ -154,19 +187,13 @@ int led_init(void)
 	}
 	else {
 		// initialize I2C controller
-		if(i2c_set_bus_num(TCA6507-1))
-			{
-			printf ("could not select I2C2\n");
-			return 1;
-			}
-		// send init command?
 	}
 	
 	omap_request_gpio(GPIO_AUX);
 	omap_request_gpio(GPIO_GPSEXT);
 	omap_request_gpio(GPIO_PENIRQ);
 	
-	if(!isGTA04) {
+	if(!hasTCA6507) {
 		omap_set_gpio_direction(GPIO_LED_AUX_GREEN, 0);		// output
 		omap_set_gpio_direction(GPIO_LED_AUX_RED, 0);		// output
 		omap_set_gpio_direction(GPIO_LED_POWER_GREEN, 0);		// output
@@ -177,11 +204,13 @@ int led_init(void)
 		}
 	
 	omap_set_gpio_direction(GPIO_AUX, 1);		// input
-	omap_set_gpio_direction(GPIO_AUX, 1);		// input
-	omap_set_gpio_direction(GPIO_GPSEXT, 1);		// input
+#ifndef CONFIG_OMAP3_GTA04
+	omap_set_gpio_direction(GPIO_POWER, 1);		// input
+#endif
+	omap_set_gpio_direction(GPIO_GPSEXT, 1);	// input
 
-	// when sould we do omap_free_gpio(GPIO_LED_AUX_GREEN);
-	printf("did led_init()\n");
+	// when sould we do omap_free_gpio(GPIO_LED_AUX_GREEN); ?
+	printf("did init LED driver for %s\n", hasTCA6507?"TCA6507":"GPIOs");
 
 	return 0;
 }

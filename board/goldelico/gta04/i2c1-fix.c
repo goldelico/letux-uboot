@@ -192,7 +192,7 @@ static int write_byte(struct i2c *base, int byte)
 static int read_byte(struct i2c *base)
 {
 	int i;
-	u8 byte;
+	u8 byte=0;
 		
 	for (i=7; i>=0; i--)
 		byte = (byte << 1) | read_bit(base);

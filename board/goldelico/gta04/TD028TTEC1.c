@@ -197,8 +197,10 @@ int jbt_check(void)
 	int failed=0;
 	int cnt0 = 0;
 	int cnt1 = 0;
-	
+
+#if 0
 	printf("jbt_reg_init()\n");
+#endif
 	err = omap_request_gpio(GPIO_CS);
 	SPI_CS(1);	// unselect
 	err |= omap_request_gpio(GPIO_SCL);
@@ -228,7 +230,7 @@ int jbt_check(void)
 			int bit=i&1;
 			SPI_SDA(bit);	// write bit
 			SPI_DELAY();
-#if 1
+#if 0
 			printf("bit: %d out: %d in: %d (%d)\n", bit, omap_get_gpio_datain(GPIO_DOUT), omap_get_gpio_datain(GPIO_DIN), SPI_READ());
 #endif
 			if(SPI_READ() != bit)	// did not read back
@@ -240,11 +242,13 @@ int jbt_check(void)
 		}	
 	if(failed > 0)
 		{
-		printf("jbt_reg_init() - no correct response, assuming no connection between GPIO_%d and GPIO_%d\n", GPIO_DOUT, GPIO_DIN);
+		printf("DISPLAY:    ");
 		if(cnt0 == 0)
-			printf("  DIN stuck at 0\n");
-		if(cnt1 == 0)
-			printf("  DIN stuck at 1\n");
+			printf("DIN (GPIO%d) stuck at 0\n", GPIO_DIN);
+		else if(cnt1 == 0)
+			printf("DIN (GPIO%d) stuck at 1\n", GPIO_DIN);
+		else 
+			printf("DIN-DOUT (GPIO%d- (GPIO%d)) connetion broken\n", GPIO_DIN, GPIO_DOUT);
 		return 1;
 		}
 #endif

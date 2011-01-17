@@ -31,12 +31,13 @@
 #include <i2c.h>
 #include <twl4030.h>
 #include "systest.h"
+#include "TD028TTEC1.h"
 
 int systest(void)
 { // do mixture of gps_echo, tsc_loop, status mirror status blink
 	int r;
 	i2c_set_bus_num(0);	// I2C1
-	printf("TPS65950:      %s\n", (r=i2c_probe(TWL4030_CHIP_USB))?"-":"found");	// responds on 4 addresses 0x48..0x4b
+	printf("TPS65950:      %s\n", (r=!i2c_probe(TWL4030_CHIP_USB))?"found":"-");	// responds on 4 addresses 0x48..0x4b
 	if(!r)
 		{ // was ok, ask for details
 		u8 val;
@@ -80,16 +81,16 @@ int systest(void)
 		printf("  VBAT:    %d\n", (val2<<2)+(val>>6));
 		}
 	i2c_set_bus_num(1);	// I2C2
-	printf("TSC2007:       %s\n", i2c_probe(0x48)?"-":"found");
-	printf("TCA6507:       %s\n", i2c_probe(0x45)?"-":"found");
-	printf("LIS302 TOP:    %s\n", i2c_probe(0x1c)?"-":"found");
-	printf("LIS302 BOTTOM: %s\n", i2c_probe(0x1d)?"-":"found");
-	printf("LSM303:        %s\n", i2c_probe(0x19)?"-":"found");
-	printf("HMC5843:       %s\n", i2c_probe(0x1e)?"-":"found");
-	printf("BMP085:        %s\n", i2c_probe(0x77)?"-":"found");
-	printf("ITG3200:       %s\n", i2c_probe(0x68)?"-":"found");
-	printf("Si4721:        %s\n", i2c_probe(0x21)?"-":"found");
-	printf("TCA8418:       %s\n", i2c_probe(0x64)?"-":"found");
+	printf("TSC2007:       %s\n", !i2c_probe(0x48)?"found":"-");
+	printf("TCA6507:       %s\n", !i2c_probe(0x45)?"found":"-");
+	printf("LIS302 TOP:    %s\n", !i2c_probe(0x1c)?"found":"-");
+	printf("LIS302 BOTTOM: %s\n", !i2c_probe(0x1d)?"found":"-");
+	printf("LSM303:        %s\n", !i2c_probe(0x19)?"found":"-");
+	printf("HMC5843:       %s\n", !i2c_probe(0x1e)?"found":"-");
+	printf("BMP085:        %s\n", !i2c_probe(0x77)?"found":"-");
+	printf("ITG3200:       %s\n", !i2c_probe(0x68)?"found":"-");
+	printf("Si4721:        %s\n", !i2c_probe(0x21)?"found":"-");
+	printf("TCA8418:       %s\n", !i2c_probe(0x64)?"found":"-");
 	i2c_set_bus_num(2);	// I2C3
 	// LEDs
 	// GPS UART
@@ -98,10 +99,10 @@ int systest(void)
 	// Buttons
 	// Power
 	// Display communication
-	if(jbt_check())
-		printf("DISPLAY:     failed\n");
+	if(!jbt_check())
+	    printf("DISPLAY:      ok\n");
 	else
-	    printf("DISPLAY:     ok\n");
+		printf("DISPLAY:      failed\n");
 	return (0);
 }
 

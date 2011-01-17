@@ -108,6 +108,16 @@ static int do_lcd_init(int argc, char *const argv[])
 	return board_video_init(NULL);
 }
 
+static int do_lcd_start(int argc, char *const argv[])
+{
+	if(board_video_init(NULL))
+		return 1;
+	jbt6k74_enter_state(2);
+	jbt6k74_display_onoff(1);
+	backlight_set_level(255);
+	return 0;
+}
+
 static int do_lcd(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int len;
@@ -132,6 +142,8 @@ static int do_lcd(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		return do_lcd_color (argc, argv);
 	} else if (strncmp ("fb", argv[1], 2) == 0) {
 		return do_lcd_framebuffer (argc, argv);
+	} else if (strncmp ("st", argv[1], 2) == 0) {
+		return do_lcd_start (argc, argv);
 	} else {
 		printf ("lcm: unknown operation: %s\n", argv[1]);
 	}
@@ -145,6 +157,7 @@ U_BOOT_CMD(lcm, 3, 0, do_lcd, "LCM sub-system",
 		   "off - switch off\n"
 		   "on - switch on\n"
 		   "power mode - set power mode\n"
+		   "start - initialize, switch on power and enable backlight\n"
 		   "color hhhhhh - switch color (can be used without init)\n"
 		   "fb address - set framebuffer address (can be used without init)\n"
 		   );
@@ -168,15 +181,45 @@ static int do_tsc_loop(int argc, char *const argv[])
 {
 	printf("permanently reading ADCs of TSC.\n"
 		   "Press any key to stop\n\n");
-	while (!tstc())
+	while (!tstc() && (led_get_buttons()&0x09) == 0)
 		{
 			print_adc();
 			printf("\r");
 		}
-	getc();
+	if(tstc())
+		getc();
 	printf("\n");
 	return 0;
 }
+
+static int do_tsc_gloop(int argc, char *const argv[])
+{
+	unsigned short *fb=0x81000000;	// RGB16
+	printf("permanently reading ADCs of TSC to framebuffer.\n"
+		   "Press any key to stop\n\n");
+	omap3_dss_set_fb(fb);
+	while (!tstc() && (led_get_buttons()&0x09) == 0)
+		{
+		int i;
+		for(i=0; i<8; i++)
+			{
+			int val=(480*read_adc(i))/4096;
+			int x, y;
+			printf("%d: %d\n", i, val);
+			for(y=16*i; y<16*i+16; y++)
+				{ // draw colored bar depending on current value
+					for(x=0; x<480; x++)
+						fb[x+480*y]=(x < val)?0xfc00:0x03ff;
+				}
+			}
+		}
+	if(tstc())
+		getc();
+	printf("\n");
+	return 0;
+}
+
+
 
 static int tsc_choice=0;
 
@@ -259,7 +302,8 @@ static int do_tsc_choose(int argc, char *const argv[])
 					return 0;
 				}
 		}
-	getc();
+	if(tstc())
+		getc();
 	return 0;
 }
 
@@ -277,6 +321,8 @@ static int do_tsc(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		return do_tsc_get (argc, argv);
 	} else if (strncmp ("lo", argv[1], 2) == 0) {
 		return do_tsc_loop (argc, argv);
+	} else if (strncmp ("gl", argv[1], 2) == 0) {
+		return do_tsc_gloop (argc, argv);
 	} else if (strncmp ("ch", argv[1], 2) == 0) {
 		return do_tsc_choose (argc, argv);
 	} else if (strncmp ("se", argv[1], 2) == 0) {
@@ -295,6 +341,7 @@ U_BOOT_CMD(tsc, 4, 0, do_tsc, "TSC2007 sub-system",
 		   "in[it] - initialize TSC2007\n"
 		   "ge[t] - read ADCs\n"
 		   "lo[op] - loop and display x/y coordinates\n"
+		   "gl[oop] - loop and draw to framebuffer\n"
 		   "ch[oose] cols rows - choose item\n"
 		   "se[lection] p - check if item p (1 .. cols*rows) was selected\n"
 		   );
@@ -327,7 +374,7 @@ static int do_led_check(int argc, char *const argv[])
 static int do_led_get(int argc, char *const argv[])
 {
 	int status=led_get_buttons();
-	printf("button status: %01x\n", status);
+	printf("button status: %02x\n", status);
 	print_buttons(status);
 	printf("\n");
 	return 0;
@@ -508,7 +555,6 @@ static int do_mux(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	printf("PADCONF [0:15] [16:31]\n");
 	while(addr < (char *) 0x48002A28) {
 		u16 mux=*(u16 *) addr;
-		int i;
 		if(cols == 0)
 			printf("%08x", (unsigned int) addr);			
 		printf(" %c%d%c", (mux&8)?((mux&0x10?'U':'D')):' ', (mux&7), (mux&0x100)?'I':'O');
