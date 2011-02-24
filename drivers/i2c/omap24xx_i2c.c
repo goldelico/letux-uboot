@@ -39,6 +39,8 @@ void i2c_bitbang_close(struct i2c *base);
 
 #endif
 
+DECLARE_GLOBAL_DATA_PTR;
+
 #define I2C_TIMEOUT	1000
 
 static void wait_for_bb (void);
@@ -52,7 +54,6 @@ static unsigned int current_bus;
 
 void i2c_init (int speed, int slaveadd)
 {
-	DECLARE_GLOBAL_DATA_PTR;
 	int psc, fsscll, fssclh;
 	int hsscll = 0, hssclh = 0;
 	u32 scll, sclh;

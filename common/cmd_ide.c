@@ -498,7 +498,6 @@ int do_diskboot (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	/* Check if we should attempt an auto-start */
 	if (((ep = getenv("autostart")) != NULL) && (strcmp(ep,"yes") == 0)) {
 		char *local_args[2];
-		extern int do_bootm (cmd_tbl_t *, int, int, char *[]);
 
 		local_args[0] = argv[0];
 		local_args[1] = NULL;
@@ -812,7 +811,8 @@ set_pcmcia_timing (int pmode)
 
 /* We only need to swap data if we are running on a big endian cpu. */
 /* But Au1x00 cpu:s already swaps data in big endian mode! */
-#if defined(__LITTLE_ENDIAN) || ( defined(CONFIG_AU1X00) && !defined(CONFIG_GTH2) )
+#if defined(__LITTLE_ENDIAN) || \
+   (defined(CONFIG_SOC_AU1X00) && !defined(CONFIG_GTH2))
 #define input_swap_data(x,y,z) input_data(x,y,z)
 #else
 static void

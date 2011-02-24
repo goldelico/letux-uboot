@@ -63,7 +63,11 @@
  */
 
 static uint flash_offset_cfi[2] = { FLASH_OFFSET_CFI, FLASH_OFFSET_CFI_ALT };
+#ifdef CONFIG_FLASH_CFI_MTD
 static uint flash_verbose = 1;
+#else
+#define flash_verbose 1
+#endif
 
 flash_info_t flash_info[CFI_MAX_FLASH_BANKS];	/* FLASH chips info */
 
@@ -73,6 +77,20 @@ flash_info_t flash_info[CFI_MAX_FLASH_BANKS];	/* FLASH chips info */
 #ifndef CONFIG_SYS_FLASH_CFI_WIDTH
 #define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_8BIT
 #endif
+
+/*
+ * 0xffff is an undefined value for the configuration register. When
+ * this value is returned, the configuration register shall not be
+ * written at all (default mode).
+ */
+static u16 cfi_flash_config_reg(int i)
+{
+#ifdef CONFIG_SYS_CFI_FLASH_CONFIG_REGS
+	return ((u16 [])CONFIG_SYS_CFI_FLASH_CONFIG_REGS)[i];
+#else
+	return 0xffff;
+#endif
+}
 
 #if defined(CONFIG_SYS_MAX_FLASH_BANKS_DETECT)
 int cfi_flash_num_flash_banks = CONFIG_SYS_MAX_FLASH_BANKS_DETECT;
@@ -1112,18 +1130,18 @@ static int sector_erased(flash_info_t *info, int i)
 {
 	int k;
 	int size;
-	volatile unsigned long *flash;
+	u32 *flash;
 
 	/*
 	 * Check if whole sector is erased
 	 */
 	size = flash_sector_size(info, i);
-	flash = (volatile unsigned long *) info->start[i];
+	flash = (u32 *)info->start[i];
 	/* divide by 4 for longword access */
 	size = size >> 2;
 
 	for (k = 0; k < size; k++) {
-		if (*flash++ != 0xffffffff)
+		if (flash_read32(flash++) != 0xffffffff)
 			return 0;	/* not erased */
 	}
 
@@ -1140,7 +1158,7 @@ void flash_print_info (flash_info_t * info)
 		return;
 	}
 
-	printf ("%s FLASH (%d x %d)",
+	printf ("%s flash (%d x %d)",
 		info->name,
 		(info->portwidth << 3), (info->chipwidth << 3));
 	if (info->size < 1024*1024)
@@ -1426,6 +1444,11 @@ int flash_real_protect (flash_info_t * info, long sector, int prot)
 #endif
 	};
 
+	/*
+	 * Flash needs to be in status register read mode for
+	 * flash_full_status_check() to work correctly
+	 */
+	flash_write_cmd(info, sector, 0, FLASH_CMD_READ_STATUS);
 	if ((retcode =
 	     flash_full_status_check (info, sector, info->erase_blk_tout,
 				      prot ? "protect" : "unprotect")) == 0) {
@@ -1975,6 +1998,13 @@ ulong flash_get_size (phys_addr_t base, int banknum)
 				case CFI_CMDSET_INTEL_PROG_REGIONS:
 				case CFI_CMDSET_INTEL_EXTENDED:
 				case CFI_CMDSET_INTEL_STANDARD:
+					/*
+					 * Set flash to read-id mode. Otherwise
+					 * reading protected status is not
+					 * guaranteed.
+					 */
+					flash_write_cmd(info, sect_cnt, 0,
+							FLASH_CMD_READ_ID);
 					info->protect[sect_cnt] =
 						flash_isset (info, sect_cnt,
 							     FLASH_OFFSET_PROTECT,
@@ -2016,9 +2046,36 @@ ulong flash_get_size (phys_addr_t base, int banknum)
 	return (info->size);
 }
 
+#ifdef CONFIG_FLASH_CFI_MTD
 void flash_set_verbose(uint v)
 {
 	flash_verbose = v;
+}
+#endif
+
+static void cfi_flash_set_config_reg(u32 base, u16 val)
+{
+#ifdef CONFIG_SYS_CFI_FLASH_CONFIG_REGS
+	/*
+	 * Only set this config register if really defined
+	 * to a valid value (0xffff is invalid)
+	 */
+	if (val == 0xffff)
+		return;
+
+	/*
+	 * Set configuration register. Data is "encrypted" in the 16 lower
+	 * address bits.
+	 */
+	flash_write16(FLASH_CMD_SETUP, (void *)(base + (val << 1)));
+	flash_write16(FLASH_CMD_SET_CR_CONFIRM, (void *)(base + (val << 1)));
+
+	/*
+	 * Finally issue reset-command to bring device back to
+	 * read-array mode
+	 */
+	flash_write16(FLASH_CMD_RESET, (void *)base);
+#endif
 }
 
 /*-----------------------------------------------------------------------
@@ -2044,12 +2101,16 @@ unsigned long flash_init (void)
 	for (i = 0; i < CONFIG_SYS_MAX_FLASH_BANKS; ++i) {
 		flash_info[i].flash_id = FLASH_UNKNOWN;
 
+		/* Optionally write flash configuration register */
+		cfi_flash_set_config_reg(cfi_flash_bank_addr(i),
+					 cfi_flash_config_reg(i));
+
 		if (!flash_detect_legacy(cfi_flash_bank_addr(i), i))
 			flash_get_size(cfi_flash_bank_addr(i), i);
 		size += flash_info[i].size;
 		if (flash_info[i].flash_id == FLASH_UNKNOWN) {
 #ifndef CONFIG_SYS_FLASH_QUIET_TEST
-			printf ("## Unknown FLASH on Bank %d "
+			printf ("## Unknown flash on Bank %d "
 				"- Size = 0x%08lx = %ld MB\n",
 				i+1, flash_info[i].size,
 				flash_info[i].size >> 20);
