@@ -1,4 +1,4 @@
-/* u-boot extended commands for GTA04
+/* u-boot extended commands for flash
  *
  * Copyright (C) 2010 by Golden Delicious Computers GmbH&Co. KG
  * Author: H. Nikolaus Schaller <hns@goldelico.com>
@@ -181,7 +181,7 @@ static int do_tsc_loop(int argc, char *const argv[])
 {
 	printf("permanently reading ADCs of TSC.\n"
 		   "Press any key to stop\n\n");
-	while (!tstc() && (led_get_buttons()&0x09) == 0)
+	while (!tstc() && (status_get_buttons()&0x09) == 0)
 		{
 			print_adc();
 			printf("\r");
@@ -194,11 +194,11 @@ static int do_tsc_loop(int argc, char *const argv[])
 
 static int do_tsc_gloop(int argc, char *const argv[])
 {
-	unsigned short *fb=0x81000000;	// RGB16
+	unsigned short *fb=(void *) 0x81000000;	// base address to be used as RGB16 framebuffer
 	printf("permanently reading ADCs of TSC to framebuffer.\n"
 		   "Press any key to stop\n\n");
 	omap3_dss_set_fb(fb);
-	while (!tstc() && (led_get_buttons()&0x09) == 0)
+	while (!tstc() && (status_get_buttons()&0x09) == 0)
 		{
 		int i;
 		for(i=0; i<8; i++)
@@ -253,7 +253,7 @@ static int pendown(int *x, int *y)
 	return z > 200;	// was pressed
 #else
 	// must be in PENIRQ mode...
-	return (led_get_buttons() & (1 << 4)) == 0;
+	return (status_get_buttons() & (1 << 4)) == 0;
 #endif
 }
 
@@ -312,7 +312,7 @@ static int do_tsc(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	int len;
 	
 	if (argc < 2) {
-		printf ("led: missing subcommand.\n");
+		printf ("tsc: missing subcommand.\n");
 		return (-1);
 	}
 	
@@ -346,11 +346,11 @@ U_BOOT_CMD(tsc, 4, 0, do_tsc, "TSC2007 sub-system",
 		   "se[lection] p - check if item p (1 .. cols*rows) was selected\n"
 		   );
 
-/** LED commands */
+/** Status commands */
 
-static int do_led_init(int argc, char *const argv[])
+static int do_status_init(int argc, char *const argv[])
 {
-	led_init();
+	status_init();
 	return 0;
 }
 
@@ -359,48 +359,48 @@ static void print_buttons(int status)
 	printf("AUX: %s Power: %s Antenna: %s Pen: %s", (status&0x01)?"on":"off", (status&0x08)?"on":"off", (status&0x02)?"EXT":"INT", (status&0x10)?"1":"0");
 }
 
-static int do_led_check(int argc, char *const argv[])
+static int do_status_check(int argc, char *const argv[])
 { // can be used in if construct
-	int state=led_get_buttons();
+	int state=status_get_buttons();
 	if (argc < 3)
 		{
-			printf ("led check: missing mask.\n");
+			printf ("status check: missing mask.\n");
 			return (-1);
 		}
 	state &= simple_strtoul(argv[2], NULL, 16);
 	return (state != 0)?0:1;
 }
 
-static int do_led_get(int argc, char *const argv[])
+static int do_status_get(int argc, char *const argv[])
 {
-	int status=led_get_buttons();
+	int status=status_get_buttons();
 	printf("button status: %02x\n", status);
 	print_buttons(status);
 	printf("\n");
 	return 0;
 }
 
-static int do_led_set(int argc, char *const argv[])
-{ // led set hh
+static int do_status_set(int argc, char *const argv[])
+{ // status set hh
 	static int state;
 	if(argc == 2)
 		state++;
 	else
 		state=simple_strtoul(argv[2], NULL, 16);
-	led_set_led(state);
+	status_set_status(state);
 	return 0;
 }
 
-static int do_led_loop(int argc, char *const argv[])
+static int do_status_loop(int argc, char *const argv[])
 {
 	printf("mirroring buttons to LEDs.\n"
 		   "Press any key to stop\n\n");
 	while (!tstc() && !pendown(NULL, NULL))
 		{
-			int state=led_get_buttons();
+			int state=status_get_buttons();
 			print_buttons(state);
 			printf("\r");
-			led_set_led(state);	// mirror to LEDs
+			status_set_status(state);	// mirror to LEDs
 			udelay(100000);	// 0.1 seconds
 		}
 	if(tstc())
@@ -409,14 +409,14 @@ static int do_led_loop(int argc, char *const argv[])
 	return 0;
 }
 
-static int do_led_blink(int argc, char *const argv[])
+static int do_status_blink(int argc, char *const argv[])
 {
 	int value=0;
 	printf("blinking LEDs.\n"
 		   "Press any key to stop\n\n");
 	while (!tstc() && !pendown(NULL, NULL))
 		{
-			led_set_led(value++);	// mirror to LEDs
+			status_set_status(value++);	// mirror to LEDs
 			udelay(100000);	// 0.1 seconds
 		}
 	if(tstc())
@@ -424,43 +424,95 @@ static int do_led_blink(int argc, char *const argv[])
 	return 0;
 }
 
-static int do_led(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_status_flash(int argc, char *const argv[])
+{
+	int len;
+	
+	if (argc < 3) {
+		printf ("status flash: missing subcommand.\n");
+		return (-1);
+	}
+	
+	len = strlen (argv[2]);
+	if (strncmp ("of", argv[2], 2) == 0) {
+		return status_set_flash (0);
+	} else if (strncmp ("on", argv[2], 2) == 0) {
+		return status_set_flash (1);
+	} else if (strncmp ("fl", argv[2], 2) == 0) {
+		return status_set_flash (2);
+	} else {
+		printf ("status: unknown operation: %s\n", argv[1]);
+		return 1;
+	}
+	return (0);
+}
+
+static int do_status_vibra(int argc, char *const argv[])
+{
+	int len;
+	
+	if (argc < 3) {
+		printf ("status flash: missing subcommand.\n");
+		return (-1);
+	}
+	
+	len = strlen (argv[2]);
+	if (strncmp ("of", argv[2], 2) == 0) {
+		return status_set_vibra (0);
+	} else if (strncmp ("on", argv[2], 2) == 0) {
+		return status_set_vibra (1);
+	} else if (strncmp ("fl", argv[2], 2) == 0) {
+		return status_set_vibra (2);
+	} else {
+		printf ("status: unknown operation: %s\n", argv[1]);
+		return 1;
+	}
+	return (0);
+}
+
+static int do_status(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int len;
 	
 	if (argc < 2) {
-		printf ("led: missing subcommand.\n");
+		printf ("status: missing subcommand.\n");
 		return (-1);
 	}
 	
 	len = strlen (argv[1]);
 	if (strncmp ("ge", argv[1], 2) == 0) {
-		return do_led_get (argc, argv);
+		return do_status_get (argc, argv);
 	} else if (strncmp ("se", argv[1], 2) == 0) {
-		return do_led_set (argc, argv);
+		return do_status_set (argc, argv);
 	} else if (strncmp ("mi", argv[1], 2) == 0) {
-		return do_led_loop (argc, argv);
+		return do_status_loop (argc, argv);
 	} else if (strncmp ("bl", argv[1], 2) == 0) {
-		return do_led_blink (argc, argv);
+		return do_status_blink (argc, argv);
 	} else if (strncmp ("in", argv[1], 2) == 0) {
-		return do_led_init (argc, argv);
+		return do_status_init (argc, argv);
 	} else if (strncmp ("ch", argv[1], 2) == 0) {
-		return do_led_check (argc, argv);
+		return do_status_check (argc, argv);
+	} else if (strncmp ("fl", argv[1], 2) == 0) {
+		return do_status_flash (argc, argv);
+	} else if (strncmp ("vi", argv[1], 2) == 0) {
+		return do_status_vibra (argc, argv);
 	} else {
-		printf ("led: unknown operation: %s\n", argv[1]);
+		printf ("status: unknown operation: %s\n", argv[1]);
 	}
 	
 	return (0);
 }
 
 
-U_BOOT_CMD(status, 3, 0, do_led, "LED and Buttons sub-system",
-		   "init - initialize GPIOs\n"
-		   "get - print button status\n"
-		   "check - check button status\n"
-		   "set value - set LEDs state\n"
-		   "mirror - read buttons and mirror to LEDs\n"
-		   "blink - blink LEDs\n"
+U_BOOT_CMD(status, 3, 0, do_status, "LED and Buttons sub-system",
+		   "in[it] - initialize GPIOs\n"
+		   "ge[t] - print button status\n"
+		   "ch[eck] - check button status\n"
+		   "se[t] value - set LEDs state\n"
+		   "mi[rror] - read buttons and mirror to LEDs\n"
+		   "bl[ink] - blink LEDs\n"
+		   "fl[ash] of[f] | on | fl[ash] - switch torch / flashlight\n"
+		   "vi[bra] of[f] | le[ft] | ri[ght] - switch vibracall motor\n"
 		   );
 
 /** GPS commands */

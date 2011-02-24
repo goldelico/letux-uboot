@@ -43,6 +43,7 @@ static int hasTCA6507=0;
 
 #endif
 
+#define TWL4030_I2C_BUS		1	// I2C1
 #define TCA6507_BUS			2	// I2C2
 #define TCA6507_ADDRESS		0x45
 
@@ -101,7 +102,7 @@ static int isXM = 0;
 #define GPIO_LED_VIBRA			(isXM?2:88)			// Vibracall motor
 #define GPIO_LED_UNUSED			(isXM?3:89)			// unused
 
-void led_set_led(int value)
+void status_set_status(int value)
 {
 	if(!hasTCA6507) {
 		omap_set_gpio_dataout(GPIO_LED_AUX_RED, (value&(1 << 0)));
@@ -113,7 +114,7 @@ void led_set_led(int value)
 		}
 	else {
 		value &= 0x3f;	// 6 LEDs only - 7th is reserved to reset the WLAN/BT chip
-		i2c_set_bus_num(1);	// write I2C2
+		i2c_set_bus_num(TCA6507_BUS-1);	// write I2C2
 		// we could write a autoincrement address and all 3 bytes in a single message
 		// we could set the TCA to do smooth transitions
 		i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
@@ -122,11 +123,11 @@ void led_set_led(int value)
 	}
 }
 
-int led_get_buttons(void)
+int status_get_buttons(void)
 { // convert button state into led state
 #if defined(CONFIG_OMAP3_GTA04)
 	u8 val;
-	i2c_set_bus_num(0);	// read I2C1
+	i2c_set_bus_num(TWL4030_I2C_BUS-1);	// read I2C1
 	twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, TWL4030_PM_MASTER_STS_HW_CONDITIONS);	// read state of power button (bit 0) from TPS65950
 	return ((omap_get_gpio_datain(GPIO_AUX)) << 0) |
 		((omap_get_gpio_datain(GPIO_GPSEXT)) << 1) |
@@ -147,7 +148,7 @@ int led_get_buttons(void)
 #endif
 }
 
-int led_init(void)
+int status_init(void)
 {
 	isXM = (get_board_revision() == REVISION_XM);
 #if !defined(CONFIG_OMAP3_GTA04)
@@ -213,4 +214,28 @@ int led_init(void)
 	printf("did init LED driver for %s\n", hasTCA6507?"TCA6507":"GPIOs");
 
 	return 0;
+}
+
+int status_set_flash (int mode)
+{ // 0: off, 1: torch, 2: flash
+	if(i2c_set_bus_num(TCA6507_BUS-1))
+		{
+		printf ("could not select I2C2\n");
+		return 1;
+		}
+	// initialize if needed
+	// set flash controller mode
+	return 0;
+}
+
+int status_set_vibra (int mode)
+{ // 0: off, 1: left, 2: right
+	if(i2c_set_bus_num(TWL4030_I2C_BUS-1))
+		{
+		printf ("could not select I2C1\n");
+		return 1;
+		}
+	// initialize if needed
+	// set vibra controller mode
+	return 0;	
 }

@@ -1,9 +1,12 @@
-#ifndef _LED_H
-#define _LED_H
+#ifndef _STATUS_H
+#define _STATUS_H
 
-int led_init(void);
+int status_init (void);
 
-void led_set_led(int value);
-int led_get_buttons(void);
+void status_set_status (int value);
+int status_get_buttons (void);
+
+int status_set_flash (int mode);	// 0: off, 1: torch, 2: flash
+int status_set_vibra (int mode);	// 0: off, 1: left, 2: right
 
 #endif

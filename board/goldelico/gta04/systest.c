@@ -37,7 +37,7 @@ int systest(void)
 { // do mixture of gps_echo, tsc_loop, status mirror status blink
 	int r;
 	i2c_set_bus_num(0);	// I2C1
-	printf("TPS65950:      %s\n", (r=!i2c_probe(TWL4030_CHIP_USB))?"found":"-");	// responds on 4 addresses 0x48..0x4b
+	printf("TPS65950:      %s\n", !(r=i2c_probe(TWL4030_CHIP_USB))?"found":"-");	// responds on 4 addresses 0x48..0x4b
 	if(!r)
 		{ // was ok, ask for details
 		u8 val;
@@ -86,11 +86,15 @@ int systest(void)
 	printf("LIS302 TOP:    %s\n", !i2c_probe(0x1c)?"found":"-");
 	printf("LIS302 BOTTOM: %s\n", !i2c_probe(0x1d)?"found":"-");
 	printf("LSM303:        %s\n", !i2c_probe(0x19)?"found":"-");
-	printf("HMC5843:       %s\n", !i2c_probe(0x1e)?"found":"-");
+	printf("HMC58xx:       %s\n", !i2c_probe(0x1e)?"found":"-");
+	printf("BMA180:        %s\n", !i2c_probe(0x41)?"found":"-");
 	printf("BMP085:        %s\n", !i2c_probe(0x77)?"found":"-");
 	printf("ITG3200:       %s\n", !i2c_probe(0x68)?"found":"-");
-	printf("Si4721:        %s\n", !i2c_probe(0x21)?"found":"-");
+	printf("Si47xx:        %s\n", !i2c_probe(0x21)?"found":"-");
 	printf("TCA8418:       %s\n", !i2c_probe(0x64)?"found":"-");
+	printf("OV9655:        %s\n", !i2c_probe(0x30)?"found":"-");
+	printf("TPS61050:      %s\n", !i2c_probe(0x33)?"found":"-");
+	printf("EEPROM:        %s\n", !i2c_probe(0x50)?"found":"-");
 	i2c_set_bus_num(2);	// I2C3
 	// LEDs
 	// GPS UART
@@ -103,6 +107,7 @@ int systest(void)
 	    printf("DISPLAY:      ok\n");
 	else
 		printf("DISPLAY:      failed\n");
+	i2c_set_bus_num(0);	// I2C1
 	return (0);
 }
 
