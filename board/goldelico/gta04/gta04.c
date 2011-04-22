@@ -29,6 +29,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
+
 #include <common.h>
 #include <twl4030.h>
 #include <asm/io.h>
@@ -43,12 +44,6 @@
 #define TWL4030_I2C_BUS			0
 #define EXPANSION_EEPROM_I2C_BUS	1
 #define EXPANSION_EEPROM_I2C_ADDRESS	0x50
-
-#define TINCANTOOLS_ZIPPY		0x01000100
-#define TINCANTOOLS_ZIPPY2		0x02000100
-#define TINCANTOOLS_TRAINER		0x04000100
-#define TINCANTOOLS_SHOWDOG		0x03000100
-#define KBADC_BEAGLEFPGA		0x01000600
 
 #define BEAGLE_NO_EEPROM		0xffffffff
 
@@ -162,22 +157,6 @@ int get_board_revision(void)
 unsigned int get_expansion_id(void)
 {
 	return BEAGLE_NO_EEPROM;
-	
-	i2c_set_bus_num(EXPANSION_EEPROM_I2C_BUS);
-	
-	/* return BEAGLE_NO_EEPROM if eeprom doesn't respond */
-	if (i2c_probe(EXPANSION_EEPROM_I2C_ADDRESS) == 1) {
-		i2c_set_bus_num(TWL4030_I2C_BUS);
-		return BEAGLE_NO_EEPROM;
-	}
-	
-	/* read configuration data */
-	i2c_read(EXPANSION_EEPROM_I2C_ADDRESS, 0, 1, (u8 *)&expansion_config,
-			 sizeof(expansion_config));
-	
-	i2c_set_bus_num(TWL4030_I2C_BUS);
-	
-	return expansion_config.device_vendor;
 }
 
 /*
@@ -226,59 +205,14 @@ int misc_init_r(void)
 		default:
 			printf("Beagle unknown 0x%02x\n", get_board_revision());
 	}
-#if UNUSED	
-	switch (get_expansion_id()) {
-		case TINCANTOOLS_ZIPPY:
-			printf("Recognized Tincantools Zippy board (rev %d %s)\n",
-				   expansion_config.revision,
-				   expansion_config.fab_revision);
-			MUX_TINCANTOOLS_ZIPPY();
-			setenv("buddy", "zippy");
-			break;
-		case TINCANTOOLS_ZIPPY2:
-			printf("Recognized Tincantools Zippy2 board (rev %d %s)\n",
-				   expansion_config.revision,
-				   expansion_config.fab_revision);
-			MUX_TINCANTOOLS_ZIPPY();
-			setenv("buddy", "zippy2");
-			break;
-		case TINCANTOOLS_TRAINER:
-			printf("Recognized Tincantools Trainer board (rev %d %s)\n",
-				   expansion_config.revision,
-				   expansion_config.fab_revision);
-			MUX_TINCANTOOLS_ZIPPY();
-			MUX_TINCANTOOLS_TRAINER();
-			setenv("buddy", "trainer");
-			break;
-		case TINCANTOOLS_SHOWDOG:
-			printf("Recognized Tincantools Showdow board (rev %d %s)\n",
-				   expansion_config.revision,
-				   expansion_config.fab_revision);
-			/* Place holder for DSS2 definition for showdog lcd */
-			setenv("defaultdisplay", "showdoglcd");
-			setenv("buddy", "showdog");
-			break;
-		case KBADC_BEAGLEFPGA:
-			printf("Recognized KBADC Beagle FPGA board\n");
-			MUX_KBADC_BEAGLEFPGA();
-			setenv("buddy", "beaglefpga");
-			break;
-		case BEAGLE_NO_EEPROM:
-			printf("No EEPROM on expansion board\n");
-			setenv("buddy", "none");
-			break;
-		default:
-			printf("Unrecognized expansion board: %x\n",
-				   expansion_config.device_vendor);
-			setenv("buddy", "unknown");
-	}
-	
-	if (expansion_config.content == 1)
-		setenv(expansion_config.env_var, expansion_config.env_setting);
-#endif
-
 	twl4030_power_init();
-#ifndef CONFIG_OMAP3_GTA04A2	// we have no LEDs on TPS on GTA04
+	
+#ifdef CONFIG_OMAP3_GTA04
+	// we have no LEDs on TPS on GTA04
+	// but a power on/off button (8 seconds)
+	twl4030_power_reset_init();
+#else
+	// LEDs on BeagleBoard
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
 #endif
 	
