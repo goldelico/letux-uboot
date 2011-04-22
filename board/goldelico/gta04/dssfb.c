@@ -28,55 +28,19 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
-#include <asm/arch/dss.h>
 #include <asm/arch/clocks.h>
 #include <asm/arch/clocks_omap3.h>
-
-#define DVI_BACKGROUND_COLOR		0x00fadc29	// rgb(250, 220, 41)
-
-// configure beagle board DSS for the TD28TTEC1
-
-#define DSS1_FCLK	432000000	// see figure 15-65
-#define PIXEL_CLOCK	22000000	// approx. 22 MHz (will be divided from 432 MHz)
-
-// all values are min ratings
-
-#define VDISP	640				// vertical active area
-#define VFP		4				// vertical front porch
-#define VS		2				// VSYNC pulse width (negative going)
-#define VBP		2				// vertical back porch
-#define VDS		(VS+VBP)		// vertical data start
-#define VBL		(VS+VBP+VFP)	// vertical blanking period
-#define VP		(VDISP+VBL)		// vertical cycle
-
-#define HDISP	480				// horizontal active area
-#define HFP		24				// horizontal front porch
-#define HS		8				// HSYNC pulse width (negative going)
-#define HBP		8				// horizontal back porch
-#define HDS		(HS+HBP)		// horizontal data start
-#define HBL		(HS+HBP+HFP)	// horizontal blanking period
-#define HP		(HDISP+HBL)		// horizontal cycle
+#include "dssfb.h"
 
 #if 0
 #define DEBUGP(x, args...) printf("%s: " x, __FUNCTION__, ## args);
 #define DEBUGPC(x, args...) printf(x, ## args);
+#define VERIFY(VAL) if(SPI_READ() != (VAL)) { printf("expected: %d found: %d\n", VAL, SPI_READ()); return 1; }
 #else
 #define DEBUGP(x, args...) do { } while (0)
 #define DEBUGPC(x, args...) do { } while (0)
+#define VERIFY(VAL) if(SPI_READ() != (VAL)) { return 1; }
 #endif
-
-static const struct panel_config lcm_cfg = 
-{
-.timing_h	= ((HBP-1)<<20) | ((HFP-1)<<8) | ((HS-1)<<0), /* Horizantal timing */
-.timing_v	= ((VBP+0)<<20) | ((VFP+0)<<8) | ((VS-1)<<0), /* Vertical timing */
-.pol_freq	= (1<<17)|(0<<16)|(0<<15)|(1<<14)|(1<<13)|(1<<12)|0x28,    /* Pol Freq */
-.divisor	= (0x0001<<16)|(DSS1_FCLK/PIXEL_CLOCK), /* Pixel Clock divisor from dss1_fclk */
-.lcd_size	= ((HDISP-1)<<0) | ((VDISP-1)<<16), /* as defined by LCM */
-.panel_type	= 0x01, /* TFT */
-.data_lines	= 0x03, /* 24 Bit RGB */
-.load_mode	= 0x02, /* Frame Mode */
-.panel_color	= DVI_BACKGROUND_COLOR
-};
 
 void omap3_dss_go(void)
 { // push changes from shadow register to display controller
@@ -256,7 +220,7 @@ static const struct panel_config dvid_cfg = {
 	.panel_color	= DVI_BEAGLE_ORANGE_COL /* ORANGE */
 };
 
-void dssfb_init(void)
+void dssfb_init(const struct panel_config *lcm_cfg)
 {
 #ifdef CONFIG_OMAP3_GTA04A2	/* delayed on GTA04A2 */
 	struct prcm *prcm_base = (struct prcm *)PRCM_BASE;
@@ -272,9 +236,11 @@ void dssfb_init(void)
 	printf("ick_cam_on\n");
 //	sr32(&prcm_base->iclken_cam, 0, 32, ICK_CAM_ON);
 	sdelay(1000);
+#else
+	// FIXME: restore original code
 #endif
 	printf("dss panel config\n");	
-	omap3_dss_panel_config(&lcm_cfg);	// set new config
+	omap3_dss_panel_config(lcm_cfg);	// set new config
 	printf("dss enable\n");
 	omap3_dss_enable();	// and (re)enable
 }

@@ -37,6 +37,55 @@
 #include "dssfb.h"
 #include "jbt6k74.h"
 
+// FIXME: we have somehow mixed up the file names...
+
+// configure beagle board DSS for the TD28TTEC1
+
+#define DVI_BACKGROUND_COLOR		0x00fadc29	// rgb(250, 220, 41)
+
+#define DSS1_FCLK	432000000	// see figure 15-65
+#define PIXEL_CLOCK	22000000	// approx. 22 MHz (will be divided from 432 MHz)
+
+// all values are min ratings
+
+#define VDISP	640				// vertical active area
+#define VFP		4				// vertical front porch
+#define VS		2				// VSYNC pulse width (negative going)
+#define VBP		2				// vertical back porch
+#define VDS		(VS+VBP)		// vertical data start
+#define VBL		(VS+VBP+VFP)	// vertical blanking period
+#define VP		(VDISP+VBL)		// vertical cycle
+
+#define HDISP	480				// horizontal active area
+#define HFP		24				// horizontal front porch
+#define HS		8				// HSYNC pulse width (negative going)
+#define HBP		8				// horizontal back porch
+#define HDS		(HS+HBP)		// horizontal data start
+#define HBL		(HS+HBP+HFP)	// horizontal blanking period
+#define HP		(HDISP+HBL)		// horizontal cycle
+
+#if 0
+#define DEBUGP(x, args...) printf("%s: " x, __FUNCTION__, ## args);
+#define DEBUGPC(x, args...) printf(x, ## args);
+#else
+#define DEBUGP(x, args...) do { } while (0)
+#define DEBUGPC(x, args...) do { } while (0)
+#endif
+
+static const struct panel_config lcm_cfg = 
+{
+	.timing_h	= ((HBP-1)<<20) | ((HFP-1)<<8) | ((HS-1)<<0), /* Horizantal timing */
+	.timing_v	= ((VBP+0)<<20) | ((VFP+0)<<8) | ((VS-1)<<0), /* Vertical timing */
+	.pol_freq	= (1<<17)|(0<<16)|(0<<15)|(1<<14)|(1<<13)|(1<<12)|0x28,    /* Pol Freq */
+	.divisor	= (0x0001<<16)|(DSS1_FCLK/PIXEL_CLOCK), /* Pixel Clock divisor from dss1_fclk */
+	.lcd_size	= ((HDISP-1)<<0) | ((VDISP-1)<<16), /* as defined by LCM */
+	.panel_type	= 0x01, /* TFT */
+	.data_lines	= 0x03, /* 24 Bit RGB */
+	.load_mode	= 0x02, /* Frame Mode */
+	.panel_color	= DVI_BACKGROUND_COLOR
+};
+
+
 #if 1
 #define DEBUGP(x, args...) printf("%s: " x, __FUNCTION__, ## args);
 #define DEBUGPC(x, args...) printf(x, ## args);
@@ -329,7 +378,7 @@ int board_video_init(GraphicDevice *pGD)
 		printf("No LCM connected\n");
 		return 1;
 		}
-	dssfb_init();
+	dssfb_init(&lcm_cfg);
 	
 	printf("did board_video_init()\n");
 	return 0;

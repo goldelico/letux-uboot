@@ -21,7 +21,9 @@
  *
  */
 
-void dssfb_init(void);
+#include <asm/arch/dss.h>
+
+void dssfb_init(const struct panel_config *lcm_cfg);
 
 void omap3_dss_go(void);
 

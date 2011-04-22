@@ -37,16 +37,6 @@
 #include <asm/mach-types.h>
 #include "TD028TTEC1.h"
 
-#if 0
-#define DEBUGP(x, args...) printf("%s: " x, __FUNCTION__, ## args);
-#define DEBUGPC(x, args...) printf(x, ## args);
-#define VERIFY(VAL) if(SPI_READ() != (VAL)) { printf("expected: %d found: %d\n", VAL, SPI_READ()); return 1; }
-#else
-#define DEBUGP(x, args...) do { } while (0)
-#define DEBUGPC(x, args...) do { } while (0)
-#define VERIFY(VAL) if(SPI_READ() != (VAL)) { return 1; }
-#endif
-
 #ifdef CONFIG_OMAP3_BEAGLE
 
 #ifdef CONFIG_OMAP3_GTA04
@@ -116,8 +106,8 @@ static int jbt_spi_xfer(int wordnum, int bitlen, u_int16_t *dout)
 	u_int16_t tmpdout = 0;
 	int   i, j;
 
-	DEBUGP("spi_xfer: dout %08X wordnum %u bitlen %d\n",
-		*(uint *)dout, wordnum, bitlen);
+//	DEBUGP("spi_xfer: dout %08X wordnum %u bitlen %d\n",
+//		*(uint *)dout, wordnum, bitlen);
 
 	SPI_CS(0);
 
@@ -128,21 +118,21 @@ static int jbt_spi_xfer(int wordnum, int bitlen, u_int16_t *dout)
 			SPI_SCL(0);
 			if (tmpdout & (1 << (bitlen-1))) {
 				SPI_SDA(1);
-				DEBUGPC("1");
-				VERIFY(1);
+//				DEBUGPC("1");
+//				VERIFY(1);
 			} else {
 				SPI_SDA(0);
-				DEBUGPC("0");
-				VERIFY(0);
+//				DEBUGPC("0");
+//				VERIFY(0);
 			}
 			SPI_DELAY();
 			SPI_SCL(1);
 			SPI_DELAY();
 			tmpdout <<= 1;
 		}
-		DEBUGPC(" ");
+//		DEBUGPC(" ");
 	}
-	DEBUGPC("\n");
+//	DEBUGPC("\n");
 
 	SPI_CS(1);
 
