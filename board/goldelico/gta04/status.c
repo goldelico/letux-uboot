@@ -79,6 +79,13 @@ static int isXM = 0;
 #define GPIO_GPSEXT		144		// external GPS antenna is plugged in
 #define GPIO_PENIRQ		160		// TSC must be set up to provide PENIRQ
 
+#elif defined(CONFIG_OMAP3_BEAGLE_HYBRID)
+
+#define GPIO_AUX		136		// AUX/User button
+#define GPIO_POWER		137		// POWER button
+#define GPIO_GPSEXT		138		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+
 #elif defined(CONFIG_OMAP3_BEAGLE_EXPANDER)
 
 #define GPIO_AUX		136		// AUX/User button
@@ -88,10 +95,7 @@ static int isXM = 0;
 
 #else
 
-#define GPIO_AUX		136		// AUX/User button
-#define GPIO_POWER		137		// N/A on GTA04
-#define GPIO_GPSEXT		138		// external GPS antenna is plugged in
-#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+#error unknown config
 
 #endif
 
