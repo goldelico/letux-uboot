@@ -103,7 +103,7 @@ int jbt6k74_enter_state(enum jbt_state new_state)
 
 int jbt6k74_display_onoff(int on)
 {
-	omap_set_gpio_dataout(GPIO_STBY, on?0:1);	// on = no STBY
+	omap_set_gpio_dataout(GPIO_STBY, on?1:0);	// on = no STBY
 	return 0;
 }
 
