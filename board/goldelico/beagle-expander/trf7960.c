@@ -144,7 +144,7 @@ static int bitbang_spi_xfer(struct spi_slave *slave, int bitlen, uchar writeBuff
 	static int first=1;
 	int bit;
 	uchar wb=0;
-	uchar rb;
+	uchar rb=0;
 	if(first) { /* if not correctly done by pinmux */
 		omap_set_gpio_direction(McSPI3_CLK, 0);
 		omap_set_gpio_direction(McSPI3_SIMO, 0);
@@ -408,6 +408,10 @@ void handleInterrupt(struct trf7960 *device)
 		memcpy(device->datapointer, &buffer[1], n);	/* buffer[0] are the first 8 bits shifted out while we did send the command */
 		device->datapointer += n;
 		device->bytes -= n;
+#if 1
+		if(device->bytes > 0)
+			printf("  remaining buffer=%d\n", device->bytes);
+#endif
 		// handle broken byte
 		sendCommand(device, TRF7960_CMD_RESET);	/* reset FIFO */		
 	}
@@ -559,7 +563,7 @@ int chooseProtocol(struct trf7960 *device, int protocol)
 
 /* high level functions (protocol handlers) */
 
-int scanInventory(struct trf7960 *device, uchar flags, uchar length, void (*found)(struct trf7960 *device, uchar uid[8], int rssi))
+int scanInventory(struct trf7960 *device, uchar flags, uchar length, void (*found)(struct trf7960 *device, uint64_t uid, int rssi))
 { /* poll for tag uids and resolve collisions */
 	static uchar buffer[32];	/* shared rx/tx buffer */
 	uchar collisionslots[16];	/* up to 16 collision slots */
@@ -644,7 +648,7 @@ int scanInventory(struct trf7960 *device, uchar flags, uchar length, void (*foun
 #if 0
 		printf("slot %d\n", slot);
 #endif
-		prepareIrq(device, buffer, 8);	/* prepare for RX of tag id */
+		prepareIrq(device, buffer, 10);	/* prepare for RX of tag id (2 bytes status + 8 bytes UID) */
 		waitIrq(device);	/* wait for RX interrupt */
 #if 1
 		printf("rx[%d] done %02x", slot, device->done);
@@ -667,11 +671,16 @@ int scanInventory(struct trf7960 *device, uchar flags, uchar length, void (*foun
 		}
 		/* check for other errors */
 		else if(device->done & 0x40) { /* RX done - FIFO already reset */
+			union {
+				uint64_t uid;
+				char b[sizeof(uint64_t)];
+			} uid;
 #if 0
 			printf(" valid id received\n");
 #endif
-			// buffer[0] and buffer[1] appear to be statsu flags and 00 if ok
-			(*found)(device, &buffer[2], rssi);	/* notify caller */
+			// buffer[0] and buffer[1] appear to be status flags and 00 if ok
+			memcpy(uid.b, &buffer[2], sizeof(uid.uid));	/* extract UID */
+			(*found)(device, le64_to_cpu(uid.uid), rssi);	/* notify caller */
 		}
 		else {
 #if 1
@@ -703,16 +712,16 @@ int scanInventory(struct trf7960 *device, uchar flags, uchar length, void (*foun
 	return 0;
 }
 
-int readBlocks(struct trf7960 *device, uchar uid[8], uchar firstBlock, uchar blocks, uchar data[32])
+int readBlocks(struct trf7960 *device, uint64_t uid, uchar firstBlock, uchar blocks, uchar data[32])
 { /* read single/multiple blocks */
 	int flags=0;
 	static uchar buffer[32];	/* shared rx/tx buffer */
-	int pdusize = 4 + (uid?8:0);			/* flags byte + command byte + optional uid + firstblock + #blocks */
+	int pdusize = 4 + (uid?sizeof(uid):0);			/* flags byte + command byte + optional uid + firstblock + #blocks */
 #if 1
 	printf("readBlocks\n");
 #endif
 	if(blocks == 0)
-		return 0;	// no blocks
+		return 0;	/* no blocks */
 	spi_claim_bus(device->slave);
 	
 	if(writeRegister(device, TRF7960_REG_IRQMASK, 0x3f))	/* enable no-response interrupt */
@@ -724,8 +733,13 @@ int readBlocks(struct trf7960 *device, uchar uid[8], uchar firstBlock, uchar blo
 	
 	buffer[5] = flags;	/* ISO15693 flags */
 	buffer[6] = 0x23;	/* ISO15693 read multiple blocks command */
-	if(uid) { /* include uid */
-		memcpy(&buffer[7], uid, 8);
+	if(uid) { /* include uid if not 0LL */
+		union {
+			uint64_t uid;
+			char b[sizeof(uint64_t)];
+		} uid2;
+		uid2.uid=cpu_to_le64(uid);
+		memcpy(&buffer[7], uid2.b, sizeof(uid2.b));
 		buffer[15]=firstBlock;
 		buffer[16]=blocks;
 		pdusize=4+8;
@@ -771,7 +785,7 @@ int readBlocks(struct trf7960 *device, uchar uid[8], uchar firstBlock, uchar blo
 	return 0;
 }
 
-int writeBlocks(struct trf7960 *device, uchar uid[8], uchar firstBlock, uchar blocks, uchar data[32])
+int writeBlocks(struct trf7960 *device, uint64_t uid, uchar firstBlock, uchar blocks, uchar data[32])
 { /* write single/multiple blocks */
 	return -1;
 }
@@ -790,24 +804,34 @@ struct trf7960 rfid_board = {
 	.vio = 18	/* we use 1.8V IO */
 };
 
-static void found(struct trf7960 *device, uchar uid[8], int rssi)
+static int numfound;
+
+static void found(struct trf7960 *device, uint64_t uid, int rssi)
 {
 	extern void status_set_status(int value);
-	int i;
-	status_set_status(0x3f);	/* LEDs on */
-	printf("UID = ");
-	for(i=0; i<8; i++)
-		printf("%02x", uid[i]);
+//	int i;
+	numfound++;
+	printf("UID = %llX", uid);
+//	for(i=0; i < 8; i++)
+//		printf("%02x", (uid>>(8*(7-i))));
 	printf(" rssi = %d/%d\n", rssi/8, rssi%8);
 }
 
 static int do_rfid(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int len;
+	static int statusinit;
+	extern void status_set_status(int value);
+	extern int status_init(void);
 	
 	if (argc < 2) {
 		printf ("rfid: missing subcommand.\n");
 		return (-1);
+	}
+	
+	if (!statusinit) { // initialize status LEDs for scan/loop subcommands
+		status_init();
+		statusinit=1;
 	}
 	
 	len = strlen (argv[1]);
@@ -867,21 +891,37 @@ static int do_rfid(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		}		
 #endif
 	} else if (strncmp ("sc", argv[1], 2) == 0) {
-		extern void status_set_status(int value);
-		status_set_status(0x00);	/* LEDs off */
+		numfound=0;
 		setPowerMode(&rfid_board, TRF7960_POWER_RXTX_FULL);
 		chooseProtocol(&rfid_board, 0x02);	/* ISO15693 26kbps one-sub 1-out-of-4 (default) */
 		scanInventory(&rfid_board, 0x06 /* 0x26 1slot */, 0, &found);
 		setPowerMode(&rfid_board, TRF7960_POWER_STANDBY);
-	} else if (strncmp ("rb", argv[1], 2) == 0) { // read block
-		uchar data[32];
-		int r;
-		// FIXME: allow to specify optional uid, first block number of blocks
+		status_set_status(numfound > 0?0x3f:0x00);	/* LEDs on/off */
+	} else if (strncmp ("lo", argv[1], 2) == 0) {
 		setPowerMode(&rfid_board, TRF7960_POWER_RXTX_FULL);
 		chooseProtocol(&rfid_board, 0x02);	/* ISO15693 26kbps one-sub 1-out-of-4 (default) */
-		r=readBlocks(&rfid_board, NULL, 0, 1, data);
+		while(!tstc()) { // scan until key is pressed
+			numfound=0;
+			scanInventory(&rfid_board, 0x06 /* 0x26 1slot */, 0, &found);
+			status_set_status(numfound);	/* LEDs binary count */
+			udelay(300*1000);	// wait 0.3 seconds
+		}
+		setPowerMode(&rfid_board, TRF7960_POWER_STANDBY);
+		if(tstc())
+			getc();
+	} else if (strncmp ("rb", argv[1], 2) == 0) { // read block
+		uint64_t uid=0;	/* set by =uid (hex) */
+		uchar firstBlock=0;	/* set by next parameter */
+		uchar blocks=1;	/* set by +n parameter (decimal) */
+		uchar data[32];
+		int r;
+		// FIXME: allow to specify optional uid, first block, number of blocks
+		setPowerMode(&rfid_board, TRF7960_POWER_RXTX_FULL);
+		chooseProtocol(&rfid_board, 0x02);	/* ISO15693 26kbps one-sub 1-out-of-4 (default) */
+		// FIXME: allocate enough memory for 32*blocks bytes!
+		r=readBlocks(&rfid_board, uid, firstBlock, blocks, data);
 		printf("r=%d\n", r);
-		// FIXME: print data
+		// FIXME: print data (hex)
 		setPowerMode(&rfid_board, TRF7960_POWER_STANDBY);
 	} else if (strncmp ("wb", argv[1], 2) == 0) {
 		// FIXME: write block
@@ -899,6 +939,7 @@ U_BOOT_CMD(
 	"re[gisters] - read registers\n"
     "rw [bitlen [hexvalue]] - read/write SPI data block\n"
     "sc[an] - scan inventory\n"
+	"lo[op] - permanently scan inventory until key is pressed\n"
     "rb[lock] [=uid] first [[+]n] - read n (default=1) 32 byte block(s) starting at first\n"
     "wb[lock] [=uid] first [+n] hexvalue - write n (default=1) 32 byte block(s) starting at first\n"
 );
