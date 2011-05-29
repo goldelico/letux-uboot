@@ -25,5 +25,6 @@
 #define _SYSTEST_H
 
 int systest(void);
+int audiotest(void);
 
 #endif

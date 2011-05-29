@@ -581,10 +581,16 @@ U_BOOT_CMD(gps, 3, 0, do_gps, "GPS sub-system",
 
 static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
+	if(argc == 2) {
+		if (strncmp ("au", argv[1], 2) == 0) {
+			return audiotest();
+		}
+	}
 	return systest();
 }
 
-U_BOOT_CMD(systest, 2, 0, do_systest, "System Test", "");
+U_BOOT_CMD(systest, 3, 0, do_systest, "System Test",
+		   "audio - test audio\n");
 
 
 static int do_halt(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
@@ -597,7 +603,8 @@ static int do_halt(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	return (0);
 }
 
-U_BOOT_CMD(halt, 2, 0, do_halt, "Powerdown", "");
+U_BOOT_CMD(halt, 2, 0, do_halt, "Powerdown",
+		   "");
 
 
 static int do_mux(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
