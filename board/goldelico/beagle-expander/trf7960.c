@@ -25,6 +25,7 @@
 #include <command.h>
 #include <spi.h>
 #include <asm/arch/gpio.h>
+#include <malloc.h>
 
 /* board specific configuration */
 
@@ -267,60 +268,6 @@ int getCollisionPosition(struct trf7960 *device)
 	return ((readBuffer[1]&0xc0)<<2) | readBuffer[2];	// combine into 10 bits
 }
 
-
-#if 0
-
-/* how many of these functions do we really need? */
-
-uchar readFifo(struct trf7960 *device)
-{
-	return readRegister(device, 0x1f);
-}
-
-int writeFifo(struct trf7960 *device, uchar byte)
-{
-	return writeRegister(device, 0x1f, byte);
-}
-
-int prepareSend(struct trf7960 *device, int framelength, int options)
-{
-	return sendCommand(device, 0x11); // optionally without CRC? with Timer?
-}
-
-int getRSSI(struct trf7960 *device)
-{
-	sendCommand(device, 0x18);
-	return readRegister(device, 0x0f);
-}
-
-int receiverGainAdjust(struct trf7960 *device)
-{
-	return sendCommand(device, 0x1a);
-}
-
-int blockReceiver(struct trf7960 *device, int flag)
-{
-	return sendCommand(device, flag?0x16:0x17);
-}
-
-int setRfidMode(struct trf7960 *device, int mode)
-{
-	// 6 bit register 0x01
-	return -1;
-}
-
-int setNoResponseWait(struct trf7960 *device, int useconds)
-{ /* in 37.76 us steps */
-	return writeRegister(device, 0x07, (100*useconds+3776/2)/3776);
-}
-
-int setTxRxWait(struct trf7960 *device, int useconds)
-{ /* in 9.44 us steps */
-	return writeRegister(device, 0x08, (100*useconds+944/2)/944);
-}
-
-#endif
-
 /* how to handle spi_claim_bus during irq handler? */
 
 int prepareIrq(struct trf7960 *device, uchar *data, unsigned int bytes)
@@ -562,6 +509,7 @@ int chooseProtocol(struct trf7960 *device, int protocol)
 }
 
 /* high level functions (protocol handlers) */
+/* the meaning of the flags and command codes in ISO15693 mode are described in TI document sloa141.pdf */
 
 int scanInventory(struct trf7960 *device, uchar flags, uchar length, void (*found)(struct trf7960 *device, uint64_t uid, int rssi))
 { /* poll for tag uids and resolve collisions */
@@ -712,10 +660,10 @@ int scanInventory(struct trf7960 *device, uchar flags, uchar length, void (*foun
 	return 0;
 }
 
-int readBlocks(struct trf7960 *device, uint64_t uid, uchar firstBlock, uchar blocks, uchar data[32])
+int readBlocks(struct trf7960 *device, uchar flags, uint64_t uid, uchar firstBlock, uchar blocks, uchar *data)
 { /* read single/multiple blocks */
-	int flags=0;
 	static uchar buffer[32];	/* shared rx/tx buffer */
+	char *rxbuf;
 	int pdusize = 4 + (uid?sizeof(uid):0);			/* flags byte + command byte + optional uid + firstblock + #blocks */
 #if 1
 	printf("readBlocks\n");
@@ -727,12 +675,16 @@ int readBlocks(struct trf7960 *device, uint64_t uid, uchar firstBlock, uchar blo
 	if(writeRegister(device, TRF7960_REG_IRQMASK, 0x3f))	/* enable no-response interrupt */
 		return -1;
 	
+	rxbuf=malloc(2+32*blocks);	// allocate enough memory for storing 32*blocks bytes
+	if(!rxbuf)
+		return -1;	// can't allocate
+
 	buffer[0] = TRF7960_COMMAND | TRF7960_CMD_RESET;	/* reset FIFO */
 	buffer[1] = TRF7960_COMMAND | TRF7960_CMD_TX_CRC;	/* start TX with CRC */
 	buffer[2] = 0x3d;	/* continuous write to register 0x1d */
 	
 	buffer[5] = flags;	/* ISO15693 flags */
-	buffer[6] = 0x23;	/* ISO15693 read multiple blocks command */
+	buffer[6] = blocks > 1 ? 0x23 : 0x20;	/* ISO15693 read single or multiple blocks command */
 	if(uid) { /* include uid if not 0LL */
 		union {
 			uint64_t uid;
@@ -740,13 +692,19 @@ int readBlocks(struct trf7960 *device, uint64_t uid, uchar firstBlock, uchar blo
 		} uid2;
 		uid2.uid=cpu_to_le64(uid);
 		memcpy(&buffer[7], uid2.b, sizeof(uid2.b));
+		pdusize=2+8+1;
 		buffer[15]=firstBlock;
-		buffer[16]=blocks;
-		pdusize=4+8;
+		if(blocks > 1) {
+			buffer[16]=blocks-1;
+			pdusize++;
+		}
 	} else { /* no UID */
+		pdusize=2+1;
 		buffer[7]=firstBlock;
-		buffer[8]=blocks;
-		pdusize=4;		
+		if(blocks > 1) {
+			buffer[8]=blocks-1;
+			pdusize++;
+		}
 	}
 	buffer[3] = pdusize >> 8;
 	buffer[4] = pdusize << 4;
@@ -759,8 +717,10 @@ int readBlocks(struct trf7960 *device, uint64_t uid, uchar firstBlock, uchar blo
 	printf("pdusize = %d\n", pdusize);
 	printf("bitsize = %d\n", 8*sizeof(buffer[0])*(5 + pdusize));
 #endif
-	if(spi_xfer(device->slave, 8*sizeof(buffer[0])*(5 + pdusize), buffer, buffer, SPI_XFER_BEGIN | SPI_XFER_END) != 0)
+	if(spi_xfer(device->slave, 8*sizeof(buffer[0])*(5 + pdusize), buffer, buffer, SPI_XFER_BEGIN | SPI_XFER_END) != 0) {
+		free(rxbuf);
 		return -1;
+	}
 #if 1
 	printf("cmd sent\n");
 #endif
@@ -772,20 +732,30 @@ int readBlocks(struct trf7960 *device, uint64_t uid, uchar firstBlock, uchar blo
 #if 1
 		printf(" unknown TX interrupt %02x\n", device->done);
 #endif
+		free(rxbuf);
 		return -1;
 	}
-	prepareIrq(device, data, 32*blocks);	/* prepare for receiving n*32 bytes RX */
+	// FIXME: the first bytes received are not data bytes but the received PDU!
+	// should we introduce some chained mbuf scheme???
+	prepareIrq(device, rxbuf, 2+32*blocks);	/* prepare for receiving n*32 bytes RX */
 	waitIrq(device);	/* wait for RX interrupt */
+	// check for standard RX done or Collision or timeout or other errors
 #if 1
 	printf("rx done %02x\n", device->done);
+	if(device->done & 0x01)
+		printf("  timeout\n");
+	if(device->done & 0x02)
+		printf("  collision\n");
 #endif
-	// check for standard RX done or Collision or timeout or other errors
+	if(rxbuf[0] != 0)
+		printf("  rx flags %02x\n", rxbuf[0]);
 	// if ok, read the flags byte from the received PDU to determine potential errors
-	// FIXME: the first bytes received are not data bytes but the received PDU!
+	memcpy(data, rxbuf+2, 32*blocks);	// copy payload
+	free(rxbuf);
 	return 0;
 }
 
-int writeBlocks(struct trf7960 *device, uint64_t uid, uchar firstBlock, uchar blocks, uchar data[32])
+int writeBlocks(struct trf7960 *device, uchar flags, uint64_t uid, uchar firstBlock, uchar blocks, uchar *data)
 { /* write single/multiple blocks */
 	return -1;
 }
@@ -913,16 +883,46 @@ static int do_rfid(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		uint64_t uid=0;	/* set by =uid (hex) */
 		uchar firstBlock=0;	/* set by next parameter */
 		uchar blocks=1;	/* set by +n parameter (decimal) */
-		uchar data[32];
+		uchar *data;
 		int r;
-		// FIXME: allow to specify optional uid, first block, number of blocks
+		int i=2;
+		if(argv[i] && argv[i][0] == '=') {
+			uid=simple_strtoull(argv[i]+1, NULL, 16);
+			i++;
+		}
+		if(argv[i] && argv[i][0] == '+') {
+			blocks=simple_strtoul(argv[i]+1, NULL, 10);
+			i++;
+		}
+		if(argv[i]) {
+			firstBlock=simple_strtoul(argv[i], NULL, 10);
+			i++;
+		}
+		data=malloc(32*blocks);	// allocate enough memory for storing 32*blocks bytes!
+		if(!data) {
+			printf ("rfid %s: can't allocate buffer for %d blocks\n", argv[1], blocks);			
+			return (1);
+		}
 		setPowerMode(&rfid_board, TRF7960_POWER_RXTX_FULL);
 		chooseProtocol(&rfid_board, 0x02);	/* ISO15693 26kbps one-sub 1-out-of-4 (default) */
-		// FIXME: allocate enough memory for 32*blocks bytes!
-		r=readBlocks(&rfid_board, uid, firstBlock, blocks, data);
+		r=readBlocks(&rfid_board, uid > 0?0x16:0x06, uid, firstBlock, blocks, data);
 		printf("r=%d\n", r);
-		// FIXME: print data (hex)
+		for(i=0; i<blocks; i++) { // print data (hex)
+			int b;
+			for(b=0; b<32; b++) {
+				if(b%16 == 0) {
+					if(b == 0)
+						printf("%03d: ", firstBlock+i);
+					else
+						printf("     ");					
+				}
+				printf("%02x", data[32*i+b]);
+				if(b%16 == 15)
+					printf("\n");
+			}
+		}
 		setPowerMode(&rfid_board, TRF7960_POWER_STANDBY);
+		free(data);
 	} else if (strncmp ("wb", argv[1], 2) == 0) {
 		// FIXME: write block
 	} else {
@@ -940,6 +940,6 @@ U_BOOT_CMD(
     "rw [bitlen [hexvalue]] - read/write SPI data block\n"
     "sc[an] - scan inventory\n"
 	"lo[op] - permanently scan inventory until key is pressed\n"
-    "rb[lock] [=uid] first [[+]n] - read n (default=1) 32 byte block(s) starting at first\n"
-    "wb[lock] [=uid] first [+n] hexvalue - write n (default=1) 32 byte block(s) starting at first\n"
+    "rb[lock] [=uid] [+n] [first] - read n (default=1) 32 byte block(s) starting at first\n"
+    "wb[lock] [=uid] [+n] first hexvalue - write n (default=1) 32 byte block(s) starting at first\n"
 );
