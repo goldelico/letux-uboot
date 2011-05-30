@@ -581,9 +581,9 @@ U_BOOT_CMD(gps, 3, 0, do_gps, "GPS sub-system",
 
 static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	if(argc == 2) {
+	if(argc >= 2) {
 		if (strncmp ("au", argv[1], 2) == 0) {
-			return audiotest();
+			return audiotest(0);
 		}
 	}
 	return systest();

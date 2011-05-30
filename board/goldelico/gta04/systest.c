@@ -170,18 +170,23 @@ int audiotest(int channel)
 	
 	// program Audio controller (see document SWCU050D)
 	
-	byte = 0x20;
+	// ??? VAUX3 is not connected on BB ???
+	// so what is the setting for 2.8V good for?
+	
+	byte = 0x20;						// RES_TYPE2=2, RES_TYPE=0
 	i2c_write(0x4B, 0x7A, 1, &byte, 1);	// VAUX3_DEV_GRP
-	byte = 0x03;
+	byte = 0x03;						// no trim, 2.8V
 	i2c_write(0x4B, 0x7D, 1, &byte, 1);	// VAUX3_DEDICATED
-	byte = 0xE0;
+
+	
+	byte = 0xE0;						// DEV_GRP belongs to all device groups
 	i2c_write(0x4B, 0x8E, 1, &byte, 1);	// VPLL2_DEV_GRP
-	byte = 0x05;
+	byte = 0x05;						// 1.8V
 	i2c_write(0x4B, 0x91, 1, &byte, 1);	// VPLL2_DEDICATED
 	
-	byte = 0x03;
+	byte = 0x03;						// 8 kHz, Codec on, Option 1:RX and TX stereo audio path
 	i2c_write(0x49, 0x01, 1, &byte, 1);	// codec_MODE
-	byte = 0xc0;
+	byte = 0xc0;						// Audio RX Right2 enable, Left 2 enable
 	i2c_write(0x49, 0x02, 1, &byte, 1);	// OPTION
 	byte = 0x00;
 	i2c_write(0x49, 0x03, 1, &byte, 1);	// ?
@@ -205,7 +210,7 @@ int audiotest(int channel)
 	i2c_write(0x49, 0x0c, 1, &byte, 1);	// AVTXL2PGA
 	byte = 0x00;
 	i2c_write(0x49, 0x0d, 1, &byte, 1);	// AVTXR2PGA
-	byte = 0x01;
+	byte = 0x01;						// TDM/CODEC master mode, 16 bit sample/word, codec mode format, clk256 disabled, Application mode
 	i2c_write(0x49, 0x0e, 1, &byte, 1);	// AUDIO_IF
 	byte = 0x00;
 	i2c_write(0x49, 0x0f, 1, &byte, 1);	// VOICE_IF
@@ -213,9 +218,9 @@ int audiotest(int channel)
 	i2c_write(0x49, 0x10, 1, &byte, 1);	// ARXR1PGA
 	byte = 0x00;
 	i2c_write(0x49, 0x11, 1, &byte, 1);	// ARXL1PGA
-	byte = 0x6c;
+	byte = 0x6c;						// ARXR2PGA_CGAIN=6 dB, ARXR2PGA_FGAIN=-31 dB
 	i2c_write(0x49, 0x12, 1, &byte, 1);	// ARXR2PGA
-	byte = 0x6c;
+	byte = 0x6c;						// ARXL2PGA_CGAIN=6 dB, ARXR2PGA_FGAIN=-31 dB
 	i2c_write(0x49, 0x13, 1, &byte, 1);	// ARXL2PGA
 	byte = 0x00;
 	i2c_write(0x49, 0x14, 1, &byte, 1);	// VRXPGA
@@ -223,7 +228,7 @@ int audiotest(int channel)
 	i2c_write(0x49, 0x15, 1, &byte, 1);	// VSTPGA
 	byte = 0x00;
 	i2c_write(0x49, 0x16, 1, &byte, 1);	// VRX2ARXPGA
-	byte = 0x0c;
+	byte = 0x0c;						// VDAC_EN off, ADACL2_EN & ADACR2_EN on, ADACL1_EN & ADACR1_EN off
 	i2c_write(0x49, 0x17, 1, &byte, 1);	// AVDAC_CTL
 	byte = 0x00;
 	i2c_write(0x49, 0x18, 1, &byte, 1);	// ARX2VTXPGA
@@ -231,9 +236,9 @@ int audiotest(int channel)
 	i2c_write(0x49, 0x19, 1, &byte, 1);	// ARXL1_APGA_CTL
 	byte = 0x00;
 	i2c_write(0x49, 0x1a, 1, &byte, 1);	// ARXR1_APGA_CTL
-	byte = 0x2b;
+	byte = 0x2b;						// 2 dB, no FM loop, Digital-Analog path enable, Analog PGA application mode
 	i2c_write(0x49, 0x1b, 1, &byte, 1);	// ARXL2_APGA_CTL
-	byte = 0x2b;
+	byte = 0x2b;						// 2 dB, no FM loop, Digital-Analog path enable, Analog PGA application mode
 	i2c_write(0x49, 0x1c, 1, &byte, 1);	// ARXR2_APGA_CTL
 	byte = 0x00;
 	i2c_write(0x49, 0x1d, 1, &byte, 1);	// ATX2ARXPGA
@@ -243,13 +248,13 @@ int audiotest(int channel)
 	i2c_write(0x49, 0x1f, 1, &byte, 1);	// BTPGA
 	byte = 0x00;
 	i2c_write(0x49, 0x20, 1, &byte, 1);	// BTSTPGA
-	byte = 0x00;
+	byte = 0x34;						// 0 dB, EAR_AL2_EN
 	i2c_write(0x49, 0x21, 1, &byte, 1);	// EAR_CTL
-	byte = 0x24;
+	byte = 0x24;						// HSOR_AR2_EN, HSOL_AL2_EN
 	i2c_write(0x49, 0x22, 1, &byte, 1);	// HS_SEL
-	byte = 0x0a;
+	byte = 0x0a;						// HSR_GAIN & HSL_GAIN = 0 dB
 	i2c_write(0x49, 0x23, 1, &byte, 1);	// HS_GAIN_SET
-	byte = 0x42;
+	byte = 0x42;						// VMID_EN enable, ramp down 20ms
 	i2c_write(0x49, 0x24, 1, &byte, 1);	// HS_POPN_SET
 	byte = 0x00;
 	i2c_write(0x49, 0x25, 1, &byte, 1);	// PREDL_CTL
@@ -293,7 +298,7 @@ int audiotest(int channel)
 	i2c_write(0x49, 0x38, 1, &byte, 1);	// I2S_RX_SCRAMBLE_M
 	byte = 0x00;
 	i2c_write(0x49, 0x39, 1, &byte, 1);	// I2S_RX_SCRAMBLE_L
-	byte = 0x15;
+	byte = 0x15;						// APLL_EN enabled, 19.2 MHz
 	i2c_write(0x49, 0x3a, 1, &byte, 1);	// APLL_CTL
 	byte = 0x00;
 	i2c_write(0x49, 0x3b, 1, &byte, 1);	// DTMF_CTL
@@ -344,9 +349,9 @@ int audiotest(int channel)
 	*((uint *) 0x49022048) = 0x00000083;	// MCBSPLP_PCR_REG
 	*((uint *) 0x49022010) = 0x00000200;	// MCBSPLP_SPCR2_REG
 	*((uint *) 0x49022014) = 0x00000000;	// MCBSPLP_SPCR1_REG
-	*((uint *) 0x4902207c) = 0x00000023;	// MCBSPLP_REV_REG (???)
+	*((uint *) 0x4902207c) = 0x00000023;	// MCBSPLP_REV_REG (is read only???)
 	*((uint *) 0x49022010) = 0x00000201;	// MCBSPLP_SPCR2_REG
-	*((uint *) 0x49022008) = 0x000056f3;	// MCBSPLP_DXR_REG
+	*((uint *) 0x49022008) = 0x000056f3;	// MCBSPLP_DXR_REG - write first byte
 	printf("  ... complete\n");
 
 	printf("Sending data");
@@ -354,7 +359,7 @@ int audiotest(int channel)
 	for (count = 0; count < 50; count++) {
 		int bytes;
 		for (bytes = 0; bytes < sizeof(tone) / 2; bytes++) {
-			*((uint *) 0x49022008) = tone[bytes];
+			*((uint *) 0x49022008) = tone[bytes];	// MCBSPLP_DXR_REG
 			udelay(100);
 		}
 	}
