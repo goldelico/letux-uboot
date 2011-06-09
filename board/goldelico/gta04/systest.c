@@ -33,10 +33,12 @@
 #include "systest.h"
 #include "TD028TTEC1.h"
 
+#define TWL4030_I2C_BUS			(1-1)
+
 int systest(void)
 { // do mixture of gps_echo, tsc_loop, status mirror status blink
 	int r;
-	i2c_set_bus_num(0);	// I2C1
+	i2c_set_bus_num(TWL4030_I2C_BUS);	// I2C1
 	printf("TPS65950:      %s\n", !(r=i2c_probe(TWL4030_CHIP_USB))?"found":"-");	// responds on 4 addresses 0x48..0x4b
 	if(!r)
 		{ // was ok, ask for details
@@ -98,7 +100,7 @@ int systest(void)
 	printf("VCNL4000:      %s\n", !i2c_probe(0x13)?"found":"-");
 	i2c_set_bus_num(2);	// I2C3
 	/* nothing to check */
-	i2c_set_bus_num(0);	// I2C1
+	i2c_set_bus_num(TWL4030_I2C_BUS);	// I2C1
 	if(!jbt_check())
 	    printf("DISPLAY:       ok\n");
 	else
@@ -166,13 +168,13 @@ int audiotest(int channel)
 	
 	printf("Test Audio Tone on Speaker\n");
 	printf("Initializing over I2C1");
-	i2c_set_bus_num(0);	// I2C1
+	i2c_set_bus_num(TWL4030_I2C_BUS);	// I2C1
 	
 	// program Audio controller (see document SWCU050D)
 	
 	// ??? VAUX3 is not connected on BB ???
 	// so what is the setting for 2.8V good for?
-	
+/*	
 	byte = 0x20;						// RES_TYPE2=2, RES_TYPE=0
 	i2c_write(0x4B, 0x7A, 1, &byte, 1);	// VAUX3_DEV_GRP
 	byte = 0x03;						// no trim, 2.8V
@@ -183,13 +185,16 @@ int audiotest(int channel)
 	i2c_write(0x4B, 0x8E, 1, &byte, 1);	// VPLL2_DEV_GRP
 	byte = 0x05;						// 1.8V
 	i2c_write(0x4B, 0x91, 1, &byte, 1);	// VPLL2_DEDICATED
+ */
 	
 	byte = 0x03;						// 8 kHz, Codec on, Option 1:RX and TX stereo audio path
-	i2c_write(0x49, 0x01, 1, &byte, 1);	// codec_MODE
+	i2c_write(0x49, 0x01, 1, &byte, 1);	// CODEC_MODE
 	byte = 0xc0;						// Audio RX Right2 enable, Left 2 enable
 	i2c_write(0x49, 0x02, 1, &byte, 1);	// OPTION
+/*
 	byte = 0x00;
 	i2c_write(0x49, 0x03, 1, &byte, 1);	// ?
+ */
 	byte = 0x00;
 	i2c_write(0x49, 0x04, 1, &byte, 1);	// MICBIAS_CTL
 	byte = 0x00;
@@ -298,7 +303,8 @@ int audiotest(int channel)
 	i2c_write(0x49, 0x38, 1, &byte, 1);	// I2S_RX_SCRAMBLE_M
 	byte = 0x00;
 	i2c_write(0x49, 0x39, 1, &byte, 1);	// I2S_RX_SCRAMBLE_L
-	byte = 0x15;						// APLL_EN enabled, 19.2 MHz
+//	byte = 0x15;						// APLL_EN enabled, 19.2 MHz
+	byte = 0x16;						// APLL_EN enabled, 26 MHz
 	i2c_write(0x49, 0x3a, 1, &byte, 1);	// APLL_CTL
 	byte = 0x00;
 	i2c_write(0x49, 0x3b, 1, &byte, 1);	// DTMF_CTL
@@ -310,6 +316,7 @@ int audiotest(int channel)
 	i2c_write(0x49, 0x3e, 1, &byte, 1);	// MISC_SET_1
 	byte = 0x00;
 	i2c_write(0x49, 0x3f, 1, &byte, 1);	// PCMBTMUX
+/*
 	byte = 0x00;
 	i2c_write(0x49, 0x40, 1, &byte, 1);	// ?
 	byte = 0x00;
@@ -318,6 +325,7 @@ int audiotest(int channel)
 	i2c_write(0x49, 0x42, 1, &byte, 1);	// ?
 	byte = 0x00;
 	i2c_write(0x49, 0x43, 1, &byte, 1);	// ?
+ */
 	byte = 0x00;
 	i2c_write(0x49, 0x44, 1, &byte, 1);	// RX_PATH_SEL
 	byte = 0x00;
@@ -346,11 +354,11 @@ int audiotest(int channel)
 	*((uint *) 0x49022024) = 0x00000000;	// MCBSPLP_XCR1_REG
 	*((uint *) 0x49022028) = 0x00000000;	// MCBSPLP_SRGR2_REG
 	*((uint *) 0x4902202c) = 0x00000000;	// MCBSPLP_SRGR1_REG
-	*((uint *) 0x49022048) = 0x00000083;	// MCBSPLP_PCR_REG
-	*((uint *) 0x49022010) = 0x00000200;	// MCBSPLP_SPCR2_REG
-	*((uint *) 0x49022014) = 0x00000000;	// MCBSPLP_SPCR1_REG
-	*((uint *) 0x4902207c) = 0x00000023;	// MCBSPLP_REV_REG (is read only???)
-	*((uint *) 0x49022010) = 0x00000201;	// MCBSPLP_SPCR2_REG
+	*((uint *) 0x49022048) = 0x00000083;	// MCBSPLP_PCR_REG	/ SCLKME, CLKXP, CLKRP
+	*((uint *) 0x49022010) = 0x00000200;	// MCBSPLP_SPCR2_REG / FREE, !XRST
+	*((uint *) 0x49022014) = 0x00000000;	// MCBSPLP_SPCR1_REG / !RRST
+//	*((uint *) 0x4902207c) = 0x00000023;	// MCBSPLP_REV_REG (is read only???)
+	*((uint *) 0x49022010) = 0x00000201;	// MCBSPLP_SPCR2_REG / FREE, XRST
 	*((uint *) 0x49022008) = 0x000056f3;	// MCBSPLP_DXR_REG - write first byte
 	printf("  ... complete\n");
 
