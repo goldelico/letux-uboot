@@ -449,25 +449,13 @@ static int do_status_flash(int argc, char *const argv[])
 
 static int do_status_vibra(int argc, char *const argv[])
 {
-	int len;
-	
+	static int value;
 	if (argc < 3) {
-		printf ("status flash: missing subcommand.\n");
+		printf ("status vibra: missing value.\n");
 		return (-1);
 	}
-	
-	len = strlen (argv[2]);
-	if (strncmp ("of", argv[2], 2) == 0) {
-		return status_set_vibra (0);
-	} else if (strncmp ("on", argv[2], 2) == 0) {
-		return status_set_vibra (1);
-	} else if (strncmp ("fl", argv[2], 2) == 0) {
-		return status_set_vibra (2);
-	} else {
-		printf ("status: unknown operation: %s\n", argv[1]);
-		return 1;
-	}
-	return (0);
+	value=simple_strtol(argv[2], NULL, 10);
+	return status_set_vibra(value);
 }
 
 static int do_status(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
@@ -511,8 +499,8 @@ U_BOOT_CMD(status, 3, 0, do_status, "LED and Buttons sub-system",
 		   "se[t] value - set LEDs state\n"
 		   "mi[rror] - read buttons and mirror to LEDs\n"
 		   "bl[ink] - blink LEDs\n"
-		   "fl[ash] of[f] | on | fl[ash] - switch torch / flashlight\n"
-		   "vi[bra] of[f] | le[ft] | ri[ght] - switch vibracall motor\n"
+		   "fl[ash] of[f] | on | fl[ash] - control torch / flashlight\n"
+		   "vi[bra] -256..256 - run vibracall motor\n"
 		   );
 
 /** GPS commands */

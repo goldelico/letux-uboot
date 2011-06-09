@@ -43,8 +43,8 @@ static int hasTCA6507=0;
 
 #endif
 
-#define TWL4030_I2C_BUS		1	// I2C1
-#define TCA6507_BUS			2	// I2C2
+#define TWL4030_I2C_BUS		(1-1)	// I2C1
+#define TCA6507_BUS			(2-1)	// I2C2
 #define TCA6507_ADDRESS		0x45
 
 /* register numbers */
@@ -118,7 +118,7 @@ void status_set_status(int value)
 		}
 	else {
 		value &= 0x3f;	// 6 LEDs only - 7th is reserved to reset the WLAN/BT chip
-		i2c_set_bus_num(TCA6507_BUS-1);	// write I2C2
+		i2c_set_bus_num(TCA6507_BUS);	// write I2C2
 		// we could write a autoincrement address and all 3 bytes in a single message
 		// we could set the TCA to do smooth transitions
 		i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
@@ -131,7 +131,7 @@ int status_get_buttons(void)
 { // convert button state into led state
 #if defined(CONFIG_OMAP3_GTA04)
 	u8 val;
-	i2c_set_bus_num(TWL4030_I2C_BUS-1);	// read I2C1
+	i2c_set_bus_num(TWL4030_I2C_BUS);	// read I2C1
 	twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, TWL4030_PM_MASTER_STS_HW_CONDITIONS);	// read state of power button (bit 0) from TPS65950
 	return ((omap_get_gpio_datain(GPIO_AUX)) << 0) |
 		((omap_get_gpio_datain(GPIO_GPSEXT)) << 1) |
@@ -156,7 +156,7 @@ int status_init(void)
 {
 	isXM = (get_board_revision() == REVISION_XM);
 #if !defined(CONFIG_OMAP3_GTA04)
-	if(i2c_set_bus_num(TCA6507_BUS-1))
+	if(i2c_set_bus_num(TCA6507_BUS))
 		{
 		printf ("could not select I2C2\n");
 		return 1;
@@ -222,7 +222,7 @@ int status_init(void)
 
 int status_set_flash (int mode)
 { // 0: off, 1: torch, 2: flash
-	if(i2c_set_bus_num(TCA6507_BUS-1))
+	if(i2c_set_bus_num(TCA6507_BUS))
 		{
 		printf ("could not select I2C2\n");
 		return 1;
@@ -232,14 +232,55 @@ int status_set_flash (int mode)
 	return 0;
 }
 
-int status_set_vibra (int mode)
-{ // 0: off, 1: left, 2: right
-	if(i2c_set_bus_num(TWL4030_I2C_BUS-1))
+int status_set_vibra (int value)
+{ // 0: off otherwise msb controls left/right (2's complement)
+	unsigned char byte;
+	if(i2c_set_bus_num(TWL4030_I2C_BUS))
 		{
 		printf ("could not select I2C1\n");
 		return 1;
 		}
-	// initialize if needed
-	// set vibra controller mode
+	
+	// program Audio controller (see document SWCU050D)
+	
+	byte = 0x00;						// LEDAON=LEDBON=0
+	i2c_write(0x4A, 0xEE, 1, &byte, 1);	// LEDEN
+	byte = value != 0 ? 0x03 : 0x00;	// 8 kHz, Codec on (if value != 0), Option 1:RX and TX stereo audio path
+	i2c_write(0x49, 0x01, 1, &byte, 1);	// CODEC_MODE
+	byte = 0x16;						// APLL_EN enabled, 26 MHz
+	i2c_write(0x49, 0x3a, 1, &byte, 1);	// APLL_CTL
+	byte = 0x04;						// use PWM
+	i2c_write(0x4B, 0x60, 1, &byte, 1);	// VIBRATOR_CFG
+	byte = value > 0?0x01:0x03;			// use VIBRADIR, local driver, enable
+	i2c_write(0x49, 0x45, 1, &byte, 1);	// VIBRATOR_CFG
+	byte = 256-(value>=0?value:-value);	// PWM turnon value
+	if(byte == 0) byte = 0x01;			// 0x00 is forbidden!
+	i2c_write(0x49, 0x46, 1, &byte, 1);	// VIBRA_SEL
+
+	// do we have to set some Audio PLL frequency (number 6 & 7?)
+
+	/*
+	 To use the vibrator H-bridge:
+	 1. Disable LEDA: Set the LEDEN[0]LEDAON bit to logic 0.
+	 2. Disable LEDB: Set the LEDEN[1]LEDBON bit to logic 0.
+	 3. Turn on the codec:
+	 Set the CODEC_MODE[1] CODECPDZ bit to 1.
+	 The H-bridge vibrator can get its operation from the following sources:
+	 •	An audio channel can provide the stimulus.
+	 •	A PWM in the audio subchip can generate the signal.
+	 If an audio channel provides the motivating force for the vibrator (for example: the audio right 1 channel):
+	 1. Set the VIBR_CTL[4]VIBRA_SEL bit to 1.
+	 2. Set the VIBR_CTL[5]VIBRA_DIR_SEL bit to 1.
+	 3. Set the VIBR_CTL[3:2]VIBRA_AUDIO_SEL bit field to 0x1 (audio right 1 channel).
+	 4. Select the use of the SIGN bit to determine the output phase to VIBRA_P and VIBRA_M. 
+	 5. Set the VIBRA_CTL[0]VIBRA_EN bit to 1 (power to the H-bridge is driven by audiodata).
+	 Notes:
+	 •	If audio data drives the vibrator H-bridge, set the VIBRA_SET register to 0xFF.
+	 •	The direction of the vibrator H-bridge controlled by the VIBRA_DIR bit can be changed
+	 on the fly.
+	 6. Set the audio PLL input frequency: The APLL_CTL APLL_INFREQ bitfield=0x6.
+	 7. Enable the audio PLL: The APLL_CTL APLL_ENbit=1.
+	 Note:	Do not enable LEDA/B and the H-vibrator simultaneously.
+	 */
 	return 0;	
 }
