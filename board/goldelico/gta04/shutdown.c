@@ -37,7 +37,7 @@ void shutdown(void)
 	if(i2c_set_bus_num(0))
 		{
 		printf ("could not select I2C1\n");
-		return 1;
+		return;
 		}
 	printf("shutting down by writing DEVOFF register of TPS65950\n");
 	if (twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val,

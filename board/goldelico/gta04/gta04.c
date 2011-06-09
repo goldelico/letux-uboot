@@ -38,25 +38,10 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
-// #include "../../ti/beagle/beagle.h"
 #include "gta04.h"
 
-#define TWL4030_I2C_BUS			0
-#define EXPANSION_EEPROM_I2C_BUS	1
-#define EXPANSION_EEPROM_I2C_ADDRESS	0x50
 
-#define BEAGLE_NO_EEPROM		0xffffffff
-
-static struct {
-	unsigned int device_vendor;
-	unsigned char revision;
-	unsigned char content;
-	char fab_revision[8];
-	char env_var[16];
-	char env_setting[64];
-} expansion_config;
-
-#if 1	/* testing tool; you can call notify() anywhere even before initialization */
+#if 1	/* testing tool; you can call notify() anywhere even before initialization to see how far the code comes */
 
 /******************************************************************************
  * Routine: delay
@@ -78,7 +63,6 @@ static inline void myudelay(unsigned long us)
 
 void notify(int number)
 { // flash LCD backlight
-	int i;
 	BLOFF();
 	myudelay(200*1000);
 	BLON();
@@ -146,17 +130,6 @@ int get_board_revision(void)
 	}
 	
 	return revision;
-}
-
-/*
- * Routine: get_expansion_id
- * Description: This function checks for expansion board by checking I2C
- *		bus 1 for the availability of an AT24C01B serial EEPROM.
- *		returns the device_vendor field from the EEPROM
- */
-unsigned int get_expansion_id(void)
-{
-	return BEAGLE_NO_EEPROM;
 }
 
 /*

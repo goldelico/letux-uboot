@@ -86,15 +86,6 @@ static const struct panel_config lcm_cfg =
 };
 
 
-#if 1
-#define DEBUGP(x, args...) printf("%s: " x, __FUNCTION__, ## args);
-#define DEBUGPC(x, args...) printf(x, ## args);
-#else
-#define DEBUGP(x, args...) do { } while (0)
-#define DEBUGPC(x, args...) do { } while (0)
-#endif
-
-
 enum jbt_register {
 	JBT_REG_SLEEP_IN		= 0x10,
 	JBT_REG_SLEEP_OUT		= 0x11,
