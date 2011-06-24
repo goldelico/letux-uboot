@@ -92,7 +92,7 @@ int systest(void)
 	printf("BMA180:        %s\n", !i2c_probe(0x41)?"found":"-");
 	printf("BMP085:        %s\n", !i2c_probe(0x77)?"found":"-");
 	printf("ITG3200:       %s\n", !i2c_probe(0x68)?"found":"-");
-	printf("Si47xx:        %s\n", !i2c_probe(0x21)?"found":"-");
+	printf("Si47xx:        %s\n", !i2c_probe(0x11)?"found":"-");
 	printf("TCA8418:       %s\n", !i2c_probe(0x64)?"found":"-");
 	printf("OV9655:        %s\n", !i2c_probe(0x30)?"found":"-");
 	printf("TPS61050:      %s\n", !i2c_probe(0x33)?"found":"-");
