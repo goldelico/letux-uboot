@@ -106,8 +106,11 @@ static int isXM = 0;
 #define GPIO_LED_VIBRA			(isXM?2:88)			// Vibracall motor
 #define GPIO_LED_UNUSED			(isXM?3:89)			// unused
 
+static int status;
+
 void status_set_status(int value)
 {
+	status=value;
 	if(!hasTCA6507) {
 		omap_set_gpio_dataout(GPIO_LED_AUX_RED, (value&(1 << 0)));
 		omap_set_gpio_dataout(GPIO_LED_AUX_GREEN, (value&(1 << 1)));

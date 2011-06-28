@@ -103,12 +103,11 @@ int board_init(void)
  */
 int get_board_revision(void)
 {
+#ifdef CONFIG_OMAP3_GTA04
+	return 6;	// configure pinmux for C1/2/3
+#else
 	int revision;
 
-	// check if really GTA04
-	
-	return 6;	// configure pinmux for C1/2/3
-	
 	if (!omap_request_gpio(171) &&
 	    !omap_request_gpio(172) &&
 	    !omap_request_gpio(173)) {
@@ -130,17 +129,54 @@ int get_board_revision(void)
 	}
 	
 	return revision;
+#endif
 }
 
 /*
  * Routine: misc_init_r
  * Description: Configure board specific parts
  */
+
+#ifdef CONFIG_OMAP3_GTA04
+#define TCA6507_BUS			(2-1)	// I2C2
+#define TCA6507_ADDRESS		0x45
+
+/* register numbers */
+#define TCA6507_SELECT0						0
+#define TCA6507_SELECT1						1
+#define TCA6507_SELECT2						2
+#endif
+
 int misc_init_r(void)
 {
 	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
 	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
-	
+#ifdef CONFIG_OMAP3_GTA04
+
+	/* ITG3200 & HMC5883L VAUX2 = 2.8V */
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
+							/*TWL4030_PM_RECEIVER_VAUX2_VSEL_28*/ 0x09,
+							TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
+							TWL4030_PM_RECEIVER_DEV_GRP_P1);
+	/* Camera VAUX3 = 2.5V */
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX3_DEDICATED,
+							/*TWL4030_PM_RECEIVER_VAUX3_VSEL_25*/ 0x02,
+							TWL4030_PM_RECEIVER_VAUX3_DEV_GRP,
+							TWL4030_PM_RECEIVER_DEV_GRP_P1);
+
+	i2c_set_bus_num(TCA6507_BUS);	// write I2C2
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT1, 0);
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT2, 0x40);	// pull down reset for WLAN&BT chip
+	i2c_set_bus_num(0);	// write I2C1
+
+	/* Bluetooth VAUX4 = 3.3V -- CHECKME: 3.3 V is not officially supported! We use 0x09 = 2.8V here*/
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX4_DEDICATED,
+							/*TWL4030_PM_RECEIVER_VAUX4_VSEL_33*/ 0x09,
+							TWL4030_PM_RECEIVER_VAUX4_DEV_GRP,
+							TWL4030_PM_RECEIVER_DEV_GRP_P1);
+
+#else
 	switch (get_board_revision()) {
 		case REVISION_AXBX:
 //			printf("Beagle Rev Ax/Bx\n");
@@ -178,6 +214,8 @@ int misc_init_r(void)
 		default:
 			printf("Beagle unknown 0x%02x\n", get_board_revision());
 	}
+#endif
+	
 	twl4030_power_init();
 	
 #ifdef CONFIG_OMAP3_GTA04
@@ -188,6 +226,8 @@ int misc_init_r(void)
 	// LEDs on BeagleBoard
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
 #endif
+	
+	// FIXME: check this!!!
 	
 	/* Configure GPIOs to output */
 	writel(~(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1), &gpio6_base->oe);
