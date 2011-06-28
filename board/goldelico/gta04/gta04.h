@@ -506,12 +506,12 @@ MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTU | DIS | M0)) /*GPIO_159 -  */\
 MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTU | EN  | M0)) /*GPIO_161 -  */\
 MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTD | EN  | M0)) /*GPIO_162 -  */\
 MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | DIS | M4)) /*GPIO_160 - PENIRQ*/\
-MUX_VAL(CP(MCSPI1_CLK),		(IEN  | PTU | DIS | M4)) /*GPIO_171 - Version sense*/\
-MUX_VAL(CP(MCSPI1_SIMO),	(IEN  | PTU | DIS | M4)) /*GPIO_172 - Version sense*/\
-MUX_VAL(CP(MCSPI1_SOMI),	(IEN  | PTU | DIS | M4)) /*GPIO_173 - Version sense*/\
+MUX_VAL(CP(MCSPI1_CLK),		(IEN  | PTU | EN  | M4)) /*GPIO_171 - Version sense*/\
+MUX_VAL(CP(MCSPI1_SIMO),	(IEN  | PTU | EN  | M4)) /*GPIO_172 - Version sense*/\
+MUX_VAL(CP(MCSPI1_SOMI),	(IEN  | PTU | EN  | M4)) /*GPIO_173 - Version sense*/\
 MUX_VAL(CP(MCSPI1_CS0),		(IEN  | PTD | EN  | M4)) /*GPIO_174 - USB-PHY-RESET*/\
-MUX_VAL(CP(MCSPI1_CS1),		(IEN  | PTD | EN  | M4)) /*GPIO_175/MMC3CMD - unused*/\
-MUX_VAL(CP(MCSPI1_CS2),		(IEN  | PTD | EN  | M4)) /*GPIO_176/MMC3CLK - unused*/\
+MUX_VAL(CP(MCSPI1_CS1),		(IEN  | PTD | EN  | M4)) /*GPIO_175/MMC3CMD - WAKE_WWAN */\
+MUX_VAL(CP(MCSPI1_CS2),		(IEN  | PTD | EN  | M4)) /*GPIO_176/MMC3CLK - 3G_WOE */\
 
 
 #endif	/* _GTA04_H_ */

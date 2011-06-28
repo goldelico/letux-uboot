@@ -34,6 +34,8 @@
 
 #ifdef CONFIG_OMAP3_GTA04A2
 
+/* #error this is for GTA04A2 only */
+
 #include "../../../drivers/i2c/omap24xx_i2c.h"
 
 /* this is a bit-bang driver for the I2C1

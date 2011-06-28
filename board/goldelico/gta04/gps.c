@@ -35,7 +35,7 @@
 #ifdef CONFIG_OMAP3_GTA04
 
 #define GPIO_GPSEXT		144		// external GPS antenna plugged in
-#define GPIO_GPS_ON		145
+#define GPIO_GPS_ON		145		// reset for GPS module
 
 #else /* Beagle Hybrid */
 
@@ -56,6 +56,15 @@ int gps_init(void)
 							TWL4030_PM_RECEIVER_DEV_GRP_P1);
 		udelay(5000);
 	}
+#ifdef CONFIG_OMAP3_GTA04
+	/* ext. GPS Ant VSIM = 2.8 V (3.0V) */
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VSIM_DEDICATED,
+							/*TWL4030_PM_RECEIVER_VSIM_VSEL_28*/ 0x04 /* 0x05 */,
+							TWL4030_PM_RECEIVER_VSIM_DEV_GRP,
+							TWL4030_PM_RECEIVER_DEV_GRP_P1);
+	udelay(5000);
+#endif
+	
 	omap_request_gpio(GPIO_GPS_ON);
 	omap_set_gpio_direction(GPIO_GPS_ON, 0);		// output
 	omap_request_gpio(GPIO_GPSEXT);
