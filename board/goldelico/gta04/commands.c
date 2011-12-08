@@ -38,6 +38,7 @@
 #include "tsc2007.h"
 #include "shutdown.h"
 #include "systest.h"
+#include "twl4030-additions.h"
 
 /* LCM commands */
 
@@ -77,44 +78,57 @@ static int do_lcd_backlight(int argc, char *const argv[])
 	return 0;
 }
 
+static char *lcdmodel="td028";
+
 static int do_lcd_power(int argc, char *const argv[])
 {
-	int state=JBT_STATE_NORMAL;
-	if (argc < 3)
+	if(strcmp(lcdmodel, "td028") == 0)
 		{
+		int state=JBT_STATE_NORMAL;
+		if (argc < 3)
+			{
 			printf ("lcm power: missing state (0..2).\n");
 			return (-1);
-		}
-	state=simple_strtoul(argv[2], NULL, 10);
-	if(state > 2)
-		{
+			}
+		state=simple_strtoul(argv[2], NULL, 10);
+		if(state > 2)
+			{
 			printf ("lcm power: invalid state (0..2).\n");
 			return (-1);
+			}
+		jbt6k74_enter_state(state);
+		printf("lcm state set to %s\n", jbt_state());	
 		}
-	jbt6k74_enter_state(state);
-	printf("lcm state set to %s\n", jbt_state());	
 	return 0;
 }
 
 static int do_lcd_onoff(int argc, char *const argv[], int flag)
 {
-	jbt6k74_display_onoff(flag);
+	if(strcmp(lcdmodel, "td028") == 0)
+		jbt6k74_display_onoff(flag);
+	else
+		jbt6k74_display_onoff(flag);
 	printf("display power %s\n", flag?"on":"off");
 	return 0;
 }
 
 static int do_lcd_init(int argc, char *const argv[])
 {
+	// check argv for user specified lcdmodel
 	return board_video_init(NULL);
 }
 
 static int do_lcd_start(int argc, char *const argv[])
 {
+	// check argv for user specified lcdmodel
 	if(board_video_init(NULL))
 		return 1;
-	jbt6k74_enter_state(2);
-	jbt6k74_display_onoff(1);
-	backlight_set_level(255);
+	if(strcmp(lcdmodel, "td028") == 0)
+		{
+		jbt6k74_enter_state(2);
+		jbt6k74_display_onoff(1);
+		backlight_set_level(255);		
+		}
 	return 0;
 }
 
@@ -152,12 +166,12 @@ static int do_lcd(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 }
 
 U_BOOT_CMD(lcm, 3, 0, do_lcd, "LCM sub-system",
-		   "init - initialize DSS, GPIOs and LCM controller\n"
+		   "init [model] - initialize DSS, GPIOs and LCM controller\n"
 		   "backlight level - set backlight level\n"
 		   "off - switch off\n"
 		   "on - switch on\n"
 		   "power mode - set power mode\n"
-		   "start - initialize, switch on power and enable backlight\n"
+		   "start [model] - initialize, switch on power and enable backlight\n"
 		   "color hhhhhh - switch color (can be used without init)\n"
 		   "fb address - set framebuffer address (can be used without init)\n"
 		   );
@@ -231,30 +245,6 @@ static int do_tsc_selection(int argc, char *const argv[])
 			return (-1);
 		}
 	return tsc_choice == simple_strtoul(argv[2], NULL, 10)?0:1;
-}
-
-static int pendown(int *x, int *y)
-{
-#if 1
-	int z;
-	int xx;
-	int yy;
-	xx=read_adc(0);
-	yy=read_adc(1);
-	z=read_adc(2);	// read Z
-	if(z < 0)
-		return 0;	// read error
-#if 0
-	printf("z=%04d x:%04d y:%04d\n", z, xx, yy);
-#endif
-	if(x) *x=xx;
-	if(y) *y=yy;
-	udelay(10000);	// reduce I2C traffic and debounce...
-	return z > 200;	// was pressed
-#else
-	// must be in PENIRQ mode...
-	return (status_get_buttons() & (1 << 4)) == 0;
-#endif
 }
 
 static int do_tsc_choose(int argc, char *const argv[])
@@ -567,31 +557,109 @@ U_BOOT_CMD(gps, 3, 0, do_gps, "GPS sub-system",
 		   "echo - echo GPS out to console\n"
 		   );
 
+#include "ulpi-phy.h"
+
+static int do_systest_all(int argc, char *const argv[])
+{
+	unsigned short *fb=(void *) 0x81000000;	// base address to be used as RGB16 framebuffer
+	printf("permanently doing complete systest.\n"
+		   "Press any key to stop\n\n");
+	omap3_dss_set_fb(fb);
+	audiotest_init(0);
+	while (!tstc() && (status_get_buttons()&0x09) == 0)
+		{
+		int i;
+		for(i=0; i<8; i++)
+			{
+			int val=(480*read_adc(i))/4096;
+			int x, y;
+			printf("%d: %d\n", i, val);
+			for(y=16*i; y<16*i+16; y++)
+				{ // draw colored bar depending on current value
+					for(x=0; x<480; x++)
+						fb[x+480*y]=(x < val)?0xfc00:0x03ff;
+				}
+			}
+		// show hardware test results (chip availability)
+		// continue to play some sound every loop...
+		}
+	if(tstc())
+		getc();
+	printf("\n");
+	return 0;
+}
+
 static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	if(argc >= 2) {
 		if (strncmp ("au", argv[1], 2) == 0) {
 			return audiotest(0);
 		}
+		if (strncmp ("al", argv[1], 2) == 0) {
+			return do_systest_all (argc, argv);
+		}
+		if (strncmp ("ir", argv[1], 2) == 0) {
+			return irdatest();
+		}
+		if (strncmp ("wl", argv[1], 2) == 0) {
+			return wlanbttest(1);
+		}
+		if (strncmp ("wp", argv[1], 2) == 0) {
+			return wlanbttest(0);	// just power on
+		}
+		if (strncmp ("ch", argv[1], 2) == 0) {
+			return twl4030_init_battery_charging();
+		}
+	}
+	if(argc == 3) {
+		if (strncmp ("ot", argv[1], 2) == 0) {
+			return OTGchargepump(simple_strtoul(argv[2], NULL, 10));			
+		}
+		if (strncmp ("ul", argv[1], 2) == 0) {
+			int port=simple_strtoul(argv[2], NULL, 10);	/* 0, 1, ... */
+			int reg;
+			for(reg=0; reg <= 0x3f; reg++)
+				printf("ulpi reg %02x: %02x\n", reg, ulpi_direct_access(port, reg, 0, 0));
+		}
 	}
 	return systest();
 }
 
 U_BOOT_CMD(systest, 3, 0, do_systest, "System Test",
-		   "audio - test audio\n");
+		   "all - graphical test mode\n"
+		   "audio - test audio\n"
+		   "irda - test IrDA\n"
+		   "wlanbt - test WLAN/BT module\n"
+		   "wp - apply power to WLAN/BT module\n"
+		   "charging - init and test BCI/BKBAT\n"
+		   "otg n - enable/disable OTG charge pump\n"
+		   );
 
 
-static int do_halt(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_powerdown(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	backlight_set_level(0);
 	jbt6k74_enter_state(0);
 	jbt6k74_display_onoff(0);
 	shutdown();	// finally shut down power
-	printf ("failed to power off\n");
+	printf ("failed to power down\n");
 	return (0);
 }
 
-U_BOOT_CMD(halt, 2, 0, do_halt, "Powerdown",
+U_BOOT_CMD(powerdown, 2, 0, do_powerdown, "Powerdown",
+		   "");
+
+static int do_suspend(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	backlight_set_level(0);
+	jbt6k74_enter_state(0);
+	jbt6k74_display_onoff(0);
+	suspend();	// put CPU in sleep mode so that it can be waked up by pressing the AUX button or other events
+	printf ("suspend finished\n");
+	return (0);
+}
+
+U_BOOT_CMD(suspend, 2, 0, do_suspend, "Suspend",
 		   "");
 
 
@@ -625,21 +693,34 @@ U_BOOT_CMD(mux, 2, 0, do_mux, "Pinmux", "");
 
 static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
+	int g;
 	if(argc == 3) {
 		if (strncmp ("on", argv[1], 2) == 0) {
-			omap_set_gpio_dataout(simple_strtoul(argv[2], NULL, 10), 1);
+			g=simple_strtoul(argv[2], NULL, 10);
+			omap_request_gpio(g);
+			omap_set_gpio_dataout(g, 1);
+			//			omap_free_gpio(g); - switches back to input
 			return 0;
 		}
 		else if (strncmp ("of", argv[1], 2) == 0) {
-			omap_set_gpio_dataout(simple_strtoul(argv[2], NULL, 10), 0);
+			g=simple_strtoul(argv[2], NULL, 10);
+			omap_request_gpio(g);
+			omap_set_gpio_dataout(g, 0);
+			//			omap_free_gpio(g); - switches back to input
 			return 0;
 		}
 		else if (strncmp ("in", argv[1], 2) == 0) {
-			omap_set_gpio_direction(simple_strtoul(argv[2], NULL, 10), 1);
+			g=simple_strtoul(argv[2], NULL, 10);
+			omap_request_gpio(g);
+			omap_set_gpio_direction(g, 1);
+			//			omap_free_gpio(g); - switches back to input
 			return 0;
 		}
 		else if (strncmp ("ou", argv[1], 2) == 0) {
-			omap_set_gpio_direction(simple_strtoul(argv[2], NULL, 10), 0);
+			g=simple_strtoul(argv[2], NULL, 10);
+			omap_request_gpio(g);
+			omap_set_gpio_direction(g, 0);
+			//			omap_free_gpio(g); - switches back to input
 			return 0;
 		}
 	}
@@ -691,5 +772,5 @@ U_BOOT_CMD(gpio, 3, 0, do_gpio, "GPIO sub-system",
 		   "on n - set to 1\n"
 		   "of[f] n - set to 0\n"
 		   "in n - switch to input\n"
-		   "ou[t] n - switch to out (dangerous!)\n"
+		   "ou[t] n - switch to out (does not change pinmux!)\n"
 		   );

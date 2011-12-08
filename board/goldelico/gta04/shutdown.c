@@ -55,3 +55,9 @@ void shutdown(void)
 	// CHECKME: do we have to write PM_MASTER_P2 and _P3?
 }
 
+void suspend(void)
+{
+	// enable the AUX button interrupt for Wakeup
+	// suspend (sleep) the CPU
+	// the TPS should remain powered on
+}

@@ -1,8 +1,11 @@
-/* u-boot extended commands for GTA04
+/*
+ * (C) Copyright 2010
+ * Nikolaus Schaller <hns@goldelico.com>
  *
- * Copyright (C) 2010 by Golden Delicious Computers GmbH&Co. KG
- * Author: H. Nikolaus Schaller <hns@goldelico.com>
- * All rights reserved.
+ * Configuration settings for the GTA04.
+ *
+ * See file CREDITS for list of people who contributed to this
+ * project.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -11,25 +14,17 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
- *
  */
 
-#ifndef _SYSTEST_H
-#define _SYSTEST_H
+#define CONFIG_OMAP3_BEAGLE_EXPANDER y
 
-int systest(void);
-int audiotest_init(int channel);
-int audiotest_send(void);
-int audiotest(int channel);
-int irdatest(void);
-int wlanbttest(int serial);
-int OTGchargepump(int enable);
+#include "omap3_gta04.h"	/* share config */
 
-#endif
+/* __CONFIG_H */

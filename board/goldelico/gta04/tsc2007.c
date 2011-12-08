@@ -155,3 +155,27 @@ void print_adc(void)
 		   read_adc(7));
 }
 
+int pendown(int *x, int *y)
+{
+#if 1
+	int z;
+	int xx;
+	int yy;
+	xx=read_adc(0);
+	yy=read_adc(1);
+	z=read_adc(2);	// read Z
+	if(z < 0)
+		return 0;	// read error
+#if 0
+	printf("z=%04d x:%04d y:%04d\n", z, xx, yy);
+#endif
+	if(x) *x=xx;
+	if(y) *y=yy;
+	udelay(10000);	// reduce I2C traffic and debounce...
+	return z > 200;	// was pressed
+#else
+	// must be in PENIRQ mode...
+	return (status_get_buttons() & (1 << 4)) == 0;
+#endif
+}
+

@@ -10,6 +10,9 @@
  *	Richard Woodruff <r-woodruff2@ti.com>
  *	Syed Mohammed Khasim <khasim@ti.com>
  *
+ * Authos:
+ *  Nikolaus Schaller <hns@goldelico.com>
+ *  adapted to GTA04
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -39,7 +42,6 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include "gta04.h"
-
 
 #if 1	/* testing tool; you can call notify() anywhere even before initialization to see how far the code comes */
 
@@ -103,33 +105,7 @@ int board_init(void)
  */
 int get_board_revision(void)
 {
-#ifdef CONFIG_OMAP3_GTA04
 	return 6;	// configure pinmux for C1/2/3
-#else
-	int revision;
-
-	if (!omap_request_gpio(171) &&
-	    !omap_request_gpio(172) &&
-	    !omap_request_gpio(173)) {
-		
-		omap_set_gpio_direction(171, 1);
-		omap_set_gpio_direction(172, 1);
-		omap_set_gpio_direction(173, 1);
-		
-		revision = omap_get_gpio_datain(173) << 2 |
-		omap_get_gpio_datain(172) << 1 |
-		omap_get_gpio_datain(171);
-		
-		omap_free_gpio(171);
-		omap_free_gpio(172);
-		omap_free_gpio(173);
-	} else {
-		printf("Error: unable to acquire board revision GPIOs\n");
-		revision = -1;
-	}
-	
-	return revision;
-#endif
 }
 
 /*
@@ -137,7 +113,6 @@ int get_board_revision(void)
  * Description: Configure board specific parts
  */
 
-#ifdef CONFIG_OMAP3_GTA04
 #define TCA6507_BUS			(2-1)	// I2C2
 #define TCA6507_ADDRESS		0x45
 
@@ -145,13 +120,11 @@ int get_board_revision(void)
 #define TCA6507_SELECT0						0
 #define TCA6507_SELECT1						1
 #define TCA6507_SELECT2						2
-#endif
 
 int misc_init_r(void)
 {
 	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
 	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
-#ifdef CONFIG_OMAP3_GTA04
 
 	/* ITG3200 & HMC5883L VAUX2 = 2.8V */
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
@@ -170,63 +143,25 @@ int misc_init_r(void)
 	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT2, 0x40);	// pull down reset for WLAN&BT chip
 	i2c_set_bus_num(0);	// write I2C1
 
+#if 0 // FIXME: enable only on demand if we want to test BT/WIFI - and apply RESET
 	/* Bluetooth VAUX4 = 3.3V -- CHECKME: 3.3 V is not officially supported! We use 0x09 = 2.8V here*/
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX4_DEDICATED,
 							/*TWL4030_PM_RECEIVER_VAUX4_VSEL_33*/ 0x09,
 							TWL4030_PM_RECEIVER_VAUX4_DEV_GRP,
 							TWL4030_PM_RECEIVER_DEV_GRP_P1);
-
-#else
-	switch (get_board_revision()) {
-		case REVISION_AXBX:
-//			printf("Beagle Rev Ax/Bx\n");
-//			setenv("beaglerev", "AxBx");
-			setenv("mpurate", "600");
-			break;
-		case REVISION_CX:
-//			printf("Beagle Rev C1/C2/C3\n");
-//			setenv("beaglerev", "Cx");
-			setenv("mpurate", "600");
-			MUX_BEAGLE_C();
-			break;
-		case REVISION_C4:
-//			printf("Beagle Rev C4\n");
-//			setenv("beaglerev", "C4");
-			setenv("mpurate", "720");
-			MUX_BEAGLE_C();
-			/* Set VAUX2 to 1.8V for EHCI PHY */
-			twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
-									TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
-									TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
-									TWL4030_PM_RECEIVER_DEV_GRP_P1);
-			break;
-		case REVISION_XM:
-//			printf("Beagle xM Rev A\n");
-//			setenv("beaglerev", "xMA");
-			setenv("mpurate", "1000");
-			MUX_BEAGLE_XM();
-			/* Set VAUX2 to 1.8V for EHCI PHY */
-			twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
-									TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
-									TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
-									TWL4030_PM_RECEIVER_DEV_GRP_P1);
-			break;
-		default:
-			printf("Beagle unknown 0x%02x\n", get_board_revision());
-	}
 #endif
-	
+
+	/* make dependent on CPU type */
+	setenv("mpurate", "600");
+	setenv("mpurate", "800");
+
 	twl4030_power_init();
 	
-#ifdef CONFIG_OMAP3_GTA04
 	// we have no LEDs on TPS on GTA04
 	// but a power on/off button (8 seconds)
 	twl4030_power_reset_init();
-#else
-	// LEDs on BeagleBoard
-	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
-#endif
-	
+
+#if 0
 	// FIXME: check this!!!
 	
 	/* Configure GPIOs to output */
@@ -239,9 +174,99 @@ int misc_init_r(void)
 		   &gpio6_base->setdataout);
 	writel(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
 		   GPIO15 | GPIO14 | GPIO13 | GPIO12, &gpio5_base->setdataout);
+#endif
+	
+#if 1	// duplicate with twl4030-additions
+	
+#define TWL4030_BB_CFG_BBCHEN		(1 << 4)
+#define TWL4030_BB_CFG_BBSEL_3200MV	(3 << 2)
+#define TWL4030_BB_CFG_BBISEL_500UA	2
+	
+	/* Enable battery backup capacitor (3.2V, 0.5mA charge current) */
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER,
+						 TWL4030_BB_CFG_BBCHEN | TWL4030_BB_CFG_BBSEL_3200MV |
+						 TWL4030_BB_CFG_BBISEL_500UA, TWL4030_PM_RECEIVER_BB_CFG);
+#endif
 	
 	dieid_num_r();
-	
+
+#if 0	// check if watchdog is switched off
+	{	
+		struct _watchdog {
+			u32 widr;	/* 0x00 r */
+			u8 res1[0x0c];
+			u32 wd_sysconfig;	/* 0x10 rw */
+			u32 ws_sysstatus;	/* 0x14 r */
+			u32 wisr;
+			u32 wier;
+			u8 res2[0x04];
+			u32 wclr;	/* 0x24 rw */
+			u32 wcrr;
+			u32 wldr;
+			u32 wtgr;
+			u32 wwps;	/* 0x34 r */
+			u8 res3[0x10];
+			u32 wspr;	/* 0x48 rw */
+		};
+		struct _watchdog *wd2_base = (struct watchdog *)WD2_BASE;
+		struct prcm *prcm_base = (struct prcm *)PRCM_BASE;
+
+		printf("idlest_wkup = %08x\n", readl(&prcm_base->idlest_wkup));
+		printf("widr = %08x\n", readl(&wd2_base->widr));
+		printf("wd_sysconfig = %08x\n", readl(&wd2_base->wd_sysconfig));
+		printf("ws_sysstatus = %08x\n", readl(&wd2_base->ws_sysstatus));
+		printf("wisr = %08x\n", readl(&wd2_base->wisr));
+		printf("wier = %08x\n", readl(&wd2_base->wier));
+		printf("wclr = %08x\n", readl(&wd2_base->wclr));
+		printf("wcrr = %08x\n", readl(&wd2_base->wcrr));
+		printf("wldr = %08x\n", readl(&wd2_base->wldr));
+		printf("wtgr = %08x\n", readl(&wd2_base->wtgr));
+		printf("wwps = %08x\n", readl(&wd2_base->wwps));
+		printf("wspr = %08x\n", readl(&wd2_base->wspr));
+				  
+		writel(WD_UNLOCK2, &wd2_base->wspr);
+		myudelay(100);
+		writel(WD_UNLOCK1, &wd2_base->wspr);
+		myudelay(100);
+		writel(WD_UNLOCK2, &wd2_base->wspr);
+		myudelay(100);
+		writel(WD_UNLOCK1, &wd2_base->wspr);
+		myudelay(100);
+		writel(WD_UNLOCK2, &wd2_base->wspr);
+
+		myudelay(10000); // so that we can see if the counter counts...
+		
+		printf("idlest_wkup = %08x\n", readl(&prcm_base->idlest_wkup));
+		printf("widr = %08x\n", readl(&wd2_base->widr));
+		printf("wd_sysconfig = %08x\n", readl(&wd2_base->wd_sysconfig));
+		printf("ws_sysstatus = %08x\n", readl(&wd2_base->ws_sysstatus));
+		printf("wisr = %08x\n", readl(&wd2_base->wisr));
+		printf("wier = %08x\n", readl(&wd2_base->wier));
+		printf("wclr = %08x\n", readl(&wd2_base->wclr));
+		printf("wcrr = %08x\n", readl(&wd2_base->wcrr));
+		printf("wldr = %08x\n", readl(&wd2_base->wldr));
+		printf("wtgr = %08x\n", readl(&wd2_base->wtgr));
+		printf("wwps = %08x\n", readl(&wd2_base->wwps));
+		printf("wspr = %08x\n", readl(&wd2_base->wspr));
+
+		writel(readl(&wd2_base->wtgr) + 1, &wd2_base->wtgr);
+		
+		printf("idlest_wkup = %08x\n", readl(&prcm_base->idlest_wkup));
+		printf("widr = %08x\n", readl(&wd2_base->widr));
+		printf("wd_sysconfig = %08x\n", readl(&wd2_base->wd_sysconfig));
+		printf("ws_sysstatus = %08x\n", readl(&wd2_base->ws_sysstatus));
+		printf("wisr = %08x\n", readl(&wd2_base->wisr));
+		printf("wier = %08x\n", readl(&wd2_base->wier));
+		printf("wclr = %08x\n", readl(&wd2_base->wclr));
+		printf("wcrr = %08x\n", readl(&wd2_base->wcrr));
+		printf("wldr = %08x\n", readl(&wd2_base->wldr));
+		printf("wtgr = %08x\n", readl(&wd2_base->wtgr));
+		printf("wwps = %08x\n", readl(&wd2_base->wwps));
+		printf("wspr = %08x\n", readl(&wd2_base->wspr));
+		
+	}
+#endif				  
+				  
 	return 0;
 }
 

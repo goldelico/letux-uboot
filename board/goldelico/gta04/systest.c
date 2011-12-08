@@ -30,13 +30,121 @@
 #include <asm/mach-types.h>
 #include <i2c.h>
 #include <twl4030.h>
+#include <ns16550.h>
 #include "systest.h"
 #include "TD028TTEC1.h"
+#include "ulpi-phy.h"
+#include "status.h"
+#include "tsc2007.h"
+#include "twl4030-additions.h"
 
 #define TWL4030_I2C_BUS			(1-1)
 
+int bt_hci(int msg)
+{
+#define MODE_X_DIV 16
+	int baudrate=9600;
+	int divisor=(CONFIG_SYS_NS16550_CLK + (baudrate * (MODE_X_DIV / 2))) / (MODE_X_DIV * baudrate);
+	char send[]={
+		0x01,	// command
+#define OGF 0x01
+#define OCF 0x0002	// HCI_Inquiry_Cancel
+#define OP ((OGF<<10)+OCF)
+		OP&0xff, OP>>8
+	};
+	NS16550_reinit((NS16550_t)CONFIG_SYS_NS16550_COM1, divisor);	// initialize UART
+	int i;
+	int bytes=0;
+	long timer=(1*1000*1000)/40;	// 1 second total timeout
+#if 1 // GPIO test for UART lines
+	if(msg)
+		{ // print states of UART lines
+			MUX_VAL(CP(UART1_TX),		(IEN  | PTU | EN | M4)) /*UART1_TX -> Bluetooth HCI */\
+			MUX_VAL(CP(UART1_RTS),		(IEN  | PTU | EN | M4)) /*UART1_RTS -> Bluetooth HCI */ \
+			MUX_VAL(CP(UART1_CTS),		(IEN  | PTU | EN | M4)) /*UART1_CTS -> Bluetooth HCI */ \
+			MUX_VAL(CP(UART1_RX),		(IEN  | PTU | EN | M4)) /*UART1_RX -> Bluetooth HCI */
+
+			MUX_VAL(CP(UART2_CTS),		(IEN  | PTU | DIS | M4)) /*GPIO_144 - ext Ant */\
+			MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M4)) /*GPIO_145 - GPS ON(0)/OFF(1)*/\
+			MUX_VAL(CP(UART2_TX),		(IEN  | PTU | DIS | M4)) /*GPIO_146 - GPS_TX */\
+			MUX_VAL(CP(UART2_RX),		(IEN  | PTU | DIS | M4)) /*GPIO_147 - GPS_RX */\
+			
+			udelay(100);
+			
+			omap_request_gpio(148);
+			omap_request_gpio(149);
+			omap_request_gpio(150);
+			omap_request_gpio(151);
+			omap_set_gpio_direction(148, 1);	// 1=input
+			omap_set_gpio_direction(149, 1);	// 1=input
+			omap_set_gpio_direction(150, 1);	// 1=input
+			omap_set_gpio_direction(151, 1);	// 1=input
+			printf("UART1 RTS: %d\n", omap_get_gpio_datain(149));
+			printf("UART1 CTS: %d\n", omap_get_gpio_datain(150));
+			printf("UART1 TX:  %d\n", omap_get_gpio_datain(148));
+			printf("UART1 RX:  %d\n", omap_get_gpio_datain(151));
+			
+			omap_request_gpio(144);
+			omap_request_gpio(145);
+			omap_request_gpio(146);
+			omap_request_gpio(147);
+			omap_set_gpio_direction(144, 1);	// 1=input
+			omap_set_gpio_direction(145, 1);	// 1=input
+			omap_set_gpio_direction(146, 1);	// 1=input
+			omap_set_gpio_direction(147, 1);	// 1=input
+			printf("UART2 RTS: %d\n", omap_get_gpio_datain(145));
+			printf("UART2 CTS: %d\n", omap_get_gpio_datain(144));
+			printf("UART2 TX:  %d\n", omap_get_gpio_datain(146));
+			printf("UART2 RX:  %d\n", omap_get_gpio_datain(147));
+			
+			MUX_VAL(CP(UART1_TX),		(IDIS | PTD | DIS | M0)) /*UART1_TX -> Bluetooth HCI */\
+			MUX_VAL(CP(UART1_RTS),		(IDIS | PTD | DIS | M0)) /*UART1_RTS -> Bluetooth HCI */ \
+			MUX_VAL(CP(UART1_CTS),		(IEN  | PTD | DIS | M0)) /*UART1_CTS -> Bluetooth HCI */ \
+			MUX_VAL(CP(UART1_RX),		(IEN  | PTD | DIS | M0)) /*UART1_RX -> Bluetooth HCI */\
+
+			MUX_VAL(CP(UART2_CTS),		(IEN  | PTU | DIS | M4)) /*GPIO_144 - ext Ant */\
+			MUX_VAL(CP(UART2_RTS),		(IDIS | PTD | DIS | M4)) /*GPIO_145 - GPS ON(0)/OFF(1)*/\
+			MUX_VAL(CP(UART2_TX),		(IDIS | PTU | DIS | M0)) /*GPIO_146 - GPS_TX */\
+			MUX_VAL(CP(UART2_RX),		(IEN  | PTU | DIS | M0)) /*GPIO_147 - GPS_RX */\
+			udelay(100);
+		}
+#endif
+	if(msg)
+		printf("HCI send:");
+	for (i=0; i<sizeof(send); i++)
+		{ // send bytes on HCI port
+			if(msg)
+				printf(" %02x", send[i]);
+			NS16550_putc((NS16550_t)CONFIG_SYS_NS16550_COM1, send[i]);
+		}
+	if(msg)
+		printf("\n");
+	if(msg)
+		printf("HCI receive:");
+	while (timer-- > 0)
+		{ //
+			if(NS16550_tstc((NS16550_t)CONFIG_SYS_NS16550_COM1))
+				{ // byte received
+					int c=NS16550_getc((NS16550_t)CONFIG_SYS_NS16550_COM1);
+					if(msg)
+						printf(" %02x", c);	// from GPS to console
+					bytes++;	// one more received
+				}
+			udelay(40);	// 115200 bit/s is approx. 86 us per byte 
+		}
+	if(bytes == 0)
+		{
+		if(msg)
+			printf(" timed out\n");
+		return 0;			
+		}
+	if(msg)
+		printf("\n");
+	return 1;
+}
+
 int systest(void)
-{ // do mixture of gps_echo, tsc_loop, status mirror status blink
+{
 	int r;
 	i2c_set_bus_num(TWL4030_I2C_BUS);	// I2C1
 	printf("TPS65950:      %s\n", !(r=i2c_probe(TWL4030_CHIP_USB))?"found":"-");	// responds on 4 addresses 0x48..0x4b
@@ -45,7 +153,7 @@ int systest(void)
 		u8 val;
 		u8 val2;
 		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, TWL4030_PM_MASTER_STS_HW_CONDITIONS);
-		printf("  STS_HW_CND: %02x", val);	// decode bits
+		printf("  STS_HW_CON: %02x", val);	// decode bits
 		if(val & 0x80) printf(" VBUS");
 		if(val & 0x08) printf(" NRESWARM");
 		if(val & 0x04) printf(" USB");
@@ -53,7 +161,7 @@ int systest(void)
 		if(val & 0x01) printf(" PWRON");
 		printf("\n");
 		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, 0x2e);
-		printf("  PWR_ISR:    %02x", val);
+		printf("  PWR_ISR1:   %02x", val);
 		// decode bits
 		printf("\n");
 		twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val, TWL4030_PM_MASTER_SC_DETECT1);
@@ -105,19 +213,22 @@ int systest(void)
 	    printf("DISPLAY:       ok\n");
 	else
 		printf("DISPLAY:       failed\n");
-	
+#if HAVE_ULPI_TEST
+	printf("PHY-WWAN:      %s\n", (ulpi_direct_access(1, 1, 0, 0) == 0x04)?"found":"-");	// read reg 1 (vendor id) of HSUSB2
+#endif
 	// LEDs
-	// GPS UART
+	// GPS/UART
 	// RAM-Test
 	// NAND-Test
 	// Buttons
 	// Power
-	// Display communication
+	// real Display communication
 	// PCM
 	// OTG USB
 	// Charger
 	// internal USB
 	// UMTS Module
+	printf("BT HCI:        %s\n", bt_hci(0)?"found":"-");
 	return (0);
 }
 
@@ -160,11 +271,10 @@ static ushort tone[] = {
 	0xDA5B, 0xDA5A, 0xE67B, 0xE67B, 0xF31B, 0xF3AC, 0x0000, 0x0000
 };
 
-int audiotest(int channel)
+int audiotest_init(int channel)
 {
 	
 	unsigned char byte;
-	int count = 0;
 	
 	printf("Test Audio Tone on Speaker\n");
 	printf("Initializing over I2C1");
@@ -361,7 +471,13 @@ int audiotest(int channel)
 	*((uint *) 0x49022010) = 0x00000201;	// MCBSPLP_SPCR2_REG / FREE, XRST
 	*((uint *) 0x49022008) = 0x000056f3;	// MCBSPLP_DXR_REG - write first byte
 	printf("  ... complete\n");
+	return 0;
 
+}
+
+int audiotest_send(void)
+{
+	int count = 0;
 	printf("Sending data");
 
 	for (count = 0; count < 50; count++) {
@@ -374,4 +490,111 @@ int audiotest(int channel)
 	printf("  ... complete\n");
 
 	return 0;
+}
+
+int audiotest(int channel)
+{
+	return audiotest_init(channel) || audiotest_send();
+}
+
+#define RS232_ENABLE	13
+#define RS232_RX		165	// UART3
+#define RS232_TX		166	// UART3
+
+int irdatest(void)
+{
+#ifdef CONFIG_OMAP3_GTA04
+	printf("Stop through touch screen or AUX button - RS232 is disabled\n");
+	udelay(50000);	// wait until RS232 is finished
+	// switch RS232_ENABLE to IrDA through Pull-Down and RXTX to GPIO mode
+	MUX_VAL(CP(UART3_RX_IRRX),	(IEN  | PTD | DIS | M4)); /*UART3_RX_IRRX*/
+	MUX_VAL(CP(UART3_TX_IRTX),	(IDIS | PTD | DIS | M4)); /*UART3_TX_IRTX*/
+	omap_request_gpio(RS232_RX);
+	omap_set_gpio_direction(RS232_RX, 1);	// 1=input
+	omap_request_gpio(RS232_TX);
+	omap_set_gpio_direction(RS232_TX, 0);
+	omap_set_gpio_dataout(RS232_TX, 0);	// set TX=low to select SIR mode
+	udelay(10);
+	MUX_VAL(CP(ETK_CTL_ES2),	(IEN  | PTD | EN  | M4)); /*GPIO_13 - RS232 enable*/
+	udelay(1000);
+	while(!pendown(NULL, NULL) && (status_get_buttons()&0x09) == 0)
+		{
+		// make IrDA blink
+		omap_set_gpio_dataout(RS232_TX, 1);
+		udelay(150);
+		omap_set_gpio_dataout(RS232_TX, 0);
+		udelay(150);
+		if(!omap_get_gpio_datain(RS232_RX))	// RX is active low
+			status_set_status(0x018);	// echo IrDA sensor status to red power button led
+		else
+			status_set_status(0x00);
+		}
+	// switch back to UART mode
+	MUX_VAL(CP(UART3_RX_IRRX),	(IEN  | PTD | DIS | M0)); /*UART3_RX_IRRX*/
+	MUX_VAL(CP(UART3_TX_IRTX),	(IDIS | PTD | DIS | M0)); /*UART3_TX_IRTX*/
+	MUX_VAL(CP(ETK_CTL_ES2),	(IEN  | PTU | EN  | M4)); /*GPIO_13 - RS232 enable*/
+	udelay(1000);
+	printf("done.\n");
+	return 0;
+#else
+	printf("n/a\n");
+	return 1;
+#endif
+}
+
+#ifdef CONFIG_OMAP3_GTA04
+int wlabbtpower(void)
+{ /* Bluetooth VAUX4 = 3.3V -- CHECKME: 3.3 V is not officially supported by TPS! We use 0x09 = 2.8V here*/
+#define TCA6507_BUS			(2-1)	// I2C2
+#define TCA6507_ADDRESS		0x45
+	
+	/* register numbers */
+#define TCA6507_SELECT0						0
+#define TCA6507_SELECT1						1
+#define TCA6507_SELECT2						2
+	
+	printf("activate WiFi/BT reset\n");
+	i2c_set_bus_num(TCA6507_BUS);	// write I2C2
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT1, 0);
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT2, 0x40);	// pull down reset for WLAN&BT chip
+	i2c_set_bus_num(0);	// write I2C1
+	printf("power on VAUX4\n");
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX4_DEDICATED,
+							/* 2.8V: */ 0x09 /* 3.15V: 0x0c */,
+							TWL4030_PM_RECEIVER_VAUX4_DEV_GRP,
+							TWL4030_PM_RECEIVER_DEV_GRP_P1);
+	udelay(20*1000);	// wait a little until power stabilizes
+	printf("release WiFi/BT reset\n");
+	i2c_set_bus_num(TCA6507_BUS);	// write I2C2
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT1, 0);
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT2, 0);	// release reset for WLAN&BT chip
+	i2c_set_bus_num(0);	// write I2C1
+	return 0;
+}
+#endif
+
+int wlanbttest(int test)
+{ /* Bluetooth VAUX4 = 3.3V -- CHECKME: 3.3 V is not officially supported! We use 0x09 = 2.8V here*/
+#ifdef CONFIG_OMAP3_GTA04
+	wlabbtpower();
+	if(test)
+		{
+		// now, we should be able to test the UART for the BT part...
+		return !bt_hci(1);
+		}
+	return 0;
+#else
+	printf("n/a\n");
+	return 1;
+#endif
+}
+
+int OTGchargepump(int enable)
+{
+	if(enable)
+		twl4030_i2c_write_u8(TWL4030_CHIP_USB, 0x20, TWL4030_USB_OTG_CTRL_SET);
+	else
+		twl4030_i2c_write_u8(TWL4030_CHIP_USB, 0x20, TWL4030_USB_OTG_CTRL_CLR);	
 }

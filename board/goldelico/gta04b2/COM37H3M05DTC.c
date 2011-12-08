@@ -35,6 +35,8 @@
 
 #ifdef CONFIG_OMAP3_BEAGLE_EXPANDER
 #define GPIO_STBY 158
+#else
+#define GPIO_STBY 20
 #endif
 
 // configure beagle board DSS for the COM37H3M05DTC

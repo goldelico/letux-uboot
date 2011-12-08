@@ -33,4 +33,9 @@
 #undef CONFIG_SYS_PROMPT
 #define CONFIG_SYS_PROMPT		"GTA04 # "
 
+#undef CONFIG_BOOTDELAY
+#define CONFIG_BOOTDELAY		1
+
+#define CONFIG_SYS_NS16550_COM1		OMAP34XX_UART1	/* used for Bluetooth */
+
 /* __CONFIG_H */

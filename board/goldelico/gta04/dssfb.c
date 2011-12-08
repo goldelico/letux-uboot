@@ -231,9 +231,9 @@ void dssfb_init(const struct panel_config *lcm_cfg)
 	printf("fck_dss_on\n");
 	sr32(&prcm_base->fclken_dss, 0, 32, FCK_DSS_ON);
 	sdelay(1000);
-	printf("fck_cam_on\n");
+//	printf("fck_cam_on\n");
 //	sr32(&prcm_base->fclken_cam, 0, 32, FCK_CAM_ON);
-	printf("ick_cam_on\n");
+//	printf("ick_cam_on\n");
 //	sr32(&prcm_base->iclken_cam, 0, 32, ICK_CAM_ON);
 	sdelay(1000);
 #else

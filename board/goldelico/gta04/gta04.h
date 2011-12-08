@@ -279,8 +279,8 @@ MUX_VAL(CP(MCSPI2_SIMO),	(IEN  | PTU | DIS | M3)) /*HSUSB2_DATA4*/\
 MUX_VAL(CP(MCSPI2_SOMI),	(IEN  | PTU | DIS | M3)) /*HSUSB2_DATA5*/\
 MUX_VAL(CP(MCSPI2_CS0),		(IEN  | PTU | DIS | M3)) /*HSUSB2_DATA6*/\
 MUX_VAL(CP(MCSPI2_CS1),		(IEN  | PTU | DIS | M3)) /*HSUSB2_DATA3*/\
-MUX_VAL(CP(ETK_D10_ES2),	(IDIS | PTU | DIS | M3)) /*HSUSB2_CLK*/\
-MUX_VAL(CP(ETK_D11_ES2),	(IDIS | PTU | DIS | M3)) /*HSUSB2_STP*/\
+MUX_VAL(CP(ETK_D10_ES2),	(IEN  | PTU | DIS | M3)) /*HSUSB2_CLK*/\
+MUX_VAL(CP(ETK_D11_ES2),	(IDIS | PTU | EN  | M3)) /*HSUSB2_STP*/\
 MUX_VAL(CP(ETK_D12_ES2),	(IEN  | PTU | DIS | M3)) /*HSUSB2_DIR*/\
 MUX_VAL(CP(ETK_D13_ES2),	(IEN  | PTU | DIS | M3)) /*HSUSB2_NXT*/\
 MUX_VAL(CP(ETK_D14_ES2),	(IEN  | PTU | DIS | M3)) /*HSUSB2_DATA0*/\
@@ -302,10 +302,10 @@ MUX_VAL(CP(SYS_CLKOUT2),	(IEN  | PTU | EN  | M4)) /*GPIO_186*/\
 /* should be removed or initialized correctly from the beginning since it may result in a glitch on these pins that we use as GPIOs */\
 MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M3)) /*HSUSB1_STP*/\
 MUX_VAL(CP(ETK_CTL_ES2),	(IDIS | PTU | DIS | M3)) /*HSUSB1_CLK*/\
-MUX_VAL(CP(ETK_D0_ES2),		(IEN  | PTU | DIS | M3)) /*HSUSB1_DATA0*/\
-MUX_VAL(CP(ETK_D1_ES2),		(IEN  | PTU | DIS | M3)) /*HSUSB1_DATA1*/\
-MUX_VAL(CP(ETK_D2_ES2),		(IEN  | PTU | DIS | M3)) /*HSUSB1_DATA2*/\
-MUX_VAL(CP(ETK_D3_ES2),		(IEN  | PTU | DIS | M3)) /*HSUSB1_DATA7*/\
+MUX_VAL(CP(ETK_D0_ES2),		(IEN  | PTU | DIS | M1)) /*MCSPI3_SIMO*/\
+MUX_VAL(CP(ETK_D1_ES2),		(IEN  | PTU | DIS | M1)) /*MCSPI3_SOMI*/\
+MUX_VAL(CP(ETK_D2_ES2),		(IEN  | PTU | DIS | M1)) /*MCSPI3_CS0*/\
+MUX_VAL(CP(ETK_D3_ES2),		(IEN  | PTU | DIS | M1)) /*MCSPI3_CLK*/\
 MUX_VAL(CP(ETK_D4_ES2),		(IEN  | PTU | DIS | M3)) /*HSUSB1_DATA4*/\
 MUX_VAL(CP(ETK_D5_ES2),		(IEN  | PTU | DIS | M3)) /*HSUSB1_DATA5*/\
 MUX_VAL(CP(ETK_D6_ES2),		(IEN  | PTU | DIS | M3)) /*HSUSB1_DATA6*/\
@@ -461,7 +461,7 @@ MUX_VAL(CP(MCBSP1_FSX),     (IDIS | PTU | DIS | M1)) /*MCSPI4_CS0*/
 
 /*
  * IEN  - Input Enable
- * IDIS - Input Disable (i.e. output enable)
+ * IDIS - Input Disable (i.e. output only; IEN means bidirectional mode)
  * PTD  - Pull type Down
  * PTU  - Pull type Up
  * DIS  - Pull type selection is inactive
@@ -470,7 +470,7 @@ MUX_VAL(CP(MCBSP1_FSX),     (IDIS | PTU | DIS | M1)) /*MCSPI4_CS0*/
  * M4	- Mode 4 (GPIO)
  */
 
-// FIXME: GTA04A3ff has some improved mux assignments
+#if defined(CONFIG_I2C_OMAP_GTA04A2)
 
 #define MUX_BEAGLE_GTA04() \
 MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M4)) /*GPIO_12 - Display serial clock*/\
@@ -503,15 +503,99 @@ MUX_VAL(CP(MCBSP1_CLKR),	(IDIS | PTD | DIS | M0)) /*GPIO_156 - FM TRX*/\
 MUX_VAL(CP(MCBSP1_FSR),		(IEN  | PTU | EN  | M0)) /*GPIO_157 -  */\
 MUX_VAL(CP(MCBSP1_DX),		(IDIS | PTD | EN  | M0)) /*GPIO_158 -  */\
 MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTU | DIS | M0)) /*GPIO_159 -  */\
+MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | EN  | M4)) /*GPIO_160 - PENIRQ*/\
 MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTU | EN  | M0)) /*GPIO_161 -  */\
 MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTD | EN  | M0)) /*GPIO_162 -  */\
-MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | DIS | M4)) /*GPIO_160 - PENIRQ*/\
+MUX_VAL(CP(MCBSP4_CLKX),	(IEN  | PTD | DIS | M0)) /*MCBSP4_CLKX*/\
+MUX_VAL(CP(MCBSP4_DR),		(IEN  | PTD | DIS | M0)) /*MCBSP4_DR*/\
+MUX_VAL(CP(MCBSP4_DX),		(IEN  | PTD | DIS | M0)) /*MCBSP4_DX*/\
+MUX_VAL(CP(MCBSP4_FSX),		(IEN  | PTD | DIS | M0)) /*MCBSP4_FSX*/\
 MUX_VAL(CP(MCSPI1_CLK),		(IEN  | PTU | EN  | M4)) /*GPIO_171 - Version sense*/\
 MUX_VAL(CP(MCSPI1_SIMO),	(IEN  | PTU | EN  | M4)) /*GPIO_172 - Version sense*/\
 MUX_VAL(CP(MCSPI1_SOMI),	(IEN  | PTU | EN  | M4)) /*GPIO_173 - Version sense*/\
 MUX_VAL(CP(MCSPI1_CS0),		(IEN  | PTD | EN  | M4)) /*GPIO_174 - USB-PHY-RESET*/\
-MUX_VAL(CP(MCSPI1_CS1),		(IEN  | PTD | EN  | M4)) /*GPIO_175/MMC3CMD - WAKE_WWAN */\
-MUX_VAL(CP(MCSPI1_CS2),		(IEN  | PTD | EN  | M4)) /*GPIO_176/MMC3CLK - 3G_WOE */\
+MUX_VAL(CP(MCSPI1_CS1),		(IEN  | PTU | DIS | M4)) /*GPIO_175/MMC3CMD - WAKE_WWAN */\
+MUX_VAL(CP(MCSPI1_CS2),		(IEN  | PTD | DIS | M4)) /*GPIO_176/MMC3CLK - 3G_WOE */\
 
+#else 	// GTA04A3ff has some improved mux assignments
+
+#define MUX_BEAGLE_GTA04() \
+/*GPIO10 - Keyboard Controller INT - n/a*/\
+MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M4)) /*GPIO_12 - Display serial clock*/\
+MUX_VAL(CP(ETK_CTL_ES2),	(IEN  | PTU | EN  | M4)) /*GPIO_13 - RS232 enable*/\
+MUX_VAL(CP(ETK_D4_ES2),		(IEN  | PTU | DIS | M4)) /*GPIO_18 - Display DIN*/\
+MUX_VAL(CP(ETK_D5_ES2),		(IDIS | PTU | EN  | M4)) /*GPIO_19 - Display chip select*/\
+MUX_VAL(CP(ETK_D6_ES2),		(IDIS | PTU | EN  | M4)) /*GPIO_20 - Display DOUT*/\
+MUX_VAL(CP(ETK_D7_ES2),		(IEN  | PTU | EN  | M4)) /*GPIO_21 - RS232 EXT line*/\
+MUX_VAL(CP(ETK_D8_ES2),		(IEN  | PTU | EN  | M4)) /*GPIO_22 - MSECURE*/\
+MUX_VAL(CP(ETK_D9_ES2),		(IEN  | PTD | EN  | M4)) /*GPIO_23 - Video Out Enable*/\
+MUX_VAL(CP(GPMC_NCS3),		(IEN  | PTD | DIS | M4)) /*GPIO_54 - PoP Temp INT*/\
+MUX_VAL(CP(GPMC_NCS4),		(IEN  | PTU | EN  | M4)) /*GPIO_55 - AUX Out enable*/\
+MUX_VAL(CP(GPMC_NCS5),		(IEN  | PTD | DIS | M4)) /*GPIO_56 - Gyro INT*/\
+MUX_VAL(CP(GPMC_NCS6),		(IEN  | PTU | EN  | M4)) /*GPIO_57(GPT_11) - Backlight enable*/\
+MUX_VAL(CP(CSI2_DX0),		(IEN  | PTU | EN  | M4)) /*GPIO_112 - Compass DRDY*/\
+MUX_VAL(CP(CSI2_DY0),		(IEN  | PTU | DIS | M4)) /*GPIO_113 - Barometer EOC*/\
+MUX_VAL(CP(CSI2_DX1),		(IEN  | PTU | DIS | M4)) /*GPIO_114 - Accel1 INT*/\
+MUX_VAL(CP(CSI2_DY1),		(IEN  | PTU | DIS | M4)) /*GPIO_115 - Accel2 INT*/\
+MUX_VAL(CP(MMC2_CLK),		(IEN  | PTU | EN  | M0)) /*GPIO_130 -> MMC2_CLK*/\
+MUX_VAL(CP(MMC2_CMD),		(IEN  | PTU | EN  | M0)) /*GPIO_131 -> MMC2_CMD*/\
+MUX_VAL(CP(MMC2_DAT0),		(IEN  | PTU | EN  | M0)) /*GPIO_132 -> MMC2_DAT0*/\
+MUX_VAL(CP(MMC2_DAT1),		(IEN  | PTU | EN  | M0)) /*GPIO_133 -> MMC2_DAT1*/\
+MUX_VAL(CP(MMC2_DAT2),		(IEN  | PTU | EN  | M0)) /*GPIO_134 -> MMC2_DAT2*/\
+MUX_VAL(CP(MMC2_DAT3),		(IEN  | PTU | EN  | M0)) /*GPIO_135 -> MMC2_DAT3*/\
+MUX_VAL(CP(MMC2_DAT4),		(IEN  | PTU | EN  | M1)) /*GPIO_136 -> MMC2_DIR_DAT0 */\
+MUX_VAL(CP(MMC2_DAT5),		(IEN  | PTU | EN  | M1)) /*GPIO_137 -> MMC2_DIR_DAT1 */\
+MUX_VAL(CP(MMC2_DAT6),		(IEN  | PTU | EN  | M1)) /*GPIO_138 -> MMC2_DIR_CMD */\
+MUX_VAL(CP(MMC2_DAT7),		(IEN  | PTU | EN  | M1)) /*GPIO_139 -> MMC2_DIR_CLKIN */\
+MUX_VAL(CP(UART2_CTS),		(IEN  | PTU | DIS | M4)) /*GPIO_144 - ext Ant */\
+MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M4)) /*GPIO_145 - GPS ON(0)/OFF(1)*/\
+MUX_VAL(CP(UART2_TX),		(IDIS | PTU | DIS | M0)) /*GPIO_146 -> GPS_TX */\
+MUX_VAL(CP(UART2_RX),		(IEN  | PTU | DIS | M0)) /*GPIO_147 -> GPS_RX */\
+MUX_VAL(CP(UART1_TX),		(IDIS | PTD | DIS | M0)) /*UART1_TX -> Bluetooth HCI */\
+MUX_VAL(CP(UART1_RTS),		(IDIS | PTD | DIS | M0)) /*UART1_RTS -> Bluetooth HCI */ \
+MUX_VAL(CP(UART1_CTS),		(IEN  | PTD | DIS | M0)) /*UART1_CTS -> Bluetooth HCI */ \
+MUX_VAL(CP(UART1_RX),		(IEN  | PTD | DIS | M0)) /*UART1_RX -> Bluetooth HCI */\
+MUX_VAL(CP(MCBSP3_DX),		(IDIS | PTD | DIS | M0)) /*McBSP3 -> Bluetooth PCM */\
+MUX_VAL(CP(MCBSP3_DR),		(IEN  | PTD | DIS | M0)) /**/\
+MUX_VAL(CP(MCBSP3_CLKX),	(IDIS | PTD | DIS | M0)) /**/\
+MUX_VAL(CP(MCBSP3_FSX),		(IEN  | PTD | DIS | M0)) /**/\
+MUX_VAL(CP(MCBSP1_CLKR),	(IDIS | PTD | DIS | M0)) /*GPIO_156 -> FM TRX*/\
+MUX_VAL(CP(MCBSP1_FSR),		(IEN  | PTU | EN  | M0)) /*GPIO_157 -> MCBSP1_FSR */\
+MUX_VAL(CP(MCBSP1_DX),		(IDIS | PTD | EN  | M0)) /*GPIO_158 -> MCBSP1_DX */\
+MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTU | DIS | M0)) /*GPIO_159 -> MCBSP1_DR */\
+MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | DIS | M4)) /*GPIO_160 - PENIRQ*/\
+MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTU | EN  | M0)) /*GPIO_161 -> MCBSP1_FSX */\
+MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTD | EN  | M0)) /*GPIO_162 -> MCBSP1_CLKX */\
+MUX_VAL(CP(MCBSP4_CLKX),	(IEN  | PTD | DIS | M0)) /*MCBSP4_CLKX*/\
+MUX_VAL(CP(MCBSP4_DR),		(IEN  | PTD | DIS | M0)) /*MCBSP4_DR*/\
+MUX_VAL(CP(MCBSP4_DX),		(IEN  | PTD | DIS | M0)) /*MCBSP4_DX*/\
+MUX_VAL(CP(MCBSP4_FSX),		(IEN  | PTD | DIS | M0)) /*MCBSP4_FSX*/\
+MUX_VAL(CP(HDQ_SIO),		(IEN  | PTU | EN  | M0)) /*GPIO_170 -> HDQ*/\
+MUX_VAL(CP(MCSPI1_CLK),		(IEN  | PTU | EN  | M4)) /*GPIO_171 - Version sense*/\
+MUX_VAL(CP(MCSPI1_SIMO),	(IEN  | PTU | EN  | M4)) /*GPIO_172 - Version sense*/\
+MUX_VAL(CP(MCSPI1_SOMI),	(IEN  | PTU | EN  | M4)) /*GPIO_173 - Version sense*/\
+MUX_VAL(CP(MCSPI1_CS0),		(IEN  | PTU | EN  | M4)) /*GPIO_174 - USB-PHY-RESET*/\
+MUX_VAL(CP(MCSPI1_CS1),		(IEN  | PTU | DIS | M4)) /*GPIO_175/MMC3CMD - WAKE_WWAN */\
+MUX_VAL(CP(MCSPI1_CS2),		(IEN  | PTD | DIS | M4)) /*GPIO_176/MMC3CLK - 3G_WOE */\
+/*GPIO186 - spare (reserved for WLAN/BT power control)*/\
+
+#if 0 // test HSUSB2 wiring
+/* USB EHCI (port 2) */\
+MUX_VAL(CP(MCSPI1_CS3),		(IEN  | PTU | EN | M4)) /*GPIO177 - HSUSB2_DATA2*/\
+MUX_VAL(CP(MCSPI2_CLK),		(IEN  | PTU | EN | M4)) /*GPIO178 - HSUSB2_DATA7*/\
+MUX_VAL(CP(MCSPI2_SIMO),	(IEN  | PTU | EN | M4)) /*GPIO179 - HSUSB2_DATA4*/\
+MUX_VAL(CP(MCSPI2_SOMI),	(IEN  | PTU | EN | M4)) /*GPIO180 - HSUSB2_DATA5*/\
+MUX_VAL(CP(MCSPI2_CS0),		(IEN  | PTU | EN | M4)) /*GPIO181 - HSUSB2_DATA6*/\
+MUX_VAL(CP(MCSPI2_CS1),		(IEN  | PTU | EN | M4)) /*GPIO182 - HSUSB2_DATA3*/\
+MUX_VAL(CP(ETK_D10_ES2),	(IEN  | PTU | EN | M4)) /*GPIO24 - HSUSB2_CLK*/\
+MUX_VAL(CP(ETK_D11_ES2),	(IEN  | PTU | EN  | M4)) /*GPIO25 - HSUSB2_STP*/\
+MUX_VAL(CP(ETK_D12_ES2),	(IEN  | PTU | EN | M4)) /*GPIO26 - HSUSB2_DIR*/\
+MUX_VAL(CP(ETK_D13_ES2),	(IEN  | PTU | EN | M4)) /*GPIO27 - HSUSB2_NXT*/\
+MUX_VAL(CP(ETK_D14_ES2),	(IEN  | PTU | EN | M4)) /*GPIO28 - HSUSB2_DATA0*/\
+MUX_VAL(CP(ETK_D15_ES2),	(IEN  | PTU | EN | M4)) /*GPIO29 - HSUSB2_DATA1*/\
+
+#endif
+
+#endif
 
 #endif	/* _GTA04_H_ */

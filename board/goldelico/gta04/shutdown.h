@@ -25,5 +25,6 @@
 #define _SHUTDOWN_H
 
 void shutdown(void);
+void suspend(void);
 
 #endif
