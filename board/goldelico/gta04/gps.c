@@ -87,6 +87,9 @@ void gps_off(void)
 }
 
 static int lastant=-1;
+static long timer;
+
+#define TIMEOUT 2	// in seconds
 
 void gps_echo(void)
 {
@@ -106,12 +109,28 @@ void gps_echo(void)
 					lastant=ant;
 				}
 			if(NS16550_tstc((NS16550_t)CONFIG_SYS_NS16550_COM2))
+				{
 				putc(NS16550_getc((NS16550_t)CONFIG_SYS_NS16550_COM2));	// from GPS to console
-			// fixme: until we press ctl-C
+				timer=0;	// data received
+				}
 			if(tstc())
-				break;	// NS16550_putc((NS16550_t)CONFIG_SYS_NS16550_COM2, getc());
+				{
+				int c=getc();
+				if(c == 0x03)	// ctrl-C
+					break;
+				// NS16550_putc((NS16550_t)CONFIG_SYS_NS16550_COM2, c);
+				break;
+				}
+			if(timer++ > 2*10000)
+				{ // timeout - try to wakeup/reset the chip
+					printf("no data: on-off impulse\n");
+					omap_set_gpio_dataout(GPIO_GPS_ON, 1);
+					udelay(5000);
+					omap_set_gpio_dataout(GPIO_GPS_ON, 1);
+					timer=0;
+				}
+			udelay(100);	// 10 kHz @ 9 kbit/s
 		}
-	getc();
 	printf("\n");
 }
 
