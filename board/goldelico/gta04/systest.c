@@ -527,7 +527,7 @@ int irdatest(void)
 		if(!omap_get_gpio_datain(RS232_RX))	// RX is active low
 			status_set_status(0x018);	// echo IrDA sensor status to red power button led
 		else
-			status_set_status(0x00);
+			status_set_status(0x000);
 		}
 	// switch back to UART mode
 	MUX_VAL(CP(UART3_RX_IRRX),	(IEN  | PTD | DIS | M0)); /*UART3_RX_IRRX*/
@@ -596,5 +596,255 @@ int OTGchargepump(int enable)
 	if(enable)
 		twl4030_i2c_write_u8(TWL4030_CHIP_USB, 0x20, TWL4030_USB_OTG_CTRL_SET);
 	else
-		twl4030_i2c_write_u8(TWL4030_CHIP_USB, 0x20, TWL4030_USB_OTG_CTRL_CLR);	
+		twl4030_i2c_write_u8(TWL4030_CHIP_USB, 0x20, TWL4030_USB_OTG_CTRL_CLR);
+	return 0;
 }
+
+static struct
+{
+	int gpio;
+	int inputonly;		// can't switch to output mode (Table 2-24. General-Purpose IOs Signals Description)
+	char *name;
+	unsigned offset;	// PIN-MUX control address -> writew((VALUE), OMAP34XX_CTRL_BASE + (OFFSET));
+} gpiotable[] = {
+	{ 7, 0, "AUX button", CP(SYS_BOOT5) },
+	
+	{ 10, 0, "A3: KEYIRQ / A4: 3G_WAKE", CP(SYS_CLKOUT1) },
+	
+	{ 12, 0, "Display SCL", CP(ETK_CLK_ES2) },
+	
+	// CHECKME: doesn't this interfere with RS232 operation?
+	//	{ 13, 1, "RS232 enable", CP(ETK_CTL_ES2) }, 
+	
+	{ 18, 0, "Display DR", CP(ETK_D4_ES2) },
+	{ 19, 0, "Display XCS", CP(ETK_D5_ES2) },
+	{ 20, 0, "Display DX", CP(ETK_D6_ES2) },
+	{ 21, 0, "RS232 EXT", CP(ETK_D7_ES2) },
+	
+	{ 23, 0, "Video out en", CP(ETK_D9_ES2) },
+	{ 24, 0, "HSUSB2_CLK", CP(ETK_D10_ES2) },
+	{ 25, 0, "HSUSB2_STP", CP(ETK_D11_ES2) },
+	{ 26, 0, "HSUSB2_DIR", CP(ETK_D12_ES2) },
+	{ 27, 0, "HSUSB2_NXT", CP(ETK_D13_ES2) },
+	{ 28, 0, "HSUSB2_DATA0", CP(ETK_D14_ES2) },
+	{ 29, 0, "HSUSB2_DATA1", CP(ETK_D15_ES2) },
+	
+	{ 54, 0, "PoP Temp", CP(GPMC_NCS3) },
+	{ 55, 0, "Audio out en", CP(GPMC_NCS4) },
+	{ 56, 0, "Gyro int", CP(GPMC_NCS5) },	
+	{ 57, 0, "Backlight en", CP(GPMC_NCS6) },
+	
+	{ 66, 0, "PCLK", CP(DSS_PCLK) },
+	{ 67, 0, "HSYNC", CP(DSS_HSYNC) },
+	{ 68, 0, "VSYNC", CP(DSS_VSYNC) },
+	{ 69, 0, "DE", CP(DSS_ACBIAS) },
+	{ 70, 0, "DSS0", CP(DSS_DATA0) },
+	{ 71, 0, "DSS1", CP(DSS_DATA1) },
+	{ 72, 0, "DSS2", CP(DSS_DATA2) },
+	{ 73, 0, "DSS3", CP(DSS_DATA3) },
+	{ 74, 0, "DSS4", CP(DSS_DATA4) },
+	{ 75, 0, "DSS5", CP(DSS_DATA5) },
+	{ 76, 0, "DSS6", CP(DSS_DATA6) },
+	{ 77, 0, "DSS7", CP(DSS_DATA7) },
+	{ 78, 0, "DSS8", CP(DSS_DATA8) },
+	{ 79, 0, "DSS9", CP(DSS_DATA9) },
+	{ 80, 0, "DSS10", CP(DSS_DATA10) },
+	{ 81, 0, "DSS11", CP(DSS_DATA11) },
+	{ 82, 0, "DSS12", CP(DSS_DATA12) },
+	{ 83, 0, "DSS13", CP(DSS_DATA13) },
+	{ 84, 0, "DSS14", CP(DSS_DATA14) },
+	{ 85, 0, "DSS15", CP(DSS_DATA15) },
+	{ 86, 0, "DSS16", CP(DSS_DATA16) },
+	{ 87, 0, "DSS17", CP(DSS_DATA17) },
+	{ 88, 0, "DSS18", CP(DSS_DATA18) },
+	{ 89, 0, "DSS19", CP(DSS_DATA19) },
+	{ 90, 0, "DSS20", CP(DSS_DATA20) },
+	{ 91, 0, "DSS21", CP(DSS_DATA21) },
+	{ 92, 0, "DSS22", CP(DSS_DATA22) },
+	{ 93, 0, "DSS23", CP(DSS_DATA23) },
+	{ 94, 0, "CAM_HS", CP(CAM_HS) },
+	{ 95, 0, "CAM_VS", CP(CAM_VS) },
+	{ 96, 0, "CAM_XCLKA", CP(CAM_XCLKA) },
+	{ 97, 0, "CAM_PCLK", CP(CAM_PCLK) },
+	{ 98, 0, "CAM_RESET", CP(CAM_FLD) },
+	{ 99, 1, "CAM_D0", CP(CAM_D0) },
+	{ 100, 1, "CAM_D1", CP(CAM_D1) },
+	{ 101, 0, "CAM_D2", CP(CAM_D2) },
+	{ 102, 0, "CAM_D3", CP(CAM_D3) },
+	{ 103, 0, "CAM_D4", CP(CAM_D4) },
+	{ 104, 0, "CAM_D5", CP(CAM_D5) },
+	{ 105, 1, "CAM_D6", CP(CAM_D6) },
+	{ 106, 1, "CAM_D7", CP(CAM_D7) },
+	{ 107, 1, "CAM_D8", CP(CAM_D8) },
+	{ 108, 1, "CAM_D9", CP(CAM_D9) },
+	{ 109, 0, "CAM_D10", CP(CAM_D10) },
+	{ 110, 0, "CAM_D11", CP(CAM_D11) },
+	{ 111, 0, "CAM_XCLKB", CP(CAM_XCLKB) },
+	{ 112, 1, "Compass rdy", CP(CSI2_DX0) },
+	{ 113, 1, "Baro EOC", CP(CSI2_DY0) },
+	{ 114, 1, "Accel2 int", CP(CSI2_DX1) },
+	{ 115, 1, "Accel1 int", CP(CSI2_DY1) },
+	{ 116, 0, "Audio_FSX", CP(MCBSP2_FSX) },
+	{ 117, 0, "Audio_CLKX", CP(MCBSP2_CLKX) },
+	{ 118, 0, "Audio_DR", CP(MCBSP2_DR) },
+	{ 119, 0, "Audio_DX", CP(MCBSP2_DX) },
+
+	/*	this are duplicate GPIOs with MMC1
+	{ 120, 0, "HSUSB0_CLK", CP(HSUSB0_CLK) },
+	{ 121, 0, "HSUSB0_STP", CP(HSUSB0_STP) },
+	{ 122, 0, "HSUSB0_DIR", CP(HSUSB0_DIR) },
+	
+	{ 124, 0, "HSUSB0_NXT", CP(HSUSB0_NXT) },
+	{ 125, 0, "HSUSB0_DATA0", CP(HSUSB0_DATA0) },
+	 */
+
+	{ 126, 0, "CAM_STROBE", CP(CAM_STROBE) },
+	
+	/*	this are duplicate GPIOs with MMC2
+	 { 130, 0, "HSUSB0_DATA1", CP(HSUSB0_DATA1) },
+	 { 131, 0, "HSUSB0_DATA2", CP(HSUSB0_DATA2) },
+	 */
+	
+	{ 130, 0, "MMC2_CLK", CP(MMC2_CLK) },
+	{ 131, 0, "MMC2_CMD", CP(MMC2_CMD) },
+	{ 132, 0, "MMC2_DAT0", CP(MMC2_DAT0) },
+	{ 133, 0, "MMC2_DAT1", CP(MMC2_DAT1) },
+	{ 134, 0, "MMC2_DAT2", CP(MMC2_DAT2) },
+	{ 135, 0, "MMC2_DAT3", CP(MMC2_DAT3) },
+	{ 136, 0, "MMC2_DIR_DAT0", CP(MMC2_DAT4) },
+	{ 137, 0, "MMC2_DIR_DAT1", CP(MMC2_DAT5) },
+	{ 138, 0, "MMC2_DIR_CMD", CP(MMC2_DAT6) },
+	{ 139, 0, "MMC2_DIR_CLKIN", CP(MMC2_DAT7) },	
+	{ 140, 0, "BT_DX", CP(MCBSP3_DX) },
+	{ 141, 0, "BT_DR", CP(MCBSP3_DR) },
+	{ 142, 0, "BT_CLKX", CP(MCBSP3_CLKX) },
+	{ 143, 0, "BT_FSX", CP(MCBSP3_FSX) },
+	{ 144, 0, "Ext Ant", CP(UART2_CTS) },
+//	{ 145, 0, "GPS enable", CP(UART2_RTS) },	// should remain disabled!
+	{ 146, 0, "GPS_TX", CP(UART2_TX) },
+	{ 147, 0, "GPS_RX", CP(UART2_RX) },
+	{ 148, 0, "BT_TX", CP(UART1_TX) },
+	{ 149, 0, "BT_RTS", CP(UART1_RTS) },
+	{ 150, 0, "BT_CTS", CP(UART1_CTS) },
+	{ 151, 0, "BT_RX", CP(UART1_RX) },
+	{ 152, 0, "WWAN_CLKX", CP(MCBSP4_CLKX) },
+	{ 153, 0, "WWAN_DR", CP(MCBSP4_DR) },
+	{ 154, 0, "WWAN_DX", CP(MCBSP4_DX) },
+	{ 155, 0, "WWAN_FSX", CP(MCBSP4_FSX) },
+	{ 156, 0, "FM_CLKR", CP(MCBSP1_CLKR) },
+	{ 157, 0, "FM_FSR", CP(MCBSP1_FSR) },
+	{ 158, 0, "FM_DX", CP(MCBSP1_DX) },
+	{ 159, 0, "FM_DR", CP(MCBSP1_DR) },
+	{ 160, 0, "PENIRQ", CP(MCBSP_CLKS) },
+	{ 161, 0, "FM_FSX", CP(MCBSP1_FSX) },
+	{ 162, 0, "FM_CLKX", CP(MCBSP1_CLKX) },
+		
+	{ 167, 0, "CAM_PWDN", CP(CAM_WEN) },
+	
+	{ 169, 0, "HSUSB0_DATA3", CP(HSUSB0_DATA3) },
+
+	{ 171, 0, "Revision 0x1", CP(MCSPI1_CLK) },
+	{ 172, 0, "Revision 0x2", CP(MCSPI1_SIMO) },
+	{ 173, 0, "Revision 0x4", CP(MCSPI1_SOMI) },
+//	{ 174, 0, "USB3322 reset", CP(MCSPI1_CS0) },	// should remain in reset state
+	{ 175, 0, "A3: HOST_WAKE / A4:spare", CP(MCSPI1_CS1) },
+	{ 176, 0, "A3: 3G_WAKE / A4: KEYIRQ", CP(MCSPI1_CS2) },
+	{ 177, 0, "HSUSB2_DATA2", CP(MCSPI1_CS3) },
+	{ 178, 0, "HSUSB2_DATA7", CP(MCSPI2_CLK) },
+	{ 179, 0, "HSUSB2_DATA4", CP(MCSPI2_SIMO) },
+	{ 180, 0, "HSUSB2_DATA5", CP(MCSPI2_SOMI) },
+	{ 181, 0, "HSUSB2_DATA6", CP(MCSPI2_CS0) },
+	{ 182, 0, "HSUSB2_DATA3", CP(MCSPI2_CS1) },
+	
+	{ 186, 0, "A3: spare / A4: ON_KEY", CP(SYS_CLKOUT2) },
+	
+	{ 188, 0, "HSUSB0_DATA4", CP(HSUSB0_DATA4) },
+	{ 189, 0, "HSUSB0_DATA5", CP(HSUSB0_DATA5) },
+	{ 190, 0, "HSUSB0_DATA6", CP(HSUSB0_DATA6) },
+	{ 191, 0, "HSUSB0_DATA7", CP(HSUSB0_DATA7) },
+	
+};
+
+
+int gpiotest(void)
+{
+	int i;
+	printf("testing GPIOs for stuck-at, floating and shorts\n");
+	omap_set_gpio_direction(174, 0);	// switch to output
+	omap_set_gpio_dataout(174, 0); // activate reset of USB3322
+	// Camera reset?
+	// WLAN-Reset?
+	// switch off GPS (if on)
+	for(i=0; i<sizeof(gpiotable)/sizeof(gpiotable[0]); i++)
+		{
+		int g=gpiotable[i].gpio;
+		omap_request_gpio(g);
+		omap_set_gpio_direction(g, 1);	// make them all inputs
+		if(gpiotable[i].offset)
+			writew((IEN  | PTD | DIS | M4), OMAP34XX_CTRL_BASE + (gpiotable[i].offset));	// make input GPIO w/o pullup/down
+		udelay(100);
+		}
+	for(i=0; i<sizeof(gpiotable)/sizeof(gpiotable[0]); i++)
+		{ // loop over all inputs
+			int g=gpiotable[i].gpio;
+			char *n=gpiotable[i].name;
+			int j;
+			for(j=0; j<sizeof(gpiotable)/sizeof(gpiotable[0]); j++)
+				{ // check for shorts with other GPIOs switched to output
+					int gj=gpiotable[j].gpio;
+					char *nj=gpiotable[j].name;
+					int valdn, valup; 
+					int stuck=0;	// if known to be stuck
+					int follows=0;	// if known to follow
+					if(!gpiotable[j].inputonly)
+						{ // test with active I/O
+							omap_set_gpio_direction(gj, 0);	// switch to output
+							udelay(100);
+							omap_set_gpio_dataout(gj, 0); // set other output to 0
+							udelay(100);
+							valdn=omap_get_gpio_datain(g);	// read value of input GPIO under test
+							omap_set_gpio_dataout(gj, 1); // set other output to 1
+							udelay(100);
+							valup=omap_get_gpio_datain(g);	// read value of input GPIO under test
+							omap_set_gpio_direction(gj, 1);	// switch back to input
+							udelay(300);
+							if(valdn == 0 && valup == 1)
+								{ // our input follows the other in output mode
+								if(i != j)
+									printf("GPIO %d (%s) follows GPIO %d (%s)\n", g, n, gj, nj), follows=1;
+								}
+							else if(i == j)
+								{ // output does *not* read back the input value -> shorted
+									if(valdn == 0 && valup == 0)
+										printf("GPIO %d (%s) stuck at 0\n", g, n), stuck=1;
+									else if(valdn == 1 && valup == 1)
+										printf("GPIO %d (%s) stuck at 1\n", g, n), stuck=1;
+								}
+						}
+					writew((IEN  | PTD | EN | M4), OMAP34XX_CTRL_BASE + (gpiotable[j].offset));	// make other GPIO input with pulldown
+					udelay(300);
+					valdn=omap_get_gpio_datain(g);	// read value of GPIO under test
+					writew((IEN  | PTU | EN | M4), OMAP34XX_CTRL_BASE + (gpiotable[j].offset));	// make other GPIO input with pullup
+					udelay(300);
+					valup=omap_get_gpio_datain(g);	// read value of GPIO under test
+					writew((IEN  | PTD | DIS | M4), OMAP34XX_CTRL_BASE + (gpiotable[j].offset)); // make other GPIO w/o pullup/down
+					udelay(100);
+					if(valdn == 0 && valup == 1)
+						{ // follows the other pull-up/down
+							if(i == j)
+								printf("GPIO %d (%s) floating\n", g, n);	// follows our own pull-up/down
+							else if(!follows)
+								printf("GPIO %d (%s) weakly follows GPIO %d (%s)\n", g, n, gj, nj, gpiotable[j].inputonly?" (strong not tested)":"");	// -> GPIOs are connected with low to high resistance
+						}
+					else if(i == j && !stuck)
+						{
+						if(valdn == 0 && valup == 0)
+							printf("GPIO %d (%s) weak 0%s\n", g, n, gpiotable[j].inputonly?" (strong not tested)":"");
+						else if(valdn == 1 && valup == 1)
+							printf("GPIO %d (%s) weak 1%s\n", g, n, gpiotable[j].inputonly?" (strong not tested)":"");
+						}
+				}
+		}											 
+	return 0;
+}
+	

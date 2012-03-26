@@ -31,5 +31,6 @@ int audiotest(int channel);
 int irdatest(void);
 int wlanbttest(int serial);
 int OTGchargepump(int enable);
+int gpiotest(void);
 
 #endif

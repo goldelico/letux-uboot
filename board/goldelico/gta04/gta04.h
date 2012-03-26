@@ -296,8 +296,8 @@ MUX_VAL(CP(SYS_BOOT3),		(IEN  | PTD | DIS | M4)) /*GPIO_5*/\
 MUX_VAL(CP(SYS_BOOT4),		(IEN  | PTD | DIS | M4)) /*GPIO_6*/\
 MUX_VAL(CP(SYS_BOOT5),		(IEN  | PTD | DIS | M4)) /*GPIO_7*/\
 MUX_VAL(CP(SYS_BOOT6),		(IDIS | PTD | DIS | M4)) /*GPIO_8*/ \
-MUX_VAL(CP(SYS_OFF_MODE),	(IEN  | PTD | DIS | M0)) /*SYS_OFF_MODE*/\
-MUX_VAL(CP(SYS_CLKOUT1),	(IEN  | PTD | DIS | M0)) /*SYS_CLKOUT1*/\
+MUX_VAL(CP(SYS_OFF_MODE),	(IEN  | PTD | DIS | M0)) /*GPIO_9 / SYS_OFF_MODE*/\
+MUX_VAL(CP(SYS_CLKOUT1),	(IEN  | PTD | DIS | M4)) /*GPIO_10 / SYS_CLKOUT1*/\
 MUX_VAL(CP(SYS_CLKOUT2),	(IEN  | PTU | EN  | M4)) /*GPIO_186*/\
 /* should be removed or initialized correctly from the beginning since it may result in a glitch on these pins that we use as GPIOs */\
 MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M3)) /*HSUSB1_STP*/\
@@ -535,8 +535,8 @@ MUX_VAL(CP(GPMC_NCS5),		(IEN  | PTD | DIS | M4)) /*GPIO_56 - Gyro INT*/\
 MUX_VAL(CP(GPMC_NCS6),		(IEN  | PTU | EN  | M4)) /*GPIO_57(GPT_11) - Backlight enable*/\
 MUX_VAL(CP(CSI2_DX0),		(IEN  | PTU | EN  | M4)) /*GPIO_112 - Compass DRDY*/\
 MUX_VAL(CP(CSI2_DY0),		(IEN  | PTU | DIS | M4)) /*GPIO_113 - Barometer EOC*/\
-MUX_VAL(CP(CSI2_DX1),		(IEN  | PTU | DIS | M4)) /*GPIO_114 - Accel1 INT*/\
-MUX_VAL(CP(CSI2_DY1),		(IEN  | PTU | DIS | M4)) /*GPIO_115 - Accel2 INT*/\
+MUX_VAL(CP(CSI2_DX1),		(IEN  | PTU | DIS | M4)) /*GPIO_114 - Accel2 INT*/\
+MUX_VAL(CP(CSI2_DY1),		(IEN  | PTU | DIS | M4)) /*GPIO_115 - Accel1 INT*/\
 MUX_VAL(CP(MMC2_CLK),		(IEN  | PTU | EN  | M0)) /*GPIO_130 -> MMC2_CLK*/\
 MUX_VAL(CP(MMC2_CMD),		(IEN  | PTU | EN  | M0)) /*GPIO_131 -> MMC2_CMD*/\
 MUX_VAL(CP(MMC2_DAT0),		(IEN  | PTU | EN  | M0)) /*GPIO_132 -> MMC2_DAT0*/\

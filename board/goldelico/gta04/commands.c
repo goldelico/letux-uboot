@@ -610,6 +610,9 @@ static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		if (strncmp ("ch", argv[1], 2) == 0) {
 			return twl4030_init_battery_charging();
 		}
+		if (strncmp ("gp", argv[1], 2) == 0) {
+			return gpiotest();
+		}
 	}
 	if(argc == 3) {
 		if (strncmp ("ot", argv[1], 2) == 0) {
@@ -626,13 +629,16 @@ static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 }
 
 U_BOOT_CMD(systest, 3, 0, do_systest, "System Test",
-		   "all - graphical test mode\n"
-		   "audio - test audio\n"
-		   "irda - test IrDA\n"
-		   "wlanbt - test WLAN/BT module\n"
+		   "al[l] - graphical test mode\n"
+		   "au[dio] - test audio\n"
+		   "ir[da] - test IrDA\n"
+		   "gp[io] - test some GPIOs\n"
+		   "wl[anbt] - test WLAN/BT module\n"
 		   "wp - apply power to WLAN/BT module\n"
-		   "charging - init and test BCI/BKBAT\n"
-		   "otg n - enable/disable OTG charge pump\n"
+		   "ch[arging] - init and test BCI/BKBAT\n"
+		   "ot[g] n - enable/disable OTG charge pump\n"
+		   "ul[pi] n - read ULPI register n\n"
+		   "<no args> - test presence of I2C devices and some TPS65950 registers\n"
 		   );
 
 
