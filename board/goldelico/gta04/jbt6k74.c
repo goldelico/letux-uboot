@@ -43,8 +43,9 @@
 
 #define DVI_BACKGROUND_COLOR		0x00fadc29	// rgb(250, 220, 41)
 
-#define DSS1_FCLK	432000000	// see figure 15-65
-#define PIXEL_CLOCK	22000000	// approx. 22 MHz (will be divided from 432 MHz)
+#define DSS1_FCLK		432000000	// compare table 4-32. figure 15-65 - but there are other factors
+#define DSS1_FCLK3730	108000000	// compare table 3-34, figure 7-63 - but there are other factors
+#define PIXEL_CLOCK		22000000	// approx. 22 MHz (will be divided from 432 MHz)
 
 // all values are min ratings
 
@@ -72,7 +73,7 @@
 #define DEBUGPC(x, args...) do { } while (0)
 #endif
 
-static const struct panel_config lcm_cfg = 
+static /*const*/ struct panel_config lcm_cfg = 
 {
 	.timing_h	= ((HBP-1)<<20) | ((HFP-1)<<8) | ((HS-1)<<0), /* Horizantal timing */
 	.timing_v	= ((VBP+0)<<20) | ((VFP+0)<<8) | ((VS-1)<<0), /* Vertical timing */
@@ -369,6 +370,8 @@ int board_video_init(GraphicDevice *pGD)
 		printf("No LCM connected\n");
 		return 1;
 		}
+	if (get_cpu_family() == CPU_OMAP36XX)
+		lcm_cfg.divisor	= (0x0001<<16)|(DSS1_FCLK3730/PIXEL_CLOCK), /* Pixel Clock divisor from dss1_fclk */
 	dssfb_init(&lcm_cfg);
 	
 	printf("did board_video_init()\n");
