@@ -26,7 +26,7 @@
 # 3. run bootcmd
 #
 
-VERSION=009	# increment if we need to re-initialize the boot environment
+VERSION=011	# increment if we need to re-initialize the boot environment
 
 echo "*** if you boot from NAND don-t worry about error messages when U-Boot tries to read a non-existing MMC ***"
 
@@ -44,13 +44,13 @@ if test "${gta04}" != "${VERSION}"
 	
 	setenv bootdelay	1
 	setenv mmcdev 		0
-	setenv imgtempaddr	0x80800000
+	setenv imgtempaddr	0x80800000	# address where we load compressed splash image
 	setenv bootaddr 	0x81800000	# address where we load the boot script
 	setenv loadaddr		0x82000000	# address where we load the kernel
-	# setenv console ttyS2,115200n8
+	# setenv console	ttyS2,115200n8
 	# for newer kernels with OMAP console (unfortunately U-Boot can't find out)
 	setenv console		ttyO2,115200n8
-	setenv defaultdisplay lcd
+	setenv defaultdisplay	lcd
 
 	# load zipped/uncompressed image from mmc or nand wherever we find it
 	setenv loadimg 'i2c dev 0; mmc rescan ${mmcdev}; if fatload mmc ${mmcdev} ${imgaddr} ${imgfile}.rgb16; then; elif fatload mmc ${mmcdev} ${imgtempaddr} ${imgfile}.rgb16z; then unzip ${imgtempaddr} ${imgaddr}; elif nand read ${imgtempaddr} ${imgnandaddr} 40000; then unzip ${imgtempaddr} ${imgaddr}; fi'
@@ -62,10 +62,10 @@ if test "${gta04}" != "${VERSION}"
 	setenv kernelloaded 'status set 10'
 
 	setenv loadbootscript 'i2c dev 0; mmc rescan ${mmcdev}; if fatload mmc ${mmcdev} ${bootaddr} boot.scr; then echo did load bootscript from mmc; elif nand read ${bootaddr} 250000 10000; then echo did load bootscript from nand; fi'	
-	setenv loadkernel 'run kernelloading; i2c dev 0; mmc rescan ${mmcdev}; if fatload mmc ${mmcdev} ${loadaddr} uImage; then run mmcargs; elif ext2load mmc 0:2 /boot/uImage; then run mmcargs; else nand read ${loadaddr} 280000 400000; run nandargs; fi; run kernelloaded'
+	setenv loadkernel 'run kernelloading; i2c dev 0; mmc rescan ${mmcdev}; if fatload mmc ${mmcdev} ${loadaddr} uImage; then run mmcargs; elif ext2load mmc 0:2 ${loadaddr} /boot/uImage; then run mmcargs; else nand read ${loadaddr} 280000 400000; run nandargs; fi; run kernelloaded'
 
 	# set boot arguments
-	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} root=${mmcroot} rootfstype=${mmcrootfstype}; echo using mmc rootfs'
+	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} root=${mmcroot} rootfstype=${mmcrootfstype}; echo using mmc rootfs; if fatload mmc ${mmcdev} ${imgtempaddr} bootargs.scr; then source ${imgtempaddr}; elif ext2load mmc 0:2 ${imgtempaddr} /boot/bootargs.scr; ; then source ${imgtempaddr}; fi'
 	setenv mmcroot '/dev/mmcblk0p2 rw'
 	setenv mmcrootfstype 'ext3 rootwait'
 
@@ -77,7 +77,7 @@ if test "${gta04}" != "${VERSION}"
 #	setenv nandroot 'ubi0:om-gta04-rootfs'
 #	setenv nandrootfstype 'ubifs ubi.mtd=4,2048'
 
-	# boot with kernel/rootfs from specified source (fallback to NAND for kernel)
+	# boot with kernel/rootfs from specified source (fallback to NAND for kernel; may call mmcargs twice)
 	setenv mmcboot 'if run loadkernel; then run mmcargs; bootm ${loadaddr}; fi;'
 	setenv nandboot 'run kernelloading; if nand read ${loadaddr} 280000 400000; then run nandargs; run kernelloaded; bootm ${loadaddr}; fi;'
 

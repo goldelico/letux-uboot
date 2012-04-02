@@ -1,0 +1,34 @@
+#
+# bootargs.scr
+#
+# Kernel parameter script for Beagle Hybrid / Panda Hybrid / GTA04
+#
+# Author: H. Nikolaus Schaller
+# Copyright Golden Delicious Computers 2010-2012
+# licensed under GPL 2.0
+#
+# This script will be run by boot.scr if the kernel is detected
+# on SD card
+# It will be aearched in FAT partition and /boot in ext partition
+#
+# Please add to your distro together with a kernel
+#
+# add/modify bootargs as needed,
+# but please resist to do other fancy stuff here.
+# finally, you should not run a saveenv here!
+#
+
+echo running bootargs.scr
+
+bootargs="${bootargs}" # add additional args here
+
+# console=${console}
+# mpurate=${mpurate}
+# vram=${vram}
+# omapfb.mode=dvi:${dvimode}
+# omapfb.debug=y
+# omapdss.def_disp=${defaultdisplay}
+# root=${mmcroot}
+# rootfstype=${mmcrootfstype}
+
+echo bootargs.scr done...
