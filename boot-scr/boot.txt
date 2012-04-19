@@ -26,7 +26,7 @@
 # 3. run bootcmd
 #
 
-VERSION=011	# increment if we need to re-initialize the boot environment
+VERSION=012	# increment if we need to re-initialize the boot environment
 
 echo "*** if you boot from NAND don-t worry about error messages when U-Boot tries to read a non-existing MMC ***"
 
@@ -204,6 +204,7 @@ then
 					nand write 0x80200000 20000 20000
 					nand write 0x80200000 40000 20000
 					nand write 0x80200000 60000 20000
+					echo *** Xloader flashed ***
 				fi
 				
 				status set 2
@@ -217,31 +218,32 @@ then
 					nand write 0x80300000 80000 150000
 					echo *** write our environment ***
 					saveenv
-				fi
 
-				# read&write compressed splash image to nand
-				# there is just room for 614 kByte
-				# since u-boot is approx 260 kByte
+					# read&write compressed splash image to nand
+					# there is just room for 614 kByte
+					# since u-boot is approx 260 kByte
 
-				if fatload mmc 0 0x80300000 splash.rgb16z
-					then
-					echo *** flashing splash ***
-					nandecc sw
-					nand write 0x80300000 1d0000 40000
-				fi
+					if fatload mmc 0 0x80300000 splash.rgb16z
+						then
+						echo *** flashing splash ***
+						nandecc sw
+						nand write 0x80300000 1d0000 40000
+					fi
 
-				if fatload mmc 0 0x80300000 menu.rgb16z
-					then
-					echo *** flashing menu ***
-					nandecc sw
-					nand write 0x80300000 210000 40000
-				fi
+					if fatload mmc 0 0x80300000 menu.rgb16z
+						then
+						echo *** flashing menu ***
+						nandecc sw
+						nand write 0x80300000 210000 40000
+					fi
 
-				if fatload mmc 0 0x80300000 boot.scr
-					then
-					echo *** flashing boot.scr ***
-					nandecc sw
-					nand write 0x80300000 250000 10000
+					if fatload mmc 0 0x80300000 boot.scr
+						then
+						echo *** flashing boot.scr ***
+						nandecc sw
+						nand write 0x80300000 250000 10000
+					fi
+					echo *** U-Boot flashed ***
 				fi
 
 				status set 3
