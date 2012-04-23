@@ -67,7 +67,7 @@ if test "${gta04}" != "${VERSION}"
 	# set boot arguments
 	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} root=${mmcroot} rootfstype=${mmcrootfstype}; echo using mmc rootfs; if fatload mmc ${mmcdev} ${imgtempaddr} bootargs.scr; then source ${imgtempaddr}; elif ext2load mmc 0:2 ${imgtempaddr} /boot/bootargs.scr; ; then source ${imgtempaddr}; fi'
 	setenv mmcroot '/dev/mmcblk0p2 rw'
-	setenv mmcrootfstype 'ext3 rootwait'
+	setenv mmcrootfstype 'ext4,ext3,btrfs rootwait'
 
 	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} root=${nandroot} rootfstype=${nandrootfstype}; echo using nand rootfs'
 	setenv nandroot '/dev/mtdblock4 rw'
