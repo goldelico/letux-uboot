@@ -42,6 +42,7 @@
 
 int bt_hci(int msg)
 {
+#ifdef CONFIG_SYS_NS16550_COM1
 #define MODE_X_DIV 16
 	int baudrate=9600;
 	int divisor=(CONFIG_SYS_NS16550_CLK + (baudrate * (MODE_X_DIV / 2))) / (MODE_X_DIV * baudrate);
@@ -140,6 +141,7 @@ int bt_hci(int msg)
 		}
 	if(msg)
 		printf("\n");
+#endif
 	return 1;
 }
 
@@ -201,7 +203,7 @@ int systest(void)
 	printf("BMP085:        %s\n", !i2c_probe(0x77)?"found":"-");
 	printf("ITG3200:       %s\n", !i2c_probe(0x68)?"found":"-");
 	printf("Si47xx:        %s\n", !i2c_probe(0x11)?"found":"-");
-	printf("TCA8418:       %s\n", !i2c_probe(0x64)?"found":"-");
+	printf("TCA8418:       %s\n", !i2c_probe(0x34)?"found":"-");
 	printf("OV9655:        %s\n", !i2c_probe(0x30)?"found":"-");
 	printf("TPS61050:      %s\n", !i2c_probe(0x33)?"found":"-");
 	printf("EEPROM:        %s\n", !i2c_probe(0x50)?"found":"-");
@@ -834,7 +836,7 @@ int gpiotest(void)
 							if(i == j)
 								printf("GPIO %d (%s) floating\n", g, n);	// follows our own pull-up/down
 							else if(!follows)
-								printf("GPIO %d (%s) weakly follows GPIO %d (%s)\n", g, n, gj, nj, gpiotable[j].inputonly?" (strong not tested)":"");	// -> GPIOs are connected with low to high resistance
+								printf("GPIO %d (%s) weakly follows GPIO %d (%s)%s\n", g, n, gj, nj, gpiotable[j].inputonly?" (strong not tested)":"");	// -> GPIOs are connected with low to high resistance
 						}
 					else if(i == j && !stuck)
 						{
