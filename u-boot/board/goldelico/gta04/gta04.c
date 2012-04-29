@@ -43,7 +43,7 @@
 #include <asm/mach-types.h>
 #include "gta04.h"
 
-#if 1	/* testing tool; you can call notify() anywhere even before initialization to see how far the code comes */
+#if 0	/* testing tool; you can call notify() anywhere even before initialization to see how far the code comes */
 
 /******************************************************************************
  * Routine: delay
@@ -64,7 +64,7 @@ static inline void myudelay(unsigned long us)
 #define BLOFF()	MUX_VAL(CP(GPMC_NCS6),      (IEN | PTD | EN  | M4)) /*GPT_PWM11/GPIO57*/
 
 void notify(int number)
-{ // flash LCD backlight
+{ // flash LCD backlight (on A3 board only or remove R209!)
 	BLOFF();
 	myudelay(200*1000);
 	BLON();
