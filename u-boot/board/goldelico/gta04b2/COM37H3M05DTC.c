@@ -112,6 +112,7 @@ int jbt6k74_display_onoff(int on)
 int board_video_init(GraphicDevice *pGD)
 {
 	extern int get_board_revision(void);
+	printf("board_video_init() COM37H3M05DTC\n");
 	
 	// FIXME: here we should pass down the GPIO(s)
 	

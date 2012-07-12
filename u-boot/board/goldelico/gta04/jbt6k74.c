@@ -355,6 +355,7 @@ int jbt6k74_display_onoff(int on)
 int board_video_init(GraphicDevice *pGD)
 {
 	extern int get_board_revision(void);
+	printf("board_video_init() for JBT6K74-AS / TD028TTEC1\n");
 	backlight_init();	// initialize backlight
 #define REVISION_XM 0
 	if(get_board_revision() == REVISION_XM) {
