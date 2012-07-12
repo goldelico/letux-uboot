@@ -803,13 +803,13 @@ int gpiotest(void)
 							omap_set_gpio_direction(gj, 0);	// switch to output
 							udelay(100);
 							omap_set_gpio_dataout(gj, 0); // set other output to 0
-							udelay(100);
+							udelay(300);
 							valdn=omap_get_gpio_datain(g);	// read value of input GPIO under test
 							omap_set_gpio_dataout(gj, 1); // set other output to 1
-							udelay(100);
+							udelay(300);
 							valup=omap_get_gpio_datain(g);	// read value of input GPIO under test
 							omap_set_gpio_direction(gj, 1);	// switch back to input
-							udelay(300);
+							udelay(100);
 							if(valdn == 0 && valup == 1)
 								{ // our input follows the other in output mode
 								if(i != j)
