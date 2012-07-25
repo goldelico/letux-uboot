@@ -319,7 +319,10 @@ int print_cpuinfo (void)
 			cpu_s = "36XX/37XX";
 			break;
 		}
-		max_clk = "1 Ghz";
+		if(readw(0x4800244C) & (1<<9))	/* check the "Speed Binned" bit for AM/DM37xx */
+			max_clk = "1 Ghz";
+		else
+			max_clk = "800 Mhz";
 		break;
 	default:
 		cpu_family_s = "OMAP";
