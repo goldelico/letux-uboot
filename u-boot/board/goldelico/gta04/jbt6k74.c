@@ -35,7 +35,8 @@
 #include <asm/arch/dss.h>
 #include <twl4030.h>
 #include "dssfb.h"
-#include "jbt6k74.h"
+#include "panel.h"
+#include "TD028TTEC1.h"
 
 // FIXME: we have somehow mixed up the file names...
 
@@ -141,14 +142,14 @@ enum jbt_register {
 };
 
 static const char *jbt_state_names[] = {
-	[JBT_STATE_DEEP_STANDBY]	= "deep-standby",
-	[JBT_STATE_SLEEP]		= "sleep",
-	[JBT_STATE_NORMAL]		= "normal",
+	[PANEL_STATE_DEEP_STANDBY]	= "deep-standby",
+	[PANEL_STATE_SLEEP]		= "sleep",
+	[PANEL_STATE_NORMAL]		= "normal",
 };
 
 static struct jbt_info _jbt, *jbt = &_jbt;
 
-const char *jbt_state(void)
+const char *panel_state(void)
 {
 	return jbt_state_names[jbt->state];
 }
@@ -283,22 +284,22 @@ static int sleep_to_standby(struct jbt_info *jbt)
 }
 
 /* frontend function */
-int jbt6k74_enter_state(enum jbt_state new_state)
+int panel_enter_state(enum panel_state new_state)
 {
 	int rc = -EINVAL;
 
 	DEBUGP("entering(old_state=%u, new_state=%u)\n", jbt->state, new_state);
 
 	switch (jbt->state) {
-	case JBT_STATE_DEEP_STANDBY:
+	case PANEL_STATE_DEEP_STANDBY:
 		switch (new_state) {
-		case JBT_STATE_DEEP_STANDBY:
+		case PANEL_STATE_DEEP_STANDBY:
 			rc = 0;
 			break;
-		case JBT_STATE_SLEEP:
+		case PANEL_STATE_SLEEP:
 			rc = standby_to_sleep(jbt);
 			break;
-		case JBT_STATE_NORMAL:
+		case PANEL_STATE_NORMAL:
 			/* first transition into sleep */
 			rc = standby_to_sleep(jbt);
 			/* then transition into normal */
@@ -306,31 +307,31 @@ int jbt6k74_enter_state(enum jbt_state new_state)
 			break;
 		}
 		break;
-	case JBT_STATE_SLEEP:
+	case PANEL_STATE_SLEEP:
 		switch (new_state) {
-		case JBT_STATE_SLEEP:
+		case PANEL_STATE_SLEEP:
 			rc = 0;
 			break;
-		case JBT_STATE_DEEP_STANDBY:
+		case PANEL_STATE_DEEP_STANDBY:
 			rc = sleep_to_standby(jbt);
 			break;
-		case JBT_STATE_NORMAL:
+		case PANEL_STATE_NORMAL:
 			rc = sleep_to_normal(jbt);
 			break;
 		}
 		break;
-	case JBT_STATE_NORMAL:
+	case PANEL_STATE_NORMAL:
 		switch (new_state) {
-		case JBT_STATE_NORMAL:
+		case PANEL_STATE_NORMAL:
 			rc = 0;
 			break;
-		case JBT_STATE_DEEP_STANDBY:
+		case PANEL_STATE_DEEP_STANDBY:
 			/* first transition into sleep */
 			rc = normal_to_sleep(jbt);
 			/* then transition into deep standby */
 			rc |= sleep_to_standby(jbt);
 			break;
-		case JBT_STATE_SLEEP:
+		case PANEL_STATE_SLEEP:
 			rc = normal_to_sleep(jbt);
 			break;
 		}
@@ -343,7 +344,7 @@ int jbt6k74_enter_state(enum jbt_state new_state)
 	return rc;
 }
 
-int jbt6k74_display_onoff(int on)
+int panel_display_onoff(int on)
 {
 	DEBUGP("entering\n");
 	if (on)
@@ -357,6 +358,7 @@ int board_video_init(GraphicDevice *pGD)
 	extern int get_board_revision(void);
 	printf("board_video_init() for JBT6K74-AS / TD028TTEC1\n");
 	backlight_init();	// initialize backlight
+#if defined(CONFIG_OMAP3_BEAGLE)
 #define REVISION_XM 0
 	if(get_board_revision() == REVISION_XM) {
 		/* Set VAUX1 to 3.3V for GTA04E display board */
@@ -366,13 +368,14 @@ int board_video_init(GraphicDevice *pGD)
 								TWL4030_PM_RECEIVER_DEV_GRP_P1);
 		udelay(5000);
 	}
-	if(jbt_reg_init())	// initialize SPI
+#endif
+	if(panel_reg_init())	// initialize SPI
 		{
 		printf("No LCM connected\n");
 		return 1;
 		}
 	if (get_cpu_family() == CPU_OMAP36XX)
-		lcm_cfg.divisor	= (0x0001<<16)|(DSS1_FCLK3730/PIXEL_CLOCK), /* Pixel Clock divisor from dss1_fclk */
+		lcm_cfg.divisor	= (0x0001<<16)|(DSS1_FCLK3730/PIXEL_CLOCK); /* get Pixel Clock divisor from dss1_fclk */
 	dssfb_init(&lcm_cfg);
 	
 	printf("did board_video_init()\n");
