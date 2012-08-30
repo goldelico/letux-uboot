@@ -7,7 +7,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include "../gta04/gta04.h"
-#include "gta04b2.h"
+#include "gta04b4.h"
 
 // make us initialize using both pinmux sets
 

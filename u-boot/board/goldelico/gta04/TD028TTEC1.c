@@ -37,23 +37,24 @@
 #include <asm/mach-types.h>
 #include "TD028TTEC1.h"
 
-#ifdef CONFIG_OMAP3_BEAGLE
-
-#ifdef CONFIG_OMAP3_GTA04
+#if defined(CONFIG_OMAP3_GTA04)
 
 #define GPIO_CS		19
 #define GPIO_SCL	12
 #define GPIO_DIN	18
 #define GPIO_DOUT	20
 
-#else	/* Beagle Hybrid */
+#define SPI_READ()      (omap_get_gpio_datain(GPIO_DIN))
+#define SPI_CS(bit) 	(omap_set_gpio_dataout(GPIO_CS, bit))
+#define SPI_SDA(bit)    (omap_set_gpio_dataout(GPIO_DOUT, bit))
+#define SPI_SCL(bit)    (omap_set_gpio_dataout(GPIO_SCL, bit))
+
+#elif defined(CONFIG_OMAP3_BEAGLE)
 
 #define GPIO_CS		161
 #define GPIO_SCL	162
 #define GPIO_DIN	159
 #define GPIO_DOUT	158
-
-#endif
 
 #define SPI_READ()      (omap_get_gpio_datain(GPIO_DIN))
 #define SPI_CS(bit) 	(omap_set_gpio_dataout(GPIO_CS, bit))
@@ -100,7 +101,7 @@ extern void smedia3362_lcm_reset(int);
 
 static int jbt_spi_xfer(int wordnum, int bitlen, u_int16_t *dout)
 {
-#if !defined(_BEAGLE_)
+#if 0
 	S3C24X0_GPIO * const gpio = S3C24X0_GetBase_GPIO();
 #endif
 	u_int16_t tmpdout = 0;
@@ -179,9 +180,9 @@ int jbt_reg_write16(struct jbt_info *jbt, u_int8_t reg, u_int16_t data)
 	return rc;
 }
 
-int jbt_check(void)
+int panel_check(void)
 { // check if we have connectivity
-#if defined(_BEAGLE_)
+#if 1
 	int err;
 	int i;
 	int failed=0;
@@ -189,7 +190,7 @@ int jbt_check(void)
 	int cnt1 = 0;
 
 #if 0
-	printf("jbt_reg_init()\n");
+	printf("panel_reg_init()\n");
 #endif
 	err = omap_request_gpio(GPIO_CS);
 	SPI_CS(1);	// unselect
@@ -200,7 +201,7 @@ int jbt_check(void)
 	err |= omap_request_gpio(GPIO_DIN);
 	if(err)
 		{
-		printf("jbt_reg_init() - could not get GPIOs\n");
+		printf("panel_reg_init() - could not get GPIOs\n");
 		return 1;
 		}
 #if 1		// should have already been done by MUX settings!
@@ -245,15 +246,15 @@ int jbt_check(void)
 	return 0;
 }
 
-int jbt_reg_init(void)
+int panel_reg_init(void)
 {
 	
-	if(jbt_check())
+	if(panel_check())
 		return 1;	// some error
 	/* according to data sheet: wait 50ms (Tpos of LCM). However, 50ms
 	 * seems unreliable with later LCM batches, increasing to 90ms */
 	udelay(90000);
-	printf("did jbt_reg_init()\n");
+	printf("did panel_reg_init()\n");
 	return 0;
 }
 

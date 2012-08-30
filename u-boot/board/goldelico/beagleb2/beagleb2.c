@@ -7,14 +7,14 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include "../../ti/beagle/beagle.h"
-#include "beaglehyb.h"
+#include "beagleb2.h"
 
 // make us initialize using both pinmux sets
 
 void muxinit(void)
 {
 	MUX_BEAGLE();
-	MUX_BEAGLE_HYBRID();
+	MUX_BEAGLE_EXPANDER();
 }
 
 #undef MUX_BEAGLE

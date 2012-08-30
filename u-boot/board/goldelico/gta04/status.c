@@ -37,9 +37,39 @@
 // no need to probe for LED controller (compiler should optimize unnecessary code)
 #define hasTCA6507 (1==1)
 
-#else
+#define GPIO_AUX		7		// AUX/User button
+#define GPIO_POWER		-1		// N/A on GTA04 (access through TPS65950)
+#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		160		// TSC must be set up to provide PENIRQ
+
+// FIXME: other expander variants?
+
+#else defined(CONFIG_OMAP3_BEAGLE)
 
 static int hasTCA6507=0;
+
+#if defined(CONFIG_GOLDELICO_EXPANDER_B1)
+
+#define GPIO_AUX		136		// AUX/User button
+#define GPIO_POWER		137		// POWER button
+#define GPIO_GPSEXT		138		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B2)
+
+#define GPIO_AUX		136		// AUX/User button
+#define GPIO_POWER		137		// POWER button
+#define GPIO_GPSEXT		138		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B4)
+
+#define GPIO_AUX		136		// AUX/User button
+#define GPIO_POWER		137		// POWER button
+#define GPIO_GPSEXT		138		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+
+#endif
 
 #endif
 
@@ -71,33 +101,6 @@ extern int get_board_revision(void);
 #define REVISION_XM	0x0
 
 static int isXM = 0;
-
-#if defined(CONFIG_OMAP3_GTA04)
-
-#define GPIO_AUX		7		// AUX/User button
-#define GPIO_POWER		-1		// N/A on GTA04 (access through TPS65950)
-#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
-#define GPIO_PENIRQ		160		// TSC must be set up to provide PENIRQ
-
-#elif defined(CONFIG_OMAP3_BEAGLE_HYBRID)
-
-#define GPIO_AUX		136		// AUX/User button
-#define GPIO_POWER		137		// POWER button
-#define GPIO_GPSEXT		138		// external GPS antenna is plugged in
-#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
-
-#elif defined(CONFIG_OMAP3_BEAGLE_EXPANDER)
-
-#define GPIO_AUX		136		// AUX/User button
-#define GPIO_POWER		137		// POWER button
-#define GPIO_GPSEXT		138		// external GPS antenna is plugged in
-#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
-
-#else
-
-#error unknown config
-
-#endif
 
 #define GPIO_LED_AUX_RED		(isXM?88:70)		// AUX
 #define GPIO_LED_AUX_GREEN		(isXM?89:71)		// AUX
@@ -140,7 +143,7 @@ int status_get_buttons(void)
 		((omap_get_gpio_datain(GPIO_GPSEXT)) << 1) |
 		(((val&0x01) != 0) << 3) |
 		((omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
-#elif defined(CONFIG_OMAP3_BEAGLE_EXPANDER)
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B2)
 	return
 		((omap_get_gpio_datain(GPIO_AUX)) << 0) |
 		((0) << 1) |

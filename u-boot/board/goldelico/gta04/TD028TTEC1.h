@@ -1,8 +1,6 @@
 #ifndef _TD028TTEC1_H
 #define _TD028TTEC1_H
 
-#define _BEAGLE_
-
 #define JBT_TX_BUF_SIZE
 struct jbt_info {
 	u_int16_t tx_buf[4];

@@ -23,11 +23,11 @@
  * MA 02111-1307 USA
  */
 
-#define CONFIG_GOLDELICO_EXPANDER_B2 y
+#define CONFIG_GOLDELICO_EXPANDER_B4 y
 
 #include "omap3_gta04.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT		"GTA04b2 # "
+#define CONFIG_SYS_PROMPT		"GTA04b4 # "
 
 /* __CONFIG_H */

@@ -32,7 +32,7 @@
 
 #include "backlight.h"
 #include "dssfb.h"
-#include "jbt6k74.h"
+#include "panel.h"
 #include "status.h"
 #include "gps.h"
 #include "tsc2007.h"
@@ -78,57 +78,44 @@ static int do_lcd_backlight(int argc, char *const argv[])
 	return 0;
 }
 
-static char *lcdmodel="td028";
-
 static int do_lcd_power(int argc, char *const argv[])
 {
-	if(strcmp(lcdmodel, "td028") == 0)
+	int state=PANEL_STATE_NORMAL;
+	if (argc < 3)
 		{
-		int state=JBT_STATE_NORMAL;
-		if (argc < 3)
-			{
-			printf ("lcm power: missing state (0..2).\n");
-			return (-1);
-			}
-		state=simple_strtoul(argv[2], NULL, 10);
-		if(state > 2)
-			{
-			printf ("lcm power: invalid state (0..2).\n");
-			return (-1);
-			}
-		jbt6k74_enter_state(state);
-		printf("lcm state set to %s\n", jbt_state());	
+		printf ("lcm power: missing state (0..2).\n");
+		return (-1);
 		}
+	state=simple_strtoul(argv[2], NULL, 10);
+	if(state > 2)
+		{
+		printf ("lcm power: invalid state (0..2).\n");
+		return (-1);
+		}
+	panel_enter_state(state);
+	printf("lcm state set to %s\n", panel_state());	
 	return 0;
 }
 
 static int do_lcd_onoff(int argc, char *const argv[], int flag)
 {
-	if(strcmp(lcdmodel, "td028") == 0)
-		jbt6k74_display_onoff(flag);
-	else
-		jbt6k74_display_onoff(flag);
+	panel_display_onoff(flag);
 	printf("display power %s\n", flag?"on":"off");
 	return 0;
 }
 
 static int do_lcd_init(int argc, char *const argv[])
 {
-	// check argv for user specified lcdmodel
 	return board_video_init(NULL);
 }
 
 static int do_lcd_start(int argc, char *const argv[])
-{
-	// check argv for user specified lcdmodel
+{ // initialize and switch on in one command
 	if(board_video_init(NULL))
 		return 1;
-	if(strcmp(lcdmodel, "td028") == 0)
-		{
-		jbt6k74_enter_state(2);
-		jbt6k74_display_onoff(1);
-		backlight_set_level(255);		
-		}
+	panel_enter_state(PANEL_STATE_NORMAL);
+	panel_display_onoff(1);
+	backlight_set_level(255);		
 	return 0;
 }
 
@@ -645,8 +632,8 @@ U_BOOT_CMD(systest, 3, 0, do_systest, "System Test",
 static int do_poweroff(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	backlight_set_level(0);
-	jbt6k74_enter_state(0);
-	jbt6k74_display_onoff(0);
+	panel_enter_state(0);
+	panel_display_onoff(0);
 	shutdown();	// finally shut down power
 	printf ("failed to power down\n");
 	return (0);
@@ -658,8 +645,8 @@ U_BOOT_CMD(poweroff, 2, 0, do_poweroff, "Poweroff",
 static int do_suspend(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	backlight_set_level(0);
-	jbt6k74_enter_state(0);
-	jbt6k74_display_onoff(0);
+	panel_enter_state(0);
+	panel_display_onoff(0);
 	suspend();	// put CPU in sleep mode so that it can be waked up by pressing the AUX button or other events
 	printf ("suspend finished\n");
 	return (0);

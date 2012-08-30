@@ -1,4 +1,4 @@
-/* u-boot driver for the OrtusTech COM37H3M05DTC LCM
+/* u-boot driver for the Sharp LQ070Y3DB3B LCM
  *
  * Copyright (C) 2006-2007 by OpenMoko, Inc.
  * Author: Harald Welte <laforge@openmoko.org>
@@ -30,41 +30,52 @@
 #include <asm/mach-types.h>
 #include <twl4030.h>
 #include "../gta04/dssfb.h"
-#include "../gta04/jbt6k74.h"	// FIXME: change to display.h and make it more generic
-#include "COM37H3M05DTC.h"
+#include "../gta04/panel.h"
+#include "LQ070Y3DB3B.h"
 
-#ifdef CONFIG_OMAP3_BEAGLE_EXPANDER
-#define GPIO_STBY 158
-#else
-#define GPIO_STBY 20
+#ifndef CONFIG_GOLDELICO_EXPANDER_B3
+
+#error only for B3 board
+
 #endif
 
-// configure beagle board DSS for the COM37H3M05DTC
+#ifdef CONFIG_OMAP3_GTA04
+
+#define GPIO_STBY 20
+
+#elif CONFIG_OMAP3_BEAGLE
+
+#define GPIO_STBY 158
+
+#endif
+
+// configure beagle board DSS for the LQ070Y3DB3B
 
 #define DVI_BACKGROUND_COLOR		0x00fadc29	// rgb(250, 220, 41)
 
 #define DSS1_FCLK	432000000	// see figure 15-65
-#define PIXEL_CLOCK	22400000	// approx. 22.4 MHz (will be divided from 432 MHz)
+#define DSS1_FCLK3730	108000000	// compare table 3-34, figure 7-63 - but there are other factors
+#define PIXEL_CLOCK	33260000	// approx. 33.26 MHz (will be divided from 432 MHz)
 
 // all values are min ratings
 
-#define VDISP	640				// vertical active area
-#define VFP		2				// vertical front porch
-#define VS		1				// VSYNC pulse width (negative going)
-#define VBP		3				// vertical back porch
+#define VDISP	480				// vertical active area
+#define VFP		8				// vertical front porch
+#define VS		2				// VSYNC pulse width (negative going)
+#define VBP		35				// vertical back porch
 #define VDS		(VS+VBP)		// vertical data start
 #define VBL		(VS+VBP+VFP)	// vertical blanking period
 #define VP		(VDISP+VBL)		// vertical cycle
 
-#define HDISP	480				// horizontal active area
-#define HFP		2				// horizontal front porch
-#define HS		2				// HSYNC pulse width (negative going)
-#define HBP		9				// horizontal back porch
+#define HDISP	800				// horizontal active area
+#define HFP		64				// horizontal front porch
+#define HS		128				// HSYNC pulse width (negative going)
+#define HBP		64				// horizontal back porch
 #define HDS		(HS+HBP)		// horizontal data start
 #define HBL		(HS+HBP+HFP)	// horizontal blanking period
 #define HP		(HDISP+HBL)		// horizontal cycle
 
-static const struct panel_config lcm_cfg = 
+static /*const*/ struct panel_config lcm_cfg = 
 {
 	.timing_h	= ((HBP-1)<<20) | ((HFP-1)<<8) | ((HS-1)<<0), /* Horizantal timing */
 	.timing_v	= ((VBP+0)<<20) | ((VFP+0)<<8) | ((VS-1)<<0), /* Vertical timing */
@@ -80,30 +91,30 @@ static const struct panel_config lcm_cfg =
 	.panel_color	= DVI_BACKGROUND_COLOR
 };
 
-int jbt_reg_init(void)
+int panel_reg_init(void)
 {
 	omap_request_gpio(GPIO_STBY);
 	omap_set_gpio_direction(GPIO_STBY, 0);		// output
 	return 0;
 }
 
-int jbt_check(void)
+int panel_check(void)
 {
 	return 0;
 }
 
-const char *jbt_state(void)
+const char *panel_state(void)
 {
 	return "?";
 }
 
 /* frontend function */
-int jbt6k74_enter_state(enum jbt_state new_state)
+int panel_enter_state(enum panel_state new_state)
 {
 	return 0;
 }
 
-int jbt6k74_display_onoff(int on)
+int panel_display_onoff(int on)
 {
 	omap_set_gpio_dataout(GPIO_STBY, on?1:0);	// on = no STBY
 	return 0;
@@ -112,11 +123,12 @@ int jbt6k74_display_onoff(int on)
 int board_video_init(GraphicDevice *pGD)
 {
 	extern int get_board_revision(void);
-	printf("board_video_init() COM37H3M05DTC\n");
+	printf("board_video_init() LQ070Y3DB3B\n");
 	
 	// FIXME: here we should pass down the GPIO(s)
 	
 	backlight_init();	// initialize backlight
+#if defined (CONFIG_OMAP3_BEAGLE)
 #define REVISION_XM 0
 	if(get_board_revision() == REVISION_XM) {
 		/* Set VAUX1 to 3.3V for GTA04E display board */
@@ -126,15 +138,18 @@ int board_video_init(GraphicDevice *pGD)
 								TWL4030_PM_RECEIVER_DEV_GRP_P1);
 		udelay(5000);
 	}
+#endif
 	
 	// FIXME: here we should init the TSC and pass down the GPIO numbers and resistance values
 	
-	if(jbt_reg_init())	// initialize SPI
+	if(panel_reg_init())	// initialize SPI
 		{
 		printf("No LCM connected\n");
 		return 1;
 		}
 	
+	if (get_cpu_family() == CPU_OMAP36XX)
+		lcm_cfg.divisor	= (0x0001<<16)|(DSS1_FCLK3730/PIXEL_CLOCK); /* get Pixel Clock divisor from dss1_fclk */
 	dssfb_init(&lcm_cfg);
 	
 	printf("did board_video_init()\n");

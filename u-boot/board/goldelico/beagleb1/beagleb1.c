@@ -6,19 +6,19 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
-#include "../gta04/gta04.h"
-#include "gta04b3.h"
+#include "../../ti/beagle/beagle.h"
+#include "beagleb1.h"
 
 // make us initialize using both pinmux sets
 
 void muxinit(void)
 {
 	MUX_BEAGLE();
-	MUX_BEAGLE_EXPANDER();
+	MUX_BEAGLE_HYBRID();
 }
 
 #undef MUX_BEAGLE
 #define MUX_BEAGLE() muxinit()
 
 // take the original beagle.c code
-#include "../gta04/gta04.c"
+#include "../../ti/beagle/beagle.c"

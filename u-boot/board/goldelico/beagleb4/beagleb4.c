@@ -7,7 +7,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include "../../ti/beagle/beagle.h"
-#include "beagleexpander.h"
+#include "beagleb4.h"
 
 // make us initialize using both pinmux sets
 

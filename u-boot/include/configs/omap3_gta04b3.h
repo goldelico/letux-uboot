@@ -2,8 +2,7 @@
  * (C) Copyright 2010
  * Nikolaus Schaller <hns@goldelico.com>
  *
- * Configuration settings for the TI OMAP3530 Beagle board with
- *               Openmoko Hybrid Display extension.
+ * Configuration settings for the GTA04.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -24,29 +23,11 @@
  * MA 02111-1307 USA
  */
 
-#define CONFIG_OMAP3_BEAGLE_EXPANDER	1	/* working with BEAGLE and Expander board */
+#define CONFIG_GOLDELICO_EXPANDER_B3 y
 
-#include "omap3_beagle.h"	/* share config */
-
-#define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
-// #undef CONFIG_CMD_JFFS2
-// #define CONFIG_CMD_JFFS2	1	/* to access the rootfs in NAND flash */
-
-#if 0	// does not compile
-#define CONFIG_MUSB_HCD        1 /* Enable USB driver*/
-#define CONFIG_TWL4030_USB      1 /* Enable TWL4030 USB */
-#define CONFIG_USB_STORAGE
-#define CONFIG_USB_OMAP3530
-#define CONFIG_USB_HOST
-#define CONFIG_CMD_USB
-#endif
-
-#define CONFIG_CMD_SPI	1
-
-// FIXME: add configs for the partitions so that JFFS2 runs in the correct NAND partition
+#include "omap3_gta04.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT		"Openmoko Beagle Expander # "
-
+#define CONFIG_SYS_PROMPT		"GTA04b3 # "
 
 /* __CONFIG_H */

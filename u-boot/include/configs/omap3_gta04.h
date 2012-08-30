@@ -23,12 +23,11 @@
  * MA 02111-1307 USA
  */
 
-/* working with BEAGLE and GTA04 */
 #define CONFIG_OMAP3_GTA04		y
 /* enable to include patches and fixes for GTA04A2 */
 /* #define CONFIG_OMAP3_GTA04A2	y */
  
-#include "omap3_beaglehyb.h"	/* share config */
+#include "omap3_beagle.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT
 #define CONFIG_SYS_PROMPT		"GTA04 # "
