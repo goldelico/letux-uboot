@@ -33,6 +33,7 @@
 #include <ns16550.h>
 #include "systest.h"
 #include "TD028TTEC1.h"
+#include "panel.h"
 #include "ulpi-phy.h"
 #include "status.h"
 #include "tsc2007.h"
@@ -199,8 +200,10 @@ int systest(void)
 	printf("LIS302 BOTTOM: %s\n", !i2c_probe(0x1d)?"found":"-");
 	printf("LSM303:        %s\n", !i2c_probe(0x19)?"found":"-");
 	printf("HMC58xx:       %s\n", !i2c_probe(0x1e)?"found":"-");
-	printf("BMA180:        %s\n", !i2c_probe(0x41)?"found":"-");
 	printf("BMP085:        %s\n", !i2c_probe(0x77)?"found":"-");
+	printf("BMA180:        %s\n", !i2c_probe(0x41)?"found":"-");
+	printf("BMC050 Accel:  %s\n", !i2c_probe(0x18)?"found":"-");
+	printf("BMC050 Mag:    %s\n", !i2c_probe(0x10)?"found":"-");
 	printf("ITG3200:       %s\n", !i2c_probe(0x68)?"found":"-");
 	printf("Si47xx:        %s\n", !i2c_probe(0x11)?"found":"-");
 	printf("TCA8418:       %s\n", !i2c_probe(0x34)?"found":"-");
@@ -211,7 +214,7 @@ int systest(void)
 	i2c_set_bus_num(2);	// I2C3
 	/* nothing to check */
 	i2c_set_bus_num(TWL4030_I2C_BUS);	// I2C1
-	if(!jbt_check())
+	if(!panel_check())
 	    printf("DISPLAY:       ok\n");
 	else
 		printf("DISPLAY:       failed\n");
