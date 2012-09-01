@@ -26,7 +26,7 @@
 # 3. run bootcmd
 #
 
-VERSION=012	# increment if we need to re-initialize the boot environment
+VERSION=012	# increment if we need to re-initialize the boot environment or should reflash x-loader and u-boot
 
 echo "*** if you boot from NAND don-t worry about error messages when U-Boot tries to read a non-existing MMC ***"
 
