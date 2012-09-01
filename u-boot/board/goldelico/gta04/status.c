@@ -44,7 +44,7 @@
 
 // FIXME: other expander variants?
 
-#else defined(CONFIG_OMAP3_BEAGLE)
+#elif defined(CONFIG_OMAP3_BEAGLE)
 
 static int hasTCA6507=0;
 
