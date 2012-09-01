@@ -29,6 +29,7 @@
 #include "omap3_beagle.h"	/* share config */
 
 #define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
+
 // #undef CONFIG_CMD_JFFS2
 // #define CONFIG_CMD_JFFS2	1	/* to access the rootfs in NAND flash */
 

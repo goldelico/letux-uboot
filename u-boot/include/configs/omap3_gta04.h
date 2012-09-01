@@ -29,6 +29,13 @@
  
 #include "omap3_beagle.h"	/* share config */
 
+#define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
+
+// #undef CONFIG_CMD_JFFS2
+// #define CONFIG_CMD_JFFS2	1	/* to access the rootfs in NAND flash */
+
+// FIXME: add configs for the partitions so that JFFS2 runs in the correct NAND partition
+
 #undef CONFIG_SYS_PROMPT
 #define CONFIG_SYS_PROMPT		"GTA04 # "
 
