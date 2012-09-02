@@ -26,7 +26,7 @@
 # 3. run bootcmd
 #
 
-VERSION=012	# increment if we need to re-initialize the boot environment or should reflash x-loader and u-boot
+VERSION=0123456789	# incremented by build script so that we re-initialize the boot environment or reflash x-loader and u-boot
 
 echo "*** if you boot from NAND don-t worry about error messages when U-Boot tries to read a non-existing MMC ***"
 
@@ -58,8 +58,8 @@ if test "${gta04}" != "${VERSION}"
 
 	# load kernel and boot script from mmc or nand wherever we find it
 
-	setenv kernelloading 'status set 18'
-	setenv kernelloaded 'status set 10'
+	setenv kernelloading 'status set 18'	# orange
+	setenv kernelloaded 'status set 10'	# green
 
 	setenv loadbootscript 'i2c dev 0; mmc rescan ${mmcdev}; if fatload mmc ${mmcdev} ${bootaddr} boot.scr; then echo did load bootscript from mmc; elif nand read ${bootaddr} 250000 10000; then echo did load bootscript from nand; fi'	
 	setenv loadkernel 'run kernelloading; i2c dev 0; mmc rescan ${mmcdev}; if fatload mmc ${mmcdev} ${loadaddr} uImage; then run mmcargs; elif ext2load mmc 0:2 ${loadaddr} /boot/uImage; then run mmcargs; else nand read ${loadaddr} 280000 400000; run nandargs; fi; run kernelloaded'
@@ -93,7 +93,7 @@ if test "${gta04}" != "${VERSION}"
 fi
 
 echo *** initializing LCM ***
-if test "x${flash}" = "xyes" || lcm start
+if lcm start || test "x${flash}" = "xyes"
 then
 
 	if test "x${flash}" != "xyes"
@@ -191,10 +191,11 @@ then
 				# note: MLO is configured to load U-Boot from MMC
 				# while X-Loader is loading U-Boot from NAND
 
-				status set 1
+				status set 10
 				i2c dev 0
 				if fatload mmc 0 0x80200000 x-load.flash
 				then
+					status set 18
 					echo *** flashing Xloader ***
 #					nand unlock
 					nandecc hw
@@ -207,12 +208,13 @@ then
 					echo *** Xloader flashed ***
 				fi
 				
-				status set 2
+				status set 10
 				# the official u-boot partition goes from 0x80000 to 0x27ffff i.e. 2 MByte
 				
 				if fatload mmc 0 0x80300000 u-boot.bin
 				then
 					echo *** flashing U-Boot ***
+					status set 18
 					nandecc sw
 					nand erase 80000 1e0000
 					nand write 0x80300000 80000 150000
@@ -223,38 +225,47 @@ then
 					# there is just room for 614 kByte
 					# since u-boot is approx 260 kByte
 
+					status set 10
 					if fatload mmc 0 0x80300000 splash.rgb16z
 						then
 						echo *** flashing splash ***
+						status set 18
 						nandecc sw
 						nand write 0x80300000 1d0000 40000
+						status set 10
 					fi
 
+					status set 10
 					if fatload mmc 0 0x80300000 menu.rgb16z
 						then
 						echo *** flashing menu ***
+						status set 18
 						nandecc sw
 						nand write 0x80300000 210000 40000
+						status set 18
 					fi
 
+					status set 10
 					if fatload mmc 0 0x80300000 boot.scr
 						then
 						echo *** flashing boot.scr ***
+						status set 18
 						nandecc sw
 						nand write 0x80300000 250000 10000
 					fi
 					echo *** U-Boot flashed ***
 				fi
 
-				status set 3
 if false # don't overwrite the kernel just because we have modified the boot script version
 then
+				status set 10
 				if fatload mmc 0 0x80300000 uImage
 				then
 					echo *** flashing Kernel (max. 4 MByte) ***
 					nandecc sw
 					nand erase 280000 400000
 					nand write 0x80300000 280000 400000
+					status set 18
 				fi
 fi
 				
