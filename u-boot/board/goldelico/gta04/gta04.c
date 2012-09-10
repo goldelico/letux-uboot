@@ -168,11 +168,21 @@ int misc_init_r(void)
 							TWL4030_PM_RECEIVER_DEV_GRP_P1);
 #endif
 
-	if (get_cpu_family() == CPU_OMAP36XX)
-		setenv("mpurate", "800");
-	else
-		setenv("mpurate", "600");
-
+	switch (get_cpu_family()) {
+		case CPU_OMAP34XX:
+			if ((get_cpu_rev() >= CPU_3XX_ES31) &&
+				(get_sku_id() == SKUID_CLK_720MHZ))
+				setenv("mpurate", "720");
+			else
+				setenv("mpurate", "600");
+			break;
+		case CPU_OMAP36XX:
+			if(readw(0x4800244C) & (1<<9))	/* check the "Speed Binned" bit for AM/DM37xx */
+				setenv("mpurate", "1000");
+			else
+				setenv("mpurate", "800");
+			break;
+	}
 	twl4030_power_init();
 	
 	// we have no LEDs on TPS on GTA04
