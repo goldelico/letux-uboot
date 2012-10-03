@@ -204,13 +204,13 @@ static int do_tsc_gloop(int argc, char *const argv[])
 		int i;
 		for(i=0; i<8; i++)
 			{
-			int val=(480*read_adc(i))/4096;
+			int val=(displayColumns*read_adc(i))/4096;
 			int x, y;
 			printf("%d: %d\n", i, val);
 			for(y=16*i; y<16*i+16; y++)
 				{ // draw colored bar depending on current value
-					for(x=0; x<480; x++)
-						fb[x+480*y]=(x < val)?0xfc00:0x03ff;
+					for(x=0; x<displayColumns; x++)
+						fb[x+displayColumns*y]=(x < val)?0xfc00:0x03ff;
 				}
 			}
 		}

@@ -16,4 +16,7 @@ int panel_enter_state(enum panel_state new_state);
 const char *panel_state(void);
 int board_video_init(GraphicDevice *pGD);
 
+extern int displayColumns;
+extern int displayLines;
+
 #endif

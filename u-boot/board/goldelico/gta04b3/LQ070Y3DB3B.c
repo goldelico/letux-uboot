@@ -31,6 +31,7 @@
 #include <twl4030.h>
 #include "../gta04/dssfb.h"
 #include "../gta04/panel.h"
+#include "../gta04/backlight.h"
 #include "LQ070Y3DB3B.h"
 
 #ifndef CONFIG_GOLDELICO_EXPANDER_B3
@@ -41,7 +42,7 @@
 
 #ifdef CONFIG_OMAP3_GTA04
 
-#define GPIO_STBY 20
+#define GPIO_STBY 12
 
 #elif CONFIG_OMAP3_BEAGLE
 
@@ -75,14 +76,17 @@
 #define HBL		(HS+HBP+HFP)	// horizontal blanking period
 #define HP		(HDISP+HBL)		// horizontal cycle
 
+int displayColumns=HDISP;
+int displayLines=VDISP;
+
 static /*const*/ struct panel_config lcm_cfg = 
 {
 	.timing_h	= ((HBP-1)<<20) | ((HFP-1)<<8) | ((HS-1)<<0), /* Horizantal timing */
 	.timing_v	= ((VBP+0)<<20) | ((VFP+0)<<8) | ((VS-1)<<0), /* Vertical timing */
-	// negative clock edge
-	// negative sync pulse
+	// negative clock edge samples data; changes on positive edge
+	// negative sync pulses
 	// positive DE pulse
-	.pol_freq	= (1<<17)|(1<<16)|(0<<15)|(0<<14)|(1<<13)|(1<<12)|0x28,    /* Pol Freq */
+	.pol_freq	= (1<<17)|(1<<16)|(0<<15)|(0<<14)|(1<<13)|(1<<12)|0x28,    /* DISPC_POL_FREQ */
 	.divisor	= (0x0001<<16)|(DSS1_FCLK/PIXEL_CLOCK), /* Pixel Clock divisor from dss1_fclk */
 	.lcd_size	= ((HDISP-1)<<0) | ((VDISP-1)<<16), /* as defined by LCM */
 	.panel_type	= 0x01, /* TFT */
@@ -94,6 +98,7 @@ static /*const*/ struct panel_config lcm_cfg =
 int panel_reg_init(void)
 {
 	omap_request_gpio(GPIO_STBY);
+	printf("panel_reg_init() GPIO_%d\n", GPIO_STBY);
 	omap_set_gpio_direction(GPIO_STBY, 0);		// output
 	return 0;
 }

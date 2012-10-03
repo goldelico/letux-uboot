@@ -13,12 +13,12 @@
 
 void muxinit(void)
 {
-	MUX_BEAGLE();
-	MUX_BEAGLE_EXPANDER();
+	MUX_GTA04();
+	MUX_EXPANDER_B3();
 }
 
-#undef MUX_BEAGLE
-#define MUX_BEAGLE() muxinit()
+#undef MUX_GTA04
+#define MUX_GTA04() muxinit()
 
 // take the original beagle.c code
 #include "../gta04/gta04.c"

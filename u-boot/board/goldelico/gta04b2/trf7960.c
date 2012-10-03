@@ -663,7 +663,7 @@ int scanInventory(struct trf7960 *device, uchar flags, uchar length, void (*foun
 int readBlocks(struct trf7960 *device, uchar flags, uint64_t uid, uchar firstBlock, uchar blocks, uchar *data)
 { /* read single/multiple blocks */
 	static uchar buffer[32];	/* shared rx/tx buffer */
-	char *rxbuf;
+	uchar *rxbuf;
 	int pdusize = 4 + (uid?sizeof(uid):0);			/* flags byte + command byte + optional uid + firstblock + #blocks */
 #if 1
 	printf("readBlocks\n");
@@ -675,7 +675,7 @@ int readBlocks(struct trf7960 *device, uchar flags, uint64_t uid, uchar firstBlo
 	if(writeRegister(device, TRF7960_REG_IRQMASK, 0x3f))	/* enable no-response interrupt */
 		return -1;
 	
-	rxbuf=malloc(2+32*blocks);	// allocate enough memory for storing 32*blocks bytes
+	rxbuf=(uchar *) malloc(2+32*blocks);	// allocate enough memory for storing 32*blocks bytes
 	if(!rxbuf)
 		return -1;	// can't allocate
 
@@ -728,7 +728,7 @@ int readBlocks(struct trf7960 *device, uchar flags, uint64_t uid, uchar firstBlo
 #if 1
 	printf("tx done %02x\n", device->done);
 #endif
-	if(!device->done & 0x80) {
+	if(!(device->done & 0x80)) {
 #if 1
 		printf(" unknown TX interrupt %02x\n", device->done);
 #endif

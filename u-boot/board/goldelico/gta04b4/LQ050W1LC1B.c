@@ -31,6 +31,7 @@
 #include <twl4030.h>
 #include "../gta04/dssfb.h"
 #include "../gta04/panel.h"
+#include "../gta04/backlight.h"
 #include "LQ050W1LC1B.h"
 
 #define mdelay(n) ({ unsigned long msec = (n); while (msec--) udelay(1000); })
@@ -43,15 +44,15 @@
 
 #ifdef CONFIG_OMAP3_GTA04
 
-#define GPIO_POWER 12			/* McBSP5-CLKX GTA04 controls 5V power for the display */
+#define GPIO_POWER 12			/* McBSP5-CLKX enables 5V DC/DC (backlight) for the display */
 #define GPIO_BLSHUTDOWN 19		/* McBSP5-FSX controls Backlight SHUTDOWN (shutdown if high) */
 #define GPIO_SHUTDOWN 20		/* McBSP5-DX controls LVDS SHUTDOWN (shutdown if low) */
 
 #elif CONFIG_OMAP3_BEAGLE
 
-#define GPIO_POWER 162			/* McBSP5-CLKX GTA04 controls 5V power for the display */
-#define GPIO_BLSHUTDOWN 161		/* McBSP5-FSX controls Backlight SHUTDOWN (shutdown if high) */
-#define GPIO_SHUTDOWN 158		/* McBSP5-DX controls LVDS SHUTDOWN (shutdown if low) */
+#define GPIO_POWER 162			/* McBSP5-CLKX?? enables 5V DC/DC (backlight) for the display */
+#define GPIO_BLSHUTDOWN 161		/* McBSP5-FSX?? controls Backlight SHUTDOWN (shutdown if high) */
+#define GPIO_SHUTDOWN 158		/* McBSP5-DX?? controls LVDS SHUTDOWN (shutdown if low) */
 
 #endif
 
@@ -80,6 +81,9 @@
 #define HDS		(HS+HBP)		// horizontal data start
 #define HBL		(HS+HBP+HFP)	// horizontal blanking period
 #define HP		(HDISP+HBL)		// horizontal cycle
+
+int displayColumns=HDISP;
+int displayLines=VDISP;
 
 static /*const*/ struct panel_config lcm_cfg = 
 {

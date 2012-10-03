@@ -36,6 +36,7 @@
 #include <twl4030.h>
 #include "dssfb.h"
 #include "panel.h"
+#include "backlight.h"
 #include "TD028TTEC1.h"
 
 // FIXME: we have somehow mixed up the file names...
@@ -73,6 +74,9 @@
 #define DEBUGP(x, args...) do { } while (0)
 #define DEBUGPC(x, args...) do { } while (0)
 #endif
+
+int displayColumns=HDISP;
+int displayLines=VDISP;
 
 static /*const*/ struct panel_config lcm_cfg = 
 {
@@ -377,7 +381,7 @@ int board_video_init(GraphicDevice *pGD)
 	if (get_cpu_family() == CPU_OMAP36XX)
 		lcm_cfg.divisor	= (0x0001<<16)|(DSS1_FCLK3730/PIXEL_CLOCK); /* get Pixel Clock divisor from dss1_fclk */
 	dssfb_init(&lcm_cfg);
-	
+
 	printf("did board_video_init()\n");
 	return 0;
 }

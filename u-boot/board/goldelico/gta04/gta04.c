@@ -307,7 +307,7 @@ int misc_init_r(void)
 void set_muxconf_regs(void)
 {
 	MUX_BEAGLE();
-	MUX_BEAGLE_GTA04();
+	MUX_GTA04();
 }
 
 #ifdef CONFIG_GENERIC_MMC

@@ -430,12 +430,12 @@ MUX_VAL(CP(SYS_BOOT6),		(IDIS | PTD | DIS | M3)) /*DSS_DATA23*/
 
 #if defined(CONFIG_I2C_OMAP_GTA04A2)
 
-#define MUX_BEAGLE_GTA04() \
-MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M4)) /*GPIO_12 - Display serial clock*/\
+#define MUX_GTA04() \
+MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M4)) /*GPIO_12 / McBSP5-CLKX - Display serial clock*/\
 MUX_VAL(CP(ETK_CTL_ES2),	(IDIS | PTU | EN  | M4)) /*GPIO_13 - IrDA FIR-SEL*/\
-MUX_VAL(CP(ETK_D4_ES2),		(IEN  | PTU | DIS | M4)) /*GPIO_18 - Display DIN*/\
-MUX_VAL(CP(ETK_D5_ES2),		(IDIS | PTU | EN  | M4)) /*GPIO_19 - Display chip select*/\
-MUX_VAL(CP(ETK_D6_ES2),		(IDIS | PTU | EN  | M4)) /*GPIO_20 - Display DOUT*/\
+MUX_VAL(CP(ETK_D4_ES2),		(IEN  | PTU | DIS | M4)) /*GPIO_18 / McBSP5-DR - Display DIN*/\
+MUX_VAL(CP(ETK_D5_ES2),		(IDIS | PTU | EN  | M4)) /*GPIO_19 / McBSP5-FSX - Display chip select*/\
+MUX_VAL(CP(ETK_D6_ES2),		(IDIS | PTU | EN  | M4)) /*GPIO_20 / McBSP5-DX - Display DOUT*/\
 MUX_VAL(CP(ETK_D7_ES2),		(IEN  | PTU | EN  | M4)) /*GPIO_21 - RS232 enable*/\
 MUX_VAL(CP(GPMC_NCS6),		(IDIS | PTD | DIS | M4)) /*GPIO_57/GPT_11 - Backlight enable*/\
 MUX_VAL(CP(GPMC_WAIT3),		(IDIS | PTU | DIS | M4)) /*GPIO_65 - AUX IN/OUT*/\
@@ -453,10 +453,10 @@ MUX_VAL(CP(MMC2_DAT4),		(IEN  | PTU | EN  | M1)) /*GPIO_136 - MMC2_DIR_DAT0 */\
 MUX_VAL(CP(MMC2_DAT5),		(IEN  | PTU | EN  | M1)) /*GPIO_137 - MMC2_DIR_DAT1 */\
 MUX_VAL(CP(MMC2_DAT6),		(IEN  | PTU | EN  | M1)) /*GPIO_138 - MMC2_DIR_CMD */\
 MUX_VAL(CP(MMC2_DAT7),		(IEN  | PTU | EN  | M1)) /*GPIO_139 - MMC2_DIR_CLKIN */\
-MUX_VAL(CP(UART2_CTS),		(IEN  | PTU | DIS | M4)) /*GPIO_144 - ext Ant */\
-MUX_VAL(CP(UART2_RTS),		(IDIS | PTD | DIS | M4)) /*GPIO_145 - GPS ON(0)/OFF(1)*/\
-MUX_VAL(CP(UART2_TX),		(IDIS | PTU | DIS | M0)) /*GPIO_146 - GPS_TX */\
-MUX_VAL(CP(UART2_RX),		(IEN  | PTU | DIS | M0)) /*GPIO_147 - GPS_RX */\
+MUX_VAL(CP(UART2_CTS),		(IEN  | PTU | DIS | M4)) /*GPIO_144 / UART2-CTS - ext Ant */\
+MUX_VAL(CP(UART2_RTS),		(IDIS | PTD | DIS | M4)) /*GPIO_145 / UART2-RTS - GPS ON(0)/OFF(1)*/\
+MUX_VAL(CP(UART2_TX),		(IDIS | PTU | DIS | M0)) /*GPIO_146 / UART2-TX - GPS_TX */\
+MUX_VAL(CP(UART2_RX),		(IEN  | PTU | DIS | M0)) /*GPIO_147 / UART2-RX - GPS_RX */\
 MUX_VAL(CP(MCBSP1_CLKR),	(IDIS | PTD | DIS | M0)) /*GPIO_156 - FM TRX*/\
 MUX_VAL(CP(MCBSP1_FSR),		(IEN  | PTU | EN  | M0)) /*GPIO_157 -  */\
 MUX_VAL(CP(MCBSP1_DX),		(IDIS | PTD | EN  | M0)) /*GPIO_158 -  */\
@@ -477,8 +477,7 @@ MUX_VAL(CP(MCSPI1_CS2),		(IEN  | PTD | DIS | M4)) /*GPIO_176/MMC3CLK - 3G_WOE */
 
 #else 	// GTA04A3ff has some improved mux assignments
 
-#define MUX_BEAGLE_GTA04() \
-/*GPIO10 - Keyboard Controller INT - n/a*/\
+#define MUX_GTA04() \
 MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M4)) /*GPIO_12 - Display serial clock*/\
 MUX_VAL(CP(ETK_CTL_ES2),	(IEN  | PTU | EN  | M4)) /*GPIO_13 - RS232 enable*/\
 MUX_VAL(CP(ETK_D4_ES2),		(IEN  | PTU | DIS | M4)) /*GPIO_18 - Display DIN*/\
@@ -524,10 +523,10 @@ MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTU | DIS | M0)) /*GPIO_159 -> MCBSP1_DR */\
 MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | DIS | M4)) /*GPIO_160 - PENIRQ*/\
 MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTU | EN  | M0)) /*GPIO_161 -> MCBSP1_FSX */\
 MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTD | EN  | M0)) /*GPIO_162 -> MCBSP1_CLKX */\
-MUX_VAL(CP(MCBSP4_CLKX),	(IEN  | PTD | DIS | M0)) /*MCBSP4_CLKX*/\
-MUX_VAL(CP(MCBSP4_DR),		(IEN  | PTD | DIS | M0)) /*MCBSP4_DR*/\
-MUX_VAL(CP(MCBSP4_DX),		(IEN  | PTD | DIS | M0)) /*MCBSP4_DX*/\
-MUX_VAL(CP(MCBSP4_FSX),		(IEN  | PTD | DIS | M0)) /*MCBSP4_FSX*/\
+MUX_VAL(CP(MCBSP4_CLKX),	(IEN  | PTD | DIS | M0)) /*GPIO_152 / MCBSP4_CLKX*/\
+MUX_VAL(CP(MCBSP4_DR),		(IEN  | PTD | DIS | M0)) /*GPIO_153 / MCBSP4_DR*/\
+MUX_VAL(CP(MCBSP4_DX),		(IEN  | PTD | DIS | M0)) /*GPIO_154 / MCBSP4_DX*/\
+MUX_VAL(CP(MCBSP4_FSX),		(IEN  | PTD | DIS | M0)) /*GPIO_155 / MCBSP4_FSX*/\
 MUX_VAL(CP(HDQ_SIO),		(IEN  | PTU | EN  | M0)) /*GPIO_170 -> HDQ*/\
 MUX_VAL(CP(MCSPI1_CLK),		(IEN  | PTU | EN  | M4)) /*GPIO_171 - Version sense*/\
 MUX_VAL(CP(MCSPI1_SIMO),	(IEN  | PTU | EN  | M4)) /*GPIO_172 - Version sense*/\

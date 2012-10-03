@@ -1,8 +1,34 @@
-// all pins on GTA04 expansion connector
+// all reuseable pins on GTA04 expansion connector
 
 // GPIO -> GTA04-Pin -> Expander function
 
-#define MUX_BEAGLE_EXPANDER() \
+#define MUX_EXPANDER_B4() \
+MUX_VAL(CP(SYS_CLKOUT1),	(IDIS | PTD | DIS | M4)) /*GPIO_10 / KEYIRQ - TRF-IRQ*/\
+MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTD | EN  | M4)) /*GPIO_12 / McBSP5-CLKX - Enable 3.3V LDO for display*/\
+MUX_VAL(CP(ETK_D0),			(IEN  | PTD | EN  | M1)) /*GPIO_14 / MCSPI3-SIMO -> TRF*/\
+MUX_VAL(CP(ETK_D1),			(IEN  | PTD | EN  | M1)) /*GPIO_15 / MCSPI3-SOMI -> TRF*/\
+MUX_VAL(CP(ETK_D2),			(IEN  | PTD | EN  | M1)) /*GPIO_16 / MCSPI3-CS -> TRF*/\
+MUX_VAL(CP(ETK_D3),			(IEN  | PTD | EN  | M1)) /*GPIO_17 / MCSPI3-CLK -> TRF*/\
+MUX_VAL(CP(ETK_D4_ES2),		(IDIS | PTU | EN  | M4)) /*GPIO_18 / McBSP5-DR - drives RS232 EXT line*/\
+MUX_VAL(CP(ETK_D5_ES2),		(IDIS | PTD | EN  | M4)) /*GPIO_19 / McBSP5-FSX - TRF79x0 EN/EN2*/\
+MUX_VAL(CP(ETK_D6_ES2),		(IDIS | PTD | EN  | M4)) /*GPIO_20 / McBSP5-DX - Enable 5V on VBUS*/\
+MUX_VAL(CP(UART2_CTS),		(IEN  | PTU | DIS | M4)) /*GPIO_144 / UART2-CTS - ext Ant */\
+MUX_VAL(CP(UART2_RTS),		(IDIS | PTD | DIS | M4)) /*GPIO_145 / UART2-RTS - GPS ON(0)/OFF(1)*/\
+MUX_VAL(CP(UART2_TX),		(IDIS | PTU | DIS | M0)) /*GPIO_146 / UART2-TX - GPS_TX */\
+MUX_VAL(CP(UART2_RX),		(IEN  | PTU | DIS | M0)) /*GPIO_147 / UART2-RX - GPS_RX */\
+MUX_VAL(CP(MCBSP4_CLKX),	(IEN  | PTD | DIS | M0)) /*GPIO_152 / MCBSP4_CLKX*/\
+MUX_VAL(CP(MCBSP4_DR),		(IEN  | PTD | DIS | M0)) /*GPIO_153 / MCBSP4_DR*/\
+MUX_VAL(CP(MCBSP4_DX),		(IEN  | PTD | DIS | M0)) /*GPIO_154 / MCBSP4_DX*/\
+MUX_VAL(CP(MCBSP4_FSX),		(IEN  | PTD | DIS | M0)) /*GPIO_155 / MCBSP4_FSX*/\
+MUX_VAL(CP(MCBSP_CLKS),		(IDIS | PTD | DIS | M4)) /*GPIO_160 / PENIRQ*/\
+
+#if 0
+MUX_VAL(CP(UART3_CTS_RCTX),	(IDIS | PTD | DIS | M0)) /*GPIO_163 / UART3-CTS*/\
+MUX_VAL(CP(UART3_RTS_SD),	(IDIS | PTD | DIS | M0)) /*GPIO_164 / UART3-RTS*/\
+MUX_VAL(CP(UART3_RX_IRRX),	(IDIS | PTD | DIS | M0)) /*GPIO_165 / UART3-RX*/\
+MUX_VAL(CP(UART3_TX_IRTX),	(IDIS | PTD | DIS | M0)) /*GPIO_166 / UART3-TX*/\
+
+#endif
 
 // FIXME: clean up so that we have the right PinMuxes
 #if 0

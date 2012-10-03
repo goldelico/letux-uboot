@@ -31,6 +31,7 @@
 #include <twl4030.h>
 #include "../gta04/dssfb.h"
 #include "../gta04/panel.h"
+#include "../gta04/backlight.h"
 #include "COM37H3M05DTC.h"
 
 #ifndef CONFIG_GOLDELICO_EXPANDER_B2
@@ -74,6 +75,9 @@
 #define HDS		(HS+HBP)		// horizontal data start
 #define HBL		(HS+HBP+HFP)	// horizontal blanking period
 #define HP		(HDISP+HBL)		// horizontal cycle
+
+int displayColumns=HDISP;
+int displayLines=VDISP;
 
 static /*const*/ struct panel_config lcm_cfg = 
 {
