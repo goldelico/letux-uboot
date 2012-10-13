@@ -66,6 +66,7 @@ int bt_hci(int msg)
 			MUX_VAL(CP(UART1_CTS),		(IEN  | PTU | EN | M4)) /*UART1_CTS -> Bluetooth HCI */ \
 			MUX_VAL(CP(UART1_RX),		(IEN  | PTU | EN | M4)) /*UART1_RX -> Bluetooth HCI */
 
+			// FIXME: this is not 100% correct for BeagleBoard
 			MUX_VAL(CP(UART2_CTS),		(IEN  | PTU | DIS | M4)) /*GPIO_144 - ext Ant */\
 			MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M4)) /*GPIO_145 - GPS ON(0)/OFF(1)*/\
 			MUX_VAL(CP(UART2_TX),		(IEN  | PTU | DIS | M4)) /*GPIO_146 - GPS_TX */\

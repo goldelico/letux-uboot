@@ -36,11 +36,13 @@
 
 #define GPIO_GPSEXT		144		// external GPS antenna plugged in
 #define GPIO_GPS_ON		145		// reset for GPS module
+#define GPIO_GPS_PPS	114		// Pulse per Second interrupt
 
 #else /* Beagle Hybrid */
 
-#define GPIO_GPSEXT		138		// external GPS antenna plugged in
+#define GPIO_GPSEXT		144		// external GPS antenna plugged in
 #define GPIO_GPS_ON		156
+#define GPIO_GPS_PPS	138		// Pulse per Second interrupt
 
 #endif
 
@@ -69,6 +71,8 @@ int gps_init(void)
 	omap_set_gpio_direction(GPIO_GPS_ON, 0);		// output
 	omap_request_gpio(GPIO_GPSEXT);
 	omap_set_gpio_direction(GPIO_GPSEXT, 1);		// input
+	omap_request_gpio(GPIO_GPS_PPS);
+	omap_set_gpio_direction(GPIO_GPS_PPS, 1);		// input
 	return 0;
 }
 
@@ -87,6 +91,7 @@ void gps_off(void)
 }
 
 static int lastant=-1;
+static int lastpps=-1;
 static long timer;
 
 #define TIMEOUT 2	// in seconds
@@ -100,13 +105,20 @@ void gps_echo(void)
 	while (1)
 		{ // echo in both directions
 			int ant=omap_get_gpio_datain(GPIO_GPSEXT);
+			int pps=omap_get_gpio_datain(GPIO_GPS_PPS);
 			if(ant != lastant)
 				{ // changed
-					if(ant)
-						printf("external antenna\n");
-					else
-						printf("internal antenna\n");
-					lastant=ant;
+				if(ant)
+					printf("external antenna\n");
+				else
+					printf("internal antenna\n");
+				lastant=ant;
+				}
+			if(pps != lastpps)
+				{ // comes only with >= 5 satellites
+				if(lastpps >= 0)
+					printf("PPS\n");
+				lastpps=pps;
 				}
 			if(NS16550_tstc((NS16550_t)CONFIG_SYS_NS16550_COM2))
 				{
@@ -126,7 +138,7 @@ void gps_echo(void)
 					printf("no data: on-off impulse\n");
 					omap_set_gpio_dataout(GPIO_GPS_ON, 1);
 					udelay(5000);
-					omap_set_gpio_dataout(GPIO_GPS_ON, 1);
+					omap_set_gpio_dataout(GPIO_GPS_ON, 0);
 					timer=0;
 				}
 			udelay(100);	// 10 kHz @ 9 kbit/s
