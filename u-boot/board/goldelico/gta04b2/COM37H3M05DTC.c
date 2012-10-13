@@ -58,20 +58,20 @@
 #define DSS1_FCLK3730	108000000	// compare table 3-34, figure 7-63 - but there are other factors
 #define PIXEL_CLOCK	22400000	// approx. 22.4 MHz (will be divided from 432 MHz)
 
-// all values are min ratings
+// all values are min ratings for COM37H3M05DTC and COM37H3M99DTC (more critical)
 
 #define VDISP	640				// vertical active area
-#define VFP		2				// vertical front porch
-#define VS		1				// VSYNC pulse width (negative going)
+#define VFP		4				// vertical front porch
+#define VS		3				// VSYNC pulse width (negative going)
 #define VBP		3				// vertical back porch
 #define VDS		(VS+VBP)		// vertical data start
 #define VBL		(VS+VBP+VFP)	// vertical blanking period
 #define VP		(VDISP+VBL)		// vertical cycle
 
 #define HDISP	480				// horizontal active area
-#define HFP		2				// horizontal front porch
-#define HS		2				// HSYNC pulse width (negative going)
-#define HBP		9				// horizontal back porch
+#define HFP		8				// horizontal front porch
+#define HS		10				// HSYNC pulse width (negative going)
+#define HBP		10				// horizontal back porch
 #define HDS		(HS+HBP)		// horizontal data start
 #define HBL		(HS+HBP+HFP)	// horizontal blanking period
 #define HP		(HDISP+HBL)		// horizontal cycle
