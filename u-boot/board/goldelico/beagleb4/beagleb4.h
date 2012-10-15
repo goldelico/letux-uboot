@@ -1,30 +1,40 @@
 // all pins on BB expansion connector
 
-// GPIO -> BB-Pin -> Expander function
+/*
+ * IEN  - Input Enable
+ * IDIS - Input Disable
+ * PTD  - Pull type Down
+ * PTU  - Pull type Up
+ * DIS  - Pull type selection is inactive
+ * EN   - Pull type selection is active
+ * M0   - Mode 0
+ * The commented string gives the final mux configuration for that pin
+ */
+// pin GPIO_### / other function - used by expander
 
 #define MUX_BEAGLE_EXPANDER() \
-MUX_VAL(CP(MMC2_CLK),		(IEN  | PTD | EN  | M1)) /*GPIO_130 / MCSPI3-CLK -> TRF*/\
-MUX_VAL(CP(MMC2_CLK),		(IDIS | PTD | EN  | M4)) /*GPIO_130 / MCSPI3-CLK -> TRF*/\
-MUX_VAL(CP(MMC2_CMD),		(IDIS | PTD | EN  | M1)) /*GPIO_131 / MCSPI3-SIMO -> TRF*/\
-MUX_VAL(CP(MMC2_CMD),		(IDIS | PTD | EN  | M4)) /*GPIO_131 / MCSPI3-SIMO -> TRF*/\
-MUX_VAL(CP(MMC2_DAT0),		(IEN  | PTU | EN  | M1)) /*GPIO_132 / MCSPI3-SOMI -> TRF*/\
-MUX_VAL(CP(MMC2_DAT0),		(IEN  | PTU | EN  | M4)) /*GPIO_132 / MCSPI3-SOMI -> TRF*/\
-MUX_VAL(CP(MMC2_DAT1),		(IEN  | PTU | EN  | M4)) /*GPIO_133 / UART3-RX (software)*/\
-MUX_VAL(CP(MMC2_DAT2),		(IDIS | PTU | EN  | M4)) /*GPIO_134 / UART3-TX (software)*/\
-MUX_VAL(CP(MMC2_DAT3),		(IDIS | PTU | EN  | M1)) /*GPIO_135 / MCSPI3-CS0*/\
-MUX_VAL(CP(MMC2_DAT4),		(IEN  | PTD | EN  | M4)) /*GPIO_136 / AUX */\
-MUX_VAL(CP(MMC2_DAT5),		(IEN  | PTU | EN  | M4)) /*GPIO_137 / POWER */\
-MUX_VAL(CP(MMC2_DAT6),		(IDIS | PTU | EN  | M4)) /*GPIO_138 / UART3-RTS (software) */\
-MUX_VAL(CP(MMC2_DAT7),		(IEN  | PTU | EN  | M4)) /*GPIO_139 / UART3-CTS (software) */\
-MUX_VAL(CP(UART2_RX),		(IEN  | PTU | EN  | M4)) /*GPIO_143 / UART2-RX */\
-MUX_VAL(CP(UART2_CTS),		(IDIS | PTU | EN  | M4)) /*GPIO_144 / UART2-CTS */\
-MUX_VAL(CP(UART2_RTS),		(IDIS | PTU | EN  | M4)) /*GPIO_145 / UART2-RTS */\
-MUX_VAL(CP(UART2_TX),		(IEN  | PTU | EN  | M4)) /*GPIO_146 / UART2-TX */\
-MUX_VAL(CP(MCBSP1_CLKR),	(IEN  | PTD | EN  | M4)) /*GPIO_156 / ... - KEYIRQ -> TRF IRQ */\
-MUX_VAL(CP(MCBSP1_FSR),		(IEN  | PTU | EN  | M4)) /*GPIO_157 / ... - PENIRQ */\
-MUX_VAL(CP(MCBSP1_DX),		(IDIS | PTD | EN  | M4)) /*GPIO_158 / ... - Display STBY */\
-MUX_VAL(CP(MCBSP1_DR),		(IDIS | PTD | EN  | M4)) /*GPIO_159 / McBSP1-DR -> TRF EN2 */\
-MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | DIS | M0)) /*GPIO_??? / McBSP_CLKS */\
-MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTD | EN  | M4)) /*GPIO_161 / McBSP1-FSX -> TRF EN */\
-MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTD | EN  | M4)) /*GPIO_162 / McBSP1-CLKX -> UART3 Powerdown */
+\
+MUX_VAL(CP(MMC2_CLK),		(IDIS | PTD | EN  | M4)) /* 21 GPIO_130 / MCSPI3-CLK	- unused*/\
+MUX_VAL(CP(MMC2_CMD),		(IDIS | PTD | EN  | M4)) /* 19 GPIO_131 / MCSPI3-SIMO	- unused*/\
+MUX_VAL(CP(MMC2_DAT0),		(IDIS | PTU | EN  | M4)) /* 17 GPIO_132 / MCSPI3-SOMI	- unused*/\
+MUX_VAL(CP(MMC2_DAT1),		(IDIS | PTU | EN  | M4)) /* 15 GPIO_133					- unused*/\
+MUX_VAL(CP(MMC2_DAT2),		(IDIS | PTU | EN  | M4)) /* 13 GPIO_134 / MCSPI3-CS1	- unused*/\
+MUX_VAL(CP(MMC2_DAT3),		(IDIS | PTU | EN  | M4)) /* 11 GPIO_135 / MCSPI3-CS0	- unused*/\
+MUX_VAL(CP(MMC2_DAT4),		(IEN  | PTD | EN  | M4)) /*  9 GPIO_136					- AUX button */\
+MUX_VAL(CP(MMC2_DAT5),		(IEN  | PTU | EN  | M4)) /*  7 GPIO_137					- POWER button */\
+MUX_VAL(CP(MMC2_DAT6),		(IEN  | PTD | EN  | M4)) /*  5 GPIO_138             	- KEYIRQ (TRF IRQ/GPS Time Mark)*/\
+MUX_VAL(CP(MMC2_DAT7),		(IDIS | PTU | EN  | M4)) /*  3 GPIO_139					- UART3-EXT*/\
+\
+MUX_VAL(CP(UART2_CTS),		(IEN  | PTD | DIS | M4)) /*  4 GPIO_144 / UART2-CTS		- ext. Antenna detect; don't use pullup/down!*/\
+MUX_VAL(CP(UART2_TX),		(IDIS | PTU | EN  | M0)) /*  6 GPIO_146 / UART2-TX		- GPS RX*/\
+MUX_VAL(CP(MCBSP3_FSX),		(IEN  | PTU | EN  | M1)) /*  8 GPIO_143 / UART2-RX		- GPS TX*/\
+MUX_VAL(CP(UART2_RTS),		(IDIS | PTU | EN  | M4)) /* 10 GPIO_145 / UART2-RTS / GPT10 - backlight */\
+MUX_VAL(CP(UART2_RX),		(IDIS | PTD | DIS | M4)) /* NA GPIO_147                 - don't switch to UART mode!*/\
+MUX_VAL(CP(MCBSP1_DX),		(IDIS | PTD | EN  | M4)) /* 12 GPIO_158 / McBSP1-DX		- LVDS Display shutdown */\
+MUX_VAL(CP(MCBSP1_CLKX),	(IEN  | PTD | EN  | M4)) /* 14 GPIO_162 / McBSP1-CLKX	- unused */\
+MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTD | EN  | M4)) /* 16 GPIO_161 / McBSP1-FSX	- backlight shutdown */\
+MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTD | EN  | M4)) /* 18 GPIO_159 / McBSP1-DR		- unused */\
+MUX_VAL(CP(MCBSP1_CLKR),	(IDIS | PTD | EN  | M4)) /* 20 GPIO_156 / McBSP1-CLR	- GPS ON/OFF */\
+MUX_VAL(CP(MCBSP1_FSR),		(IEN  | PTU | EN  | M4)) /* 22 GPIO_157 / McBSP1-FSR	- PENIRQ */\
+
 

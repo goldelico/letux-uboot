@@ -11,14 +11,14 @@
 
 // make us initialize using both pinmux sets
 
-void muxinit(void)
+int misc_init_r(void)
 {
-	MUX_BEAGLE();
-	MUX_BEAGLE_HYBRID();
+	my_misc_init_r();		// initializes board revision dependent mux (e.g. MUX_BEAGLE_C())
+	MUX_BEAGLE_EXPANDER();	// append our own pinmux
+	return 0;
 }
 
-#undef MUX_BEAGLE
-#define MUX_BEAGLE() muxinit()
+#define misc_init_r my_misc_init_r
 
 // take the original beagle.c code
 #include "../../ti/beagle/beagle.c"
