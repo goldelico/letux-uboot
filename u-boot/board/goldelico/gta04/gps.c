@@ -34,13 +34,13 @@
 
 #ifdef CONFIG_OMAP3_GTA04
 
-#define GPIO_GPSEXT		144		// external GPS antenna plugged in
+#define GPIO_GPS_EXT	144		// external GPS antenna plugged in
 #define GPIO_GPS_ON		145		// reset for GPS module
 #define GPIO_GPS_PPS	114		// Pulse per Second interrupt
 
 #else /* Beagle Hybrid */
 
-#define GPIO_GPSEXT		144		// external GPS antenna plugged in
+#define GPIO_GPS_EXT	144		// external GPS antenna plugged in
 #define GPIO_GPS_ON		156
 #define GPIO_GPS_PPS	138		// Pulse per Second interrupt
 
@@ -69,8 +69,8 @@ int gps_init(void)
 	
 	omap_request_gpio(GPIO_GPS_ON);
 	omap_set_gpio_direction(GPIO_GPS_ON, 0);		// output
-	omap_request_gpio(GPIO_GPSEXT);
-	omap_set_gpio_direction(GPIO_GPSEXT, 1);		// input
+	omap_request_gpio(GPIO_GPS_EXT);
+	omap_set_gpio_direction(GPIO_GPS_EXT, 1);		// input
 	omap_request_gpio(GPIO_GPS_PPS);
 	omap_set_gpio_direction(GPIO_GPS_PPS, 1);		// input
 	return 0;
@@ -79,7 +79,7 @@ int gps_init(void)
 void gps_on(void)
 {
 	omap_set_gpio_dataout(GPIO_GPS_ON, 1);
-	if(omap_get_gpio_datain(GPIO_GPSEXT))
+	if(omap_get_gpio_datain(GPIO_GPS_EXT))
 		printf("external antenna\n");
 	else
 		printf("internal antenna\n");
@@ -104,7 +104,7 @@ void gps_echo(void)
 	NS16550_reinit((NS16550_t)CONFIG_SYS_NS16550_COM2, divisor);	// initialize UART
 	while (1)
 		{ // echo in both directions
-			int ant=omap_get_gpio_datain(GPIO_GPSEXT);
+			int ant=omap_get_gpio_datain(GPIO_GPS_EXT);
 			int pps=omap_get_gpio_datain(GPIO_GPS_PPS);
 			if(ant != lastant)
 				{ // changed
