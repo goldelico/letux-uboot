@@ -139,6 +139,9 @@ void status_set_status(int value)
 		i2c_set_bus_num(TCA6507_BUS);	// write I2C2
 		// we could write a autoincrement address and all 3 bytes in a single message
 		// we could set the TCA to do smooth transitions
+#if defined(CONFIG_GOLDELICO_EXPANDER_B2)
+		value |= (value >> 3) & 0x03;	// map power LEDs to AUX LEDs (we only have 2)
+#endif
 		i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
 		i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT1, 0);
 		i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT2, value);	// 1 = on
