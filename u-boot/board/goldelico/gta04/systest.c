@@ -606,6 +606,8 @@ int OTGchargepump(int enable)
 	return 0;
 }
 
+// NOTE: this table is only for GTA04
+
 static struct
 {
 	int gpio;
