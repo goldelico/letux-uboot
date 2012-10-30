@@ -1,7 +1,7 @@
 /* u-boot driver for the Sharp LQ070Y3DB3B LCM
  *
- * Copyright (C) 2006-2007 by OpenMoko, Inc.
- * Author: Harald Welte <laforge@openmoko.org>
+ * Copyright (C) 2012 by Golden Delicious Computers GmbH&Co. KG
+ * Author: H. Nikolaus Schaller <hns@goldelico.com>
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or

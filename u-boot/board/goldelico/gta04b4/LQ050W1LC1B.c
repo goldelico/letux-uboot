@@ -1,7 +1,7 @@
 /* u-boot driver for the Sharp LQ050W1LC1B LCM
  *
- * Copyright (C) 2006-2007 by OpenMoko, Inc.
- * Author: Harald Welte <laforge@openmoko.org>
+ * Copyright (C) 2012 by Golden Delicious Computers GmbH&Co. KG
+ * Author: H. Nikolaus Schaller <hns@goldelico.com>
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,9 +50,9 @@
 
 #elif CONFIG_OMAP3_BEAGLE
 
-#define GPIO_POWER 162			/* McBSP5-CLKX?? enables 5V DC/DC (backlight) for the display */
-#define GPIO_BLSHUTDOWN 161		/* McBSP5-FSX?? controls Backlight SHUTDOWN (shutdown if high) */
-#define GPIO_SHUTDOWN 158		/* McBSP5-DX?? controls LVDS SHUTDOWN (shutdown if low) */
+#define GPIO_POWER 162			/* McBSP1-CLKX enables 5V DC/DC (backlight) for the display */
+#define GPIO_BLSHUTDOWN 161		/* McBSP1-FSX controls Backlight SHUTDOWN (shutdown if high) */
+#define GPIO_SHUTDOWN 158		/* McBSP1-DX controls LVDS SHUTDOWN (shutdown if low) */
 
 #endif
 
@@ -67,17 +67,17 @@
 // all values are min ratings
 
 #define VDISP	600				// vertical active area
-#define VFP		7				// vertical front porch
-#define VS		7				// VSYNC pulse width (negative going)
-#define VBP		7				// vertical back porch
+#define VFP		(621-VDISP)/3	// vertical front porch
+#define VS		(621-VDISP)/3	// VSYNC pulse width
+#define VBP		(621-VDISP)/3	// vertical back porch
 #define VDS		(VS+VBP)		// vertical data start
 #define VBL		(VS+VBP+VFP)	// vertical blanking period
 #define VP		(VDISP+VBL)		// vertical cycle
 
 #define HDISP	1024			// horizontal active area
-#define HFP		96				// horizontal front porch
-#define HS		96				// HSYNC pulse width (negative going)
-#define HBP		96				// horizontal back porch
+#define HFP		(1312-HDISP)/3	// horizontal front porch
+#define HS		(1312-HDISP)/3	// HSYNC pulse width
+#define HBP		(1312-HDISP)/3	// horizontal back porch
 #define HDS		(HS+HBP)		// horizontal data start
 #define HBL		(HS+HBP+HFP)	// horizontal blanking period
 #define HP		(HDISP+HBL)		// horizontal cycle
@@ -91,8 +91,8 @@ static /*const*/ struct panel_config lcm_cfg =
 	.timing_v	= ((VBP+0)<<20) | ((VFP+0)<<8) | ((VS-1)<<0), /* Vertical timing */
 	// negative clock edge
 	// negative sync pulse
-	// positive DE pulse
-	.pol_freq	= (1<<17)|(1<<16)|(0<<15)|(0<<14)|(1<<13)|(1<<12)|0x28,    /* Pol Freq */
+	// positive DE pulse incl. HSYNC&VSYNC
+	.pol_freq	= (1<<17)|(1<<16)|(0<<15)|(0<<14)|(0<<13)|(0<<12)|0x28,    /* Pol Freq */
 	.divisor	= (0x0001<<16)|(DSS1_FCLK/PIXEL_CLOCK), /* Pixel Clock divisor from dss1_fclk */
 	.lcd_size	= ((HDISP-1)<<0) | ((VDISP-1)<<16), /* as defined by LCM */
 	.panel_type	= 0x01, /* TFT */
@@ -140,11 +140,11 @@ int panel_display_onoff(int on)
 		}
 	else
 		{
-		omap_set_gpio_dataout(GPIO_BLSHUTDOWN, 0);
+		omap_set_gpio_dataout(GPIO_BLSHUTDOWN, 1);
 		mdelay(5);
-		omap_set_gpio_dataout(GPIO_SHUTDOWN, 1);
+		omap_set_gpio_dataout(GPIO_SHUTDOWN, 0);
 		mdelay(10);
-		omap_set_gpio_dataout(GPIO_POWER, 1);
+		omap_set_gpio_dataout(GPIO_POWER, 0);
 		mdelay(200);
 		}
 	return 0;
