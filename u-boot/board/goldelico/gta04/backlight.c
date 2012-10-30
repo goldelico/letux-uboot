@@ -81,6 +81,9 @@
 
 void backlight_set_level(int level)	// 0..255
 {
+#if defined(CONFIG_GOLDELICO_EXPANDER_B4)
+	level=255-level;	// reversed polarity by T401
+#endif
 #if USE_PWM
 	struct gptimer *gpt_base = (struct gptimer *)GPT_BACKLIGHT;
 	// 	writel(value, &gpt_base->registername);
@@ -133,7 +136,7 @@ int backlight_init(void)
 	if(omap_request_gpio(GPIO_BACKLIGHT) == 0)	// 0 == ok
 		{
 		omap_set_gpio_direction(GPIO_BACKLIGHT, 0);		// output
-		printf("did backlight_init() on GPIO_%d\n", GPIO_BACKLIGHT);		
+		printf("did backlight_init() on GPIO_%d\n", GPIO_BACKLIGHT);
 		}
 	else
 		{
