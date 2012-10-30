@@ -13,6 +13,7 @@
 
 int misc_init_r(void)
 {
+	int my_misc_init_r();
 	my_misc_init_r();		// initializes board revision dependent mux (e.g. MUX_BEAGLE_C())
 	MUX_BEAGLE_EXPANDER();	// append our own pinmux
 	return 0;

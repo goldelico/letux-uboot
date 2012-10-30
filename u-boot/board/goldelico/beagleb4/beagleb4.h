@@ -33,7 +33,7 @@ MUX_VAL(CP(UART2_RX),		(IDIS | PTD | DIS | M4)) /* NA GPIO_147                 -
 MUX_VAL(CP(MCBSP1_DX),		(IDIS | PTD | EN  | M4)) /* 12 GPIO_158 / McBSP1-DX		- LVDS Display shutdown */\
 MUX_VAL(CP(MCBSP1_CLKX),	(IEN  | PTD | EN  | M4)) /* 14 GPIO_162 / McBSP1-CLKX	- unused */\
 MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTD | EN  | M4)) /* 16 GPIO_161 / McBSP1-FSX	- backlight shutdown */\
-MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTD | EN  | M4)) /* 18 GPIO_159 / McBSP1-DR		- unused */\
+MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTD | EN  | M4)) /* 18 GPIO_159 / McBSP1-DR		- controls EXT line for RS232 */\
 MUX_VAL(CP(MCBSP1_CLKR),	(IDIS | PTD | EN  | M4)) /* 20 GPIO_156 / McBSP1-CLR	- GPS ON/OFF */\
 MUX_VAL(CP(MCBSP1_FSR),		(IEN  | PTU | EN  | M4)) /* 22 GPIO_157 / McBSP1-FSR	- PENIRQ */\
 
