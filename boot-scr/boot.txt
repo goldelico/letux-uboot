@@ -25,11 +25,11 @@
 # 2. flash=yes
 # 3. boot
 #
-# booting tries to load in this order
-#    boot script		/boot.scr from partition 1(FAT) -- /boot/boot.scr from partition 1(ext) -- NAND
-#    splash images		/image.rgb16 from partition 1(FAT) -- /boot/image.rgb16 partition 1(ext) -- NAND
-#    kernel			/uImage from partition 1(FAT) -- /boot/uImage from partition 1 to 4 (ext) -- NAND
-#    bootargs.scr		/boot/bootargs.scr from same partition as kernel -- defines default for NAND/jffs2
+# booting tries to load:
+#    boot script		/boot.scr (FAT) from partition 1, then /boot/boot.scr (EXT) from partition 1, then NAND
+#    splash images		/image.rgb16 (FAT) from partition 1, then /boot/image.rgb16 (EXT) partition 1, then NAND
+#    kernel			on up to 4 partitions /boot/uImage (EXT) or /uImage (FAT) or if none found then NAND
+#    bootargs.scr		on the same paritions /boot/bootargs.scr (EXT) or /bootargs.scr (FAT) -- default is initialized to NAND or SD (if kernel is found)
 #
 
 VERSION=0123456789	# incremented by build script so that we re-initialize the boot environment or reflash x-loader and u-boot
