@@ -204,11 +204,15 @@ int env_import(const char *buf, int check)
 {
 	env_t *ep = (env_t *)buf;
 
+#if defined(CONFIG_START_WITH_DEFAULT_ENVIRONMENT)
+	set_default_env(NULL);
+	return 0;
+#endif
+
 	if (check) {
 		uint32_t crc;
 
 		memcpy(&crc, &ep->crc, sizeof(crc));
-
 		if (crc32(0, ep->data, ENV_SIZE) != crc) {
 			set_default_env("!bad CRC");
 			return 0;
