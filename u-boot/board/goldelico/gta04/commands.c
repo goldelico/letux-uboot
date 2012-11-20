@@ -595,6 +595,7 @@ static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 			return wlanbttest(0);	// just power on
 		}
 		if (strncmp ("ch", argv[1], 2) == 0) {
+			i2c_set_bus_num(TWL4030_I2C_BUS);	// I2C1
 			return twl4030_init_battery_charging();
 		}
 		if (strncmp ("gp", argv[1], 2) == 0) {

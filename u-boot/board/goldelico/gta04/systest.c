@@ -549,7 +549,7 @@ int irdatest(void)
 }
 
 #ifdef CONFIG_OMAP3_GTA04
-int wlabbtpower(void)
+int wlanbtpower(void)
 { /* Bluetooth VAUX4 = 3.3V -- CHECKME: 3.3 V is not officially supported by TPS! We use 0x09 = 2.8V here*/
 #define TCA6507_BUS			(2-1)	// I2C2
 #define TCA6507_ADDRESS		0x45
@@ -564,7 +564,7 @@ int wlabbtpower(void)
 	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
 	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT1, 0);
 	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT2, 0x40);	// pull down reset for WLAN&BT chip
-	i2c_set_bus_num(0);	// write I2C1
+	i2c_set_bus_num(TWL4030_I2C_BUS);	// write I2C1
 	printf("power on VAUX4\n");
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX4_DEDICATED,
 							/* 2.8V: */ 0x09 /* 3.15V: 0x0c */,
@@ -576,7 +576,7 @@ int wlabbtpower(void)
 	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
 	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT1, 0);
 	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT2, 0);	// release reset for WLAN&BT chip
-	i2c_set_bus_num(0);	// write I2C1
+	i2c_set_bus_num(TWL4030_I2C_BUS);	// write I2C1
 	return 0;
 }
 #endif
@@ -584,7 +584,7 @@ int wlabbtpower(void)
 int wlanbttest(int test)
 { /* Bluetooth VAUX4 = 3.3V -- CHECKME: 3.3 V is not officially supported! We use 0x09 = 2.8V here*/
 #ifdef CONFIG_OMAP3_GTA04
-	wlabbtpower();
+	wlanbtpower();
 	if(test)
 		{
 		// now, we should be able to test the UART for the BT part...
@@ -599,6 +599,7 @@ int wlanbttest(int test)
 
 int OTGchargepump(int enable)
 {
+	i2c_set_bus_num(TWL4030_I2C_BUS);	// I2C1
 	if(enable)
 		twl4030_i2c_write_u8(TWL4030_CHIP_USB, 0x20, TWL4030_USB_OTG_CTRL_SET);
 	else
