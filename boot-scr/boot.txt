@@ -39,9 +39,10 @@ echo "*** if you boot from NAND don-t worry about error messages when U-Boot tri
 i2c dev 0
 status init
 status set 8	# give fast feedback that U-Boot did start (red power led)
-flash=no
 
-if test "${gta04}" != "${VERSION}"
+# we have to add an "x" because the test command treats empty string as equal to anything
+
+if test "x${gta04}" != "x${VERSION}"
 	then
 
 	# set up default environment
@@ -176,7 +177,7 @@ echo *** initializing LCM ***
 if lcm start || test "${flash}" = "yes"
 then
 
-	if test "${flash}" = "yes"
+	if test "x${flash}" = "xyes"
 	then
 		lcm color ff0000	# will flash - turn screen red
 	else
@@ -187,13 +188,18 @@ then
 		run showimg
 	fi
 
-	if test "${flash}" = "yes" || status check 1	# we want to flash or AUX button is (still) pressed
+	if test "x${flash}" = "xyes" || test "x${forcemenu}" = "xyes" || status check 1	# we want to flash or AUX button is (still) pressed
 	then
+		if test "x${forcemenu}" = "xyes"
+		then	# reset
+			setenv forcemenu
+			saveenv
+		fi
 		echo *** initializing TSC for boot menu ***
 		tsc init # tsc selection will be 0
 		while true
 		do
-			if test "${flash}" != "yes"
+			if test "x${flash}" != "xyes"
 			then
 				echo *** loading boot menu image ***
 				setenv imgaddr 80600000
@@ -301,7 +307,7 @@ then
 				setenv defaultdisplay lcd
 				saveenv
 				run mmcboot
-			elif test "${flash}" = "yes" || tsc selection 99
+			elif test "x${flash}" = "xyes" || tsc selection 99
 			then 
 				echo *** NAND flash ***
 				# note: MLO is configured to load U-Boot from MMC
