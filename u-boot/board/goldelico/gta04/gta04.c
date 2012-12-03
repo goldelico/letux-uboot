@@ -149,7 +149,7 @@ int misc_init_r(void)
 	 * have oscillated until the battery is available
 	 * this makes the ITG3200 Power On Reset fail 
 	 */
-	i2c_set_bus_num(1);	// I2C2
+	i2c_set_bus_num(TCA6507_BUS);	// I2C2
 	udelay(10*1000);	// wait a little until power stabilizes
 	if(i2c_probe(0x68)) { // ITG3200 does not respond
 		printf("ITG3200 does not respond\n");
