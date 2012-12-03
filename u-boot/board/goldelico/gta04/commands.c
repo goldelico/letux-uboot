@@ -40,6 +40,8 @@
 #include "systest.h"
 #include "twl4030-additions.h"
 
+#define TWL4030_I2C_BUS			(1-1)
+
 /* LCM commands */
 
 static int do_lcd_color(int argc, char *const argv[])
@@ -601,6 +603,9 @@ static int do_systest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		if (strncmp ("gp", argv[1], 2) == 0) {
 			return gpiotest();
 		}
+		if (strncmp ("ke", argv[1], 2) == 0) {
+			return keytest();
+		}
 	}
 	if(argc == 3) {
 		if (strncmp ("ot", argv[1], 2) == 0) {
@@ -621,6 +626,7 @@ U_BOOT_CMD(systest, 3, 0, do_systest, "System Test",
 		   "au[dio] - test audio\n"
 		   "ir[da] - test IrDA\n"
 		   "gp[io] - test some GPIOs\n"
+		   "ke[ytest] - test TCA8418 keyboard\n"
 		   "wl[anbt] - test WLAN/BT module\n"
 		   "wp - apply power to WLAN/BT module\n"
 		   "ch[arging] - init and test BCI/BKBAT\n"
