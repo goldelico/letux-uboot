@@ -198,6 +198,15 @@ int status_get_buttons(void)
 int status_init(void)
 {
 	isXM = (get_board_revision() == REVISION_XM);
+	i2c_set_bus_num(TWL4030_I2C_BUS);
+	if(isXM) {
+		/* Set VAUX1 to 3.3V for GTA04E display board */
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,
+								/*TWL4030_PM_RECEIVER_VAUX1_VSEL_33*/ 0x07,
+								TWL4030_PM_RECEIVER_VAUX1_DEV_GRP,
+								TWL4030_PM_RECEIVER_DEV_GRP_P1);
+		udelay(5000);
+	}
 #if !defined(CONFIG_OMAP3_GTA04)	// we assume that a GTA04 always has a TCA6507
 	if(i2c_set_bus_num(TCA6507_BUS))
 		{
@@ -208,7 +217,7 @@ int status_init(void)
 #endif
 	
 	if(!hasTCA6507) {
-		if(isXM) { // XM has scrambled dss assignment with respect to default ball name
+		if(isXM) { // XM has scrambled dss assignment with respect to default ball names
 			MUX_VAL(CP(DSS_DATA18),		(IEN | PTD | EN | M4)); /*GPIO */
 			MUX_VAL(CP(DSS_DATA19),		(IEN | PTD | EN | M4)); /*GPIO */
 			MUX_VAL(CP(DSS_DATA8),		(IEN | PTD | EN | M4)); /*GPIO */
