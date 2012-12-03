@@ -31,7 +31,7 @@
 #include <i2c.h>
 #include "tsc2007.h"
 
-#define TSC2007_BUS 2	// I2C2
+#define TSC2007_BUS (2-1)	// I2C2
 #define TSC2007_ADDRESS 0x48
 
 // command byte definitions:
@@ -86,7 +86,7 @@ int tsc2007_cmd(int cmd)
 
 int tsc2007_init(void)
 {
-	if(i2c_set_bus_num(TSC2007_BUS-1))
+	if(i2c_set_bus_num(TSC2007_BUS))
 		{
 			printf ("could not select I2C2\n");
 			return 1;
@@ -125,7 +125,7 @@ int read_adc(int adcnum)
 	};
 	if(didNotInit)
 		return -1;
-	if(i2c_get_bus_num() != TSC2007_BUS-1 && i2c_set_bus_num(TSC2007_BUS-1))
+	if(i2c_get_bus_num() != TSC2007_BUS && i2c_set_bus_num(TSC2007_BUS))
 		{
 		printf ("could not select I2C2\n");
 		return -1;
