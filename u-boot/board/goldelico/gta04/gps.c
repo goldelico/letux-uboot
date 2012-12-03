@@ -46,19 +46,12 @@
 
 #endif
 
+#define TWL4030_I2C_BUS		(1-1)	// I2C1
+
 int gps_init(void)
 {
-	extern int get_board_revision(void);
-#define REVISION_XM 0
-	if(get_board_revision() == REVISION_XM) {
-		/* Set VAUX1 to 3.3V for GTA04E display board */
-		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,
-							/*TWL4030_PM_RECEIVER_VAUX1_VSEL_33*/ 0x07,
-							TWL4030_PM_RECEIVER_VAUX1_DEV_GRP,
-							TWL4030_PM_RECEIVER_DEV_GRP_P1);
-		udelay(5000);
-	}
 #ifdef CONFIG_OMAP3_GTA04
+	i2c_set_bus_num(TWL4030_I2C_BUS);
 	/* ext. GPS Ant VSIM = 2.8 V (3.0V) */
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VSIM_DEDICATED,
 							/*TWL4030_PM_RECEIVER_VSIM_VSEL_28*/ 0x04 /* 0x05 */,
