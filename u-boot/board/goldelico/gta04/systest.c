@@ -40,6 +40,7 @@
 #include "twl4030-additions.h"
 
 #define TWL4030_I2C_BUS			(1-1)
+#define SENSORS_I2C_BUS			(2-1)
 
 int bt_hci(int msg)
 {
@@ -194,7 +195,7 @@ int systest(void)
 		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val2, 0x60);
 		printf("  VBAT:    %d\n", (val2<<2)+(val>>6));
 		}
-	i2c_set_bus_num(1);	// I2C2
+	i2c_set_bus_num(SENSORS_I2C_BUS);	// I2C2
 	printf("TSC2007:       %s\n", !i2c_probe(0x48)?"found":"-");
 	printf("TCA6507:       %s\n", !i2c_probe(0x45)?"found":"-");
 	printf("LIS302 TOP:    %s\n", !i2c_probe(0x1c)?"found":"-");
@@ -774,6 +775,71 @@ static struct
 	
 };
 
+/*
+ int i2c_read(u_int8_t chip, u_int32_t addr, int alen, u_int8_t *buf, int len)
+ int i2c_write(u_int8_t chip, u_int32_t addr, int alen, u_int8_t *buf, int len)
+ */
+
+#define TCA8418_BUS (2-1)	// I2C1=0, I2C2=1, I2C3=2
+#define TCA8418_ADDRESS 0x34
+
+int keytest(void)
+{
+	unsigned char byte;
+	printf("testing TCA8418 keyboard\n");
+	if(i2c_set_bus_num(TCA8418_BUS))
+		{
+		printf ("could not select I2C%d\n", TCA8418_BUS+1);
+		return 1;
+		}
+	
+	if(i2c_probe(TCA8418_ADDRESS))
+		{
+		printf ("could not probe TCA8418 at 0x%02x\n", TCA8418_ADDRESS);
+		return 1;		
+		}
+	
+	byte = 0x01;
+	i2c_write(TCA8418_ADDRESS, 0x01, 1, &byte, 1);	// enable keyboard IRQ
+	byte = 0xff;
+	i2c_write(TCA8418_ADDRESS, 0x1d, 1, &byte, 1);	// enable all lines as KP matrix
+	i2c_write(TCA8418_ADDRESS, 0x1e, 1, &byte, 1);	// enable all lines as KP matrix
+	i2c_write(TCA8418_ADDRESS, 0x1f, 1, &byte, 1);	// enable all lines as KP matrix
+		
+	while (!tstc())
+		{
+		int keyint=(status_get_buttons() & (1<<5)) != 0;	// get_button() knows how to read the KEYIRQ
+#if 1
+		if(!keyint)
+		   continue;	// wait for key interrupt
+#endif
+		i2c_read(TCA8418_ADDRESS, 0x02, 1, &byte, 1);	// read int-status register
+#if 0
+		printf("keyint=%d intstat=%02x\r", keyint, byte);
+#endif
+		if(byte&1)
+			{ // read matrix
+			int i;
+			unsigned char events;
+			i2c_read(TCA8418_ADDRESS, 0x03, 1, &events, 1);	// read number of events in FIFO
+			events &= 0x0f;	// up to 10
+			for(i=0; i < events; i++)
+				{
+				i2c_read(TCA8418_ADDRESS, 0x04, 1, &byte, 1);	// read keypad event as often as there is an event
+				if(byte & 0x80)
+					printf("press   %2d\n", byte&0x7f);
+				else
+					printf("release %2d\n", byte&0x7f);
+				}
+			byte=0x01;
+			i2c_write(TCA8418_ADDRESS, 0x02, 1, &byte, 1);	// write int-status register to reset keypad int
+			}
+		}
+	if(tstc())
+		getc();
+	printf("\n");
+	return 0;
+}
 
 int gpiotest(void)
 {
