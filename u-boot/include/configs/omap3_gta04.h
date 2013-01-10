@@ -33,8 +33,13 @@
 
 // #undef CONFIG_CMD_JFFS2
 // #define CONFIG_CMD_JFFS2	1	/* to access the rootfs in NAND flash */
+// FIXME: needs to add configs for the partitions so that JFFS2 runs in the correct NAND partition
 
-// FIXME: add configs for the partitions so that JFFS2 runs in the correct NAND partition
+#define CONFIG_CMD_UBIFS	1
+
+#define CONFIG_CMD_EXT2 1
+#define CONFIG_CMD_EXT4 1
+
 
 #undef CONFIG_SYS_PROMPT
 #define CONFIG_SYS_PROMPT		"GTA04 # "
