@@ -617,21 +617,21 @@ int do_jffs2_fsinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 /***************************************************/
 U_BOOT_CMD(
-	fsload,	3,	0,	do_jffs2_fsload,
-	"load binary file from a filesystem image",
+	jcload,	3,	0,	do_jffs2_fsload,
+	"load binary file from a JFFS2/CRAMFS filesystem image",
 	"[ off ] [ filename ]\n"
 	"    - load binary file from flash bank\n"
 	"      with offset 'off'"
 );
 U_BOOT_CMD(
-	ls,	2,	1,	do_jffs2_ls,
-	"list files in a directory (default /)",
+	jcls,	2,	1,	do_jffs2_ls,
+	"list files in a JFFS2/CRAMFS directory (default /)",
 	"[ directory ]"
 );
 
 U_BOOT_CMD(
-	fsinfo,	1,	1,	do_jffs2_fsinfo,
-	"print information about filesystems",
+	jcinfo,	1,	1,	do_jffs2_fsinfo,
+	"print information about JFFS2/CRAMFS filesystems",
 	""
 );
 /***************************************************/

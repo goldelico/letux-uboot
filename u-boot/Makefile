@@ -193,8 +193,9 @@ ifeq ($(CPU),ixp)
 LIBS += arch/arm/cpu/ixp/npe/libnpe.o
 endif
 LIBS += arch/$(ARCH)/lib/lib$(ARCH).o
+LIBS += fs/fs.o
 LIBS += fs/cramfs/libcramfs.o fs/fat/libfat.o fs/fdos/libfdos.o fs/jffs2/libjffs2.o \
-	fs/reiserfs/libreiserfs.o fs/ext2/libext2fs.o fs/yaffs2/libyaffs2.o \
+	fs/reiserfs/libreiserfs.o fs/ext2/libext2fs.o fs/ext4/libext4fs.o fs/yaffs2/libyaffs2.o \
 	fs/ubifs/libubifs.o
 LIBS += net/libnet.o
 LIBS += disk/libdisk.o
