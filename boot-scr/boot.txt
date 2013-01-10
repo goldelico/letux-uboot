@@ -64,29 +64,29 @@ if test "x${gta04}" != "x${VERSION}"
 	# load boot script from mmc (first FAT partition only) or nand wherever we find it
 # i2c dev 0
 # mmc rescan 0
-# if fatload mmc 0 ${bootaddr} boot.scr
+# if load mmc 0 ${bootaddr} boot.scr
 # then
 #   echo did load bootscript from mmc
 # elif nand read ${bootaddr} 250000 10000
 # then
 #   echo did load bootscript from nand
 # fi
-	setenv loadbootscript 'i2c dev 0; mmc rescan 0; if fatload mmc 0 ${bootaddr} boot.scr; then echo did load bootscript from mmc; elif nand read ${bootaddr} 250000 10000; then echo did load bootscript from nand; fi'	
+	setenv loadbootscript 'i2c dev 0; mmc rescan 0; if load mmc 0 ${bootaddr} boot.scr; then echo did load bootscript from mmc; elif nand read ${bootaddr} 250000 10000; then echo did load bootscript from nand; fi'	
 
 	# load zipped/uncompressed image from mmc (first FAT partition only) or nand wherever we find it
 # i2c dev 0
 # mmc rescan 0
-# if fatload mmc 0 ${imgaddr} ${imgfile}.rgb16
+# if load mmc 0 ${imgaddr} ${imgfile}.rgb16
 # then
 #   ;
-# elif fatload mmc 0 ${imgtempaddr} ${imgfile}.rgb16z
+# elif load mmc 0 ${imgtempaddr} ${imgfile}.rgb16z
 # then
 #   unzip ${imgtempaddr} ${imgaddr}
 # elif nand read ${imgtempaddr} ${imgnandaddr} 40000
 # then
 #   unzip ${imgtempaddr} ${imgaddr}
 # fi
-	setenv loadimg 'i2c dev 0; mmc rescan 0; if fatload mmc 0 ${imgaddr} ${imgfile}.rgb16; then; elif fatload mmc 0 ${imgtempaddr} ${imgfile}.rgb16z; then unzip ${imgtempaddr} ${imgaddr}; elif nand read ${imgtempaddr} ${imgnandaddr} 40000; then unzip ${imgtempaddr} ${imgaddr}; fi'
+	setenv loadimg 'i2c dev 0; mmc rescan 0; if load mmc 0 ${imgaddr} ${imgfile}.rgb16; then; elif load mmc 0 ${imgtempaddr} ${imgfile}.rgb16z; then unzip ${imgtempaddr} ${imgaddr}; elif nand read ${imgtempaddr} ${imgnandaddr} 40000; then unzip ${imgtempaddr} ${imgaddr}; fi'
 	setenv showimg 'run loadimg; lcm fb ${imgaddr};'
 
 	# predefine default boot arguments (unless overwritten by bootargs.scr)
@@ -117,13 +117,13 @@ if test "x${gta04}" != "x${VERSION}"
 # do
 #   if itest $DONE == 0
 #   then
-#     if fatload mmc 0:${p} ${loadaddr} uImage
+#     if load mmc 0:${p} ${loadaddr} uImage
 #     then
 #       echo found kernel on FAT partition $p
 #       run mmcargs	# start with default mmc args
 #       KERNEL=1
 #       DONE=1
-#     elif ext2load mmc 0:${p} ${loadaddr} /boot/uImage
+#     elif load mmc 0:${p} ${loadaddr} /boot/uImage
 #     then
 #       echo found kernel on EXT partition $p
 #       setenv mmcroot "/dev/mmcblk0p${p} rw"
@@ -131,13 +131,13 @@ if test "x${gta04}" != "x${VERSION}"
 #       KERNEL=1
 #       DONE=1
 #     fi
-#     if fatload mmc 0:${p} ${imgtempaddr} bootargs.scr
+#     if load mmc 0:${p} ${imgtempaddr} bootargs.scr
 #     then
 #       setenv PARTITION $p
 #       setenv PARTITIONTYPE FAT
 #       source ${imgtempaddr}
 #       DONE=1
-#     elif ext2load mmc 0:${p} ${imgtempaddr} /boot/bootargs.scr
+#     elif load mmc 0:${p} ${imgtempaddr} /boot/bootargs.scr
 #     then
 #       setenv PARTITION $p
 #       setenv PARTITIONTYPE EXT
@@ -157,7 +157,7 @@ if test "x${gta04}" != "x${VERSION}"
 # fi
 # run kernelloaded
 
-	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan 0;DONE=0;KERNEL=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if fatload mmc 0:${p} ${loadaddr} uImage;then;echo found kernel on FAT partition $p;run mmcargs;KERNEL=1;DONE=1;elif ext2load mmc 0:${p} ${loadaddr} /boot/uImage;then;echo found kernel on EXT partition $p;setenv mmcroot "/dev/mmcblk0p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if fatload mmc 0:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif ext2load mmc 0:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 400000;then;echo fallback to NAND kernel;else;status blink;fi;fi;run kernelloaded'
+	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan 0;DONE=0;KERNEL=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if load mmc 0:${p} ${loadaddr} uImage;then;echo found kernel on FAT partition $p;run mmcargs;KERNEL=1;DONE=1;elif load mmc 0:${p} ${loadaddr} /boot/uImage;then;echo found kernel on EXT partition $p;setenv mmcroot "/dev/mmcblk0p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if load mmc 0:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif load mmc 0:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 400000;then;echo fallback to NAND kernel;else;status blink;fi;fi;run kernelloaded'
 
 	# boot with kernel/rootfs from specified source
 	setenv mmcboot 'if run loadkernel; then bootm ${loadaddr}; fi;'
@@ -315,7 +315,7 @@ then
 
 				status set 10
 				i2c dev 0
-				if fatload mmc 0 0x80200000 x-load.flash
+				if load mmc 0 0x80200000 x-load.flash
 				then
 					status set 18
 					echo *** flashing Xloader ***
@@ -333,7 +333,7 @@ then
 				status set 10
 				# the official u-boot partition goes from 0x80000 to 0x27ffff i.e. 2 MByte
 				
-				if fatload mmc 0 0x80300000 u-boot.flash
+				if load mmc 0 0x80300000 u-boot.flash
 				then
 					echo *** flashing U-Boot ***
 					status set 18
@@ -348,7 +348,7 @@ then
 					# since u-boot is approx 260 kByte
 
 					status set 10
-					if fatload mmc 0 0x80300000 splash.rgb16z
+					if load mmc 0 0x80300000 splash.rgb16z
 						then
 						echo *** flashing splash ***
 						status set 18
@@ -358,7 +358,7 @@ then
 					fi
 
 					status set 10
-					if fatload mmc 0 0x80300000 menu.rgb16z
+					if load mmc 0 0x80300000 menu.rgb16z
 						then
 						echo *** flashing menu ***
 						status set 18
@@ -368,7 +368,7 @@ then
 					fi
 
 					status set 10
-					if fatload mmc 0 0x80300000 boot.scr
+					if load mmc 0 0x80300000 boot.scr
 						then
 						echo *** flashing boot.scr ***
 						status set 18
