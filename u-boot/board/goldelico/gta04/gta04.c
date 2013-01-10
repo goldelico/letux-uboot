@@ -142,22 +142,6 @@ int misc_init_r(void)
 	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT1, 0);
 	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT2, 0x40);	// pull down reset for WLAN&BT chip
 
-#if 1
-	// FIXME: if(gta04_board_revision() should have ITG)
-	/* if the GTA04 is connected to USB power first and
-	 * the battery is inserted after this, all power rails
-	 * have oscillated until the battery is available
-	 * this makes the ITG3200 Power On Reset fail 
-	 */
-	i2c_set_bus_num(TCA6507_BUS);	// I2C2
-	udelay(10*1000);	// wait a little until power stabilizes
-	if(i2c_probe(0x68)) { // ITG3200 does not respond
-		printf("ITG3200 does not respond\n");
-		// Pulse VAUX2 to force POR
-		// how can we do that???
-		}
-#endif
-	
 	i2c_set_bus_num(0);	// write I2C1
 
 #if 0 // FIXME: enable only on demand if we want to test BT/WIFI - and apply RESET

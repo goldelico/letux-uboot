@@ -29,6 +29,7 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <i2c.h>
+#include <twl4030.h>
 #include "tsc2007.h"
 
 #define TSC2007_BUS (2-1)	// I2C2
@@ -91,6 +92,34 @@ int tsc2007_init(void)
 			printf ("could not select I2C2\n");
 			return 1;
 		}
+	
+#if 1
+	// FIXME: if(gta04_board_revision() should have ITG)
+	/* if the GTA04 is connected to USB power first and
+	 * the battery is inserted after this, all power rails
+	 * have oscillated until the battery is available
+	 * this makes the ITG3200 Power On Reset fail 
+	 */
+	if(i2c_probe(0x68))
+		{ // ITG3200 does not respond
+		printf("ITG3200 does not respond\n");
+		// FIXME: temporarily switch off VAUX2
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
+								/*TWL4030_PM_RECEIVER_VAUX2_VSEL_28*/ 0x09,
+								TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
+								TWL4030_PM_RECEIVER_DEV_GRP_P1);
+		udelay(30*1000);	// wait a little until power drops
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
+								/*TWL4030_PM_RECEIVER_VAUX2_VSEL_28*/ 0x09,
+								TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
+								TWL4030_PM_RECEIVER_DEV_GRP_P1);
+		udelay(10*1000);	// wait a little until power stabilizes and ITG did reset
+		if(i2c_probe(0x68))	 // ITG3200 does not respond
+			printf("ITG3200 still does not respond\n");
+		else
+			printf("ITG3200 now ok\n");
+		}
+#endif
 	
 	if(i2c_probe(TSC2007_ADDRESS))
 		{
