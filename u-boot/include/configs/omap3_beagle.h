@@ -322,7 +322,7 @@
 #define CONFIG_ENV_OFFSET		boot_flash_off
 #define CONFIG_ENV_ADDR			SMNAND_ENV_OFFSET
 
-//#define CONFIG_START_WITH_DEFAULT_ENVIRONMENT 1
+#define CONFIG_START_WITH_DEFAULT_ENVIRONMENT 1
 
 #ifndef __ASSEMBLY__
 extern unsigned int boot_flash_base;

@@ -585,11 +585,40 @@ int wlanbtpower(void)
 int wlanbttest(int test)
 { /* Bluetooth VAUX4 = 3.3V -- CHECKME: 3.3 V is not officially supported! We use 0x09 = 2.8V here*/
 #ifdef CONFIG_OMAP3_GTA04
+	int ret=0;
 	wlanbtpower();
 	if(test)
 		{
+		int i;
 		// now, we should be able to test the UART for the BT part...
-		return !bt_hci(1);
+		ret |= !bt_hci(1);
+		/* test if U1102 (SN74AVCA604LZYX is feeding back the clock */
+		omap_request_gpio(130);
+		omap_request_gpio(139);
+		omap_set_gpio_direction(130, 1);	// output
+		omap_set_gpio_direction(139, 1);	// input
+		writew((IDIS | PTD | DIS | M4), OMAP34XX_CTRL_BASE + CP(MMC2_CLK));	// make output GPIO
+		writew((IEN  | PTD | DIS | M4), OMAP34XX_CTRL_BASE + CP(MMC2_DAT7));	// make input GPIO w/o pullup/down
+		for(i=0; i<8; i++)
+			{
+			int val;
+			udelay(100);
+			omap_set_gpio_dataout(130, i%2); // set clock output
+			udelay(300);
+			val=omap_get_gpio_datain(139);	// read clock feedback
+			if(i%2 == 0)
+				{
+				if(val)
+					printf("clock 0 --> feedback 1\n");
+				}
+			else
+				{
+				if(!val)
+					printf("clock 1 --> feedback 0\n");
+				}
+			}
+		writew((IDIS | PTD | DIS | M0), OMAP34XX_CTRL_BASE + CP(MMC2_CLK));		// switch back to MMC clock out mode
+		writew((IEN  | PTD | DIS | M1), OMAP34XX_CTRL_BASE + CP(MMC2_DAT7));	// switch back to MMC clock in mode		
 		}
 	return 0;
 #else
@@ -724,7 +753,7 @@ static struct
 	{ 136, 0, "MMC2_DIR_DAT0", CP(MMC2_DAT4) },
 	{ 137, 0, "MMC2_DIR_DAT1", CP(MMC2_DAT5) },
 	{ 138, 0, "MMC2_DIR_CMD", CP(MMC2_DAT6) },
-	{ 139, 0, "MMC2_DIR_CLKIN", CP(MMC2_DAT7) },	
+	{ 139, 0, "MMC2_DIR_CLKIN", CP(MMC2_DAT7) },	// if U1102 works, this should follow GPIO130
 	{ 140, 0, "BT_DX", CP(MCBSP3_DX) },
 	{ 141, 0, "BT_DR", CP(MCBSP3_DR) },
 	{ 142, 0, "BT_CLKX", CP(MCBSP3_CLKX) },
