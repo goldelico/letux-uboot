@@ -4,7 +4,7 @@
 # Boot script for Beagle Hybrid / Panda Hybrid / GTA04
 #
 # Author: H. Nikolaus Schaller
-# Copyright Golden Delicious Computers 2010-2012
+# Copyright Golden Delicious Computers 2010-2013
 # licensed under GPL 2.0
 #
 #
@@ -42,7 +42,7 @@ status set 8	# give fast feedback that U-Boot did start (red power led)
 
 # we have to add an "x" because the test command treats empty string as equal to anything
 
-if test "x${gta04}" != "x${VERSION}"
+if test "x${scriptversion}" != "x${VERSION}"
 	then
 
 	# set up default environment
@@ -168,7 +168,7 @@ if test "x${gta04}" != "x${VERSION}"
 	setenv bootscript 'echo Running bootscript ...; source ${bootaddr}'
 
 	# write script version number permanently
-	setenv gta04 "${VERSION}"
+	setenv scriptversion "${VERSION}"
 
 	flash=yes	# trigger flashing
 fi
