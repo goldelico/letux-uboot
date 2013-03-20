@@ -42,6 +42,8 @@
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 #include <asm/arch/omap3.h>
 
+#define CONFIG_OF_LIBFDT	1	/* we start to use it by the kernel */
+
 /*
  * Display CPU and Board information
  */
