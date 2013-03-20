@@ -43,6 +43,7 @@
 #include <asm/arch/omap3.h>
 
 #define CONFIG_OF_LIBFDT	1	/* we start to use it by the kernel */
+#define CONFIG_SYS_BOOTMAPSZ	(256 << 20) /* Initial Memory map for Linux */
 
 /*
  * Display CPU and Board information
