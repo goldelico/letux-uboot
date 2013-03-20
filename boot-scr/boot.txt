@@ -95,12 +95,12 @@ if test "x${scriptversion}" != "x${VERSION}"
 	setenv mmcrootfstype 'ext4,ext3,btrfs rootwait'
 
 	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.vram=0:8M,1:4M omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} root=${nandroot} rootfstype=${nandrootfstype}'
-	setenv nandroot '/dev/mtdblock4 rw'
-	setenv nandrootfstype 'jffs2'
+#	setenv nandroot '/dev/mtdblock4 rw'
+#	setenv nandrootfstype 'jffs2'
 
 # as soon as we can use UBIFS, change this to
-#	setenv nandroot 'ubi0:om-gta04-rootfs'
-#	setenv nandrootfstype 'ubifs ubi.mtd=4,2048'
+	setenv nandroot 'ubi0:gta04-rootfs'
+	setenv nandrootfstype 'ubifs ubi.mtd=4'
 
 	# load kernel and boot script from mmc (any of 4 partitions FAT or ext) or nand wherever we find it
 
