@@ -60,6 +60,9 @@ if test "x${scriptversion}" != "x${VERSION}"
 	setenv console		ttyO2,115200n8
 	setenv defaultdisplay	lcd
 	setenv bootorder	"1 2 3 4"
+	setenv nand		4		# mtd4 is nand
+	setenv vram		12M
+	setenv omapfbvram	0:8M,1:4M
 
 	# load boot script from mmc (first FAT partition only) or nand wherever we find it
 # i2c dev 0
@@ -90,17 +93,13 @@ if test "x${scriptversion}" != "x${VERSION}"
 	setenv showimg 'run loadimg; lcm fb ${imgaddr};'
 
 	# predefine default boot arguments (unless overwritten by bootargs.scr)
-	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.vram=0:8M,1:4M omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} root=${mmcroot} rootfstype=${mmcrootfstype}'
+	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${mmcroot} rootfstype=${mmcrootfstype}'
 	setenv mmcroot '/dev/mmcblk0p2 rw'
 	setenv mmcrootfstype 'ext4,ext3,btrfs rootwait'
 
-	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.vram=0:8M,1:4M omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} root=${nandroot} rootfstype=${nandrootfstype}'
-#	setenv nandroot '/dev/mtdblock4 rw'
-#	setenv nandrootfstype 'jffs2'
-
-# as soon as we can use UBIFS, change this to
+	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${nandroot} rootfstype=${nandrootfstype}'
 	setenv nandroot 'ubi0:gta04-rootfs'
-	setenv nandrootfstype 'ubifs ubi.mtd=4'
+	setenv nandrootfstype 'ubifs'
 
 	# load kernel and boot script from mmc (any of 4 partitions FAT or ext) or nand wherever we find it
 
