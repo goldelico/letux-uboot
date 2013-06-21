@@ -43,6 +43,8 @@
 #include <asm/mach-types.h>
 #include "gta04.h"
 
+char *muxname="unknown";
+
 #if 0	/* testing tool; you can call notify() anywhere even before initialization to see how far the code comes */
 
 /******************************************************************************
@@ -151,6 +153,8 @@ int misc_init_r(void)
 							TWL4030_PM_RECEIVER_VAUX4_DEV_GRP,
 							TWL4030_PM_RECEIVER_DEV_GRP_P1);
 #endif
+
+	setenv("mux", muxname);
 
 	switch (get_cpu_family()) {
 		case CPU_OMAP34XX:
