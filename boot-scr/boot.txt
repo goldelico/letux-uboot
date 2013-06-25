@@ -93,11 +93,11 @@ if test "x${scriptversion}" != "x${VERSION}"
 	setenv showimg 'run loadimg; lcm fb ${imgaddr};'
 
 	# predefine default boot arguments (unless overwritten by bootargs.scr)
-	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${mmcroot} rootfstype=${mmcrootfstype}'
+	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${mmcroot} rootfstype=${mmcrootfstype}'
 	setenv mmcroot '/dev/mmcblk0p2 rw'
 	setenv mmcrootfstype 'ext4,ext3,btrfs rootwait'
 
-	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${nandroot} rootfstype=${nandrootfstype}'
+	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${nandroot} rootfstype=${nandrootfstype}'
 	setenv nandroot 'ubi0:gta04-rootfs'
 	setenv nandrootfstype 'ubifs'
 
@@ -156,7 +156,7 @@ if test "x${scriptversion}" != "x${VERSION}"
 # fi
 # run kernelloaded
 
-	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan 0;DONE=0;KERNEL=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if load mmc 0:${p} ${loadaddr} uImage;then;echo found kernel on FAT partition $p;run mmcargs;KERNEL=1;DONE=1;elif load mmc 0:${p} ${loadaddr} /boot/uImage;then;echo found kernel on EXT partition $p;setenv mmcroot "/dev/mmcblk0p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if load mmc 0:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif load mmc 0:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 400000;then;echo fallback to NAND kernel;else;status blink;fi;fi;run kernelloaded'
+	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan 0;DONE=0;KERNEL=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if load mmc 0:${p} ${loadaddr} uImage;then;echo found kernel on partition $p;run mmcargs;KERNEL=1;DONE=1;elif load mmc 0:${p} ${loadaddr} /boot/uImage;then;echo found kernel on EXT partition $p;setenv mmcroot "/dev/mmcblk0p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if load mmc 0:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif load mmc 0:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 400000;then;echo fallback to NAND kernel;else;status blink;fi;fi;run kernelloaded'
 
 	# boot with kernel/rootfs from specified source
 	setenv mmcboot 'if run loadkernel; then bootm ${loadaddr}; fi;'
