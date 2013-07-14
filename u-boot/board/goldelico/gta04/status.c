@@ -162,7 +162,7 @@ int status_get_buttons(void)
 		u8 val;
 		i2c_set_bus_num(TWL4030_I2C_BUS);	// read I2C1
 		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, TWL4030_PM_MASTER_STS_HW_CONDITIONS);	// read state of power button (bit 0) from TPS65950
-		status |= (val&0x01) != 0;
+		status |= (((val&0x01) != 0) << 3);
 		}
 	if(GPIO_PENIRQ >= 0)
 		status |= ((!omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
