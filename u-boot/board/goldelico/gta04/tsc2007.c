@@ -201,6 +201,7 @@ int pendown(int *x, int *y)
 	if(x) *x=xx;
 	if(y) *y=yy;
 	udelay(10000);	// reduce I2C traffic and debounce...
+	// FIXME: this is not correctly working on the b3 display at the bottom rows - there we get values > 50
 	return z > 200;	// was pressed
 #else
 	// must be in PENIRQ mode...
