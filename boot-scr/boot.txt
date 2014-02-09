@@ -1,10 +1,10 @@
 #
 # boot.scr
 #
-# Boot script for Beagle Hybrid / Panda Hybrid / GTA04
+# Boot script for Beagle Hybrid / Panda Hybrid / GTA04 / Neo900
 #
 # Author: H. Nikolaus Schaller
-# Copyright Golden Delicious Computers 2010-2013
+# Copyright Golden Delicious Computers 2010-2014
 # licensed under GPL 2.0
 #
 #
@@ -54,6 +54,7 @@ if test "x${scriptversion}" != "x${VERSION}"
 	setenv bootdelay	1
 	setenv imgtempaddr	0x80800000	# address where we load compressed splash image
 	setenv bootaddr 	0x81800000	# address where we load the boot script
+	setenv loadaddrfdt	0x81c00000	# address where we load the flattened device tree
 	setenv loadaddr		0x82000000	# address where we load the kernel
 	# setenv console	ttyS2,115200n8
 	# for newer kernels with OMAP console (unfortunately U-Boot can't find out)
@@ -111,6 +112,7 @@ if test "x${scriptversion}" != "x${VERSION}"
 # mmc rescan 0
 # DONE=0
 # KERNEL=0
+# FDT=0
 # run nandargs	# start with default arguments for rootfs in NAND
 # for p in $bootorder
 # do
@@ -143,6 +145,13 @@ if test "x${scriptversion}" != "x${VERSION}"
 #       source ${imgtempaddr}
 #       DONE=1
 #     fi
+#     if load mmc 0:${p} ${loadaddrfdt} ${devicetree}.dtb
+#     then
+#       FDT=1
+#     elif load mmc 0:${p} ${loadaddrfdt} /boot/${devicetree}.dtb
+#     then
+#       FDT=1
+#     fi
 #   fi
 # done
 # if itest $KERNEL == 0
@@ -150,20 +159,22 @@ if test "x${scriptversion}" != "x${VERSION}"
 #    if nand read ${loadaddr} 280000 400000
 #    then
 #      echo fallback to NAND kernel
+#      FDT=0
 #    else
 #      status blink
 #    fi
 # fi
 # run kernelloaded
 
-	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan 0;DONE=0;KERNEL=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if load mmc 0:${p} ${loadaddr} uImage;then;echo found kernel on partition $p;run mmcargs;KERNEL=1;DONE=1;elif load mmc 0:${p} ${loadaddr} /boot/uImage;then;echo found kernel on EXT partition $p;setenv mmcroot "/dev/mmcblk0p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if load mmc 0:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif load mmc 0:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 400000;then;echo fallback to NAND kernel;else;status blink;fi;fi;run kernelloaded'
+	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan 0;DONE=0;KERNEL=0;FDT=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if load mmc 0:${p} ${loadaddr} uImage;then;echo found kernel on partition $p;run mmcargs;KERNEL=1;DONE=1;elif load mmc 0:${p} ${loadaddr} /boot/uImage;then;echo found kernel on EXT partition $p;setenv mmcroot "/dev/mmcblk0p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if load mmc 0:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif load mmc 0:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;if load mmc 0:${p} ${loadaddrfdt} ${devicetree}.dtb;then;FDT=1;elif load mmc 0:${p} ${loadaddrfdt} /boot/${devicetree}.dtb;then;FDT=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 400000;then;echo fallback to NAND kernel;FDT=0;else;status blink;fi;fi;run kernelloaded'
 
 	# boot with kernel/rootfs from specified source
-	setenv mmcboot 'if run loadkernel; then bootm ${loadaddr}; fi;'
+	setenv boot 'if itest $FDT == 1; then bootm ${loadaddr} - ${loadaddrfdt}; else bootm ${loadaddr}; fi;'
+	setenv mmcboot 'if run loadkernel; then run boot; fi;'
 	setenv nandboot 'run kernelloading; if nand read ${loadaddr} 280000 400000; then run nandargs; run kernelloaded; bootm ${loadaddr}; fi;'
 
 	# run the boot script - and fall back to direct kernel boot
-	setenv bootcmd 'if run loadbootscript; then run bootscript; elif run loadkernel; then bootm ${loadaddr}; fi;'
+	setenv bootcmd 'if run loadbootscript; then run bootscript; else run mmcboot; fi;'
 	setenv bootscript 'echo Running bootscript ...; source ${bootaddr}'
 
 	# write script version number permanently
@@ -238,7 +249,7 @@ then
 				lcm fb 0
 				echo *** LCD boot ***
 				setenv defaultdisplay lcd
-				if run loadkernel; then bootm ${loadaddr}; fi
+				run mmcboot
 			elif tsc selection 5
 			then
 				lcm color 00ff00	# turn screen green (feedback to touch press)
@@ -264,7 +275,7 @@ then
 					lcm backlight 0
 					lcm off
 					lcm power 0
-					bootm ${loadaddr}
+					run mmcboot
 				fi
 			elif tsc selection 1
 			then 
@@ -404,7 +415,7 @@ then
 			printenv
 			lcm power 0
 			lcm off	# avoid wash-out
-			bootm ${loadaddr}
+			run boot
 		fi
 	fi
 else	# LCM did not init (e.g. we run without display)
@@ -414,7 +425,7 @@ else	# LCM did not init (e.g. we run without display)
 		setenv bootdelay 10
 		setenv defaultdisplay dvi
 		setenv dvimode 1024x768MR-16@60
-		bootm ${loadaddr}
+		run boot
 	fi
 fi
 
