@@ -23,4 +23,5 @@ MUX_VAL(CP(MCBSP1_DX),		(IDIS | PTU | EN  | M4)) /*GPIO_158 / ... - Display DOUT
 MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTU | DIS | M4)) /*GPIO_159 / McBSP1-DR -> Display DIN - pulled up */\
 MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | DIS | M0)) /*GPIO_??? / McBSP_CLKS */\
 MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTU | EN  | M4)) /*GPIO_161 / McBSP1-FSX -> Display CS */\
-MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTU | EN  | M4)) /*GPIO_162 / McBSP1-CLKX -> Display SCL */
+MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTU | EN  | M4)) /*GPIO_162 / McBSP1-CLKX -> Display SCL */\
+muxname="BeagleBoardB1", devicetree="omap3-beagle+b1"

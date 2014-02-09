@@ -44,6 +44,7 @@
 #include "gta04.h"
 
 char *muxname="unknown";
+char *devicetree="unknown";
 
 #if 0	/* testing tool; you can call notify() anywhere even before initialization to see how far the code comes */
 
@@ -155,7 +156,8 @@ int misc_init_r(void)
 #endif
 
 	setenv("mux", muxname);
-
+	setenv("devicetree", devicetree);
+	
 	switch (get_cpu_family()) {
 		case CPU_OMAP34XX:
 			if ((get_cpu_rev() >= CPU_3XX_ES31) &&
@@ -165,7 +167,9 @@ int misc_init_r(void)
 				setenv("mpurate", "600");
 			break;
 		case CPU_OMAP36XX:
-			if(readw(0x4800244C) & (1<<9))	/* check the "Speed Binned" bit for AM/DM37xx */
+			/* check the "Speed Binned" bit for AM/DM37xx
+			 in the Control Device Status Register */
+			if(readw(0x4800244C) & (1<<9))
 				setenv("mpurate", "1000");
 			else
 				setenv("mpurate", "800");

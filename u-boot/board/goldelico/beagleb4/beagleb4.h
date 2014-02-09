@@ -36,5 +36,4 @@ MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTD | EN  | M4)) /* 16 GPIO_161 / McBSP1-FSX	- 
 MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTD | EN  | M4)) /* 18 GPIO_159 / McBSP1-DR		- controls EXT line for RS232 */\
 MUX_VAL(CP(MCBSP1_CLKR),	(IDIS | PTD | EN  | M4)) /* 20 GPIO_156 / McBSP1-CLR	- GPS ON/OFF */\
 MUX_VAL(CP(MCBSP1_FSR),		(IEN  | PTU | EN  | M4)) /* 22 GPIO_157 / McBSP1-FSR	- PENIRQ */\
-
-
+muxname="BeagleBoardB4", devicetree="omap3-beagle+b4"

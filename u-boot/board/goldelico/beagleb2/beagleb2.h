@@ -27,4 +27,5 @@ MUX_VAL(CP(MCBSP1_DR),		(IDIS | PTD | EN  | M4)) /*GPIO_159 / McBSP1-DR -> TRF E
 MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | DIS | M0)) /*GPIO_??? / McBSP_CLKS */\
 MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTD | EN  | M4)) /*GPIO_161 / McBSP1-FSX -> TRF EN */\
 MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTD | EN  | M4)) /*GPIO_162 / McBSP1-CLKX -> UART3 Powerdown */
+muxname="BeagleBoardB2", devicetree="omap3-beagle+b2"
 
