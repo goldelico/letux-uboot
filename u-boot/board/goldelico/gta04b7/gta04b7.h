@@ -2,7 +2,7 @@
 
 // GPIO -> GTA04-Pin -> Expander function
 
-#define MUX_EXPANDER_B4() \
+#define MUX_EXPANDER_B7() \
 MUX_VAL(CP(SYS_CLKOUT1),	(IDIS | PTD | DIS | M4)) /*GPIO_10 / KEYIRQ - TRF-IRQ*/\
 MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTD | EN  | M4)) /*GPIO_12 / McBSP5-CLKX - Enable 3.3V LDO for display*/\
 MUX_VAL(CP(ETK_D0),			(IEN  | PTD | EN  | M1)) /*GPIO_14 / MCSPI3-SIMO -> TRF*/\
@@ -21,7 +21,7 @@ MUX_VAL(CP(MCBSP4_DR),		(IEN  | PTD | DIS | M0)) /*GPIO_153 / MCBSP4_DR*/\
 MUX_VAL(CP(MCBSP4_DX),		(IEN  | PTD | DIS | M0)) /*GPIO_154 / MCBSP4_DX*/\
 MUX_VAL(CP(MCBSP4_FSX),		(IEN  | PTD | DIS | M0)) /*GPIO_155 / MCBSP4_FSX*/\
 MUX_VAL(CP(MCBSP_CLKS),		(IDIS | PTD | DIS | M4)) /*GPIO_160 / PENIRQ*/\
-muxname="GTA04B4"
+muxname="GTA04B7", devicetree="omap3-neo900"
 
 #if 0
 MUX_VAL(CP(UART3_CTS_RCTX),	(IDIS | PTD | DIS | M0)) /*GPIO_163 / UART3-CTS*/\

@@ -36,9 +36,9 @@
 
 #define mdelay(n) ({ unsigned long msec = (n); while (msec--) udelay(1000); })
 
-#ifndef CONFIG_GOLDELICO_EXPANDER_B4
+#ifndef CONFIG_GOLDELICO_EXPANDER_B7
 
-#error only for B4 board
+#error only for B7 board
 
 #endif
 

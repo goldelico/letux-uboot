@@ -7,14 +7,14 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include "../gta04/gta04.h"
-#include "gta04b4.h"
+#include "gta04b7.h"
 
 // make us initialize using both pinmux sets
 
 void muxinit(void)
 {
 	MUX_GTA04();
-	MUX_EXPANDER_B4();
+	MUX_EXPANDER_B7();
 }
 
 #undef MUX_GTA04
