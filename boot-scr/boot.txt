@@ -51,6 +51,8 @@ if test "x${scriptversion}" != "x${VERSION}"
 
 	echo *** initializing GTA04 environment ***
 	
+	setenv mmc		0		# MMC number where this boot.scr is found
+	setenv kernelmmc	0		# MMC number where the rootfs is found by the kernel
 	setenv bootdelay	1
 	setenv imgtempaddr	0x80800000	# address where we load compressed splash image
 	setenv bootaddr 	0x81800000	# address where we load the boot script
@@ -67,40 +69,40 @@ if test "x${scriptversion}" != "x${VERSION}"
 
 	# load boot script from mmc (first FAT partition only) or nand wherever we find it
 # i2c dev 0
-# mmc rescan 0
-# if load mmc 0 ${bootaddr} boot.scr
+# mmc rescan ${mmc}
+# if load mmc ${mmc} ${bootaddr} boot.scr
 # then
 #   echo did load bootscript from mmc
 # elif nand read ${bootaddr} 250000 10000
 # then
 #   echo did load bootscript from nand
 # fi
-	setenv loadbootscript 'i2c dev 0; mmc rescan 0; if load mmc 0 ${bootaddr} boot.scr; then echo did load bootscript from mmc; elif nand read ${bootaddr} 250000 10000; then echo did load bootscript from nand; fi'	
+	setenv loadbootscript 'i2c dev 0; mmc rescan ${mmc}; if load mmc ${mmc} ${bootaddr} boot.scr; then echo did load bootscript from mmc; elif nand read ${bootaddr} 250000 10000; then echo did load bootscript from nand; fi'	
 
 	# load zipped/uncompressed image from mmc (first FAT partition only) or nand wherever we find it
 # i2c dev 0
-# mmc rescan 0
-# if load mmc 0 ${imgaddr} ${imgfile}.rgb16
+# mmc rescan ${mmc}
+# if load mmc ${mmc} ${imgaddr} ${imgfile}.rgb16
 # then
 #   ;
-# elif load mmc 0 ${imgtempaddr} ${imgfile}.rgb16z
+# elif load mmc ${mmc} ${imgtempaddr} ${imgfile}.rgb16z
 # then
 #   unzip ${imgtempaddr} ${imgaddr}
 # elif nand read ${imgtempaddr} ${imgnandaddr} 40000
 # then
 #   unzip ${imgtempaddr} ${imgaddr}
 # fi
-	setenv loadimg 'i2c dev 0; mmc rescan 0; if load mmc 0 ${imgaddr} ${imgfile}.rgb16; then; elif load mmc 0 ${imgtempaddr} ${imgfile}.rgb16z; then unzip ${imgtempaddr} ${imgaddr}; elif nand read ${imgtempaddr} ${imgnandaddr} 40000; then unzip ${imgtempaddr} ${imgaddr}; fi'
+	setenv loadimg 'i2c dev 0; mmc rescan ${mmc}; if load mmc ${mmc} ${imgaddr} ${imgfile}.rgb16; then; elif load mmc ${mmc} ${imgtempaddr} ${imgfile}.rgb16z; then unzip ${imgtempaddr} ${imgaddr}; elif nand read ${imgtempaddr} ${imgnandaddr} 40000; then unzip ${imgtempaddr} ${imgaddr}; fi'
 	setenv showimg 'run loadimg; lcm fb ${imgaddr};'
 
 	# predefine default boot arguments (unless overwritten by bootargs.scr)
 	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${mmcroot} rootfstype=${mmcrootfstype}'
-	setenv mmcroot '/dev/mmcblk0p2 rw'
-	setenv mmcrootfstype 'ext4,ext3,btrfs rootwait'
+	setenv mmcroot "/dev/mmcblk${kernelmmc}p2 rw"
+	setenv mmcrootfstype "ext4,ext3,btrfs rootwait"
 
 	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${nandroot} rootfstype=${nandrootfstype}'
-	setenv nandroot 'ubi0:gta04-rootfs'
-	setenv nandrootfstype 'ubifs'
+	setenv nandroot "ubi0:gta04-rootfs"
+	setenv nandrootfstype "ubifs"
 
 	# load kernel and boot script from mmc (any of 4 partitions FAT or ext) or nand wherever we find it
 
@@ -109,7 +111,7 @@ if test "x${scriptversion}" != "x${VERSION}"
 
 # run kernelloading
 # i2c dev 0
-# mmc rescan 0
+# mmc rescan ${mmc}
 # DONE=0
 # KERNEL=0
 # FDT=0
@@ -118,37 +120,38 @@ if test "x${scriptversion}" != "x${VERSION}"
 # do
 #   if itest $DONE == 0
 #   then
-#     if load mmc 0:${p} ${loadaddr} uImage
+#     if load mmc ${mmc}:${p} ${loadaddr} uImage
 #     then
 #       echo found kernel /uImage on partition $p
+#       setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
 #       run mmcargs	# start with default mmc args
 #       KERNEL=1
 #       DONE=1
-#     elif load mmc 0:${p} ${loadaddr} /boot/uImage
+#     elif load mmc ${mmc}:${p} ${loadaddr} /boot/uImage
 #     then
 #       echo found kernel /boot/uImage on partition $p
-#       setenv mmcroot "/dev/mmcblk0p${p} rw"
+#       setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
 #       run mmcargs	# start with default mmc args
 #       KERNEL=1
 #       DONE=1
 #     fi
-#     if load mmc 0:${p} ${imgtempaddr} bootargs.scr
+#     if load mmc ${mmc}:${p} ${imgtempaddr} bootargs.scr
 #     then
 #       setenv PARTITION $p
 #       setenv PARTITIONTYPE FAT
 #       source ${imgtempaddr}
 #       DONE=1
-#     elif load mmc 0:${p} ${imgtempaddr} /boot/bootargs.scr
+#     elif load mmc ${mmc}:${p} ${imgtempaddr} /boot/bootargs.scr
 #     then
 #       setenv PARTITION $p
 #       setenv PARTITIONTYPE EXT
 #       source ${imgtempaddr}
 #       DONE=1
 #     fi
-#     if load mmc 0:${p} ${loadaddrfdt} ${devicetree}.dtb
+#     if load mmc ${mmc}:${p} ${loadaddrfdt} ${devicetree}.dtb
 #     then
 #       FDT=1
-#     elif load mmc 0:${p} ${loadaddrfdt} /boot/${devicetree}.dtb
+#     elif load mmc ${mmc}:${p} ${loadaddrfdt} /boot/${devicetree}.dtb
 #     then
 #       FDT=1
 #     fi
@@ -166,7 +169,7 @@ if test "x${scriptversion}" != "x${VERSION}"
 # fi
 # run kernelloaded
 
-	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan 0;DONE=0;KERNEL=0;FDT=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if load mmc 0:${p} ${loadaddr} uImage;then;echo found kernel on partition $p;run mmcargs;KERNEL=1;DONE=1;elif load mmc 0:${p} ${loadaddr} /boot/uImage;then;echo found kernel on EXT partition $p;setenv mmcroot "/dev/mmcblk0p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if load mmc 0:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif load mmc 0:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;if load mmc 0:${p} ${loadaddrfdt} ${devicetree}.dtb;then;FDT=1;elif load mmc 0:${p} ${loadaddrfdt} /boot/${devicetree}.dtb;then;FDT=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 400000;then;echo fallback to NAND kernel;FDT=0;else;status blink;fi;fi;run kernelloaded'
+	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan ${mmc};DONE=0;KERNEL=0;FDT=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if load mmc ${mmc}:${p} ${loadaddr} uImage;then;echo found kernel /uImage on partition $p;setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw";run mmcargs;KERNEL=1;DONE=1;elif load mmc ${mmc}:${p} ${loadaddr} /boot/uImage;then;echo found kernel /boot/uImage on EXT partition $p;setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if load mmc ${mmc}:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif load mmc ${mmc}:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;if load mmc ${mmc}:${p} ${loadaddrfdt} ${devicetree}.dtb;then;FDT=1;elif load mmc ${mmc}:${p} ${loadaddrfdt} /boot/${devicetree}.dtb;then;FDT=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 400000;then;echo fallback to NAND kernel;FDT=0;else;status blink;fi;fi;run kernelloaded'
 
 	# boot with kernel/rootfs from specified source
 	setenv boot 'if itest $FDT == 1; then bootm ${loadaddr} - ${loadaddrfdt}; else bootm ${loadaddr}; fi;'
@@ -261,7 +264,7 @@ then
 				run mmcboot
 			elif tsc selection 6
 			then
-				lcm color 555555	# turn screen green (feedback to touch press)
+				lcm color 555555	# turn screen grey (feedback to touch press)
 				lcm fb 0
 				sleep 1
 				poweroff
@@ -275,7 +278,7 @@ then
 					lcm backlight 0
 					lcm off
 					lcm power 0
-					run mmcboot
+					run boot
 				fi
 			elif tsc selection 1
 			then 
@@ -289,7 +292,7 @@ then
 				run mmcboot
 			elif tsc selection 2
 			then 
-				lcm color 55ff00	# turn screen green (feedback to touch press)
+				lcm color 55ff00	# turn screen yellow (feedback to touch press)
 				lcm fb 0
 				echo *** MMC boot partition 1***
 				setenv bootorder "2 3 4 1"
@@ -299,7 +302,7 @@ then
 				run mmcboot
 			elif tsc selection 3
 			then 
-				lcm color 00ff55	# turn screen green (feedback to touch press)
+				lcm color 00ff55	# turn screen magenta (feedback to touch press)
 				lcm fb 0
 				echo *** MMC boot partition 1***
 				setenv bootorder "3 4 1 2"
@@ -325,7 +328,7 @@ then
 
 				status set 10
 				i2c dev 0
-				if fatload mmc 0 0x80200000 x-load.flash
+				if fatload mmc ${mmc} 0x80200000 x-load.flash
 				then
 					status set 18
 					echo *** flashing Xloader ***
@@ -343,7 +346,7 @@ then
 				status set 10
 				# the official u-boot partition goes from 0x80000 to 0x27ffff i.e. 2 MByte
 				
-				if fatload mmc 0 0x80300000 u-boot.flash
+				if fatload mmc ${mmc} 0x80300000 u-boot.flash
 				then
 					echo *** flashing U-Boot ***
 					status set 18
@@ -358,7 +361,7 @@ then
 					# since u-boot is approx 260 kByte
 
 					status set 10
-					if fatload mmc 0 0x80300000 splash.rgb16z
+					if fatload mmc ${mmc} 0x80300000 splash.rgb16z
 						then
 						echo *** flashing splash ***
 						status set 18
@@ -368,7 +371,7 @@ then
 					fi
 
 					status set 10
-					if fatload mmc 0 0x80300000 menu.rgb16z
+					if fatload mmc ${mmc} 0x80300000 menu.rgb16z
 						then
 						echo *** flashing menu ***
 						status set 18
@@ -378,7 +381,7 @@ then
 					fi
 
 					status set 10
-					if fatload mmc 0 0x80300000 boot.scr
+					if fatload mmc ${mmc} 0x80300000 boot.scr
 						then
 						echo *** flashing boot.scr ***
 						status set 18
