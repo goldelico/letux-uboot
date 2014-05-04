@@ -155,6 +155,47 @@ int misc_init_r(void)
 							TWL4030_PM_RECEIVER_DEV_GRP_P1);
 #endif
 
+	/* we must load different device trees depending
+	   on the board revision */
+
+	if(strcmp(devicetree, "omap3-gta04") == 0) {
+		int revision;
+		if (!omap_request_gpio(171) &&
+			!omap_request_gpio(172) &&
+			!omap_request_gpio(173)) {
+
+			omap_set_gpio_direction(171, 1);
+			omap_set_gpio_direction(172, 1);
+			omap_set_gpio_direction(173, 1);
+
+			revision = omap_get_gpio_datain(173) << 2 |
+			omap_get_gpio_datain(172) << 1 |
+			omap_get_gpio_datain(171);
+
+			omap_free_gpio(171);
+			omap_free_gpio(172);
+			omap_free_gpio(173);
+			switch(revision) {
+				case 7:
+					devicetree="omap3-gta04a2";
+					break;
+				case 3:
+					devicetree="omap3-gta04a3";
+					break;
+				case 5:
+					// a4 has no specific device tree suffix since it is the most widely deployed board
+					break;
+				case 6:
+					devicetree="omap3-gta04a5";
+					break;
+				default:
+					printf("Error: unknown revision GPIOs: %x\n", revision);
+			}
+		} else {
+			printf("Error: unable to acquire board revision GPIOs\n");
+		}
+	}
+
 	setenv("mux", muxname);
 	setenv("devicetree", devicetree);
 	
