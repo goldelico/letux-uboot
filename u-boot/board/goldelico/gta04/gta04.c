@@ -45,6 +45,7 @@
 
 char *muxname="unknown";
 char *devicetree="unknown";
+char *peripheral="";
 
 #if 0	/* testing tool; you can call notify() anywhere even before initialization to see how far the code comes */
 
@@ -128,6 +129,7 @@ int misc_init_r(void)
 {
 	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
 	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
+	char devtree[256];
 
 	/* ITG3200 & HMC5883L VAUX2 = 2.8V */
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
@@ -160,6 +162,7 @@ int misc_init_r(void)
 
 	if(strcmp(devicetree, "omap3-gta04") == 0) {
 		int revision;
+
 		if (!omap_request_gpio(171) &&
 			!omap_request_gpio(172) &&
 			!omap_request_gpio(173)) {
@@ -177,16 +180,17 @@ int misc_init_r(void)
 			omap_free_gpio(173);
 			switch(revision) {
 				case 7:
-					devicetree="omap3-gta04a2";
+					strcpy(devtree, "omap3-gta04a2");
 					break;
+				case 1:	/* GTA04 Custom for +b2 */
 				case 3:
-					devicetree="omap3-gta04a3";
+					strcpy(devtree, "omap3-gta04a3");
 					break;
 				case 5:
-					// a4 has no specific device tree suffix since it is the most widely deployed board
+					strcpy(devtree, "omap3-gta04a4");
 					break;
 				case 6:
-					devicetree="omap3-gta04a5";
+					strcpy(devtree, "omap3-gta04a5");
 					break;
 				default:
 					printf("Error: unknown revision GPIOs: %x\n", revision);
@@ -194,6 +198,8 @@ int misc_init_r(void)
 		} else {
 			printf("Error: unable to acquire board revision GPIOs\n");
 		}
+		strcat(devtree, peripheral);	/* append potential +b2/b3 suffix for peripheral board(s) */
+		devicetree=devtree;
 	}
 
 	setenv("mux", muxname);

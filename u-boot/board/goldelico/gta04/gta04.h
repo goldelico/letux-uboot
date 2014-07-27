@@ -35,6 +35,7 @@ const omap3_sysinfo sysinfo = {
 
 extern char *muxname;	// MUX settings name
 extern char *devicetree;	// device tree file name - can be used to load a matching .dtb for the kernel
+extern char *peripheral;
 
 /* BeagleBoard revisions */
 #define REVISION_AXBX	0x7
