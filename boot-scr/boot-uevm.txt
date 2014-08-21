@@ -1,0 +1,20 @@
+setenv devicetree omap5-pyra
+setenv mmc 0	# u-boot mmc number where u-boot looks for kernel
+setenv p 1	# partition where kernel is found
+setenv kernelmmc 1	# mmc number as seen by kernel
+setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rw rootwait earlyprintk fixrtc'
+
+fatload mmc ${mmc}:${p} 0x825f0000 ${devicetree}.dtb
+fatload mmc ${mmc}:${p} 0x80300000 uImage
+run mmcargs
+
+# allow to overwrite boot args (incl. kernelmmc)
+if fatload mmc ${mmc}:${p} 0x81300000 bootargs.scr
+then
+	source 0x81300000
+fi
+
+setenv PARTITION ${p}
+setenv PARTITIONTYPE FAT
+setenv fdt_high 0x84000000
+bootm 0x80300000 - 0x825f0000
