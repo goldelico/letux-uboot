@@ -78,6 +78,17 @@ static int hasTCA6507=0;
 #undef GPIO_KEYIRQ
 #define GPIO_KEYIRQ		138		// PPS interrupt
 
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B7)
+
+#define GPIO_AUX		7		// AUX/User button sits on main board
+#define GPIO_POWER		-1		// POWER button
+#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+#undef GPIO_KEYIRQ
+#define GPIO_KEYIRQ		138		// PPS interrupt
+
+#else
+#error undefined CONFIG_GOLDELICO_EXPANDER
 #endif
 
 #endif

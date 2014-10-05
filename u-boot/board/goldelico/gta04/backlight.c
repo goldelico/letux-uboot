@@ -73,6 +73,11 @@
 #define GPIO_BACKLIGHT		145	/* = GPT10_PWM (instead of UART2-RTS) */
 #define GPT_BACKLIGHT		OMAP34XX_GPT10
 
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B7)
+
+#define GPIO_BACKLIGHT		145	/* = GPT10_PWM (instead of UART2-RTS) */
+#define GPT_BACKLIGHT		OMAP34XX_GPT10
+
 #endif
 
 #endif
@@ -107,8 +112,10 @@ int backlight_init(void)
 	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M2)) /* switch GPIO146 to GPT11 */
 #elif defined(CONFIG_GOLDELICO_EXPANDER_B4)
 	// tbd.
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B7)
+	// tbd.
 #else	
-#error undefined CONFIG_OMAP3_
+#error undefined CONFIG_GOLDELICO_EXPANDER
 #endif // defined(CONFIG_GOLDELICO_EXPANDER_B1)
 #endif // defined(CONFIG_OMAP3_BEAGLE)
 	// 	writel(value, &gpt_base->registername);
@@ -129,8 +136,10 @@ int backlight_init(void)
 	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #elif defined(CONFIG_GOLDELICO_EXPANDER_B4)
 // tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B7)
+	// tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #else	
-#error undefined CONFIG_OMAP3_
+#error undefined CONFIG_GOLDELICO_EXPANDER
 #endif
 #endif	// USE_PWM
 	if(omap_request_gpio(GPIO_BACKLIGHT) == 0)	// 0 == ok
@@ -146,5 +155,3 @@ int backlight_init(void)
 #endif
 	return 0;
 }
-
-

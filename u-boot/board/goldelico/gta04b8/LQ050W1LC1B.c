@@ -21,6 +21,8 @@
  *
  */
 
+// FIXME: the b8 model uses a different panel!
+
 #include <common.h>
 #include <asm/errno.h>
 #include <asm/io.h>
@@ -36,9 +38,9 @@
 
 #define mdelay(n) ({ unsigned long msec = (n); while (msec--) udelay(1000); })
 
-#ifndef CONFIG_GOLDELICO_EXPANDER_B4
+#ifndef CONFIG_GOLDELICO_EXPANDER_B8
 
-#error only for B4 board
+#error only for B8 board
 
 #endif
 
