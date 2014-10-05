@@ -12,12 +12,12 @@ fatload mmc ${mmc}:${PARTITION} 0x825f0000 ${devicetree}.dtb
 fatload mmc ${mmc}:${PARTITION} 0x80300000 uImage
 
 run mmcargs
-printenv
+
 # allow to overwrite boot args (incl. kernelmmc)
 if fatload mmc ${mmc}:${PARTITION} 0x81300000 bootargs.scr
 then
 	source 0x81300000
 fi
-printenv
+
 setenv fdt_high 0x84000000
 bootm 0x80300000 - 0x825f0000
