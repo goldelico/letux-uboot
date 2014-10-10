@@ -29,14 +29,14 @@ static int fs_type = FS_TYPE_ANY;
 
 static inline int fs_ls_unsupported(const char *dirname)
 {
-	printf("** Unrecognized filesystem type **\n");
+	printf("** Unrecognized filesystem type (ls) **\n");
 	return -1;
 }
 
 static inline int fs_read_unsupported(const char *filename, ulong addr,
 				      int offset, int len)
 {
-	printf("** Unrecognized filesystem type **\n");
+	printf("** Unrecognized filesystem type (read) **\n");
 	return -1;
 }
 
@@ -185,7 +185,7 @@ int fs_set_blk_dev(const char *ifname, const char *dev_part_str, int fstype)
 		}
 	}
 
-	printf("** Unrecognized filesystem type **\n");
+	printf("** Unrecognized filesystem type (%d) **\n", fstype);
 	return -1;
 }
 
