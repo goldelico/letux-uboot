@@ -172,9 +172,31 @@ int misc_init_r(void)
 									TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
 									TWL4030_PM_RECEIVER_DEV_GRP_P1);
 			break;
-		case REVISION_XM:
+		case REVISION_XM_A:
 			printf("Beagle xM Rev A\n");
 			setenv("beaglerev", "xMA");
+			setenv("mpurate", "1000");
+			MUX_BEAGLE_XM();
+			/* Set VAUX2 to 1.8V for EHCI PHY */
+			twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
+									TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
+									TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
+									TWL4030_PM_RECEIVER_DEV_GRP_P1);
+			break;
+		case REVISION_XM_B:
+			printf("Beagle xM Rev B\n");
+			setenv("beaglerev", "xMB");
+			setenv("mpurate", "1000");
+			MUX_BEAGLE_XM();
+			/* Set VAUX2 to 1.8V for EHCI PHY */
+			twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
+									TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
+									TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
+									TWL4030_PM_RECEIVER_DEV_GRP_P1);
+			break;
+		case REVISION_XM_C:
+			printf("Beagle xM Rev C\n");
+			setenv("beaglerev", "xMC");
 			setenv("mpurate", "1000");
 			MUX_BEAGLE_XM();
 			/* Set VAUX2 to 1.8V for EHCI PHY */
@@ -236,6 +258,8 @@ int misc_init_r(void)
 	if (expansion_config.content == 1)
 		setenv(expansion_config.env_var, expansion_config.env_setting);
 	
+	i2c_set_bus_num(0);	// write I2C1
+
 	twl4030_power_init();
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
 	

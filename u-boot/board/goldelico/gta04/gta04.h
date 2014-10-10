@@ -37,12 +37,6 @@ extern char *muxname;	// MUX settings name
 extern char *devicetree;	// device tree file name - can be used to load a matching .dtb for the kernel
 extern char *peripheral;
 
-/* BeagleBoard revisions */
-#define REVISION_AXBX	0x7
-#define REVISION_CX	0x6
-#define REVISION_C4	0x5
-#define REVISION_XM	0x0
-
 /*
  * IEN  - Input Enable
  * IDIS - Input Disable

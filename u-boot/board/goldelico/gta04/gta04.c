@@ -107,9 +107,15 @@ int board_init(void)
  *		GPIO173, GPIO172, GPIO171: 1 0 1 => C4
  *		GPIO173, GPIO172, GPIO171: 0 0 0 => xM
  */
+
 int get_board_revision(void)
 {
-	return 6;	// configure pinmux for C1/2/3
+	return 6;	// on GTA04, configure default pinmux for C1/2/3
+}
+
+int isXM(void)
+{
+	return 0;
 }
 
 /*

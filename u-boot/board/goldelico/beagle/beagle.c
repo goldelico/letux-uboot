@@ -27,10 +27,13 @@ int misc_init_r(void)
 		case REVISION_C4:
 			strcpy(devtree, "omap3-beagle");
 			break;
-		case REVISION_XM:
+		case REVISION_XM_A:
+		case REVISION_XM_B:
 			strcpy(devtree, "omap3-beagle-xm-ab");
 			break;
-		/* case XM_C devicetree="omap3-beagle-xm" */
+		case REVISION_XM_C:
+			strcpy(devtree, "omap3-beagle-xm");
+			break;
 	}
 	
 	setenv("mux", muxname);
@@ -38,6 +41,12 @@ int misc_init_r(void)
 	setenv("devicetree", devtree);
 	
 	return 0;
+}
+
+int isXM(void)
+{
+	int rev=get_board_revision();
+	return (rev == REVISION_XM_A ||rev == REVISION_XM_B || rev == REVISION_XM_C);
 }
 
 #undef misc_init_r

@@ -359,12 +359,10 @@ int panel_display_onoff(int on)
 
 int board_video_init(GraphicDevice *pGD)
 {
-	extern int get_board_revision(void);
+	extern int isXM(void);
 	printf("board_video_init() for JBT6K74-AS / TD028TTEC1\n");
 	backlight_init();	// initialize backlight
-#if defined(CONFIG_OMAP3_BEAGLE)
-#define REVISION_XM 0
-	if(get_board_revision() == REVISION_XM) {
+	if(isXM()) {
 		/* Set VAUX1 to 3.3V for GTA04E display board */
 		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,
 								/*TWL4030_PM_RECEIVER_VAUX1_VSEL_33*/ 0x07,
@@ -372,7 +370,6 @@ int board_video_init(GraphicDevice *pGD)
 								TWL4030_PM_RECEIVER_DEV_GRP_P1);
 		udelay(5000);
 	}
-#endif
 	if(panel_reg_init())	// initialize SPI
 		{
 		printf("No LCM connected\n");

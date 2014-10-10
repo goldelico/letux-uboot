@@ -112,25 +112,17 @@ static int hasTCA6507=0;
 
 #define TCA6507_AUTO_INCREMENT				16
 
-// we can't include "beagle.h"
-/* BeagleBoard revisions */
-extern int get_board_revision(void); 
-#define REVISION_AXBX	0x7
-#define REVISION_CX	0x6
-#define REVISION_C4	0x5
-#define REVISION_XM	0x0
-
-static int isXM = 0;
+static int thisIsXM = 0;
 
 // FIXME some BB Expanders have neither TCA6507 nor LEDs
 // we could use the GPIO 149 and 150 LEDs
 
-#define GPIO_LED_AUX_RED		(isXM?88:70)		// AUX
-#define GPIO_LED_AUX_GREEN		(isXM?89:71)		// AUX
+#define GPIO_LED_AUX_RED		(thisIsXM?88:70)		// AUX
+#define GPIO_LED_AUX_GREEN		(thisIsXM?89:71)		// AUX
 #define GPIO_LED_POWER_RED		78					// Power
 #define GPIO_LED_POWER_GREEN	79					// Power
-#define GPIO_LED_VIBRA			(isXM?2:88)			// Vibracall motor
-#define GPIO_LED_UNUSED			(isXM?3:89)			// unused
+#define GPIO_LED_VIBRA			(thisIsXM?2:88)			// Vibracall motor
+#define GPIO_LED_UNUSED			(thisIsXM?3:89)			// unused
 
 static int status;
 
@@ -208,9 +200,10 @@ int status_get_buttons(void)
 
 int status_init(void)
 {
-	isXM = (get_board_revision() == REVISION_XM);
+	extern int isXM(void);
 	i2c_set_bus_num(TWL4030_I2C_BUS);
-	if(isXM) {
+	thisIsXM = isXM();
+	if(thisIsXM) {
 		/* Set VAUX1 to 3.3V for GTA04E display board */
 		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX1_DEDICATED,
 								/*TWL4030_PM_RECEIVER_VAUX1_VSEL_33*/ 0x07,
@@ -228,7 +221,7 @@ int status_init(void)
 #endif
 	
 	if(!hasTCA6507) {
-		if(isXM) { // XM has scrambled dss assignment with respect to default ball names
+		if(thisIsXM) { // XM has scrambled dss assignment with respect to default ball names
 			MUX_VAL(CP(DSS_DATA18),		(IEN | PTD | EN | M4)); /*GPIO */
 			MUX_VAL(CP(DSS_DATA19),		(IEN | PTD | EN | M4)); /*GPIO */
 			MUX_VAL(CP(DSS_DATA8),		(IEN | PTD | EN | M4)); /*GPIO */

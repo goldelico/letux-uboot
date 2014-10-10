@@ -343,4 +343,22 @@ extern unsigned int boot_flash_type;
 
 #define CONFIG_OMAP3_SPI
 
+#define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
+
+// #define CONFIG_CMD_UBIFS	1	// broken
+
+#define CONFIG_FS_FAT		1
+#define CONFIG_FS_EXT2		1
+#define CONFIG_FS_EXT4		1
+#define CONFIG_CMD_FS		1
+#define CONFIG_CMD_EXT4		1
+
+#undef CONFIG_SYS_PROMPT
+#define CONFIG_SYS_PROMPT		"GTA04 # "
+
+#undef CONFIG_BOOTDELAY
+#define CONFIG_BOOTDELAY		1
+
+#define CONFIG_SYS_NS16550_COM1		OMAP34XX_UART1	/* used for Bluetooth */
+
 #endif /* __CONFIG_H */
