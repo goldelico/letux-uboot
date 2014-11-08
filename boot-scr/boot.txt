@@ -180,10 +180,16 @@ if test "x${scriptversion}" != "x${VERSION}"
 	setenv bootcmd 'if run loadbootscript; then run bootscript; else run mmcboot; fi;'
 	setenv bootscript 'echo Running bootscript ...; source ${bootaddr}'
 
-	# write script version number permanently
+	# write new script version number permanently
 	setenv scriptversion "${VERSION}"
-
-	flash=yes	# trigger flashing
+	if nand read ${loadaddr} 280000 4
+	then
+		# we have some nand that can be flashed
+		flash=yes	# trigger flashing
+	else
+		flash=no
+		echo "can not flash - must always boot from SD card"
+	fi
 fi
 
 echo *** initializing LCM ***
@@ -203,7 +209,7 @@ then
 
 	if test "x${flash}" = "xyes" || test "x${forcemenu}" = "xyes" || status check 1	# we want to flash or AUX button is (still) pressed
 	then
-		if test "x${forcemenu}" = "xyes"
+		if test "x${forcemenu}" = "xyes"	# set forcemenu from user space and it is activated after reboot
 		then	# reset
 			setenv forcemenu
 			saveenv
