@@ -12,14 +12,15 @@
 char *muxname="BeagleBoard";
 char *peripheral="";
 
+extern int get_board_revision();
+
 int misc_init_r(void)
 {
-	int get_board_revision(void);
 	int orig_misc_init_r(void);
 	char devtree[50]="unknown";
 	orig_misc_init_r();		// initializes board revision dependent mux (e.g. MUX_BEAGLE_C())
 #ifdef BEAGLE_EXTRA_MUX
-	BEAGLE_EXTRA_MUX();
+	BEAGLE_EXTRA_MUX();	// set MUX for expander board
 #endif
 	switch (get_board_revision()) {
 		case REVISION_AXBX:
@@ -39,7 +40,8 @@ int misc_init_r(void)
 	setenv("mux", muxname);
 	strcat(devtree, peripheral);
 	setenv("devicetree", devtree);
-	
+	printf("Device Tree: %s\n", devtree);
+
 	return 0;
 }
 

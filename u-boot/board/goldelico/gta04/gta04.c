@@ -210,7 +210,8 @@ int misc_init_r(void)
 
 	setenv("mux", muxname);
 	setenv("devicetree", devicetree);
-	
+	printf("Device Tree: %s\n", devicetree);
+
 	switch (get_cpu_family()) {
 		case CPU_OMAP34XX:
 			if ((get_cpu_rev() >= CPU_3XX_ES31) &&
