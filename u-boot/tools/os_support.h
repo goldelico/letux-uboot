@@ -29,7 +29,11 @@
 #endif
 
 #ifdef __APPLE__
+#if __DARWIN_C_LEVEL >= 200809L
+// defined in /usr/include/stdio.h
+#else
 #include "getline.h"
+#endif
 #endif
 
 #endif /* __OS_SUPPORT_H_ */
