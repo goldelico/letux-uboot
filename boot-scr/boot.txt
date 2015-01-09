@@ -4,7 +4,7 @@
 # Boot script for Beagle Hybrid / Panda Hybrid / GTA04 / Neo900
 #
 # Author: H. Nikolaus Schaller
-# Copyright Golden Delicious Computers 2010-2014
+# Copyright Golden Delicious Computers 2010-2015
 # licensed under GPL 2.0
 #
 #
@@ -16,8 +16,8 @@
 # 0x0021 0000	0x0024 ffff	04 0000		256 KB	menu.rgb16z
 # 0x0025 0000	0x0025 ffff	01 0000		64 KB	boot.scr
 # 0x0026 0000	0x0027 ffff	02 0000		128 KB	U-Boot parameters written by saveenv
-# 0x0028 0000	0x0067 ffff	40 0000		4 MB	Kernel (flash image loaded by nandboot)
-# 0x0068 0000	0x0fff ffff			250 MB	(or more) file system (e.g. jffs)
+# 0x0028 0000	0x00a7 ffff	60 0000		6 MB	Kernel (flash image loaded by nandboot)
+# 0x00a8 0000	0x0fff ffff			250 MB	(or more) file system (e.g. jffs)
 #
 # To flash into NAND from command line:
 #
@@ -159,7 +159,7 @@ if test "x${scriptversion}" != "x${VERSION}"
 # done
 # if itest $KERNEL == 0
 # then
-#    if nand read ${loadaddr} 280000 400000
+#    if nand read ${loadaddr} 280000 600000
 #    then
 #      echo fallback to NAND kernel
 #      FDT=0
@@ -169,12 +169,12 @@ if test "x${scriptversion}" != "x${VERSION}"
 # fi
 # run kernelloaded
 
-	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan ${mmc};DONE=0;KERNEL=0;FDT=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if load mmc ${mmc}:${p} ${loadaddr} uImage;then;echo found kernel /uImage on partition $p;setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw";run mmcargs;KERNEL=1;DONE=1;elif load mmc ${mmc}:${p} ${loadaddr} /boot/uImage;then;echo found kernel /boot/uImage on EXT partition $p;setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if load mmc ${mmc}:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif load mmc ${mmc}:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;if load mmc ${mmc}:${p} ${loadaddrfdt} ${devicetree}.dtb;then;FDT=1;elif load mmc ${mmc}:${p} ${loadaddrfdt} /boot/${devicetree}.dtb;then;FDT=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 400000;then;echo fallback to NAND kernel;FDT=0;else;status blink;fi;fi;run kernelloaded'
+	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan ${mmc};DONE=0;KERNEL=0;FDT=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if load mmc ${mmc}:${p} ${loadaddr} uImage;then;echo found kernel /uImage on partition $p;setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw";run mmcargs;KERNEL=1;DONE=1;elif load mmc ${mmc}:${p} ${loadaddr} /boot/uImage;then;echo found kernel /boot/uImage on EXT partition $p;setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if load mmc ${mmc}:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif load mmc ${mmc}:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;if load mmc ${mmc}:${p} ${loadaddrfdt} ${devicetree}.dtb;then;FDT=1;elif load mmc ${mmc}:${p} ${loadaddrfdt} /boot/${devicetree}.dtb;then;FDT=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 600000;then;echo fallback to NAND kernel;FDT=0;else;status blink;fi;fi;run kernelloaded'
 
 	# boot with kernel/rootfs from specified source
 	setenv boot 'if itest $FDT == 1; then bootm ${loadaddr} - ${loadaddrfdt}; else bootm ${loadaddr}; fi;'
 	setenv mmcboot 'if run loadkernel; then run boot; fi;'
-	setenv nandboot 'run kernelloading; if nand read ${loadaddr} 280000 400000; then run nandargs; run kernelloaded; bootm ${loadaddr}; fi;'
+	setenv nandboot 'run kernelloading; if nand read ${loadaddr} 280000 600000; then run nandargs; run kernelloaded; bootm ${loadaddr}; fi;'
 
 	# run the boot script - and fall back to direct kernel boot
 	setenv bootcmd 'if run loadbootscript; then run bootscript; else run mmcboot; fi;'
