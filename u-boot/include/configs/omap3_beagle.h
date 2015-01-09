@@ -134,7 +134,7 @@
 #define MTDIDS_DEFAULT			"nand0=nand"
 #define MTDPARTS_DEFAULT		"mtdparts=nand:512k(x-loader),"\
 					"1920k(u-boot),128k(u-boot-env),"\
-					"4m(kernel),-(fs)"
+					"6m(kernel),-(fs)"
 
 #define CONFIG_CMD_I2C		/* I2C serial bus support	*/
 #define CONFIG_CMD_MMC		/* MMC support			*/
@@ -183,8 +183,8 @@
 /* nand device jffs2 lives on */
 #define CONFIG_JFFS2_DEV		"nand0"
 /* start of jffs2 partition */
-#define CONFIG_JFFS2_PART_OFFSET	0x680000
-#define CONFIG_JFFS2_PART_SIZE		0xf980000	/* size of jffs2 */
+#define CONFIG_JFFS2_PART_OFFSET	0xa80000
+#define CONFIG_JFFS2_PART_SIZE		0xf180000	/* size of jffs2 */
 							/* partition */
 
 /* Environment information */
