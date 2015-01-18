@@ -17,7 +17,7 @@
 # 0x0025 0000	0x0025 ffff	01 0000		64 KB	boot.scr
 # 0x0026 0000	0x0027 ffff	02 0000		128 KB	U-Boot parameters written by saveenv
 # 0x0028 0000	0x00a7 ffff	60 0000		6 MB	Kernel (flash image loaded by nandboot)
-# 0x00a8 0000	0x0fff ffff			250 MB	(or more) file system (e.g. jffs)
+# 0x0088 0000	0x0fff ffff			250 MB	(or more) file system (e.g. jffs)
 #
 # To flash into NAND from command line:
 #
