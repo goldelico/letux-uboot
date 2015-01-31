@@ -46,7 +46,7 @@
 // FIXME: add configs for the partitions so that JFFS2 runs in the correct NAND partition
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT		"Openmoko Beagle B2 # "
+#define CONFIG_SYS_PROMPT		"OGTA04@Beagle B2 # "
 
 
 /* __CONFIG_H */

@@ -29,7 +29,7 @@
 #include "omap4_panda.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT		"Openmoko Panda Hybrid # "
+#define CONFIG_SYS_PROMPT		"GTA04@Panda # "
 
 
 /* __CONFIG_H */
