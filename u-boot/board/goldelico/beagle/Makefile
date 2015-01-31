@@ -25,7 +25,8 @@ include $(TOPDIR)/config.mk
 
 LIB	= $(obj)lib$(BOARD).o
 
-COBJS	:= beagle.o nopanel.o ../gta04/backlight.o ../gta04/status.o ../gta04/tsc2007.o ../gta04/dssfb.o ../gta04/gps.o ../gta04/shutdown.o ../gta04/systest.o ../gta04/commands.o ../gta04/ulpi-phy.o ../gta04/twl4030-additions.o
+COBJS	:= beagle.o nopanel.o ../gta04/status.o ../gta04/shutdown.o ../gta04/commands.o ../gta04/ulpi-phy.o ../gta04/twl4030-additions.o
+# ../gta04/backlight.o ../gta04/tsc2007.o ../gta04/dssfb.o ../gta04/gps.o ../gta04/systest.o
 
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))

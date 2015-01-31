@@ -59,7 +59,8 @@ const char *panel_state(void)
 
 int board_video_init(GraphicDevice *pGD)
 {
-	return 0;
+//	printf("no panel board_video_init\n");
+	return 1;
 }
 
 int displayColumns=0;
@@ -72,7 +73,37 @@ int panel_check(void)
 
 int panel_reg_init(void)
 {
+//	printf("no panel panel_reg_init\n");
 	return 1;
 }
+
+void backlight_set_level(int level) { return ; }
+int backlight_init(void) { return 0; }
+
+void dssfb_init(const struct panel_config *lcm_cfg) { return ; }
+void omap3_dss_go(void) { return ; }
+int omap3_dss_enable_fb(int flag) { return 0; }
+int omap3_dss_set_fb(void *addr) { return 0; }
+int omap3_set_color(u32 color) { return 0; }
+
+int gps_init(void) { return 0; }
+void gps_on(void) { return ; }
+void gps_off(void) { return ; }
+void gps_echo(void) { return ; }
+
+int systest(void) { return 0; }
+int audiotest_init(int channel) { return 0; }
+int audiotest_send(void) { return 0; }
+int audiotest(int channel) { return 0; }
+int irdatest(void) { return 0; }
+int wlanbttest(int serial) { return 0; }
+int OTGchargepump(int enable) { return 0; }
+int gpiotest(void) { return 0; }
+int keytest(void) { return 0; }
+
+int tsc2007_init(void) { return 0; }
+int read_adc(int adcnum) { return 0; }
+void print_adc(void) { return ; }
+int pendown(int *x, int *y) { return 0; }
 
 

@@ -24,8 +24,6 @@
  * MA 02111-1307 USA
  */
 
-#define CONFIG_GOLDELICO_EXPANDER_B1	1		/* working with BEAGLE and OMB Hybrid */
-
 #include "omap3_beagle.h"	/* share config */
 
 #define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
@@ -36,7 +34,7 @@
 // FIXME: add configs for the partitions so that JFFS2 runs in the correct NAND partition
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT		"Openmoko Beagle B1 # "
+#define CONFIG_SYS_PROMPT		"GTA04@Beagle # "
 
 
 /* __CONFIG_H */
