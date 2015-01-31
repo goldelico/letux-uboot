@@ -35,6 +35,7 @@
 #if defined(CONFIG_OMAP3_GTA04)
 
 // no need to probe for LED controller (compiler should optimize unnecessary code)
+#define CHECK_TCA6507	0
 #define hasTCA6507 (1==1)
 
 #define GPIO_AUX		7		// AUX/User button
@@ -55,12 +56,16 @@ static int hasTCA6507=0;
 
 #if defined(CONFIG_GOLDELICO_EXPANDER_B1)
 
+#define CHECK_TCA6507	1
+
 #define GPIO_AUX		136		// AUX/User button on expansion board
 #define GPIO_POWER		137		// POWER button
 #define GPIO_GPSEXT		144		// external GPS antenna is plugged in
 #define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
 
 #elif defined(CONFIG_GOLDELICO_EXPANDER_B2)
+
+#define CHECK_TCA6507	1
 
 #define GPIO_AUX		136		// AUX/User button on expansion board
 #define GPIO_POWER		137		// POWER button
@@ -71,6 +76,8 @@ static int hasTCA6507=0;
 
 #elif defined(CONFIG_GOLDELICO_EXPANDER_B4)
 
+#define CHECK_TCA6507	1
+
 #define GPIO_AUX		7		// AUX/User button sits on main board
 #define GPIO_POWER		-1		// POWER button
 #define GPIO_GPSEXT		144		// external GPS antenna is plugged in
@@ -80,6 +87,8 @@ static int hasTCA6507=0;
 
 #elif defined(CONFIG_GOLDELICO_EXPANDER_B7)
 
+#define CHECK_TCA6507	1
+
 #define GPIO_AUX		7		// AUX/User button sits on main board
 #define GPIO_POWER		-1		// POWER button
 #define GPIO_GPSEXT		144		// external GPS antenna is plugged in
@@ -88,7 +97,16 @@ static int hasTCA6507=0;
 #define GPIO_KEYIRQ		138		// PPS interrupt
 
 #else
-#error undefined CONFIG_GOLDELICO_EXPANDER
+
+// no CONFIG_GOLDELICO_EXPANDER
+
+#define GPIO_AUX		7		// AUX/User button
+#define GPIO_AUX_ACTIVE	1
+#define GPIO_POWER		-1		// N/A on BB (access through TPS65950)
+#define GPIO_GPSEXT		-1		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		-1		// TSC must be set up to provide PENIRQ
+#define GPIO_KEYIRQ		-1		// FIXME: was 63, 10 on GTA04A2 and A3
+
 #endif
 
 #endif
@@ -172,30 +190,6 @@ int status_get_buttons(void)
 	if(GPIO_KEYIRQ >= 0)
 		status |= ((omap_get_gpio_datain(GPIO_KEYIRQ)) << 5);
 	return status;
-
-#if OLD
-#if defined(CONFIG_OMAP3_GTA04)
-	u8 val;
-	i2c_set_bus_num(TWL4030_I2C_BUS);	// read I2C1
-	twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, TWL4030_PM_MASTER_STS_HW_CONDITIONS);	// read state of power button (bit 0) from TPS65950
-	return ((omap_get_gpio_datain(GPIO_AUX)) << 0) |
-		((omap_get_gpio_datain(GPIO_GPSEXT)) << 1) |
-		(((val&0x01) != 0) << 3) |
-		((omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
-#elif defined(CONFIG_GOLDELICO_EXPANDER_B2)
-	return
-		((omap_get_gpio_datain(GPIO_AUX)) << 0) |
-		((0) << 1) |
-	((GPIO_POWER>=0?(!omap_get_gpio_datain(GPIO_POWER)):0) << 3) |
-		((omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
-#else
-	return
-		((!omap_get_gpio_datain(GPIO_AUX)) << 0) |
-		((omap_get_gpio_datain(GPIO_GPSEXT)) << 1) |
-	((GPIO_POWER>=0?(!omap_get_gpio_datain(GPIO_POWER)):0) << 3) |
-		((omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
-#endif
-#endif
 }
 
 int status_init(void)
@@ -211,16 +205,17 @@ int status_init(void)
 								TWL4030_PM_RECEIVER_DEV_GRP_P1);
 		udelay(5000);
 	}
-#if !defined(CONFIG_OMAP3_GTA04)	// we assume that a GTA04 always has a TCA6507
+
+#if CHECK_TCA6507
 	if(i2c_set_bus_num(TCA6507_BUS))
-		{
-		printf ("could not select I2C2\n");
+		{ // check if we have a tca
+		printf ("could not select I2C2 to probe for TCA6507\n");
 		return 1;
 		}
 	hasTCA6507 = !i2c_probe(TCA6507_ADDRESS);
 #endif
 	
-	if(!hasTCA6507) {
+	if(!hasTCA6507) { // reuse DSS pins
 		if(thisIsXM) { // XM has scrambled dss assignment with respect to default ball names
 			MUX_VAL(CP(DSS_DATA18),		(IEN | PTD | EN | M4)); /*GPIO */
 			MUX_VAL(CP(DSS_DATA19),		(IEN | PTD | EN | M4)); /*GPIO */

@@ -92,7 +92,7 @@ void backlight_set_level(int level)	// 0..255
 #if USE_PWM
 	struct gptimer *gpt_base = (struct gptimer *)GPT_BACKLIGHT;
 	// 	writel(value, &gpt_base->registername);
-#else
+#elif defined(GPIO_BACKLIGHT)
 	omap_set_gpio_dataout(GPIO_BACKLIGHT, level >= 128);	// for simplicity we just have on/off
 	level=(level >= 128)?255:0;
 #endif
