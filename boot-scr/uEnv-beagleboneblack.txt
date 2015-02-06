@@ -1,0 +1,1 @@
+uenvcmd=echo "Booting GTA04 from SD"; if fatload mmc 0:1 0x81300000 boot.scr; then source 0x81300000; fi
