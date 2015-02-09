@@ -175,6 +175,8 @@ int misc_init_r(void)
 									TWL4030_PM_RECEIVER_DEV_GRP_P1);
 			break;
 		case REVISION_XM_A:
+			/* Enable i2c2 pullup resisters */
+			*(ulong *)(CONTROL_PROG_IO1) &= ~(PRG_I2C2_PULLUPRESX);
 			printf("Beagle xM Rev A\n");
 			setenv("beaglerev", "xMA");
 			setenv("mpurate", "1000");
@@ -186,6 +188,8 @@ int misc_init_r(void)
 									TWL4030_PM_RECEIVER_DEV_GRP_P1);
 			break;
 		case REVISION_XM_B:
+			/* Enable i2c2 pullup resisters */
+			*(ulong *)(CONTROL_PROG_IO1) &= ~(PRG_I2C2_PULLUPRESX);
 			printf("Beagle xM Rev B\n");
 			setenv("beaglerev", "xMB");
 			setenv("mpurate", "1000");
@@ -197,6 +201,8 @@ int misc_init_r(void)
 									TWL4030_PM_RECEIVER_DEV_GRP_P1);
 			break;
 		case REVISION_XM_C:
+			/* Enable i2c2 pullup resisters */
+			*(ulong *)(CONTROL_PROG_IO1) &= ~(PRG_I2C2_PULLUPRESX);
 			printf("Beagle xM Rev C\n");
 			setenv("beaglerev", "xMC");
 			setenv("mpurate", "1000");

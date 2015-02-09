@@ -50,6 +50,15 @@
 /* CONTROL */
 #define OMAP34XX_CTRL_BASE		(OMAP34XX_L4_IO_BASE + 0x2000)
 
+/* Signal Integrity Parameter Control Registers */
+#define CONTROL_PROG_IO0		0x48002444
+#define CONTROL_PROG_IO1		0x48002448 /* significantly differs between OMAP3530 and DM3730! */
+#define CONTROL_PROG_IO2		0x48002408
+#define CONTROL_PROG_IO_WKUP1		0x48002A80
+
+/* Bit definition for CONTROL_PROG_IO1 */
+#define PRG_I2C2_PULLUPRESX		0x00000001
+
 /* UART */
 #define OMAP34XX_UART1			(OMAP34XX_L4_IO_BASE + 0x6a000)
 #define OMAP34XX_UART2			(OMAP34XX_L4_IO_BASE + 0x6c000)
