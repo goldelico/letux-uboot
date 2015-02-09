@@ -12,7 +12,7 @@
 char *muxname="BeagleBoard";
 char *peripheral="";
 
-extern int get_board_revision();
+extern int get_board_revision(void);
 
 int misc_init_r(void)
 {

@@ -125,6 +125,8 @@ unsigned int get_expansion_id(void)
 {
 	i2c_set_bus_num(EXPANSION_EEPROM_I2C_BUS);
 	
+	expansion_config.content = 0;
+
 	/* return BEAGLE_NO_EEPROM if eeprom doesn't respond */
 	if (i2c_probe(EXPANSION_EEPROM_I2C_ADDRESS) == 1) {
 		i2c_set_bus_num(TWL4030_I2C_BUS);
@@ -258,7 +260,7 @@ int misc_init_r(void)
 	if (expansion_config.content == 1)
 		setenv(expansion_config.env_var, expansion_config.env_setting);
 	
-	i2c_set_bus_num(0);	// write I2C1
+	i2c_set_bus_num(TWL4030_I2C_BUS);	// write I2C1
 
 	twl4030_power_init();
 	twl4030_led_init(TWL4030_LED_LEDEN_LEDAON | TWL4030_LED_LEDEN_LEDBON);
