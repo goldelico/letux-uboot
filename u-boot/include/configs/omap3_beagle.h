@@ -139,6 +139,7 @@
 #define CONFIG_CMD_I2C		/* I2C serial bus support	*/
 #define CONFIG_CMD_MMC		/* MMC support			*/
 #define CONFIG_CMD_NAND		/* NAND support			*/
+// #define CONFIG_CMD_ONENAND	/* OneNAND support		*/
 #define CONFIG_CMD_LED		/* LED support			*/
 #define CONFIG_VIDEO_OMAP3	/* DSS Support			*/
 #define CONFIG_CMD_SETEXPR	/* Evaluate expressions		*/
@@ -169,14 +170,11 @@
  * Board NAND Info.
  */
 #define CONFIG_SYS_NAND_QUIET_TEST	1
-#define CONFIG_NAND_OMAP_GPMC
 #define CONFIG_SYS_NAND_ADDR		NAND_BASE	/* physical address */
 							/* to access nand */
 #define CONFIG_SYS_NAND_BASE		NAND_BASE	/* physical address */
 							/* to access nand at */
 							/* CS0 */
-#define GPMC_NAND_ECC_LP_x16_LAYOUT	1
-
 #define CONFIG_SYS_MAX_NAND_DEVICE	1		/* Max number of NAND */
 							/* devices */
 #define CONFIG_JFFS2_NAND
@@ -316,7 +314,13 @@
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_FLASH_BASE
 #define CONFIG_SYS_ONENAND_BASE		ONENAND_MAP
 
-#define CONFIG_ENV_IS_IN_NAND		1
+#if defined(CONFIG_CMD_NAND)
+#define CONFIG_NAND_OMAP_GPMC
+#define GPMC_NAND_ECC_LP_x16_LAYOUT	1
+#define CONFIG_ENV_IS_IN_NAND
+#elif defined(CONFIG_CMD_ONENAND)
+#define CONFIG_ENV_IS_IN_ONENAND	1
+#endif
 #define ONENAND_ENV_OFFSET		0x260000 /* environment starts here */
 #define SMNAND_ENV_OFFSET		0x260000 /* environment starts here */
 
