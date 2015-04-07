@@ -1,0 +1,14 @@
+The files in this directory are needed
+for recovery if the NAND image has been
+corrupted and it is impossible to boot
+from SD card for whatever reasons.
+
+In this case, these tools help to start
+a standard u-boot through a special
+X-Loader (s-load.bin) and a RS232
+connection.
+
+For a description how it works, please
+refer to:
+
+http://projects.goldelico.com/p/gta04-main/page/SerialBoot/
