@@ -1,4 +1,6 @@
-setenv devicetree omap4-panda-es-gta04
+# boot gta04 kernel with device tree on Pandaboard-ES
+
+setenv devicetree omap4-panda-es+gta04
 setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel
 setenv kernelmmc 0	# mmc number as seen by kernel
 setenv defaultdisplay   hdmi
