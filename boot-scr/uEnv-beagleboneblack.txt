@@ -1,1 +1,1 @@
-uenvcmd=echo "Booting GTA04 from SD"; if fatload mmc 0:1 0x81300000 boot.scr; then source 0x81300000; fi
+uenvcmd=echo "Booting GTA04-Kernel from SD"; if fatload mmc 0:1 0x81300000 boot.scr; then setenv mmc 0; source 0x81300000; elif fatload mmc 1:1 0x81300000 boot.scr; then setenv mmc 1; source 0x81300000; else echo "Unable to locate boot.scr"; fi
