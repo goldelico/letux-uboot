@@ -1,0 +1,24 @@
+setenv devicetree omap5-letux-cortex15+pyra
+setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel
+setenv kernelmmc 1	# mmc number as seen by kernel
+setenv defaultdisplay   lcd
+setenv PARTITION 1	# partition where kernel is found (simulates the partition selection mechanism of the GTA04)
+setenv PARTITIONTYPE FAT
+
+# set default
+setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rw rootwait earlyprintk fixrtc'
+
+# load device tree and kernel binary
+fatload mmc ${mmc}:${PARTITION} 0x825f0000 ${devicetree}.dtb
+fatload mmc ${mmc}:${PARTITION} 0x80300000 uImage
+
+run mmcargs
+
+# allow to overwrite boot args (incl. kernelmmc)
+if fatload mmc ${mmc}:${PARTITION} 0x81300000 bootargs.scr
+then
+	source 0x81300000
+fi
+
+setenv fdt_high 0x84000000
+bootm 0x80300000 - 0x825f0000
