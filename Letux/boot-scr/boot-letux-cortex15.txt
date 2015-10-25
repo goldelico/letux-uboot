@@ -1,4 +1,4 @@
-setenv devicetree omap5-letux-cortex-15+pyra
+setenv devicetree omap5-letux-cortex15+pyra
 setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel
 setenv kernelmmc 0	# mmc number as seen by kernel
 setenv defaultdisplay   lcd
