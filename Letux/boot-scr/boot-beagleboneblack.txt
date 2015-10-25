@@ -3,7 +3,8 @@ setenv devicetree am335x-boneblack+gta04
 setenv defaultdisplay   lcd
 
 setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel
-setenv kernelmmc 0	# mmc number as seen by kernel
+# we should have some mechanism so that u-boot and kernel use the same mmc numbering scheme or we have problems specifying the right rootfs
+setenv kernelmmc 1	# mmc number as seen by kernel
 setenv PARTITION 1	# partition where kernel is found (simulates the partition selection mechanism of the GTA04)
 setenv PARTITIONTYPE FAT
 
@@ -11,7 +12,7 @@ setenv PARTITIONTYPE FAT
 setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rw rootwait earlyprintk fixrtc'
 
 DONE=0
-for m in 0 1 # scan eMMC and uSD
+for m in 1 0 # scan uSD and eMMC
 do
 	mmc rescan # ${m}
 	for p in 1 2 3 4 # scan all partitions
