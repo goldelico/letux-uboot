@@ -165,6 +165,51 @@ U_BOOT_CMD(lcm, 3, 0, do_lcd, "LCM sub-system",
 		   "fb address - set framebuffer address (can be used without init)\n"
 		   );
 
+static int do_charge_auto(int argc, char *const argv[])
+{
+	twl4030_init_battery_charging();
+	return 0;
+}
+
+static int do_charge_continuous(int argc, char *const argv[])
+{
+	twl4030_enable_linear_charging();
+	return 0;
+}
+
+static int do_charge_off(int argc, char *const argv[])
+{
+	twl4030_charging_off();
+	return 0;
+}
+
+static int do_charge(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	int len;
+
+	if (argc < 2) {
+		printf("charge: missing subcommand.\n");
+		return -1;
+	}
+
+	len = strlen(argv[1]);
+	if (strncmp("au", argv[1], 2) == 0) {
+		return do_charge_auto(argc, argv);
+	} else if (strncmp("of", argv[1], 2) == 0) {
+		return do_charge_off(argc, argv);
+	} else if (strncmp("co", argv[1], 2) == 0) {
+		return do_charge_continuous(argc, argv);
+	} else {
+		printf("charge: unknown operation: %s\n", argv[1]);
+	}
+	return 0;
+}
+
+U_BOOT_CMD(charge, 3, 0, do_charge, "battery charging sub-system",
+		   "off - disable charging\n"
+		   "auto - automatic charging\n"
+		   "continuous - software-controlled charging\n"
+		   );
 /* TSC commands */
 
 static int do_tsc_init(int argc, char *const argv[])

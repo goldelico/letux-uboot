@@ -359,6 +359,39 @@ static int twl4030_get_usb_charger_voltage(void)
 	return (volt * 2058) / 300;
 }
 
+int twl4030_enable_linear_charging()
+{
+	int ret;
+	ret = twl4030_madc_setup();
+	if (ret) {
+		printf("twl4030 madc setup error %d\n", ret);
+		return ret;
+	}
+	ret = clear_n_set(TWL4030_CHIP_PM_MASTER, BCIAUTOUSB, 0, REG_BOOT_BCI);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0x33,
+			REG_BCIWDKEY);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0x2a,
+			REG_BCIMDKEY);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0x26,
+			REG_BCIMDKEY);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0xf3,
+			REG_BCIWDKEY);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0x9c,
+			REG_BCIMFKEY);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0xf0,
+			REG_BCIMFEN3);
+	return ret;
+}
+
+int twl4030_charging_off()
+{
+	int ret;
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0x2a,
+				REG_BCIMDKEY);
+	ret = clear_n_set(TWL4030_CHIP_PM_MASTER, BCIAUTOUSB | BCIAUTOAC,
+				 0, REG_BOOT_BCI);
+	return ret;
+}
 /*
  * Battery charging main function called from board-specific file
  */
