@@ -58,6 +58,9 @@ config TARGET_AM57XX_EVM
 config TARGET_LETUX_CORTEX15
 	bool "Letux Cortex 15 SoM"
 
+config TARGET_PYRA_LC15
+	bool "Pyra Handheld with LC15 CPU"
+
 endchoice
 
 config SYS_SOC
@@ -95,6 +98,6 @@ source "board/ti/dra7xx/Kconfig"
 source "board/ti/am57xx/Kconfig"
 source "board/ti/beagle_x15/Kconfig"
 source "board/goldelico/letux-cortex15/Kconfig"
-omap5_evm code
+source "board/pandora/pyra+lc15/Kconfig"
 
 endif
