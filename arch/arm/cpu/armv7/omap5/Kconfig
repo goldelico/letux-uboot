@@ -16,6 +16,9 @@ config TARGET_DRA7XX_EVM
 config TARGET_BEAGLE_X15
 	bool "BeagleBoard X15"
 
+config TARGET_LETUX_CORTEX15
+	bool "Letux Cortex 15 SoM"
+
 endchoice
 
 config SYS_SOC
@@ -25,5 +28,6 @@ source "board/compulab/cm_t54/Kconfig"
 source "board/ti/omap5_uevm/Kconfig"
 source "board/ti/dra7xx/Kconfig"
 source "board/ti/beagle_x15/Kconfig"
+source "board/goldelico/letux-cortex15/Kconfig"
 
 endif
