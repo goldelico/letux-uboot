@@ -55,6 +55,9 @@ config TARGET_AM57XX_EVM
 	bool "AM57XX"
 	select TI_I2C_BOARD_DETECT
 
+config TARGET_LETUX_CORTEX15
+	bool "Letux Cortex 15 SoM"
+
 endchoice
 
 config SYS_SOC
@@ -90,5 +93,8 @@ source "board/compulab/cm_t54/Kconfig"
 source "board/ti/omap5_uevm/Kconfig"
 source "board/ti/dra7xx/Kconfig"
 source "board/ti/am57xx/Kconfig"
+source "board/ti/beagle_x15/Kconfig"
+source "board/goldelico/letux-cortex15/Kconfig"
+omap5_evm code
 
 endif

@@ -1,0 +1,6 @@
+LETUX CORTEX 15
+M:	Nikolaus Schaller <hns@goldelico.com>
+S:	Maintained
+F:	board/goldelico/letux-cortex15
+F:	include/configs/goldelico/lc15.h
+F:	configs/goldelico_letux_cortex15_defconfig
