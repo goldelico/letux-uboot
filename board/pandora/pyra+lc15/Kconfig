@@ -1,0 +1,12 @@
+if TARGET_PYRA_LC15
+
+config SYS_BOARD
+	default "pyra+lc15"
+
+config SYS_VENDOR
+	default "pandora"
+
+config SYS_CONFIG_NAME
+	default "pandora_pyra_lc15"
+
+endif
