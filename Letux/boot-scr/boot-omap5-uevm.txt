@@ -1,4 +1,4 @@
-setenv devicetree omap5-pyra
+setenv devicetree omap5-uevm
 setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel
 setenv kernelmmc 1	# mmc number as seen by kernel
 setenv defaultdisplay   lcd
