@@ -1,6 +1,7 @@
-setenv fdtfile omap5-letux-cortex15-v4.9+pyra
+echo boot.scr for Pyra+LC15 V4.9
+setenv fdtfile omap5-letux-cortex15-v4.9+pyra.dtb
 setenv mmcdev 0		# mmc number as seen by u-boot where it looks for kernel
-setenv kernelmmc 1	# mmc number as seen by kernel
+setenv kernelmmc 0	# mmc number as seen by kernel
 setenv defaultdisplay   lcd
 setenv PARTITION 1	# partition where kernel is found (simulates the partition selection mechanism of the GTA04)
 setenv PARTITIONTYPE FAT
