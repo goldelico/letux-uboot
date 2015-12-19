@@ -25,6 +25,7 @@
 #undef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND \
 	"echo bootcmd for LC15;" \
+	"setenv mmcdev 0; " \
 	"if test ${dofastboot} -eq 1; then " \
 		"echo Boot fastboot requested, resetting dofastboot ...;" \
 		"setenv dofastboot 0; saveenv;" \
@@ -32,23 +33,24 @@
 	"fi;" \
 	"if run loadbootscript; then " \
 		"run bootscript;" \
+	"else;" \
+		"echo trying mmc0;" \
+		"setenv mmcdev 0; " \
+		"setenv bootpart 0:1; " \
+		"setenv mmcroot /dev/mmcblk0p2 rw; " \
+		"run findfdt; " \
+		"run mmcboot;" \
+		"echo trying mmc1;" \
+		"setenv mmcdev 1; " \
+		"setenv bootpart 1:1; " \
+		"setenv mmcroot /dev/mmcblk1p2 rw; " \
+		"run mmcboot;" \
 	"fi;" \
-	"echo trying mmc0;" \
-	"setenv mmcdev 0; " \
-	"setenv bootpart 0:1; " \
-	"setenv mmcroot /dev/mmcblk0p2 rw; " \
-	"run findfdt; " \
-	"run mmcboot;" \
-	"echo trying mmc1;" \
-	"setenv mmcdev 1; " \
-	"setenv bootpart 1:1; " \
-	"setenv mmcroot /dev/mmcblk1p2 rw; " \
-	"run mmcboot;" \
 	""
 
 #endif
 
-if 1	/* for the moment disable environment */
+#if 0	/* for the moment, disable to store environment in eMMC */
 #undef CONFIG_ENV_IS_IN_MMC
 #undef CONFIG_SYS_MMC_ENV_DEV
 #undef CONFIG_ENV_SIZE
