@@ -1,3 +1,4 @@
+echo boot.scr for LC15 standalone
 setenv fdtfile omap5-letux-cortex15.dtb
 setenv mmcdev 0		# mmc number as seen by u-boot where it looks for kernel
 setenv kernelmmc 0	# mmc number as seen by kernel
@@ -9,7 +10,7 @@ setenv PARTITIONTYPE FAT
 setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rw rootwait earlyprintk fixrtc'
 
 # load device tree and kernel binary
-fatload mmc ${mmcdev}:${PARTITION} 0x825f0000 ${devicetree}
+fatload mmc ${mmcdev}:${PARTITION} 0x825f0000 ${fdtfile}
 fatload mmc ${mmcdev}:${PARTITION} 0x80300000 uImage
 
 run mmcargs
