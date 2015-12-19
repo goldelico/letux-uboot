@@ -1,6 +1,7 @@
-setenv devicetree omap5-uevm
+echo boot.scr for OMAP5432 EVM
+setenv fdtfile omap5-uevm.dtb
 setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel
-setenv kernelmmc 1	# mmc number as seen by kernel
+setenv kernelmmc 0	# mmc number as seen by kernel
 setenv defaultdisplay   lcd
 setenv PARTITION 1	# partition where kernel is found (simulates the partition selection mechanism of the GTA04)
 setenv PARTITIONTYPE FAT
@@ -9,7 +10,7 @@ setenv PARTITIONTYPE FAT
 setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rw rootwait earlyprintk fixrtc'
 
 # load device tree and kernel binary
-fatload mmc ${mmc}:${PARTITION} 0x825f0000 ${devicetree}.dtb
+fatload mmc ${mmc}:${PARTITION} 0x825f0000 ${fdtfile}
 fatload mmc ${mmc}:${PARTITION} 0x80300000 uImage
 
 run mmcargs
