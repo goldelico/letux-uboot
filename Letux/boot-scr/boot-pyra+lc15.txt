@@ -10,16 +10,20 @@ setenv PARTITIONTYPE FAT
 setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rw rootwait earlyprintk fixrtc'
 
 # load device tree and kernel binary
+echo ${fdtfile} to 0x825f0000
 fatload mmc ${mmcdev}:${PARTITION} 0x825f0000 ${fdtfile}
+echo uImage to 0x80300000
 fatload mmc ${mmcdev}:${PARTITION} 0x80300000 uImage
 
 run mmcargs
 
 # allow to overwrite boot args (incl. kernelmmc)
+echo bootargs.scr to 0x81300000
 if fatload mmc ${mmcdev}:${PARTITION} 0x81300000 bootargs.scr
 then
 	source 0x81300000
 fi
+fatload mmc ${mmcdev}:${PARTITION} 0x80300000 uImage
 
 setenv fdt_high 0x84000000
 bootm 0x80300000 - 0x825f0000
