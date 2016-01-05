@@ -1,15 +1,21 @@
 /*
- * basically the same as the letux Cortex 15
+ * basically the same as the Letux Cortex 15
  * except that we change the UART3 pinmux because it is wired up
  * differently
  */
 
 /* move away definition by included file */
 #define set_muxconf_regs_essential set_muxconf_regs_essential_disabled
+#define sysinfo sysinfo_disabled
 
 #include "../../goldelico/letux-cortex15/lc15.c"
 
+#undef sysinfo
 #undef set_muxconf_regs_essential
+
+const struct omap_sysinfo sysinfo = {
+	"Board: Pyra with Letux Cortex 15\n"
+};
 
 const struct pad_conf_entry core_padconf_array_essential_alternate[] = {
 
