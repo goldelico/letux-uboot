@@ -206,37 +206,28 @@ static void omap24_i2c_init(struct i2c_adapter *adap, int speed, int slaveadd)
 	int timeout = I2C_TIMEOUT;
 	int deblock = 1;
 
-	printf("omap24_i2c_init\n");
-
 retry:
-	printf("omap24_i2c_init retry\n");
 	if (readw(&i2c_base->con) & I2C_CON_EN) {
 		writew(0, &i2c_base->con);
 		udelay(50000);
 	}
-	printf("1\n");
 
 	writew(0x2, &i2c_base->sysc); /* for ES2 after soft reset */
 	udelay(1000);
-	printf("2\n");
 
 	writew(I2C_CON_EN, &i2c_base->con);
-	printf("3\n");
 	while (!(readw(&i2c_base->syss) & I2C_SYSS_RDONE) && timeout--) {
-		printf("4\n");
 		if (timeout <= 0) {
 			puts("ERROR: Timeout in soft-reset\n");
 			return;
 		}
 		udelay(1000);
 	}
-	printf("5\n");
 
 	if (0 != omap24_i2c_setspeed(adap, speed)) {
 		printf("ERROR: failed to setup I2C bus-speed!\n");
 		return;
 	}
-	printf("6\n");
 
 	/* own address */
 	writew(slaveadd, &i2c_base->oa);
@@ -250,15 +241,11 @@ retry:
 	       I2C_IE_NACK_IE | I2C_IE_AL_IE, &i2c_base->ie);
 #endif
 	udelay(1000);
-	printf("7\n");
-
 	flush_fifo(adap);
 	writew(0xFFFF, &i2c_base->stat);
-	printf("8\n");
 
 	/* Handle possible failed I2C state */
 	if (wait_for_bb(adap))
-		printf("wait_for_bb\n");
 		if (deblock == 1) {
 			omap24_i2c_deblock(adap);
 			deblock = 0;
