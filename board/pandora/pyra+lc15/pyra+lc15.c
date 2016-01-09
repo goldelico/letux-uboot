@@ -5,6 +5,7 @@
  */
 
 /* move away definition by included file */
+#define spl_start_uboot spl_start_uboot_overwritten
 #define set_muxconf_regs_essential set_muxconf_regs_essential_disabled
 #define sysinfo sysinfo_disabled
 
@@ -80,6 +81,49 @@ void set_muxconf_regs_essential(void)
 		   sizeof(struct pad_conf_entry));
 }
 
+/* SPL only code */
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_OS_BOOT)
 
+// FIXME: we should write to i2c2 and not to i2c1!
+// FIXME: add a driver?
 
-// (re)enable tca6424 (because we do have it on this board)
+/* I2C chip addresses, bq24297 */
+#define BQ24297_ADDR	0x6b
+
+static inline int bq24297_i2c_write_u8(u8 reg, u8 val)
+{
+	printf("bq24297 %02x[%02x] := %02x\n", BQ24297_ADDR, reg, val);
+	return i2c_write(BQ24297_ADDR, reg, 1, &val, 1);
+}
+
+static inline int bq24297_i2c_read_u8(u8 reg, u8 *val)
+{
+	return i2c_read(BQ24297_ADDR, reg, 1, val, 1);
+}
+
+int bq2429x_set_ilim(int ilim)
+{
+	u8 reg;
+	printf("bq2429x_set_ilim(%d) - set input current limit\n", ilim);
+
+	bq24297_i2c_read_u8(0x00, &reg);
+	/* bit 0..2 are IINLIM */
+	printf("p  r0=%02x\n", reg);
+	bq24297_i2c_read_u8(0x09, &reg);
+	/* fault/status - can we decide battery presence? e.g. NTC fault? */
+	printf("p  r0=%02x\n", reg);
+	/* we should set IINLIM = 0x5 (1.5 A) if no battery */
+	/* or IINLIM = 0x0 (100 mA) if battery */
+	return 0;
+}
+
+int spl_start_uboot(void)
+{
+	printf("spl_start_uboot for Pyra+LC15 called\n");
+	bq2429x_set_ilim(1000);	/* set bq24297 current to 1.0 A */
+	return spl_start_uboot_overwritten();	/* do everything inherited from LC15 board */
+}
+
+#endif
+
+// TODO: we can (re)enable tca6424 code (because we do have it on this board)
