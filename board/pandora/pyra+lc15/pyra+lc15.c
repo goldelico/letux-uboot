@@ -5,7 +5,7 @@
  */
 
 /* move away definition by included file */
-#define spl_start_uboot spl_start_uboot_overwritten
+#define board_init board_init_overwritten
 #define set_muxconf_regs_essential set_muxconf_regs_essential_disabled
 #define sysinfo sysinfo_disabled
 
@@ -13,7 +13,7 @@
 
 #undef sysinfo
 #undef set_muxconf_regs_essential
-#undef spl_start_uboot
+#undef board_init
 
 const struct omap_sysinfo sysinfo = {
 	"Board: Pyra with Letux Cortex 15\n"
@@ -81,8 +81,8 @@ void set_muxconf_regs_essential(void)
 		   sizeof(struct pad_conf_entry));
 }
 
-/* SPL only code */
-#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_OS_BOOT)
+/* U-Boot only code */
+#if !defined(CONFIG_SPL_BUILD)
 
 // FIXME: we should write to i2c2 and not to i2c1!
 // FIXME: add a driver?
@@ -169,15 +169,16 @@ int bq2429x_set_iinlim(int mA)
 	return 0;
 }
 
-int spl_start_uboot(void)
+int board_init(void)
 {
 	int ilim;
-	printf("spl_start_uboot for Pyra+LC15 called\n");
+	printf("board_init for Pyra+LC15 called\n");
+	board_init_overwritten();	/* do everything inherited from LC15 board */
 	/* set bq24297 current limit to 1.5A if we operate from no battery and 100 if we have */
 	ilim = bq2429x_battery_present() ? 100 : 1500;
 	printf("ilim = %d", ilim);
 	bq2429x_set_iinlim(ilim);
-	return spl_start_uboot_overwritten();	/* do everything inherited from LC15 board */
+	return 0;
 }
 
 #endif
