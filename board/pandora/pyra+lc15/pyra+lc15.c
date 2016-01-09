@@ -58,8 +58,8 @@ const struct pad_conf_entry core_padconf_array_essential_pyra[] = {
 	{RFBI_DATA1, (PTU | IEN | M4)},  /*  UART3_RX_IRRX */
 	{RFBI_DATA2, (M4)}, /*  UART3_TX_IRTX */
 	// enable I2C1..5 pullups
-	{I2C1_SCL, (PTU | IEN | M0)}, /* I2C1_SCL */
-	{I2C1_SDA, (PTU | IEN | M0)}, /* I2C1_SDA */
+	{I2C1_PMIC_SCL, (PTU | IEN | M0)}, /* I2C1_SCL */
+	{I2C1_PMIC_SDA, (PTU | IEN | M0)}, /* I2C1_SDA */
 	{I2C2_SCL, (PTU | IEN | M0)}, /* I2C2_SCL */
 	{I2C2_SDA, (PTU | IEN | M0)}, /* I2C2_SDA */
 	{I2C3_SCL, (PTU | IEN | M0)}, /* I2C3_SCL */
@@ -88,39 +88,95 @@ void set_muxconf_regs_essential(void)
 // FIXME: add a driver?
 
 /* I2C chip addresses, bq24297 */
+#define BQ24297_BUS	1	/* I2C2 */
 #define BQ24297_ADDR	0x6b
 
 static inline int bq24297_i2c_write_u8(u8 reg, u8 val)
 {
+	int org_bus_num;
+	int ret;
+
 	printf("bq24297 %02x[%02x] := %02x\n", BQ24297_ADDR, reg, val);
-	return i2c_write(BQ24297_ADDR, reg, 1, &val, 1);
+
+	org_bus_num = i2c_get_bus_num();
+	printf("busnum = %d\n", org_bus_num);
+	i2c_set_bus_num(BQ24297_BUS);	/* select I2C2 */
+	printf("busnum = %d\n", i2c_get_bus_num());
+
+	ret = i2c_write(BQ24297_ADDR, reg, 1, &val, 1);
+
+	i2c_set_bus_num(org_bus_num);
+	return ret;
 }
 
 static inline int bq24297_i2c_read_u8(u8 reg, u8 *val)
 {
-	return i2c_read(BQ24297_ADDR, reg, 1, val, 1);
+	int org_bus_num;
+	int ret;
+
+	printf("bq24297 read %02x[%02x]\n", BQ24297_ADDR, reg);
+
+	org_bus_num = i2c_get_bus_num();
+	printf("busnum = %d\n", org_bus_num);
+	i2c_set_bus_num(BQ24297_BUS);	/* select I2C2 */
+	printf("busnum = %d\n", i2c_get_bus_num());
+
+	ret = i2c_read(BQ24297_ADDR, reg, 1, val, 1);
+
+	i2c_set_bus_num(org_bus_num);
+	return ret;
 }
 
-int bq2429x_set_ilim(int ilim)
+int bq2429x_battery_present(void)
 {
 	u8 reg;
-	printf("bq2429x_set_ilim(%d) - set input current limit\n", ilim);
 
-	bq24297_i2c_read_u8(0x00, &reg);
-	/* bit 0..2 are IINLIM */
-	printf("p  r0=%02x\n", reg);
-	bq24297_i2c_read_u8(0x09, &reg);
+	printf("bq2429x_battery_present\n");
+
 	/* fault/status - can we decide battery presence? e.g. NTC fault? */
-	printf("p  r0=%02x\n", reg);
-	/* we should set IINLIM = 0x5 (1.5 A) if no battery */
-	/* or IINLIM = 0x0 (100 mA) if battery */
+	if (bq24297_i2c_read_u8(0x09, &reg)) {
+		printf("no response from bq24297\n");
+		return 0;
+	}
+
+	printf("  r9=%02x\n", reg);
+
+	return !(reg & 0x03);	/* no NTC fault */
+}
+
+int bq2429x_set_iinlim(int mA)
+{
+	u8 reg;
+
+	printf("bq2429x_set_iinlim(%d mA)\n", mA);
+
+	if (bq24297_i2c_read_u8(0x00, &reg)) {
+		/* bit 0..2 are IINLIM */
+		printf("  r0=%02x\n", reg);
+		reg &= ~0x7;
+		if (mA >= 3000) reg |= 0x07;
+		else if (mA >= 2000) reg |= 0x06;
+		else if (mA >= 1500) reg |= 0x05;
+		else if (mA >= 1000) reg |= 0x04;
+		else if (mA >= 900) reg |= 0x03;
+		else if (mA >= 500) reg |= 0x02;
+		else if (mA >= 150) reg |= 0x01;
+		printf("  r0:=%02x\n", reg);
+//		bq24297_i2c_write_u8(0x00, reg);
+	} else
+		printf("no response from bq24297\n");
+
 	return 0;
 }
 
 int spl_start_uboot(void)
 {
+	int ilim;
 	printf("spl_start_uboot for Pyra+LC15 called\n");
-	bq2429x_set_ilim(1000);	/* set bq24297 current to 1.0 A */
+	/* set bq24297 current limit to 1.5A if we operate from no battery and 100 if we have */
+	ilim = bq2429x_battery_present() ? 100 : 1500;
+	printf("ilim = %d", ilim);
+	bq2429x_set_iinlim(ilim);
 	return spl_start_uboot_overwritten();	/* do everything inherited from LC15 board */
 }
 
