@@ -216,9 +216,11 @@ static int i2c_mux_disconnect_all(void)
  */
 static void i2c_init_bus(unsigned int bus_no, int speed, int slaveaddr)
 {
+	printf("1 i2c_init_bus %d %d %d\n", bus_no, speed, slaveaddr);
 	if (bus_no >= CONFIG_SYS_NUM_I2C_BUSES)
 		return;
 
+	printf("2 i2c_init_bus I2C_ADAP=%p\n", I2C_ADAP);
 	I2C_ADAP->init(I2C_ADAP, speed, slaveaddr);
 
 	if (gd->flags & GD_FLG_RELOC) {
@@ -226,6 +228,7 @@ static void i2c_init_bus(unsigned int bus_no, int speed, int slaveaddr)
 		I2C_ADAP->speed = speed;
 		I2C_ADAP->slaveaddr = slaveaddr;
 	}
+	printf("3 i2c_init_bus\n");
 }
 
 /* implement possible board specific board init */
@@ -276,33 +279,43 @@ unsigned int i2c_get_bus_num(void)
 int i2c_set_bus_num(unsigned int bus)
 {
 	int max;
-
+printf("1 i2c_set_bus_num %u\n", bus);
 	if ((bus == I2C_BUS) && (I2C_ADAP->init_done > 0))
 		return 0;
 
+printf("2 i2c_set_bus_num %u\n", bus);
 #ifndef CONFIG_SYS_I2C_DIRECT_BUS
 	if (bus >= CONFIG_SYS_NUM_I2C_BUSES)
 		return -1;
 #endif
+printf("3 i2c_set_bus_num %u\n", bus);
 
 	max = ll_entry_count(struct i2c_adapter, i2c);
+printf("4 i2c_set_bus_num %u\n", bus);
+
 	if (I2C_ADAPTER(bus) >= max) {
 		printf("Error, wrong i2c adapter %d max %d possible\n",
 		       I2C_ADAPTER(bus), max);
 		return -2;
 	}
+printf("5 i2c_set_bus_num %u\n", bus);
 
 #ifndef CONFIG_SYS_I2C_DIRECT_BUS
 	i2c_mux_disconnect_all();
 #endif
+printf("6 i2c_set_bus_num %u\n", bus);
 
 	gd->cur_i2c_bus = bus;
+printf("7 i2c_set_bus_num %u\n", bus);
 	if (I2C_ADAP->init_done == 0)
 		i2c_init_bus(bus, I2C_ADAP->speed, I2C_ADAP->slaveaddr);
+printf("8 i2c_set_bus_num %u\n", bus);
 
 #ifndef CONFIG_SYS_I2C_DIRECT_BUS
 	i2c_mux_set_all();
 #endif
+printf("9 i2c_set_bus_num %u\n", bus);
+
 	return 0;
 }
 
