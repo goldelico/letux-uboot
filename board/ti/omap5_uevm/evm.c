@@ -82,7 +82,6 @@ static struct ti_usb_phy_device usb_phy_device = {
 
 int board_usb_init(int index, enum usb_init_type init)
 {
-printf("board_usb_init\n");
 	if (index) {
 		printf("Invalid Controller Index\n");
 		return -EINVAL;
@@ -138,7 +137,6 @@ int usb_gadget_handle_interrupts(int index)
  */
 int board_init(void)
 {
-printf("board_init\n");
 	gpmc_init();
 	gd->bd->bi_arch_number = MACH_TYPE_OMAP5_SEVM;
 	gd->bd->bi_boot_params = (0x80000000 + 0x100); /* boot param addr */
@@ -150,7 +148,6 @@ printf("board_init\n");
 
 int board_eth_init(bd_t *bis)
 {
-printf("board_eth_init\n");
 	return 0;
 }
 
@@ -193,7 +190,6 @@ static void enable_host_clocks(void)
 int misc_init_r(void)
 {
 
-printf("misc_init_r\n");
 #ifdef CONFIG_PALMAS_POWER
 	palmas_init_settings();
 #endif
@@ -219,7 +215,6 @@ void set_muxconf_regs(void)
 #if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_GENERIC_MMC)
 int board_mmc_init(bd_t *bis)
 {
-printf("board_mmc_init\n");
 	omap_mmc_init(0, 0, 0, -1, -1);
 	omap_mmc_init(1, 0, 0, -1, -1);
 	return 0;
@@ -275,7 +270,6 @@ void usb_hub_reset_devices(int port)
 int board_usb_init(int index, enum usb_init_type init)
 {
 	int ret;
-printf("board_usb_init\n");
 #ifdef CONFIG_PALMAS_USB_SS_PWR
 	ret = palmas_enable_ss_ldo();
 #endif
