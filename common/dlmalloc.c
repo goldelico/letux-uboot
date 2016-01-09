@@ -1532,13 +1532,18 @@ void mem_malloc_init(ulong start, ulong size)
 	mem_malloc_start = start;
 	mem_malloc_end = start + size;
 	mem_malloc_brk = start;
+	printf("using memory %#lx-%#lx for malloc()\n", mem_malloc_start,
+	      mem_malloc_end);
 
 	debug("using memory %#lx-%#lx for malloc()\n", mem_malloc_start,
 	      mem_malloc_end);
+	printf("memset %lu bytes\n", size);
 #ifdef CONFIG_SYS_MALLOC_CLEAR_ON_INIT
 	memset((void *)mem_malloc_start, 0x0, size);
 #endif
+	printf("memset done");
 	malloc_bin_reloc();
+	printf("malloc bin reloc done");
 }
 
 /* field-extraction macros */

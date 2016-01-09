@@ -264,15 +264,17 @@ static int initr_barrier(void)
 static int initr_malloc(void)
 {
 	ulong malloc_start;
-
+printf("initr_malloc start\n");
 #ifdef CONFIG_SYS_MALLOC_F_LEN
 	debug("Pre-reloc malloc() used %#lx bytes (%ld KB)\n", gd->malloc_ptr,
 	      gd->malloc_ptr / 1024);
 #endif
 	/* The malloc area is immediately below the monitor copy in DRAM */
 	malloc_start = gd->relocaddr - TOTAL_MALLOC_LEN;
+printf("initr_malloc 2\n");
 	mem_malloc_init((ulong)map_sysmem(malloc_start, TOTAL_MALLOC_LEN),
 			TOTAL_MALLOC_LEN);
+printf("initr_malloc done\n");
 	return 0;
 }
 
@@ -678,6 +680,16 @@ static int run_main_loop(void)
 	return 0;
 }
 
+static int note1(void) { printf("note1...\n"); return 0; }
+static int note2(void) { printf("note2...\n"); return 0; }
+static int note3(void) { printf("note3...\n"); return 0; }
+static int note4(void) { printf("note4...\n"); return 0; }
+static int note5(void) { printf("note5...\n"); return 0; }
+static int note6(void) { printf("note6...\n"); return 0; }
+static int note7(void) { printf("note7...\n"); return 0; }
+static int note8(void) { printf("note8...\n"); return 0; }
+static int note9(void) { printf("note9...\n"); return 0; }
+
 /*
  * Over time we hope to remove these functions with code fragments and
  * stub funtcions, and instead call the relevant function directly.
@@ -688,10 +700,13 @@ static int run_main_loop(void)
  * TODO: perhaps reset the watchdog in the initcall function after each call?
  */
 init_fnc_t init_sequence_r[] = {
+	note1,
 	initr_trace,
+	note2,
 	initr_reloc,
 	/* TODO: could x86/PPC have this also perhaps? */
 #ifdef CONFIG_ARM
+	note3,
 	initr_caches,
 	/* Note: For Freescale LS2 SoCs, new MMU table is created in DDR.
 	 *	 A temporary mapping of IFC high region is since removed,
@@ -700,22 +715,28 @@ init_fnc_t init_sequence_r[] = {
 	 *	 region.
 	 */
 #endif
+	note4,
 	initr_reloc_global_data,
 #if defined(CONFIG_SYS_INIT_RAM_LOCK) && defined(CONFIG_E500)
 	initr_unlock_ram_in_cache,
 #endif
+	note5,
 	initr_barrier,
+	note6,
 	initr_malloc,
 #ifdef CONFIG_SYS_NONCACHED_MEMORY
 	initr_noncached,
 #endif
+	note7,
 	bootstage_relocate,
 #ifdef CONFIG_DM
 	initr_dm,
 #endif
+	note8,
 #if defined(CONFIG_ARM) || defined(CONFIG_NDS32)
 	board_init,	/* Setup chipselects */
 #endif
+	note9,
 	/*
 	 * TODO: printing of the clock inforamtion of the board is now
 	 * implemented as part of bdinfo command. Currently only support for
@@ -890,6 +911,7 @@ init_fnc_t init_sequence_r[] = {
 
 void board_init_r(gd_t *new_gd, ulong dest_addr)
 {
+	printf("board_init_r\n");
 #ifdef CONFIG_NEEDS_MANUAL_RELOC
 	int i;
 #endif
@@ -907,6 +929,7 @@ void board_init_r(gd_t *new_gd, ulong dest_addr)
 		init_sequence_r[i] += gd->reloc_off;
 #endif
 
+	printf("run init_sequence_r\n");
 	if (initcall_run_list(init_sequence_r))
 		hang();
 

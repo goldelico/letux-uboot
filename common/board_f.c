@@ -982,12 +982,13 @@ void board_init_f(ulong boot_flags)
 
 	if (initcall_run_list(init_sequence_f))
 		hang();
-
+printf("board_init_f almost ... ");
 #if !defined(CONFIG_ARM) && !defined(CONFIG_SANDBOX) && \
 		!defined(CONFIG_EFI_APP)
 	/* NOTREACHED - jump_to_copy() does not return */
 	hang();
 #endif
+printf("done\n");
 }
 
 #if defined(CONFIG_X86) || defined(CONFIG_ARC)
