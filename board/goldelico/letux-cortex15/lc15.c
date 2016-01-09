@@ -57,7 +57,7 @@ int board_mmc_init(bd_t *bis)
  */
 
 const struct pad_conf_entry wkupconf_mmcmux_pyra[] = {
-	{DRM_EMU0, (IEN | M6)}, /* gpio 1_wk7 */
+	{DRM_EMU1, (IEN | M6)}, /* gpio 1_wk7 */
 };
 
 const struct pad_conf_entry padconf_mmcmux_pyra[] = {
