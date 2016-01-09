@@ -110,6 +110,7 @@
  */
 static inline int palmas_i2c_write_u8(u8 chip_no, u8 reg, u8 val)
 {
+	printf("palmas %02x[%02x] := %02x\n", chip_no, reg, val);
 	return i2c_write(chip_no, reg, 1, &val, 1);
 }
 
