@@ -36,6 +36,5 @@ int initcall_run_list(const init_fnc_t init_sequence[])
 			return -1;
 		}
 	}
-printf("initcall_run_list success\n");
 	return 0;
 }
