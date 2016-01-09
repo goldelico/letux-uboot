@@ -150,7 +150,9 @@ int bq2429x_set_iinlim(int mA)
 
 	printf("bq2429x_set_iinlim(%d mA)\n", mA);
 
-	if (bq24297_i2c_read_u8(0x00, &reg)) {
+	if (bq24297_i2c_read_u8(0x00, &reg))
+		printf("no response from bq24297\n");
+	else {
 		/* bit 0..2 are IINLIM */
 		printf("  r0=%02x\n", reg);
 		reg &= ~0x7;
@@ -162,9 +164,9 @@ int bq2429x_set_iinlim(int mA)
 		else if (mA >= 500) reg |= 0x02;
 		else if (mA >= 150) reg |= 0x01;
 		printf("  r0:=%02x\n", reg);
-//		bq24297_i2c_write_u8(0x00, reg);
-	} else
-		printf("no response from bq24297\n");
+		if (bq24297_i2c_write_u8(0x00, reg))
+			printf("bq24297: could not set %d mA\n", mA);
+	}
 
 	return 0;
 }
