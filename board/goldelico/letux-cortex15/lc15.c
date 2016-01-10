@@ -96,7 +96,6 @@ int set_mmc_switch(void)
 
 int spl_start_uboot(void)
 {
-	printf("spl_start_uboot for LC15 called\n");
 	set_mmc_switch();
 	return 1;	/* no direct Linux boot */
 }
