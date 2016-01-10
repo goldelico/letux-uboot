@@ -96,12 +96,8 @@ static inline int bq24297_i2c_write_u8(u8 reg, u8 val)
 	int org_bus_num;
 	int ret;
 
-	printf("bq24297 %02x[%02x] := %02x\n", BQ24297_ADDR, reg, val);
-
 	org_bus_num = i2c_get_bus_num();
-	printf("busnum = %d\n", org_bus_num);
 	i2c_set_bus_num(BQ24297_BUS);	/* select I2C2 */
-	printf("busnum = %d\n", i2c_get_bus_num());
 
 	ret = i2c_write(BQ24297_ADDR, reg, 1, &val, 1);
 
@@ -114,13 +110,8 @@ static inline int bq24297_i2c_read_u8(u8 reg, u8 *val)
 	int org_bus_num;
 	int ret;
 
-	printf("bq24297 read %02x[%02x]\n", BQ24297_ADDR, reg);
-
 	org_bus_num = i2c_get_bus_num();
-	printf("busnum = %d\n", org_bus_num);
 	i2c_set_bus_num(BQ24297_BUS);	/* select I2C2 */
-	printf("busnum = %d\n", i2c_get_bus_num());
-
 	ret = i2c_read(BQ24297_ADDR, reg, 1, val, 1);
 
 	i2c_set_bus_num(org_bus_num);
@@ -131,9 +122,6 @@ int bq2429x_battery_present(void)
 {
 	u8 reg;
 
-	printf("bq2429x_battery_present\n");
-
-	/* fault/status - can we decide battery presence? e.g. NTC fault? */
 	if (bq24297_i2c_read_u8(0x09, &reg)) {
 		printf("no response from bq24297\n");
 		return 0;
@@ -141,20 +129,17 @@ int bq2429x_battery_present(void)
 
 	printf("  r9=%02x\n", reg);
 
-	return !(reg & 0x03);	/* no NTC fault */
+	return !(reg & 0x03);	/* no NTC fault - assume battery is inserted */
 }
 
 int bq2429x_set_iinlim(int mA)
 {
 	u8 reg;
 
-	printf("bq2429x_set_iinlim(%d mA)\n", mA);
-
 	if (bq24297_i2c_read_u8(0x00, &reg))
 		printf("no response from bq24297\n");
 	else {
 		/* bit 0..2 are IINLIM */
-		printf("  r0=%02x\n", reg);
 		reg &= ~0x7;
 		if (mA >= 3000) reg |= 0x07;
 		else if (mA >= 2000) reg |= 0x06;
@@ -163,7 +148,6 @@ int bq2429x_set_iinlim(int mA)
 		else if (mA >= 900) reg |= 0x03;
 		else if (mA >= 500) reg |= 0x02;
 		else if (mA >= 150) reg |= 0x01;
-		printf("  r0:=%02x\n", reg);
 		if (bq24297_i2c_write_u8(0x00, reg))
 			printf("bq24297: could not set %d mA\n", mA);
 	}
@@ -174,11 +158,9 @@ int bq2429x_set_iinlim(int mA)
 int board_init(void)
 {
 	int ilim;
-	printf("board_init for Pyra+LC15 called\n");
 	board_init_overwritten();	/* do everything inherited from LC15 board */
 	/* set bq24297 current limit to 1.5A if we operate from no battery and 100 if we have */
 	ilim = bq2429x_battery_present() ? 100 : 1500;
-	printf("ilim = %d", ilim);
 	bq2429x_set_iinlim(ilim);
 	return 0;
 }
