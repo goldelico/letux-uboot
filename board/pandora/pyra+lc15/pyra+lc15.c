@@ -132,22 +132,39 @@ int bq2429x_battery_present(void)
 	return !(reg & 0x03);	/* no NTC fault - assume battery is inserted */
 }
 
+/* from our Linux kernel driver */
+static int bq24296_get_limit_current(int value)
+{
+	u8 data;
+	if (value < 120)
+		data = 0;
+	else if(value < 400)
+		data = 1;
+	else if(value < 700)
+		data = 2;
+	else if(value < 1000)
+		data = 3;
+	else if(value < 1200)
+		data = 4;
+	else if(value < 1800)
+		data = 5;
+	else if(value < 2200)
+		data = 6;
+	else
+		data = 7;
+	return data;
+
+}
+
 int bq2429x_set_iinlim(int mA)
 {
 	u8 reg;
 
 	if (bq24297_i2c_read_u8(0x00, &reg))
 		printf("no response from bq24297\n");
-	else {
-		/* bit 0..2 are IINLIM */
+	else { /* bit 0..2 are IINLIM */
 		reg &= ~0x7;
-		if (mA >= 3000) reg |= 0x07;
-		else if (mA >= 2000) reg |= 0x06;
-		else if (mA >= 1500) reg |= 0x05;
-		else if (mA >= 1000) reg |= 0x04;
-		else if (mA >= 900) reg |= 0x03;
-		else if (mA >= 500) reg |= 0x02;
-		else if (mA >= 150) reg |= 0x01;
+		reg |= bq24296_get_limit_current(mA);
 		if (bq24297_i2c_write_u8(0x00, reg))
 			printf("bq24297: could not set %d mA\n", mA);
 	}
@@ -159,8 +176,8 @@ int board_init(void)
 {
 	int ilim;
 	board_init_overwritten();	/* do everything inherited from LC15 board */
-	/* set bq24297 current limit to 1.5A if we operate from no battery and 100 if we have */
-	ilim = bq2429x_battery_present() ? 100 : 1500;
+	/* set bq24297 current limit to 2 A if we operate from no battery and 100 mA if we have */
+	ilim = bq2429x_battery_present() ? 100 : 2000;
 	bq2429x_set_iinlim(ilim);
 	return 0;
 }
