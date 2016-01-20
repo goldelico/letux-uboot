@@ -14,8 +14,6 @@
 
 #include <configs/omap5_uevm.h>
 
-#ifndef CONFIG_SPL_BUILD
-
 /* Letux Cortex 15 has no tca6424 */
 #undef CONFIG_TCA642X
 #undef CONFIG_CMD_TCA642X
