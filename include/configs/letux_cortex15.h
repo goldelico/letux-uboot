@@ -22,34 +22,6 @@
 #undef CONFIG_SYS_I2C_TCA642X_BUS_NUM
 #undef CONFIG_SYS_I2C_TCA642X_ADDR
 
-#undef CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND \
-	"echo bootcmd for LC15;" \
-	"setenv mmcdev 0; " \
-	"if test ${dofastboot} -eq 1; then " \
-		"echo Boot fastboot requested, resetting dofastboot ...;" \
-		"setenv dofastboot 0; saveenv;" \
-		"echo Booting into fastboot ...; fastboot;" \
-	"fi;" \
-	"if run loadbootscript; then " \
-		"run bootscript;" \
-	"else;" \
-		"echo trying mmc0;" \
-		"setenv mmcdev 0; " \
-		"setenv bootpart 0:1; " \
-		"setenv mmcroot /dev/mmcblk0p2 rw; " \
-		"run findfdt; " \
-		"run mmcboot;" \
-		"echo trying mmc1;" \
-		"setenv mmcdev 1; " \
-		"setenv bootpart 1:1; " \
-		"setenv mmcroot /dev/mmcblk1p2 rw; " \
-		"run mmcboot;" \
-	"fi;" \
-	""
-
-#endif
-
 #if 0	/* for the moment, disable to store environment in eMMC */
 #undef CONFIG_ENV_IS_IN_MMC
 #undef CONFIG_SYS_MMC_ENV_DEV
