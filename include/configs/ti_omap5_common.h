@@ -76,6 +76,7 @@
 	"bootpart=0:2\0" \
 	"bootdir=/boot\0" \
 	"bootfile=zImage\0" \
+	"bootfilecmd=bootz\0" \
 	"usbtty=cdc_acm\0" \
 	"vram=16M\0" \
 	"partitions=" PARTS_DEFAULT "\0" \
@@ -104,7 +105,7 @@
 				"run loadfdt; " \
 				"echo Booting from mmc${mmcdev} ...; " \
 				"run args_mmc; " \
-				"bootz ${loadaddr} - ${fdtaddr}; " \
+				"${bootfilecmd} ${loadaddr} - ${fdtaddr}; " \
 			"fi;" \
 		"fi;\0" \
 	"findfdt="\
@@ -124,16 +125,18 @@
 
 
 #define CONFIG_BOOTCOMMAND \
+	"echo Letux OMAP5 bootcmd;" \
 	"if test ${dofastboot} -eq 1; then " \
 		"echo Boot fastboot requested, resetting dofastboot ...;" \
 		"setenv dofastboot 0; saveenv;" \
 		"echo Booting into fastboot ...; fastboot 0;" \
 	"fi;" \
 	"run findfdt; " \
+	"setenv mmcdev 0; " \
+	"setenv bootpart 0:2; " \
 	"run mmcboot;" \
 	"setenv mmcdev 1; " \
 	"setenv bootpart 1:2; " \
-	"setenv mmcroot /dev/mmcblk0p2 rw; " \
 	"run mmcboot;" \
 	""
 #endif
