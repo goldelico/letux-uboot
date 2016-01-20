@@ -1,0 +1,4 @@
+fdtfile=omap5-pyra.dtb
+
+bootfile=uImage
+bootfilecmd=bootm
