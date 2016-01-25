@@ -1,4 +1,5 @@
 fdtfile=omap5-uevm.dtb
 
+bootdir=/
 bootfile=uImage
 bootfilecmd=bootm
