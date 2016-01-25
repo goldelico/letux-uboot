@@ -16,7 +16,6 @@
 
 /* Letux Cortex 15 has no tca6424 */
 #undef CONFIG_TCA642X
-#undef CONFIG_CMD_TCA642X
 #undef CONFIG_SYS_I2C_TCA642X_BUS_NUM
 #undef CONFIG_SYS_I2C_TCA642X_ADDR
 
