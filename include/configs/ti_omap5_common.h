@@ -93,6 +93,7 @@
 	"mmcboot=mmc dev ${mmcdev}; " \
 		"if mmc rescan; then " \
 			"echo SD/MMC found on device ${mmcdev};" \
+			"setenv bootpart ${mmcdev}:1; " \
 			"if run loadbootenv; then " \
 				"echo Loaded environment from ${bootenv};" \
 				"run importbootenv;" \
@@ -133,10 +134,8 @@
 	"fi;" \
 	"run findfdt; " \
 	"setenv mmcdev 0; " \
-	"setenv bootpart 0:2; " \
 	"run mmcboot;" \
 	"setenv mmcdev 1; " \
-	"setenv bootpart 1:2; " \
 	"run mmcboot;" \
 	""
 #endif
