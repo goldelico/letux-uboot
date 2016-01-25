@@ -121,12 +121,19 @@
 		"if test $fdtfile = undefined; then " \
 			"echo WARNING: Could not determine device tree to use; fi; \0" \
 	"loadfdt=load mmc ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile};\0" \
+	"test=setenv bootpart 0:1; setenv bootdir /; setenv bootfile uImage; setenv size 450000; while true; do run loadimage; crc32 ${loadaddr} ${size}; done\0" \
+	"test2=setenv size 450000; while true; do crc32 ${loadaddr} ${size}; done\0" \
 	DFUARGS \
 	NETARGS \
 
 
+#define CONFIG_SYS_MEMTEST_START	0x82000000 /* memtest works on */
+#define CONFIG_SYS_MEMTEST_END		0x84000000
+#define CONFIG_SYS_ALT_MEMTEST
+
 #define CONFIG_BOOTCOMMAND \
 	"echo Letux OMAP5 bootcmd;" \
+	"mtest; 82000000 82050000; setenv size 450000; crc32 ${loadaddr} ${size};" \
 	"if test ${dofastboot} -eq 1; then " \
 		"echo Boot fastboot requested, resetting dofastboot ...;" \
 		"setenv dofastboot 0; saveenv;" \
