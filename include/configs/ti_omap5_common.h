@@ -87,6 +87,15 @@
 	"mmcboot=mmc dev ${mmcdev}; " \
 		"if mmc rescan; then " \
 			"echo SD/MMC found on device ${mmcdev};" \
+			"setenv bootpart ${mmcdev}:1; " \
+			"if run loadbootenv; then " \
+				"echo Loaded environment from ${bootenv};" \
+				"run importbootenv;" \
+			"fi;" \
+			"if test -n $uenvcmd; then " \
+				"echo Running uenvcmd ...;" \
+				"run uenvcmd;" \
+			"fi;" \
 			"if run loadimage; then " \
 				"run loadfdt; " \
 				"echo Booting from mmc${mmcdev} ...; " \
@@ -125,10 +134,8 @@
 	"run findfdt; " \
 	"run envboot; " \
 	"setenv mmcdev 0; " \
-	"setenv bootpart 0:2; " \
 	"run mmcboot;" \
 	"setenv mmcdev 1; " \
-	"setenv bootpart 1:2; " \
 	"run mmcboot;" \
 	""
 #endif
