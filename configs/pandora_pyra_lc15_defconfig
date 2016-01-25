@@ -6,3 +6,5 @@ CONFIG_SPL=y
 # CONFIG_CMD_FLASH is not set
 # CONFIG_CMD_SETEXPR is not set
 # CONFIG_SYS_MALLOC_CLEAR_ON_INIT is not set - reduces malloc init power peak by memset
+CONFIG_CMD_MEMTEST=y
+CONFIG_CMD_TCA642X=y
