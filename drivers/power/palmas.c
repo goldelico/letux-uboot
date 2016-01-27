@@ -66,6 +66,20 @@ int palmas_mmc1_poweron_ldo(void)
 	}
 	return 0;
 #else
+#if defined(CONFIG_TARGET_PYRA_LC15) || defined(CONFIG_TARGET_LC15)
+	/* use LDO2 for SDIO4 slot */
+	val = LDO_VOLT_3V0;
+	if (palmas_i2c_write_u8(TWL603X_CHIP_P1, LDO2_VOLTAGE, val)) {
+		printf("tps65903x: could not set LDO2 voltage.\n");
+//		return 1;
+	}
+	/* TURN ON LDO2 */
+	val = RSC_MODE_SLEEP | RSC_MODE_ACTIVE;
+	if (palmas_i2c_write_u8(TWL603X_CHIP_P1, LDO2_CTRL, val)) {
+		printf("tps65903x: could not turn on LDO2.\n");
+//		return 1;
+	}
+#endif
 	/*
 	 * We assume that this is a OMAP543X + TWL603X board:
 	 * Set TWL6035/37 LDO9 to 3.0 V
