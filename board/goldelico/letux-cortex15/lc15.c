@@ -36,11 +36,22 @@ int board_mmc_init(bd_t *bis)
 {
 	int uSD = 0;	// could ask GPIO3_82 state
 	debug("special board_mmc_init for LC15\n");
-	omap_mmc_init(0, uSD?MMC_MODE_4BIT:0, 0, -1, -1);
-	omap_mmc_init(1, MMC_MODE_4BIT, 0, -1, -1);
-/* FIXME: we might need to modify the HSMMC3_BASE in omap_hsmmc.c to make this work */
-/* here we need an interface called SDIO4 with controller base address 480d1000 */
-	omap_mmc_init(2, MMC_MODE_4BIT, 0, -1, -1);
+	writel(0x02, 0x4A009120);	/* enable MMC3 module */
+	writel(0x02, 0x4A009128);	/* enable MMC4 module */
+
+	/* MMC1 = left SD */
+	omap_mmc_init(0, uSD?MMC_MODE_8BIT:0, 0, -1, -1);
+	/* MMC2 = eMMC (8 bit) / uSD (4 bit) */
+	omap_mmc_init(1, 0, 0, -1, -1);
+#if 0
+	/* MMC3 = WLAN */
+	omap_mmc_init(2, MMC_MODE_8BIT|MMC_MODE_4BIT, 0, -1, -1);
+#endif
+	/* SDIO4 = right SD */
+	omap_mmc_init(3, 0, 0, -1, -1);
+
+//	printf("%08x: %08x\n", 0x4A009120, readl(0x4A009120));
+//	printf("%08x: %08x\n", 0x4A009128, readl(0x4A009128));
 	return 0;
 }
 
