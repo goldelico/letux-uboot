@@ -127,13 +127,12 @@
 	NETARGS \
 
 
-#define CONFIG_SYS_MEMTEST_START	0x82000000 /* memtest works on */
-#define CONFIG_SYS_MEMTEST_END		0x84000000
+#define CONFIG_SYS_MEMTEST_START	0x82000000	/* memtest works here */
+#define CONFIG_SYS_MEMTEST_END		0xdf000000	/* up to here */
 #define CONFIG_SYS_ALT_MEMTEST
 
 #define CONFIG_BOOTCOMMAND \
 	"echo Letux OMAP5 bootcmd;" \
-	"mtest; 82000000 82050000; setenv size 450000; crc32 ${loadaddr} ${size};" \
 	"if test ${dofastboot} -eq 1; then " \
 		"echo Boot fastboot requested, resetting dofastboot ...;" \
 		"setenv dofastboot 0; saveenv;" \
