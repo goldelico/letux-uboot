@@ -84,8 +84,7 @@ void set_muxconf_regs_essential(void)
 /* U-Boot only code */
 #if !defined(CONFIG_SPL_BUILD)
 
-// FIXME: we should write to i2c2 and not to i2c1!
-// FIXME: add a driver?
+// FIXME: add a bq2427x driver?
 
 /* I2C chip addresses, bq24297 */
 #define BQ24297_BUS	1	/* I2C2 */
@@ -176,6 +175,8 @@ int board_init(void)
 {
 	int ilim;
 	board_init_overwritten();	/* do everything inherited from LC15 board */
+	if (bq24297_i2c_write_u8(0x05, 0x8a))
+		printf("bq24297: could not turn off 40 sec watchdog\n");
 	/* set bq24297 current limit to 2 A if we operate from no battery and 100 mA if we have */
 	ilim = bq2429x_battery_present() ? 100 : 2000;
 	bq2429x_set_iinlim(ilim);
