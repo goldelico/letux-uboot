@@ -6,7 +6,7 @@
 
 /* move away definition by included file */
 #define board_init board_init_overwritten
-#define set_muxconf_regs_essential set_muxconf_regs_essential_disabled
+#define set_muxconf_regs_essential set_muxconf_regs_essential_inherited
 #define sysinfo sysinfo_disabled
 
 #include "../../goldelico/letux-cortex15/lc15.c"
@@ -21,43 +21,17 @@ const struct omap_sysinfo sysinfo = {
 
 const struct pad_conf_entry core_padconf_array_essential_pyra[] = {
 
-	{EMMC_CLK, (PTU | IEN | M0)}, /*  EMMC_CLK   */
-	{EMMC_CMD, (PTU | IEN | M0)}, /*  EMMC_CMD   */
-	{EMMC_DATA0, (PTU | IEN | M0)}, /*  EMMC_DATA0 */
-	{EMMC_DATA1, (PTU | IEN | M0)}, /*  EMMC_DATA1 */
-	{EMMC_DATA2, (PTU | IEN | M0)}, /*  EMMC_DATA2 */
-	{EMMC_DATA3, (PTU | IEN | M0)}, /*  EMMC_DATA3 */
-	{EMMC_DATA4, (PTU | IEN | M0)}, /*  EMMC_DATA4 */
-	{EMMC_DATA5, (PTU | IEN | M0)}, /*  EMMC_DATA5 */
-	{EMMC_DATA6, (PTU | IEN | M0)}, /*  EMMC_DATA6 */
-	{EMMC_DATA7, (PTU | IEN | M0)}, /*  EMMC_DATA7 */
-	{SDCARD_CLK, (PTU | IEN | M0)}, /*  SDCARD_CLK  */
-	{SDCARD_CMD, (PTU | IEN | M0)}, /*  SDCARD_CMD  */
-	{SDCARD_DATA0, (PTU | IEN | M0)}, /*  SDCARD_DATA0*/
-	{SDCARD_DATA1, (PTU | IEN | M0)}, /*  SDCARD_DATA1*/
-	{SDCARD_DATA2, (PTU | IEN | M0)}, /*  SDCARD_DATA2*/
-	{SDCARD_DATA3, (PTU | IEN | M0)}, /*  SDCARD_DATA3*/
-//	{UART3_RX_IRRX, (PTU | IEN | M0)}, /*  UART3_RX_IRRX    */
-//	{UART3_TX_IRTX, (M0)},    /*  UART3_TX_IRTX    */
-	{USBB1_HSIC_STROBE, (PTU | IEN | M0)},    /*  USBB1_HSIC_STROBE */
-	{USBB1_HSIC_DATA, (PTU | IEN | M0)},    /*  USBB1_HSIC_DATA */
-	{USBB2_HSIC_STROBE, (PTU | IEN | M0)},    /*  USBB2_HSIC_STROBE */
-	{USBB2_HSIC_DATA, (PTU | IEN | M0)},    /*  USBB2_HSIC_DATA  */
-	{USBB3_HSIC_STROBE, (PTU | IEN | M0)},    /*  USBB3_HSIC_STROBE*/
-	{USBB3_HSIC_DATA, (PTU | IEN | M0)},    /*  USBB3_HSIC_DATA  */
-	{USBD0_HS_DP, (IEN | M0)},	/*  USBD0_HS_DP */
-	{USBD0_HS_DM, (IEN | M0)},	/*  USBD0_HS_DM */
-	{USBD0_SS_RX, (IEN | M0)},	/*  USBD0_SS_RX */
-	{I2C5_SCL, (IEN | M0)}, /* I2C5_SCL */
-	{I2C5_SDA, (IEN | M0)}, /* I2C5_SDA */
-	{HSI2_ACWAKE, (PTU | M6)},    /*  HSI2_ACWAKE */
-	{HSI2_CAFLAG, (PTU | M6)},    /*  HSI2_CAFLAG */
-	// switch UART3 to different pins
-	{UART3_RX_IRRX, (PTU | M4)}, /*  SDIO4_CLK */
-	{UART3_TX_IRTX, (PTU | M4)},  /*  SDIO4_CMD */
+	/* enable SDIO4 (right SD slot) */
+	{UART3_RX_IRRX, (PTU | IEN| M4)}, /*  SDIO4_CLK */
+	{UART3_TX_IRTX, (PTU | IEN| M4)},  /*  SDIO4_CMD */
+	{UART5_RX, (PTU | IEN| M4)},  /*  SDIO4_DATA1 */
+	{UART5_TX, (PTU | IEN| M4)},  /*  SDIO4_DATA2 */
+	{UART5_CTS, (PTU | IEN| M4)},  /*  SDIO4_DATA0 */
+	{UART5_RTS, (PTU | IEN| M4)},  /*  SDIO4_DATA3 */
+	/* switch UART3 to different pins */
 	{RFBI_DATA1, (PTU | IEN | M4)},  /*  UART3_RX_IRRX */
 	{RFBI_DATA2, (M4)}, /*  UART3_TX_IRTX */
-	// enable I2C1..5 pullups
+	/* enable I2C1..5 pullups */
 	{I2C1_PMIC_SCL, (PTU | IEN | M0)}, /* I2C1_SCL */
 	{I2C1_PMIC_SDA, (PTU | IEN | M0)}, /* I2C1_SDA */
 	{I2C2_SCL, (PTU | IEN | M0)}, /* I2C2_SCL */
@@ -66,18 +40,17 @@ const struct pad_conf_entry core_padconf_array_essential_pyra[] = {
 	{I2C3_SDA, (PTU | IEN | M0)}, /* I2C3_SDA */
 	{I2C4_SCL, (PTU | IEN | M0)}, /* I2C4_SCL */
 	{I2C4_SDA, (PTU | IEN | M0)}, /* I2C4_SDA */
+	/* release some resets */
+	{MCSPI1_CS1, (PTU | IEN | M6)}, /* GPIO5_144: peripheral reset */
+	{HSI1_CAFLAG, (PTU | IEN | M6)}, /* GPIO3_80: usb hub reset */
 };
 
 void set_muxconf_regs_essential(void)
 {
+	set_muxconf_regs_essential_inherited();
 	do_set_mux((*ctrl)->control_padconf_core_base,
 		   core_padconf_array_essential_pyra,
 		   sizeof(core_padconf_array_essential_pyra) /
-		   sizeof(struct pad_conf_entry));
-
-	do_set_mux((*ctrl)->control_padconf_wkup_base,
-		   wkup_padconf_array_essential,
-		   sizeof(wkup_padconf_array_essential) /
 		   sizeof(struct pad_conf_entry));
 }
 
