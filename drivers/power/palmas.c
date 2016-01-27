@@ -21,6 +21,27 @@ void palmas_init_settings(void)
 		printf("palmas: could not force PWM for SMPS7: err = %d\n",
 		       err);
 #endif
+#if defined(CONFIG_TARGET_PYRA_LC15)
+	{ /* may wake up from VBUS and interrupt watchdog might trigger */
+	int err;
+	u8 val;
+	int i;
+
+	err = palmas_i2c_read_u8(TWL603X_CHIP_P2, 0x24, &val);
+	if (!err) printf("int.ctrl = %02x\n", val);
+	for (i=1; i <= 4; i++)
+		{
+		err = palmas_i2c_read_u8(TWL603X_CHIP_P2, 5*(i-1)+0x10, &val);
+		if (!err) printf("INT%d_STATUS = %02x\n", i, val);
+		err = palmas_i2c_read_u8(TWL603X_CHIP_P2, 5*(i-1)+0x11, &val);
+		if (!err) printf("INT%d_MASK = %02x\n", i, val);
+		err = palmas_i2c_read_u8(TWL603X_CHIP_P2, 5*(i-1)+0x12, &val);
+		if (!err) printf("INT%d_LINE_STATE = %02x\n", i, val);
+		}
+	err = palmas_i2c_read_u8(TWL603X_CHIP_P2, 0xa5, &val);
+	if (!err) printf("WATCHDOG = %02x\n", val);
+	}
+#endif
 }
 
 int palmas_mmc1_poweron_ldo(void)
