@@ -121,8 +121,11 @@
 		"if test $fdtfile = undefined; then " \
 			"echo WARNING: Could not determine device tree to use; fi; \0" \
 	"loadfdt=load mmc ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile};\0" \
-	"test=setenv bootpart 0:1; setenv bootdir /; setenv bootfile uImage; setenv size 450000; while true; do run loadimage; crc32 ${loadaddr} ${size}; done\0" \
+	"testl=echo test left SD; setenv bootpart 0:1; setenv bootdir /; setenv bootfile uImage; setenv size 450000; for i in 1 2 3 4 5 6 7 8 9 10; do run loadimage; crc32 ${loadaddr} ${size}; done\0" \
+	"testr=echo test right SD; setenv bootpart 2:1; setenv bootdir /; setenv bootfile uImage; setenv size 450000; for i in 1 2 3 4 5 6 7 8 9 10; do run loadimage; crc32 ${loadaddr} ${size}; done\0" \
+	"testu=echo test uSD; setenv bootpart 1:1; setenv bootdir /; setenv bootfile uImage; setenv size 450000; for i in 1 2 3 4 5 6 7 8 9 10; do run loadimage; crc32 ${loadaddr} ${size}; done\0" \
 	"test2=setenv size 450000; while true; do crc32 ${loadaddr} ${size}; done\0" \
+	"testi2c=for i in 0 1 2 3 4; do i2c dev ${i}; i2c probe; done; i2c dev 0;\0" \
 	DFUARGS \
 	NETARGS \
 
