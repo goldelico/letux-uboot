@@ -458,7 +458,6 @@ static int mmc_read_data(struct hsmmc *mmc_base, char *buf, unsigned int size)
 				return TIMEOUT;
 			}
 		} while (mmc_stat == 0);
-
 		if ((mmc_stat & (IE_DTO | IE_DCRC | IE_DEB)) != 0)
 			mmc_reset_controller_fsm(mmc_base, SYSCTL_SRD);
 
@@ -485,6 +484,10 @@ static int mmc_read_data(struct hsmmc *mmc_base, char *buf, unsigned int size)
 			writel(readl(&mmc_base->stat) | TC_MASK,
 				&mmc_base->stat);
 			break;
+		}
+		if (mmc_stat & ~(IE_DTO | IE_DCRC | IE_DEB | ERRI_MASK | BRR_MASK | BWR_MASK | TC_MASK)) {
+			printf("%s: unhandled mmc_stat = %x\n", __func__, mmc_stat);
+			return 1;
 		}
 	}
 	return 0;
