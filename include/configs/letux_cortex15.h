@@ -14,6 +14,10 @@
 
 #include <configs/omap5_uevm.h>
 
+#undef CONFIG_OMAP_EHCI_PHY3_RESET_GPIO	/* gpio 79 used differently */
+#undef CONFIG_USB_HOST_ETHER
+#undef CONFIG_USB_ETHER_SMSC95XX
+
 /* Letux Cortex 15 has no tca6424 */
 #undef CONFIG_TCA642X
 #undef CONFIG_SYS_I2C_TCA642X_BUS_NUM

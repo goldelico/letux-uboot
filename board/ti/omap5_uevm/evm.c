@@ -262,12 +262,15 @@ int ehci_hcd_stop(void)
 
 void usb_hub_reset_devices(int port)
 {
+printf("usb_hub_reset_devices(%d)\n", port);
+#if defined(CONFIG_OMAP_EHCI_PHY3_RESET_GPIO)
 	/* The LAN9730 needs to be reset after the port power has been set. */
 	if (port == 3) {
 		gpio_direction_output(CONFIG_OMAP_EHCI_PHY3_RESET_GPIO, 0);
 		udelay(10);
 		gpio_direction_output(CONFIG_OMAP_EHCI_PHY3_RESET_GPIO, 1);
 	}
+#endif
 }
 #endif
 
