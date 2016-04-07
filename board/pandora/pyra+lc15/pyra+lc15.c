@@ -200,7 +200,12 @@ int board_init(void)
 	bq2429x_set_iinlim(ilim);
 
 #if defined(CONFIG_TCA642X)
+	extern int tca642x_info(uchar chip);
+	tca642x_info(CONFIG_SYS_I2C_TCA642X_ADDR);
+	printk("tca6424 init\n");
 	tca642x_set_inital_state(CONFIG_SYS_I2C_TCA642X_ADDR, pyra_tca642x_init);
+	printk("tca6424 initialized\n");
+	tca642x_info(CONFIG_SYS_I2C_TCA642X_ADDR);
 #endif
 
 	return 0;
