@@ -148,7 +148,26 @@ int bq2429x_set_iinlim(int mA)
 int board_init(void)
 {
 	int ilim;
-	board_init_overwritten();	/* do everything inherited from LC15 board */
+
+	/* do the same as on LC15 board/EVM */
+	gpmc_init();
+	gd->bd->bi_arch_number = MACH_TYPE_OMAP5_SEVM;
+	gd->bd->bi_boot_params = (0x80000000 + 0x100); /* boot param addr */
+
+#if 1
+	printk("reset peripherals\n");
+	/* but now reset peripherals */
+	gpio_request(144, "peripheral-reset");
+	gpio_direction_output(144, 0);	/* reset all peripheral chips (incl. tca6424) */
+	udelay(1000);	/* 1ms should suffice */
+	gpio_direction_output(144, 1);
+	gpio_free(144);
+	udelay(5000);	/* 5ms should suffice */
+#endif
+
+// UNDERSTAND ME: it is important that we program the bq2429x first before
+// we initialize the tca6424! Why? What is turned on and draws too much energy?
+
 	if (bq24297_i2c_write_u8(0x05, 0x8a))
 		printf("bq24297: could not turn off 40 sec watchdog\n");
 	/* set bq24297 current limit to 2 A if we operate from no battery and 100 mA if we have */
