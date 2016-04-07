@@ -167,7 +167,7 @@ int tca642x_set_inital_state(uchar chip, struct tca642x_bank_info init_data[])
 /*
  * Display tca642x information
  */
-static int tca642x_info(uchar chip)
+/* static */ int tca642x_info(uchar chip)
 {
 	int i, j;
 	uint8_t data;
