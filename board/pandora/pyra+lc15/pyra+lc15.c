@@ -40,9 +40,10 @@ const struct pad_conf_entry core_padconf_array_essential_pyra[] = {
 	{I2C3_SDA, (PTU | IEN | M0)}, /* I2C3_SDA */
 	{I2C4_SCL, (PTU | IEN | M0)}, /* I2C4_SCL */
 	{I2C4_SDA, (PTU | IEN | M0)}, /* I2C4_SDA */
-	/* release some resets */
+	/* some resets */
 	{MCSPI1_CS1, (PTU | IEN | M6)}, /* GPIO5_144: peripheral reset */
 	{HSI2_CAFLAG, (PTU | IEN | M6)}, /* GPIO3_80: usb hub reset */
+	{TIMER8_PWM_EVT, (PTU | IEN | M6)}, /* GPIO8_230: keyboard backlight - pulled high */
 };
 
 void set_muxconf_regs_essential(void)
