@@ -145,6 +145,30 @@ int bq2429x_set_iinlim(int mA)
 	return 0;
 }
 
+/**
+ * @brief tca642x_init - Pyra default values for the GPIO expander
+ * input reg, output reg, polarity reg, configuration reg (0=output)
+ */
+struct tca642x_bank_info pyra_tca642x_init[] = {
+	{ .input_reg = 0x00,
+	  .output_reg = 0x00,
+	  .polarity_reg = 0x00,
+	  .configuration_reg = 0x00 },	/* drive fault low (red LED on) */
+	{ .input_reg = 0x00,
+	  .output_reg = 0x00,
+	  .polarity_reg = 0x00,
+	  .configuration_reg = 0x48 },	/* mic-pres and otg-int are inputs */
+	{ .input_reg = 0x00,
+	  .output_reg = 0x00,
+	  .polarity_reg = 0x00,
+	  .configuration_reg = 0x03 },	/* driver fault low (red LED on), open-drain (input) en-hs-amp, chg-stat = input */
+};
+
+/**
+ * @brief board_init for Pyra
+ *
+ * @return 0
+ */
 int board_init(void)
 {
 	int ilim;
@@ -173,9 +197,12 @@ int board_init(void)
 	/* set bq24297 current limit to 2 A if we operate from no battery and 100 mA if we have */
 	ilim = bq2429x_battery_present() ? 100 : 2000;
 	bq2429x_set_iinlim(ilim);
+
+#if defined(CONFIG_TCA642X)
+	tca642x_set_inital_state(CONFIG_SYS_I2C_TCA642X_ADDR, pyra_tca642x_init);
+#endif
+
 	return 0;
 }
 
 #endif
-
-// TODO: we can (re)enable tca6424 code (because we do have it on this board)
