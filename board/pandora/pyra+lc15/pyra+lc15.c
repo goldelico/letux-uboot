@@ -196,6 +196,7 @@ int board_init(void)
 		printf("bq24297: could not turn off 40 sec watchdog\n");
 	/* set bq24297 current limit to 2 A if we operate from no battery and 100 mA if we have */
 	ilim = bq2429x_battery_present() ? 100 : 2000;
+	printf("bq24297: set current limit to %u mA\n", ilim);
 	bq2429x_set_iinlim(ilim);
 
 #if defined(CONFIG_TCA642X)
