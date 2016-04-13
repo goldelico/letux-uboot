@@ -96,53 +96,13 @@ int bq2429x_battery_present(void)
 	u8 reg;
 
 	if (bq24297_i2c_read_u8(0x09, &reg)) {
-		printf("no response from bq24297\n");
+		printf("bq24297: no response from REG9\n");
 		return 0;
 	}
 
 	printf("  r9=%02x\n", reg);
 
 	return !(reg & 0x03);	/* no NTC fault - assume battery is inserted */
-}
-
-/* from our Linux kernel driver */
-static int bq24296_get_limit_current(int value)
-{
-	u8 data;
-	if (value < 120)
-		data = 0;
-	else if(value < 400)
-		data = 1;
-	else if(value < 700)
-		data = 2;
-	else if(value < 1000)
-		data = 3;
-	else if(value < 1200)
-		data = 4;
-	else if(value < 1800)
-		data = 5;
-	else if(value < 2200)
-		data = 6;
-	else
-		data = 7;
-	return data;
-
-}
-
-int bq2429x_set_iinlim(int mA)
-{
-	u8 reg;
-
-	if (bq24297_i2c_read_u8(0x00, &reg))
-		printf("no response from bq24297\n");
-	else { /* bit 0..2 are IINLIM */
-		reg &= ~0x7;
-		reg |= bq24296_get_limit_current(mA);
-		if (bq24297_i2c_write_u8(0x00, reg))
-			printf("bq24297: could not set %d mA\n", mA);
-	}
-
-	return 0;
 }
 
 /**
@@ -171,8 +131,6 @@ struct tca642x_bank_info pyra_tca642x_init[] = {
  */
 int board_init(void)
 {
-	int ilim;
-
 	/* do the same as on LC15 board/EVM */
 	gpmc_init();
 	gd->bd->bi_arch_number = MACH_TYPE_OMAP5_SEVM;
@@ -194,10 +152,28 @@ int board_init(void)
 
 	if (bq24297_i2c_write_u8(0x05, 0x8a))
 		printf("bq24297: could not turn off 40 sec watchdog\n");
-	/* set bq24297 current limit to 2 A if we operate from no battery and 100 mA if we have */
-	ilim = bq2429x_battery_present() ? 100 : 2000;
-	printf("bq24297: set current limit to %u mA\n", ilim);
-	bq2429x_set_iinlim(ilim);
+
+	if (!bq2429x_battery_present()) {
+		u8 reg;
+		/* increase bq24297 current limit to 2 A if we operate from no battery */
+		/* otherwise we can not safely boot into Linux */
+
+		if (bq24297_i2c_read_u8(0x00, &reg))
+			printf("bq24297: no response from REG0\n");
+		else {
+			int ilim = reg & 0x7; /* bit 0..2 are IINLIM */
+			printf("Iin_lim detected %d\n", ilim);
+			if (ilim < 6)
+				{
+				ilim=6;	/* increase to min. of 2A */
+				reg &= ~0x7;
+				reg |= ilim;
+				printf("Iin_lim changed %d\n", ilim);
+				if (bq24297_i2c_write_u8(0x00, reg))
+					printf("bq24297: could not set REG0 to %02x\n", reg);
+			}
+		}
+	}
 
 #if defined(CONFIG_TCA642X)
 	extern int tca642x_info(uchar chip);
