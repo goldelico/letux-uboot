@@ -29,9 +29,9 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <twl4030.h>
-#include "../gta04/dssfb.h"
-#include "../gta04/panel.h"
-#include "../gta04/backlight.h"
+#include "../letux-gta04/dssfb.h"
+#include "../letux-gta04/panel.h"
+#include "../letux-gta04/backlight.h"
 #include "ACX565AKM.h"
 
 #define mdelay(n) ({ unsigned long msec = (n); while (msec--) udelay(1000); })

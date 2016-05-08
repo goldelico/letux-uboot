@@ -27,6 +27,7 @@
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 #include <asm/mach-types.h>
 #include <i2c.h>
 #include <twl4030.h>
@@ -75,31 +76,31 @@ int bt_hci(int msg)
 			
 			udelay(100);
 			
-			omap_request_gpio(148);
-			omap_request_gpio(149);
-			omap_request_gpio(150);
-			omap_request_gpio(151);
-			omap_set_gpio_direction(148, 1);	// 1=input
-			omap_set_gpio_direction(149, 1);	// 1=input
-			omap_set_gpio_direction(150, 1);	// 1=input
-			omap_set_gpio_direction(151, 1);	// 1=input
-			printf("UART1 RTS: %d\n", omap_get_gpio_datain(149));
-			printf("UART1 CTS: %d\n", omap_get_gpio_datain(150));
-			printf("UART1 TX:  %d\n", omap_get_gpio_datain(148));
-			printf("UART1 RX:  %d\n", omap_get_gpio_datain(151));
+			gpio_request(148, "148");
+			gpio_request(149, "149");
+			gpio_request(150, "150");
+			gpio_request(151, "151");
+			gpio_direction_input(148);	// 1=input
+			gpio_direction_input(149);	// 1=input
+			gpio_direction_input(150);	// 1=input
+			gpio_direction_input(151);	// 1=input
+			printf("UART1 RTS: %d\n", gpio_get_value(149));
+			printf("UART1 CTS: %d\n", gpio_get_value(150));
+			printf("UART1 TX:  %d\n", gpio_get_value(148));
+			printf("UART1 RX:  %d\n", gpio_get_value(151));
 			
-			omap_request_gpio(144);
-			omap_request_gpio(145);
-			omap_request_gpio(146);
-			omap_request_gpio(147);
-			omap_set_gpio_direction(144, 1);	// 1=input
-			omap_set_gpio_direction(145, 1);	// 1=input
-			omap_set_gpio_direction(146, 1);	// 1=input
-			omap_set_gpio_direction(147, 1);	// 1=input
-			printf("UART2 RTS: %d\n", omap_get_gpio_datain(145));
-			printf("UART2 CTS: %d\n", omap_get_gpio_datain(144));
-			printf("UART2 TX:  %d\n", omap_get_gpio_datain(146));
-			printf("UART2 RX:  %d\n", omap_get_gpio_datain(147));
+			gpio_request(144, "144");
+			gpio_request(145, "145");
+			gpio_request(146, "146");
+			gpio_request(147, "147");
+			gpio_direction_input(144, 1);	// 1=input
+			gpio_direction_input(145, 1);	// 1=input
+			gpio_direction_input(146, 1);	// 1=input
+			gpio_direction_input(147, 1);	// 1=input
+			printf("UART2 RTS: %d\n", gpio_get_value(145));
+			printf("UART2 CTS: %d\n", gpio_get_value(144));
+			printf("UART2 TX:  %d\n", gpio_get_value(146));
+			printf("UART2 RX:  %d\n", gpio_get_value(147));
 			
 			MUX_VAL(CP(UART1_TX),		(IDIS | PTD | DIS | M0)) /*UART1_TX -> Bluetooth HCI */\
 			MUX_VAL(CP(UART1_RTS),		(IDIS | PTD | DIS | M0)) /*UART1_RTS -> Bluetooth HCI */ \
@@ -157,7 +158,7 @@ int systest(void)
 		{ // was ok, ask for details
 		u8 val;
 		u8 val2;
-		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, TWL4030_PM_MASTER_STS_HW_CONDITIONS);
+		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, TWL4030_PM_MASTER_STS_HW_CONDITIONS, &val);
 		printf("  STS_HW_CON: %02x", val);	// decode bits
 		if(val & 0x80) printf(" VBUS");
 		if(val & 0x08) printf(" NRESWARM");
@@ -165,34 +166,34 @@ int systest(void)
 		if(val & 0x02) printf(" CHG");
 		if(val & 0x01) printf(" PWRON");
 		printf("\n");
-		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, 0x2e);
+		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, 0x2e, &val);
 		printf("  PWR_ISR1:   %02x", val);
 		// decode bits
 		printf("\n");
-		twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val, TWL4030_PM_MASTER_SC_DETECT1);
+		twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, TWL4030_PM_MASTER_SC_DETECT1, &val);
 		printf("  SC_DETECT:  1:%02x", val);
-		twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, &val, TWL4030_PM_MASTER_SC_DETECT1);
+		twl4030_i2c_read_u8(TWL4030_CHIP_PM_RECEIVER, TWL4030_PM_MASTER_SC_DETECT1, &val);
 		printf(" 2:%02x\n", val);
-		twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, &val, 0x82);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, 0x82, &val);
 		printf("  BCIMFSTS2:  %02x\n", val);
-		twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, &val, 0x83);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, 0x83, &val);
 		printf("  BCIMFSTS3:  %02x\n", val);
-		twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, &val, 0x84);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, 0x84, &val);
 		printf("  BCIMFSTS4:  %02x\n", val);
-		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val, 0x57);
-		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val2, 0x58);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, 0x57, &val);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, 0x58, &val2);
 		printf("  BTEMP:   %d\n", (val2<<2)+(val>>6));
-		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val, 0x59);
-		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val2, 0x5a);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, 0x59, &val);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, 0x5a, &val2);
 		printf("  USBVBUS: %d\n", (val2<<2)+(val>>6));
-		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val, 0x5b);
-		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val2, 0x5c);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, 0x5b, &val);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, 0x5c, &val2);
 		printf("  ICHG:    %d\n", (val2<<2)+(val>>6));
-		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val, 0x5d);
-		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val2, 0x5e);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, 0x5d, &val);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, 0x5e, &val2);
 		printf("  VCHG:    %d\n", (val2<<2)+(val>>6));
-		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val, 0x5f);
-		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val2, 0x60);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, 0x5f, &val);
+		twl4030_i2c_read_u8(TWL4030_CHIP_MADC, 0x60, &val2);
 		printf("  VBAT:    %d\n", (val2<<2)+(val>>6));
 		}
 	i2c_set_bus_num(SENSORS_I2C_BUS);	// I2C2
@@ -510,28 +511,27 @@ int audiotest(int channel)
 
 int irdatest(void)
 {
-#ifdef CONFIG_OMAP3_GTA04
+#ifdef CONFIG_TARGET_LETUX_GTA04
 	printf("Stop through touch screen or AUX button - RS232 is disabled\n");
 	udelay(50000);	// wait until RS232 is finished
 	// switch RS232_ENABLE to IrDA through Pull-Down and RXTX to GPIO mode
 	MUX_VAL(CP(UART3_RX_IRRX),	(IEN  | PTD | DIS | M4)); /*UART3_RX_IRRX*/
 	MUX_VAL(CP(UART3_TX_IRTX),	(IDIS | PTD | DIS | M4)); /*UART3_TX_IRTX*/
-	omap_request_gpio(RS232_RX);
-	omap_set_gpio_direction(RS232_RX, 1);	// 1=input
-	omap_request_gpio(RS232_TX);
-	omap_set_gpio_direction(RS232_TX, 0);
-	omap_set_gpio_dataout(RS232_TX, 0);	// set TX=low to select SIR mode
+	gpio_request(RS232_RX, "rx");
+	gpio_direction_input(RS232_RX);	// 1=input
+	gpio_request(RS232_TX, "tx");
+	gpio_direction_output(RS232_TX, 0);	// set TX=low to select SIR mode
 	udelay(10);
 	MUX_VAL(CP(ETK_CTL_ES2),	(IEN  | PTD | EN  | M4)); /*GPIO_13 - RS232 enable*/
 	udelay(1000);
 	while(!pendown(NULL, NULL) && (status_get_buttons()&0x09) == 0)
 		{
 		// make IrDA blink
-		omap_set_gpio_dataout(RS232_TX, 1);
+		gpio_direction_output(RS232_TX, 1);
 		udelay(150);
-		omap_set_gpio_dataout(RS232_TX, 0);
+		gpio_direction_output(RS232_TX, 0);
 		udelay(150);
-		if(!omap_get_gpio_datain(RS232_RX))	// RX is active low
+		if(!gpio_get_value(RS232_RX))	// RX is active low
 			status_set_status(0x018);	// echo IrDA sensor status to red power button led
 		else
 			status_set_status(0x000);
@@ -549,7 +549,7 @@ int irdatest(void)
 #endif
 }
 
-#ifdef CONFIG_OMAP3_GTA04
+#ifdef CONFIG_TARGET_LETUX_GTA04
 int wlanbtpower(void)
 { /* Bluetooth VAUX4 = 3.3V -- CHECKME: 3.3 V is not officially supported by TPS! We use 0x09 = 2.8V here*/
 #define TCA6507_BUS			(2-1)	// I2C2
@@ -584,7 +584,7 @@ int wlanbtpower(void)
 
 int wlanbttest(int test)
 { /* Bluetooth VAUX4 = 3.3V -- CHECKME: 3.3 V is not officially supported! We use 0x09 = 2.8V here*/
-#ifdef CONFIG_OMAP3_GTA04
+#ifdef CONFIG_TARGET_LETUX_GTA04
 	int ret=0;
 	wlanbtpower();
 	if(test)
@@ -593,19 +593,19 @@ int wlanbttest(int test)
 		// now, we should be able to test the UART for the BT part...
 		ret |= !bt_hci(1);
 		/* test if U1102 (SN74AVCA604LZYX is feeding back the clock */
-		omap_request_gpio(130);
-		omap_request_gpio(139);
-		omap_set_gpio_direction(130, 1);	// output
-		omap_set_gpio_direction(139, 1);	// input
+		gpio_request(130, "clockout");
+		gpio_request(139, "feedback");
+		gpio_direction_output(130, 1);	// output
+		gpio_direction_input(139);	// input
 		writew((IDIS | PTD | DIS | M4), OMAP34XX_CTRL_BASE + CP(MMC2_CLK));	// make output GPIO
 		writew((IEN  | PTD | DIS | M4), OMAP34XX_CTRL_BASE + CP(MMC2_DAT7));	// make input GPIO w/o pullup/down
 		for(i=0; i<8; i++)
 			{
 			int val;
 			udelay(100);
-			omap_set_gpio_dataout(130, i%2); // set clock output
+			gpio_direction_output(130, i%2); // set clock output
 			udelay(300);
-			val=omap_get_gpio_datain(139);	// read clock feedback
+			val=gpio_get_value(139);	// read clock feedback
 			if(i%2 == 0)
 				{
 				if(val)
@@ -631,9 +631,9 @@ int OTGchargepump(int enable)
 {
 	i2c_set_bus_num(TWL4030_I2C_BUS);	// I2C1
 	if(enable)
-		twl4030_i2c_write_u8(TWL4030_CHIP_USB, 0x20, TWL4030_USB_OTG_CTRL_SET);
+		twl4030_i2c_write_u8(TWL4030_CHIP_USB, TWL4030_USB_OTG_CTRL_SET, 0x20);
 	else
-		twl4030_i2c_write_u8(TWL4030_CHIP_USB, 0x20, TWL4030_USB_OTG_CTRL_CLR);
+		twl4030_i2c_write_u8(TWL4030_CHIP_USB, TWL4030_USB_OTG_CTRL_CLR, 0x20);
 	return 0;
 }
 
@@ -874,16 +874,15 @@ int gpiotest(void)
 {
 	int i;
 	printf("testing GPIOs for stuck-at, floating and shorts\n");
-	omap_set_gpio_direction(174, 0);	// switch to output
-	omap_set_gpio_dataout(174, 0); // activate reset of USB3322
+	gpio_direction_output(174, 0); // activate reset of USB3322
 	// Camera reset?
 	// WLAN-Reset?
 	// switch off GPS (if on)
 	for(i=0; i<sizeof(gpiotable)/sizeof(gpiotable[0]); i++)
 		{
 		int g=gpiotable[i].gpio;
-		omap_request_gpio(g);
-		omap_set_gpio_direction(g, 1);	// make them all inputs
+		gpio_request(g, "test1");
+		gpio_direction_input(g);	// make them all inputs
 		if(gpiotable[i].offset)
 			writew((IEN  | PTD | DIS | M4), OMAP34XX_CTRL_BASE + (gpiotable[i].offset));	// make input GPIO w/o pullup/down
 		udelay(100);
@@ -902,15 +901,15 @@ int gpiotest(void)
 					int follows=0;	// if known to follow
 					if(!gpiotable[j].inputonly)
 						{ // test with active I/O
-							omap_set_gpio_direction(gj, 0);	// switch to output
+							gpio_direction_output(gj, 0);	// switch to output
 							udelay(100);
-							omap_set_gpio_dataout(gj, 0); // set other output to 0
+							gpio_direction_output(gj, 0); // set other output to 0
 							udelay(300);
-							valdn=omap_get_gpio_datain(g);	// read value of input GPIO under test
-							omap_set_gpio_dataout(gj, 1); // set other output to 1
+							valdn=gpio_get_value(g);	// read value of input GPIO under test
+							gpio_direction_output(gj, 1); // set other output to 1
 							udelay(300);
-							valup=omap_get_gpio_datain(g);	// read value of input GPIO under test
-							omap_set_gpio_direction(gj, 1);	// switch back to input
+							valup=gpio_get_value(g);	// read value of input GPIO under test
+							gpio_direction_input(gj);	// switch back to input
 							udelay(100);
 							if(valdn == 0 && valup == 1)
 								{ // our input follows the other in output mode
@@ -927,10 +926,10 @@ int gpiotest(void)
 						}
 					writew((IEN  | PTD | EN | M4), OMAP34XX_CTRL_BASE + (gpiotable[j].offset));	// make other GPIO input with pulldown
 					udelay(300);
-					valdn=omap_get_gpio_datain(g);	// read value of GPIO under test
+					valdn=gpio_get_value(g);	// read value of GPIO under test
 					writew((IEN  | PTU | EN | M4), OMAP34XX_CTRL_BASE + (gpiotable[j].offset));	// make other GPIO input with pullup
 					udelay(300);
-					valup=omap_get_gpio_datain(g);	// read value of GPIO under test
+					valup=gpio_get_value(g);	// read value of GPIO under test
 					writew((IEN  | PTD | DIS | M4), OMAP34XX_CTRL_BASE + (gpiotable[j].offset)); // make other GPIO w/o pullup/down
 					udelay(100);
 					if(valdn == 0 && valup == 1)

@@ -29,9 +29,9 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <twl4030.h>
-#include "../gta04/dssfb.h"
-#include "../gta04/panel.h"
-#include "../gta04/backlight.h"
+#include "../letux-gta04/dssfb.h"
+#include "../letux-gta04/panel.h"
+#include "../letux-gta04/backlight.h"
 #include "COM37H3M05DTC.h"
 
 #ifndef CONFIG_GOLDELICO_EXPANDER_B2
@@ -128,9 +128,9 @@ int board_video_init(GraphicDevice *pGD)
 {
 	extern int isXM(void);
 	printf("board_video_init() COM37H3M05DTC\n");
-	
+
 	// FIXME: here we should pass down the GPIO(s)
-	
+
 	backlight_init();	// initialize backlight
 	if(isXM()) {
 		/* Set VAUX1 to 3.3V for GTA04E display board */
@@ -142,13 +142,13 @@ int board_video_init(GraphicDevice *pGD)
 	}
 
 	// FIXME: here we should init the TSC and pass down the GPIO numbers and resistance values
-	
+
 	if(panel_reg_init())	// initialize SPI
 		{
 		printf("No LCM connected\n");
 		return 1;
 		}
-	
+
 	if (get_cpu_family() == CPU_OMAP36XX)
 		lcm_cfg.divisor	= (0x0001<<16)|(DSS1_FCLK3730/PIXEL_CLOCK); /* get Pixel Clock divisor from dss1_fclk */
 	dssfb_init(&lcm_cfg);

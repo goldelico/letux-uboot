@@ -37,32 +37,33 @@
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 #include <asm/mach-types.h>
 #include "TD028TTEC1.h"
 
-#if defined(CONFIG_OMAP3_GTA04)
+#if defined(CONFIG_TARGET_LETUX_GTA04)
 
 #define GPIO_CS		19
 #define GPIO_SCL	12
 #define GPIO_DIN	18
 #define GPIO_DOUT	20
 
-#define SPI_READ()      (omap_get_gpio_datain(GPIO_DIN))
-#define SPI_CS(bit) 	(omap_set_gpio_dataout(GPIO_CS, bit))
-#define SPI_SDA(bit)    (omap_set_gpio_dataout(GPIO_DOUT, bit))
-#define SPI_SCL(bit)    (omap_set_gpio_dataout(GPIO_SCL, bit))
+#define SPI_READ()      (gpio_get_value(GPIO_DIN))
+#define SPI_CS(bit) 	(gpio_direction_output(GPIO_CS, bit))
+#define SPI_SDA(bit)    (gpio_direction_output(GPIO_DOUT, bit))
+#define SPI_SCL(bit)    (gpio_direction_output(GPIO_SCL, bit))
 
-#elif defined(CONFIG_OMAP3_BEAGLE)
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B1)
 
 #define GPIO_CS		161
 #define GPIO_SCL	162
 #define GPIO_DIN	159
 #define GPIO_DOUT	158
 
-#define SPI_READ()      (omap_get_gpio_datain(GPIO_DIN))
-#define SPI_CS(bit) 	(omap_set_gpio_dataout(GPIO_CS, bit))
-#define SPI_SDA(bit)    (omap_set_gpio_dataout(GPIO_DOUT, bit))
-#define SPI_SCL(bit)    (omap_set_gpio_dataout(GPIO_SCL, bit))
+#define SPI_READ()      (gpio_get_value(GPIO_DIN))
+#define SPI_CS(bit) 	(gpio_direction_output(GPIO_CS, bit))
+#define SPI_SDA(bit)    (gpio_direction_output(GPIO_DOUT, bit))
+#define SPI_SCL(bit)    (gpio_direction_output(GPIO_SCL, bit))
 
 #elif !defined(CONFIG_GTA02_REVISION)	/* GTA01 */
 
@@ -195,29 +196,27 @@ int panel_check(void)
 #if 0
 	printf("panel_reg_init()\n");
 #endif
-	err = omap_request_gpio(GPIO_CS);
+	err = gpio_request(GPIO_CS, "cs");
 	SPI_CS(1);	// unselect
-	err |= omap_request_gpio(GPIO_SCL);
+	err |= gpio_request(GPIO_SCL, "scl");
 	SPI_SCL(1);	// default
-	err |= omap_request_gpio(GPIO_DOUT);
+	err |= gpio_request(GPIO_DOUT, "dout");
 	SPI_SDA(0);
-	err |= omap_request_gpio(GPIO_DIN);
+	err |= gpio_request(GPIO_DIN, "din");
 	if(err)
 		{
 		printf("panel_reg_init() - could not get GPIOs\n");
 		return 1;
 		}
-#if 1		// should have already been done by MUX settings!
-	omap_set_gpio_direction(GPIO_CS, 0);	// output
-	omap_set_gpio_direction(GPIO_SCL, 0);	// output
-	omap_set_gpio_direction(GPIO_DOUT, 0);	// output
-	omap_set_gpio_direction(GPIO_DIN, 1);	// input (for reading back)
-#endif
+	gpio_direction_output(GPIO_CS, 0);	// output
+	gpio_direction_output(GPIO_SCL, 0);	// output
+	gpio_direction_output(GPIO_DOUT, 0);	// output
+	gpio_direction_input(GPIO_DIN);	// input (for reading back)
 	
-	//	omap_free_gpio(GPIO_DIN);
-	//	omap_free_gpio(GPIO_DOUT);
-	//	omap_free_gpio(GPIO_CS);
-	//	omap_free_gpio(GPIO_SCL);
+	//	gpio_free(GPIO_DIN);
+	//	gpio_free(GPIO_DOUT);
+	//	gpio_free(GPIO_CS);
+	//	gpio_free(GPIO_SCL);
 	
 	for(i=0; i<16; i++)
 		{ // check for connection between GPIO158 -> GPIO159; since we have 10 kOhm pse. make sure that the PUP/PDN is disabled on DIN in the MUX config!

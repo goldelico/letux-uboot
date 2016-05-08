@@ -40,14 +40,13 @@ void shutdown(void)
 		return;
 		}
 	printf("shutting down by writing DEVOFF register of TPS65950\n");
-	if (twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val,
-							TWL4030_PM_MASTER_P1_SW_EVENTS)) {
+	if (twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER,
+							TWL4030_PM_MASTER_P1_SW_EVENTS, &val)) {
 		printf("Error:TWL4030: failed to read the power register\n");
 		printf("Could not initialize hardware reset\n");
 	} else {
 		val |= TWL4030_PM_MASTER_SW_EVENTS_DEVOFF;
-		if (twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, val,
-								 TWL4030_PM_MASTER_P1_SW_EVENTS)) {
+		if (twl4030_i2c_write_u8(TWL4030_CHIP_PM_MASTER, TWL4030_PM_MASTER_P1_SW_EVENTS, val)) {
 			printf("Error:TWL4030: failed to write the power register\n");
 			printf("Could not initialize hardware reset\n");
 		}

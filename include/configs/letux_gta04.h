@@ -12,6 +12,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define CONFIG_SYS_NS16550_CLK		V_NS16550_CLK
+
 #define CONFIG_NR_DRAM_BANKS	2	/* CS1 may or may not be populated */
 
 /*
@@ -21,7 +23,7 @@
  * other needs.  We use this rather than the inherited defines from
  * ti_armv7_common.h for backwards compatibility.
  */
-#define CONFIG_SYS_TEXT_BASE		0x80100000
+
 #define CONFIG_SPL_BSS_START_ADDR	0x80000000
 #define CONFIG_SPL_BSS_MAX_SIZE		(512 << 10)	/* 512 KB */
 #define CONFIG_SYS_SPL_MALLOC_START	0x80208000

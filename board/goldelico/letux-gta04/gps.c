@@ -27,10 +27,13 @@
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 #include <asm/mach-types.h>
 #include <ns16550.h>
 #include <twl4030.h>
 #include "gps.h"
+
+#define CONFIG_SYS_NS16550_COM2		OMAP34XX_UART2
 
 #ifdef CONFIG_OMAP3_GTA04
 
@@ -50,7 +53,7 @@
 
 int gps_init(void)
 {
-#ifdef CONFIG_OMAP3_GTA04
+#if defined(CONFIG_TARGET_LETUX_GTA04) || defined(CONFIG_TARGET_LETUX_GTA04_B2) ||  defined(CONFIG_TARGET_LETUX_GTA04_B3)
 	i2c_set_bus_num(TWL4030_I2C_BUS);
 	/* ext. GPS Ant VSIM = 2.8 V (3.0V) */
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VSIM_DEDICATED,
@@ -60,19 +63,19 @@ int gps_init(void)
 	udelay(5000);
 #endif
 	
-	omap_request_gpio(GPIO_GPS_ON);
-	omap_set_gpio_direction(GPIO_GPS_ON, 0);		// output
-	omap_request_gpio(GPIO_GPS_EXT);
-	omap_set_gpio_direction(GPIO_GPS_EXT, 1);		// input
-	omap_request_gpio(GPIO_GPS_PPS);
-	omap_set_gpio_direction(GPIO_GPS_PPS, 1);		// input
+	gpio_request(GPIO_GPS_ON, "gps onoff");
+	gpio_direction_output(GPIO_GPS_ON, 0);		// output
+	gpio_request(GPIO_GPS_EXT, "ext-ant");
+	gpio_direction_input(GPIO_GPS_EXT);		// input
+	gpio_request(GPIO_GPS_PPS, "pps");
+	gpio_direction_input(GPIO_GPS_PPS);		// input
 	return 0;
 }
 
 void gps_on(void)
 {
-	omap_set_gpio_dataout(GPIO_GPS_ON, 1);
-	if(omap_get_gpio_datain(GPIO_GPS_EXT))
+	gpio_direction_output(GPIO_GPS_ON, 1);
+	if(gpio_get_value(GPIO_GPS_EXT))
 		printf("external antenna\n");
 	else
 		printf("internal antenna\n");
@@ -80,7 +83,7 @@ void gps_on(void)
 
 void gps_off(void)
 {
-	omap_set_gpio_dataout(GPIO_GPS_ON, 0);
+	gpio_direction_output(GPIO_GPS_ON, 0);
 }
 
 static int lastant=-1;
@@ -97,8 +100,8 @@ void gps_echo(void)
 	NS16550_reinit((NS16550_t)CONFIG_SYS_NS16550_COM2, divisor);	// initialize UART
 	while (1)
 		{ // echo in both directions
-			int ant=omap_get_gpio_datain(GPIO_GPS_EXT);
-			int pps=omap_get_gpio_datain(GPIO_GPS_PPS);
+			int ant=gpio_get_value(GPIO_GPS_EXT);
+			int pps=gpio_get_value(GPIO_GPS_PPS);
 			if(ant != lastant)
 				{ // changed
 				if(ant)
@@ -129,9 +132,9 @@ void gps_echo(void)
 			if(timer++ > 2*10000)
 				{ // timeout - try to wakeup/reset the chip
 					printf("no data: on-off impulse\n");
-					omap_set_gpio_dataout(GPIO_GPS_ON, 1);
+					gpio_direction_output(GPIO_GPS_ON, 1);
 					udelay(5000);
-					omap_set_gpio_dataout(GPIO_GPS_ON, 0);
+					gpio_direction_output(GPIO_GPS_ON, 0);
 					timer=0;
 				}
 			udelay(100);	// 10 kHz @ 9 kbit/s

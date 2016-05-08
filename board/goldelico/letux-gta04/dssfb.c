@@ -26,9 +26,8 @@
 #include <asm/io.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
-#include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
-#include <asm/arch/clocks.h>
+// #include <asm/arch/clocks.h>
 #include <asm/arch/clocks_omap3.h>
 #include "dssfb.h"
 
@@ -62,7 +61,6 @@ struct gfx_regs
 	u32 gfx_size;				/* 8c */
 	u32 reserved1[4];			
 	u32 gfx_attributes;			/* a0 */
-#define GFX_ENABLE 0x0001
 	u32 gfx_fifo_threshold;		/* a4 */
 	u32 gfx_fifo_size_status;	/* a8 */
 	u32 gfx_row_inc;			/* ac */
