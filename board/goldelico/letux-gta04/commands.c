@@ -28,6 +28,7 @@
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 #include <asm/mach-types.h>
 
 #include "backlight.h"
@@ -742,29 +743,22 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	if(argc == 3) {
 		if (strncmp ("on", argv[1], 2) == 0) {
 			g=simple_strtoul(argv[2], NULL, 10);
-			omap_request_gpio(g);
-			omap_set_gpio_dataout(g, 1);
+			gpio_request(g, "gpio");
+			gpio_direction_output(g, 1);
 			//			omap_free_gpio(g); - switches back to input
 			return 0;
 		}
 		else if (strncmp ("of", argv[1], 2) == 0) {
 			g=simple_strtoul(argv[2], NULL, 10);
-			omap_request_gpio(g);
-			omap_set_gpio_dataout(g, 0);
+			gpio_request(g, "gpio");
+			gpio_direction_output(g, 0);
 			//			omap_free_gpio(g); - switches back to input
 			return 0;
 		}
 		else if (strncmp ("in", argv[1], 2) == 0) {
 			g=simple_strtoul(argv[2], NULL, 10);
-			omap_request_gpio(g);
-			omap_set_gpio_direction(g, 1);
-			//			omap_free_gpio(g); - switches back to input
-			return 0;
-		}
-		else if (strncmp ("ou", argv[1], 2) == 0) {
-			g=simple_strtoul(argv[2], NULL, 10);
-			omap_request_gpio(g);
-			omap_set_gpio_direction(g, 0);
+			gpio_request(g, "gpio");
+			gpio_direction_input(g);
 			//			omap_free_gpio(g); - switches back to input
 			return 0;
 		}
@@ -783,7 +777,7 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 				{
 				if(col == 0)
 					printf("%03d", i);
-				printf(" %d", omap_get_gpio_datain(i));
+				printf(" %d", gpio_get_value(i));
 				if(++col == n)
 					printf("\n"), col=0;
 				}
@@ -791,7 +785,7 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 				printf("\n");	// last line		
 		}
 	else if(argc == 2) { // n only
-		if(omap_get_gpio_datain(simple_strtoul(argv[1], NULL, 10)))
+		if(gpio_get_value(simple_strtoul(argv[1], NULL, 10)))
 			{
 			printf("1\n");
 			return 1;

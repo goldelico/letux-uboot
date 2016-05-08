@@ -41,6 +41,8 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
+#include <asm/gpio.h>
+#include <linux/mtd/nand.h>
 #include "gta04.h"
 
 char *muxname="unknown";
@@ -169,21 +171,21 @@ int misc_init_r(void)
 	if(strcmp(devicetree, "omap3-gta04") == 0) {
 		int revision;
 
-		if (!omap_request_gpio(171) &&
-			!omap_request_gpio(172) &&
-			!omap_request_gpio(173)) {
+		if (!gpio_request(171, "version-0") &&
+			!gpio_request(172, "version-1") &&
+			!gpio_request(173, "version-2")) {
 
-			omap_set_gpio_direction(171, 1);
-			omap_set_gpio_direction(172, 1);
-			omap_set_gpio_direction(173, 1);
+			gpio_direction_input(171);
+			gpio_direction_input(172);
+			gpio_direction_input(173);
 
-			revision = omap_get_gpio_datain(173) << 2 |
-			omap_get_gpio_datain(172) << 1 |
-			omap_get_gpio_datain(171);
+			revision = gpio_get_value(173) << 2 |
+			gpio_get_value(172) << 1 |
+			gpio_get_value(171);
 
-			omap_free_gpio(171);
-			omap_free_gpio(172);
-			omap_free_gpio(173);
+			gpio_free(171);
+			gpio_free(172);
+			gpio_free(173);
 			switch(revision) {
 				case 7:
 					strcpy(devtree, "omap3-gta04a2");
@@ -359,7 +361,7 @@ void set_muxconf_regs(void)
 #ifdef CONFIG_GENERIC_MMC
 int board_mmc_init(bd_t *bis)
 {
-	omap_mmc_init(0);
+	omap_mmc_init(0, 0, 0, -1, -1);
 	return 0;
 }
 #endif

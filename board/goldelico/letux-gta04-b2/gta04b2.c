@@ -6,7 +6,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
-#include "../gta04/gta04.h"
+#include "../letux-gta04/gta04.h"
 #include "gta04b2.h"
 
 // make us initialize using both pinmux sets
@@ -21,4 +21,4 @@ void muxinit(void)
 #define MUX_GTA04() muxinit()
 
 // take the original beagle.c code
-#include "../gta04/gta04.c"
+#include "../letux-gta04/gta04.c"

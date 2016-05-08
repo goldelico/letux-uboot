@@ -38,7 +38,7 @@ static inline int clear_n_set(u8 chip_no, u8 clear, u8 set, u8 reg)
 	u8 val = 0;
 	
 	/* Gets the initial register value */
-	ret = twl4030_i2c_read_u8(chip_no, &val, reg);
+	ret = twl4030_i2c_read_u8(chip_no, reg, &val);
 	if (ret) {
 		printf("a\n");
 		return ret;
@@ -51,7 +51,7 @@ static inline int clear_n_set(u8 chip_no, u8 clear, u8 set, u8 reg)
 	val |= set;
 	
 	/* Update the register */
-	ret = twl4030_i2c_write_u8(chip_no, val, reg);
+	ret = twl4030_i2c_write_u8(chip_no, reg, val);
 	if (ret) {
 		printf("b\n");
 		return ret;
@@ -94,14 +94,14 @@ static int twl4030_usb_charger_enable(int enable)
 	
 	if (enable) {
 		/* enable access to BCIIREF1 */
-		ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0xE7,
-								   +	 REG_BCIMFKEY);
+		ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+								   +	 REG_BCIMFKEY, 0xE7);
 		if (ret)
 			return ret;
 		
 		/* set charging current = 852mA */
-		ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0xFF,
-								   +	 REG_BCIIREF1);
+		ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+								   +	 REG_BCIIREF1, 0xFF);
 		if (ret)
 			return ret;
 		
@@ -122,8 +122,8 @@ static int twl4030_usb_charger_enable(int enable)
 		
 		while (!(value & PHY_DPLL_CLK)) {
 			udelay(10);
-			ret = twl4030_i2c_read_u8(TWL4030_CHIP_USB, &value,
-									  +	 REG_PHY_CLK_CTRL_STS);
+			ret = twl4030_i2c_read_u8(TWL4030_CHIP_USB,
+									  +	 REG_PHY_CLK_CTRL_STS, &value);
 			if (ret)
 				return ret;
 		}
@@ -166,8 +166,8 @@ static int twl4030_madc_setup(void)
 		return ret;
 	
 	/* turning adc_on */
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MADC, MADC_ON,
-							   +	 REG_CTRL1);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MADC,
+							   +	 REG_CTRL1, MADC_ON);
 	if (ret)
 		return ret;
 	
@@ -202,14 +202,14 @@ static int read_bci_val(u8 reg)
 	u8 val;
 	
 	/* reading MSB */
-	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, &val, reg + 1);
+	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, reg + 1, &val);
 	if (ret)
 		return ret;
 	
 	temp = ((int)(val & 0x03)) << 8;
 	
 	/* reading LSB */
-	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, &val, reg);
+	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, reg, &val);
 	if (ret)
 		return ret;
 	
@@ -226,13 +226,13 @@ static int twl4030_madc_sw1_trigger(void)
 	int ret;
 	
 	/* Triggering SW1 MADC convertion */
-	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val, REG_CTRL_SW1);
+	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MADC, REG_CTRL_SW1, &val);
 	if (ret)
 		return ret;
 	
 	val |= SW1_TRIGGER;
 	
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MADC, val, REG_CTRL_SW1);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MADC, REG_CTRL_SW1, val);
 	if (ret)
 		return ret;
 	
@@ -240,8 +240,8 @@ static int twl4030_madc_sw1_trigger(void)
 	val = BUSY;
 	
 	while (!((val & EOC_SW1) && (!(val & BUSY)))) {
-		ret = twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &val,
-								  +	 REG_CTRL_SW1);
+		ret = twl4030_i2c_read_u8(TWL4030_CHIP_MADC,
+								  +	 REG_CTRL_SW1, &val);
 		if (ret)
 			return ret;
 		mdelay(10);
@@ -326,13 +326,13 @@ static int twl4030_get_backup_battery_voltage(void)
 	/* trigger MADC convertion */
 	twl4030_madc_sw1_trigger();
 	
-	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &volt, REG_GPCH9 + 1);
+	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MADC, REG_GPCH9 + 1, &volt);
 	if (ret)
 		return ret;
 	
 	temp = ((int) volt) << 2;
 	
-	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MADC, &volt, REG_GPCH9);
+	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MADC, REG_GPCH9, &volt);
 	if (ret)
 		return ret;
 	
@@ -368,26 +368,26 @@ int twl4030_enable_linear_charging()
 		return ret;
 	}
 	ret = clear_n_set(TWL4030_CHIP_PM_MASTER, BCIAUTOUSB, 0, REG_BOOT_BCI);
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0x33,
-			REG_BCIWDKEY);
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0x2a,
-			REG_BCIMDKEY);
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0x26,
-			REG_BCIMDKEY);
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0xf3,
-			REG_BCIWDKEY);
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0x9c,
-			REG_BCIMFKEY);
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0xf0,
-			REG_BCIMFEN3);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+			REG_BCIWDKEY, 0x33);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+			REG_BCIMDKEY, 0x2a);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+			REG_BCIMDKEY, 0x26);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+			REG_BCIWDKEY, 0xf3);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+			REG_BCIMFKEY, 0x9c);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+			REG_BCIMFEN3, 0xf0);
 	return ret;
 }
 
 int twl4030_charging_off()
 {
 	int ret;
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0x2a,
-				REG_BCIMDKEY);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+				REG_BCIMDKEY, 0x2a);
 	ret = clear_n_set(TWL4030_CHIP_PM_MASTER, BCIAUTOUSB | BCIAUTOAC,
 				 0, REG_BOOT_BCI);
 	return ret;
@@ -414,24 +414,24 @@ int twl4030_init_battery_charging(void)
 	udelay(100);
 	
 	
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0xE7,
-							   +	 REG_BCIMFKEY);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+							   +	 REG_BCIMFKEY, 0xE7);
 	/* set MAX charging current */
-	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE, 0xFF,
-							   +	 REG_BCIIREF1);
+	ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+							   +	 REG_BCIIREF1, 0xFF);
 		
 	/* Done for Zoom2 */
 	return 0;
 #endif
 	
 	/* check for battery presence */
-	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE, &batstsmchg,
-							  +	 REG_BCIMFSTS3);
+	ret = twl4030_i2c_read_u8(TWL4030_CHIP_MAIN_CHARGE,
+							  +	 REG_BCIMFSTS3, &batstsmchg);
 	if (ret)
 		return ret;
 	
-	ret = twl4030_i2c_read_u8(TWL4030_CHIP_PRECHARGE, &batstspchg,
-							  +	 REG_BCIMFSTS1);
+	ret = twl4030_i2c_read_u8(TWL4030_CHIP_PRECHARGE,
+							  +	 REG_BCIMFSTS1, &batstspchg);
 	if (ret)
 		return ret;
 	
@@ -455,8 +455,8 @@ int twl4030_init_battery_charging(void)
 	// SPLITME here - up to here it is init, all below can be a systest user command
 	
 	/* check for charger presence */
-	ret = twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &hwsts,
-							  +	 REG_STS_HW_CONDITIONS);
+	ret = twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER,
+							  +	 REG_STS_HW_CONDITIONS, &hwsts);
 	if (ret)
 		return ret;
 	
@@ -497,11 +497,11 @@ int twl4030_keypad_init(void)
 {
 	int ret = 0;
 	u8 ctrl;
-	ret = twl4030_i2c_read_u8(TWL4030_CHIP_KEYPAD, &ctrl, KEYPAD_KEYP_CTRL_REG);
+	ret = twl4030_i2c_read_u8(TWL4030_CHIP_KEYPAD, KEYPAD_KEYP_CTRL_REG, &ctrl);
 	if (!ret) {
 		ctrl |= CTRL_KBD_ON | CTRL_SOFT_NRST;
 		ctrl &= ~CTRL_SOFTMODEN;
-		ret = twl4030_i2c_write_u8(TWL4030_CHIP_KEYPAD, ctrl, KEYPAD_KEYP_CTRL_REG);
+		ret = twl4030_i2c_write_u8(TWL4030_CHIP_KEYPAD, KEYPAD_KEYP_CTRL_REG, ctrl);
 	}
 	return ret;
 }
@@ -510,10 +510,10 @@ int twl4030_keypad_reset(void)
 {
 	int ret = 0;
 	u8 ctrl;
-	ret = twl4030_i2c_read_u8(TWL4030_CHIP_KEYPAD, &ctrl, KEYPAD_KEYP_CTRL_REG);
+	ret = twl4030_i2c_read_u8(TWL4030_CHIP_KEYPAD, KEYPAD_KEYP_CTRL_REG, &ctrl);
 	if (!ret) {
 		ctrl &= ~CTRL_SOFT_NRST;
-		ret = twl4030_i2c_write_u8(TWL4030_CHIP_KEYPAD, ctrl, KEYPAD_KEYP_CTRL_REG);
+		ret = twl4030_i2c_write_u8(TWL4030_CHIP_KEYPAD, KEYPAD_KEYP_CTRL_REG, ctrl);
 	}
 	return ret;
 }
@@ -524,8 +524,8 @@ int twl4030_keypad_keys_pressed(unsigned char *key1, unsigned char *key2)
 	u8 cb, c, rb, r;
 	for (cb = 0; cb < 8; cb++) {
 		c = 0xff & ~(1 << cb);
-		twl4030_i2c_write_u8(TWL4030_CHIP_KEYPAD, c, KEYPAD_KBC_REG);
-		twl4030_i2c_read_u8(TWL4030_CHIP_KEYPAD, &r, KEYPAD_KBR_REG);
+		twl4030_i2c_write_u8(TWL4030_CHIP_KEYPAD, KEYPAD_KBC_REG, c);
+		twl4030_i2c_read_u8(TWL4030_CHIP_KEYPAD, KEYPAD_KBR_REG, &r);
 		for (rb = 0; rb < 8; rb++) {
 			if (!(r & (1 << rb))) {
 				if (!ret)

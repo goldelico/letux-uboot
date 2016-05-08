@@ -27,12 +27,13 @@
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 #include <asm/mach-types.h>
 #include <i2c.h>
 #include <twl4030.h>
 #include "status.h"
 
-#if defined(CONFIG_OMAP3_GTA04)
+#if defined(CONFIG_TARGET_LETUX_GTA04)
 
 // no need to probe for LED controller (compiler should optimize unnecessary code)
 #define CHECK_TCA6507	0
@@ -54,7 +55,7 @@ static int hasTCA6507=0;
 #define GPIO_AUX_ACTIVE	1
 #define GPIO_KEYIRQ		-1
 
-#if defined(CONFIG_GOLDELICO_EXPANDER_B1)
+#if defined(CONFIG_TARGET_LETUX_BEAGLE_B1)
 
 #define CHECK_TCA6507	1
 
@@ -63,7 +64,7 @@ static int hasTCA6507=0;
 #define GPIO_GPSEXT		144		// external GPS antenna is plugged in
 #define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
 
-#elif defined(CONFIG_GOLDELICO_EXPANDER_B2)
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B2) || defined(CONFIG_TARGET_LETUX_GTA04_B2)
 
 #define CHECK_TCA6507	1
 
@@ -74,7 +75,7 @@ static int hasTCA6507=0;
 #undef GPIO_KEYIRQ
 #define GPIO_KEYIRQ		138		// TRF79x0
 
-#elif defined(CONFIG_GOLDELICO_EXPANDER_B4)
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B4) || defined(CONFIG_TARGET_LETUX_GTA04_B4)
 
 #define CHECK_TCA6507	1
 
@@ -85,7 +86,7 @@ static int hasTCA6507=0;
 #undef GPIO_KEYIRQ
 #define GPIO_KEYIRQ		138		// PPS interrupt
 
-#elif defined(CONFIG_GOLDELICO_EXPANDER_B7)
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7) || defined(CONFIG_TARGET_LETUX_GTA04_B7)
 
 #define CHECK_TCA6507	1
 
@@ -148,12 +149,12 @@ void status_set_status(int value)
 {
 	status=value;
 	if(!hasTCA6507) {
-		omap_set_gpio_dataout(GPIO_LED_AUX_RED, (value&(1 << 0)));
-		omap_set_gpio_dataout(GPIO_LED_AUX_GREEN, (value&(1 << 1)));
-		omap_set_gpio_dataout(GPIO_LED_POWER_RED, (value&(1 << 3)));
-		omap_set_gpio_dataout(GPIO_LED_POWER_GREEN, (value&(1 << 4)));
-		omap_set_gpio_dataout(GPIO_LED_VIBRA, (value&(1 << 6)));
-		omap_set_gpio_dataout(GPIO_LED_UNUSED, (value&(1 << 7)));
+		gpio_direction_output(GPIO_LED_AUX_RED, (value&(1 << 0)));
+		gpio_direction_output(GPIO_LED_AUX_GREEN, (value&(1 << 1)));
+		gpio_direction_output(GPIO_LED_POWER_RED, (value&(1 << 3)));
+		gpio_direction_output(GPIO_LED_POWER_GREEN, (value&(1 << 4)));
+		gpio_direction_output(GPIO_LED_VIBRA, (value&(1 << 6)));
+		gpio_direction_output(GPIO_LED_UNUSED, (value&(1 << 7)));
 		}
 	else {
 		value &= 0x3f;	// 6 LEDs only - 7th is reserved to reset the WLAN/BT chip
@@ -173,22 +174,22 @@ int status_get_buttons(void)
 { // convert button state into led state (for mirror)
 	int status=0;
 	if(GPIO_AUX >= 0)
-		status |= ((omap_get_gpio_datain(GPIO_AUX) == GPIO_AUX_ACTIVE) << 0);
+		status |= ((gpio_get_value(GPIO_AUX) == GPIO_AUX_ACTIVE) << 0);
 	if(GPIO_GPSEXT >= 0)
-		status |= ((omap_get_gpio_datain(GPIO_GPSEXT)) << 1);
+		status |= ((gpio_get_value(GPIO_GPSEXT)) << 1);
 	if(GPIO_POWER >= 0)
-		status |= ((!omap_get_gpio_datain(GPIO_POWER)) << 3);
+		status |= ((!gpio_get_value(GPIO_POWER)) << 3);
 	else
 		{
 		u8 val;
 		i2c_set_bus_num(TWL4030_I2C_BUS);	// read I2C1
-		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, &val, TWL4030_PM_MASTER_STS_HW_CONDITIONS);	// read state of power button (bit 0) from TPS65950
+		twl4030_i2c_read_u8(TWL4030_CHIP_PM_MASTER, TWL4030_PM_MASTER_STS_HW_CONDITIONS, &val);	// read state of power button (bit 0) from TPS65950
 		status |= (((val&0x01) != 0) << 3);
 		}
 	if(GPIO_PENIRQ >= 0)
-		status |= ((!omap_get_gpio_datain(GPIO_PENIRQ)) << 4);
+		status |= ((!gpio_get_value(GPIO_PENIRQ)) << 4);
 	if(GPIO_KEYIRQ >= 0)
-		status |= ((omap_get_gpio_datain(GPIO_KEYIRQ)) << 5);
+		status |= ((gpio_get_value(GPIO_KEYIRQ)) << 5);
 	return status;
 }
 
@@ -233,49 +234,49 @@ int status_init(void)
 			MUX_VAL(CP(DSS_DATA17),		(IEN | PTD | EN | M4)); /*GPIO */
 		}
 		
-		omap_request_gpio(GPIO_LED_AUX_GREEN);
-		omap_request_gpio(GPIO_LED_AUX_RED);
-		omap_request_gpio(GPIO_LED_POWER_GREEN);
-		omap_request_gpio(GPIO_LED_POWER_RED);
-		omap_request_gpio(GPIO_LED_VIBRA);
-		omap_request_gpio(GPIO_LED_UNUSED);
+		gpio_request(GPIO_LED_AUX_GREEN, "green-aux");
+		gpio_request(GPIO_LED_AUX_RED, "red-aux");
+		gpio_request(GPIO_LED_POWER_GREEN, "green-power");
+		gpio_request(GPIO_LED_POWER_RED, "red-power");
+		gpio_request(GPIO_LED_VIBRA, "vibra");
+		gpio_request(GPIO_LED_UNUSED, "unused");
 		if(GPIO_POWER >= 0)
-			omap_request_gpio(GPIO_POWER);
+			gpio_request(GPIO_POWER, "power");
 	}
 	else {
 		// initialize I2C controller
 	}
 	
 	if(GPIO_AUX >= 0)
-		omap_request_gpio(GPIO_AUX);
+		gpio_request(GPIO_AUX, "aus");
 	if(GPIO_POWER >= 0)
-		omap_request_gpio(GPIO_POWER);
+		gpio_request(GPIO_POWER, "power");
 	if(GPIO_GPSEXT >= 0)
-		omap_request_gpio(GPIO_GPSEXT);
+		gpio_request(GPIO_GPSEXT, "ext-gps");
 	if(GPIO_PENIRQ >= 0)
-		omap_request_gpio(GPIO_PENIRQ);
+		gpio_request(GPIO_PENIRQ, "penirq");
 	if(GPIO_KEYIRQ >= 0)
-		omap_request_gpio(GPIO_KEYIRQ);
+		gpio_request(GPIO_KEYIRQ, "keyirq");
 	
 	if(!hasTCA6507) {
-		omap_set_gpio_direction(GPIO_LED_AUX_GREEN, 0);		// output
-		omap_set_gpio_direction(GPIO_LED_AUX_RED, 0);		// output
-		omap_set_gpio_direction(GPIO_LED_POWER_GREEN, 0);		// output
-		omap_set_gpio_direction(GPIO_LED_POWER_RED, 0);		// output
-		omap_set_gpio_direction(GPIO_LED_VIBRA, 0);		// output
-		omap_set_gpio_direction(GPIO_LED_UNUSED, 0);		// output
+		gpio_direction_output(GPIO_LED_AUX_GREEN, 0);		// output
+		gpio_direction_output(GPIO_LED_AUX_RED, 0);		// output
+		gpio_direction_output(GPIO_LED_POWER_GREEN, 0);		// output
+		gpio_direction_output(GPIO_LED_POWER_RED, 0);		// output
+		gpio_direction_output(GPIO_LED_VIBRA, 0);		// output
+		gpio_direction_output(GPIO_LED_UNUSED, 0);		// output
 		}
 	
 	if(GPIO_AUX >= 0)
-		omap_set_gpio_direction(GPIO_AUX, 1);		// input
+		gpio_direction_input(GPIO_AUX);		// input
 	if(GPIO_POWER >= 0)
-		omap_set_gpio_direction(GPIO_POWER, 1);		// input
+		gpio_direction_input(GPIO_POWER);		// input
 	if(GPIO_GPSEXT >= 0)
-		omap_set_gpio_direction(GPIO_GPSEXT, 1);	// input
+		gpio_direction_input(GPIO_GPSEXT);	// input
 	if(GPIO_PENIRQ >= 0)
-		omap_set_gpio_direction(GPIO_PENIRQ, 1);	// input
+		gpio_direction_input(GPIO_PENIRQ);	// input
 	if(GPIO_KEYIRQ >= 0)
-		omap_set_gpio_direction(GPIO_KEYIRQ, 1);	// input
+		gpio_direction_input(GPIO_KEYIRQ);	// input
 
 	// when sould we do omap_free_gpio(GPIO_LED_AUX_GREEN); ?
 	printf("did init LED driver for %s\n", hasTCA6507?"TCA6507":"GPIOs");
