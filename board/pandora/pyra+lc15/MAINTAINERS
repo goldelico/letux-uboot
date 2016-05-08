@@ -2,5 +2,5 @@ PYRA BOARD with LC15 CPU
 M:	Nikolaus Schaller <hns@goldelico.com>
 S:	Maintained
 F:	board/pandora/pyra+lc15
-F:	include/configs/omap3_pandora.h
-F:	configs/omap5_pyra_lc15_defconfig
+F:	include/configs/pandora_pyra_lc15_defconfig.h
+F:	configs/pandora_pyra_lc15_defconfig
