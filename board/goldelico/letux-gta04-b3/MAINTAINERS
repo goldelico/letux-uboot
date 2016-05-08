@@ -1,0 +1,6 @@
+GTA04
+M:	Nikolaus Schaller <hns@goldelico.com>
+S:	Maintained
+F:	board/goldelico/letux-gta04-b3
+F:	include/configs/letux-gta04b3.h
+F:	configs/letux_gta04b3_defconfig
