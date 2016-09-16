@@ -737,7 +737,7 @@ static int do_mux(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 U_BOOT_CMD(mux, 2, 0, do_mux, "Pinmux", "");
 
 
-static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+static int do_letux_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	int g;
 	if(argc == 3) {
@@ -804,7 +804,7 @@ static int do_gpio(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	return (0);
 }
 
-U_BOOT_CMD(gpio, 3, 0, do_gpio, "GPIO sub-system",
+U_BOOT_CMD(letux_gpio, 3, 0, do_letux_gpio, "GPIO sub-system",
 		   " - print all\n"
 		   "n - print and return state\n"
 		   "m n - print state in given range\n"
