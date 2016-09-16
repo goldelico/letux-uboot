@@ -109,19 +109,46 @@ int bq2429x_battery_present(void)
  * @brief tca642x_init - Pyra default values for the GPIO expander
  * input reg, output reg, polarity reg, configuration reg (0=output)
  */
+#define P00_HDMI_CT_HPD	0x01
+#define P01_HDMI_LS_OE	0x02
+#define P02_NONE	0x04
+#define P03_NONE	0x08
+#define P04_VIBRA	0x10
+#define P05_FAULT2	0x20
+#define P06_NONE	0x40
+#define P07_NONE	0x80
+
+#define P10_EN_USB	0x01
+#define P11_EN_HOST1	0x02
+#define P12_EN_HOST2	0x04
+#define P13_CHG_INT	0x08
+#define P14_NONE	0x10
+#define P15_NONE	0x20
+#define P16_MICPRES	0x40
+#define P17_EN_MODEM	0x80
+
+#define P20_SD_HS_AMP	0x01
+#define P21_CHG_STAT	0x02
+#define P22_PWR_GREEN	0x04
+#define P23_PWR_BLUE	0x08
+#define P24_EN_ESATA	0x10
+#define P25_FAULT2	0x20
+#define P26_NONE	0x40
+#define P27_NONE	0x80
+
 struct tca642x_bank_info pyra_tca642x_init[] = {
+	{ .input_reg = 0x00,	/* not really initialized */
+	  .output_reg = 0x00,
+	  .polarity_reg = 0x00,
+	  .configuration_reg = 0x00 },	/* all others are outputs */
 	{ .input_reg = 0x00,
 	  .output_reg = 0x00,
 	  .polarity_reg = 0x00,
-	  .configuration_reg = 0x00 },	/* drive fault low (red LED on) */
+	  .configuration_reg = P16_MICPRES | P13_CHG_INT },	/* all others are outputs */
 	{ .input_reg = 0x00,
 	  .output_reg = 0x00,
 	  .polarity_reg = 0x00,
-	  .configuration_reg = 0x48 },	/* mic-pres and otg-int are inputs */
-	{ .input_reg = 0x00,
-	  .output_reg = 0x00,
-	  .polarity_reg = 0x00,
-	  .configuration_reg = 0x03 },	/* driver fault low (red LED on), open-drain (input) en-hs-amp, chg-stat = input */
+	  .configuration_reg = P20_SD_HS_AMP | P21_CHG_STAT | P22_PWR_GREEN | P23_PWR_BLUE },	/* all others are outputs */
 };
 
 /**
