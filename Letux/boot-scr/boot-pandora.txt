@@ -1,5 +1,12 @@
-# this file makes the SD card bootable on the OpenPandora (press right shoulder button during boot)
-# (c) Golden Delicious Computers, 2014-2015
+# this file makes the SD card bootable on the OpenPandora
+#
+# operation:
+#  1. press right shoulder button
+#  2. power on
+#  3. select boot from SD by D-Pad arrow keys
+#  4. press "B" button
+#
+# (c) Golden Delicious Computers, 2014-2016
 # compare http://pandorawiki.org/Debian_On_SD#auto.2Fboot.txt
 
 setenv stdout serial	# output should go to console and not flash across the screen
