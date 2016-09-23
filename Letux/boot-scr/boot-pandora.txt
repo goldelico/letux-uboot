@@ -11,9 +11,18 @@
 
 setenv stdout serial	# output should go to console and not flash across the screen
 
-# we should somehow auto-detect and choose either:
-setenv devicetree omap3-pandora-600mhz
-# setenv devicetree omap3-pandora-1ghz
+# check the CONTROL_IDCODE to distinguish between OMAP3530 and DM3730
+
+if itest.w *0x4830a204 == 0x102f
+then
+	# could check "speed binned bit" to decide 800/1000MHz
+	echo "DM3730 1GHz Pandora"
+	setenv devicetree omap3-pandora-1ghz
+else
+	# could check bit to decide 600/720MHz
+	echo "OMAP3530 600MHz Pandora"
+	setenv devicetree omap3-pandora-600mhz
+fi
 
 setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel
 setenv kernelmmc 0	# mmc number as seen by kernel
