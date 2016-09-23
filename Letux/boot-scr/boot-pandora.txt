@@ -1,0 +1,38 @@
+# this file makes the SD card bootable on the OpenPandora (press right shoulder button during boot)
+# (c) Golden Delicious Computers, 2014-2015
+# compare http://pandorawiki.org/Debian_On_SD#auto.2Fboot.txt
+
+setenv stdout serial	# output should go to console and not flash across the screen
+
+# we should somehow auto-detect and choose either:
+setenv devicetree omap3-pandora-600mhz
+# setenv devicetree omap3-pandora-1ghz
+
+setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel
+setenv kernelmmc 0	# mmc number as seen by kernel
+setenv defaultdisplay   lcd
+setenv PARTITION 1	# partition where kernel is found (simulates the partition selection mechanism of the GTA04)
+setenv PARTITIONTYPE EXT	# we are located in / of an ext partition
+
+echo set some defaults for bootargs.scr
+setenv console "ttyO2,115200n8"
+# setenv nand "not yet sure if kernel does not damage system in nand"
+setenv mmcroot "/dev/mmcblk${kernelmmc}p1"
+setenv mmcrootfstype "ext4,ext3 rootwait"
+# setenv mmcargs 'setenv bootargs elevator=noop console=${console} root=/dev/mmcblk${kernelmmc}p${PARTITION} rw rootwait earlyprintk fixrtc'
+setenv bootargs "console=${console} ubi.mtd=${nand} root=${mmcroot} rootfstype=${mmcrootfstype}"
+
+# load device tree and kernel binary
+ext2load mmc ${mmc}:${PARTITION} 0x825f0000 /boot/${devicetree}.dtb
+ext2load mmc ${mmc}:${PARTITION} 0x80300000 /boot/uImage
+
+# run mmcargs
+
+# allow to overwrite boot args (incl. kernelmmc)
+if ext2load mmc ${mmc}:${PARTITION} 0x81300000 /boot/bootargs.scr
+then
+	source 0x81300000
+fi
+
+setenv fdt_high 0x84000000
+bootm 0x80300000 - 0x825f0000
