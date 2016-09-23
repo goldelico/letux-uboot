@@ -1,0 +1,45 @@
+# assume we have the EXP43 connected
+setenv devicetree am335x-boneblack+gta04
+setenv defaultdisplay   lcd
+
+setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel
+# we should have some mechanism so that u-boot and kernel use the same mmc numbering scheme or we have problems specifying the right rootfs
+setenv kernelmmc 1	# mmc number as seen by kernel
+setenv PARTITION 1	# partition where kernel is found (simulates the partition selection mechanism of the GTA04)
+setenv PARTITIONTYPE FAT
+
+# set default
+setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rw rootwait earlyprintk fixrtc'
+
+DONE=0
+for m in 1 0 # scan uSD and eMMC
+do
+	mmc rescan # ${m}
+	for p in 1 2 3 4 # scan all partitions
+	do
+		# echo try mmc ${m}:${p}
+		if itest $DONE == 0
+		then  # try to load device tree and kernel binary
+			if fatload mmc ${m}:${p} 0x80300000 uImage
+			then
+				echo found kernel /uImage on mmc ${m}:${p}
+		#	setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
+				setenv mmc ${m}
+				setenv PARTITION ${p}
+				fatload mmc ${m}:${p} 0x825f0000 ${devicetree}.dtb
+				DONE=1
+			fi
+		fi
+	done
+done
+
+run mmcargs
+
+# allow to overwrite boot args (incl. kernelmmc)
+if fatload mmc ${mmc}:${PARTITION} 0x81300000 bootargs.scr
+then
+	source 0x81300000
+fi
+
+setenv fdt_high 0x84000000
+bootm 0x80300000 - 0x825f0000
