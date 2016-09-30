@@ -100,7 +100,7 @@ int bq2429x_battery_present(void)
 		return 0;
 	}
 
-	printf("  r9=%02x\n", reg);
+	printf("bq24297: r9 = %02x\n", reg);
 
 	return !(reg & 0x03);	/* no NTC fault - assume battery is inserted */
 }
@@ -148,29 +148,46 @@ int board_init(void)
 #endif
 
 // UNDERSTAND ME: it is important that we program the bq2429x first before
-// we initialize the tca6424! Why? What is turned on and draws too much energy?
+// we initialize the tca6424! Why?
+// What is (sometimes) turned on and draws too much energy?
+// WWAN-Module? USB DC/DC?
 
 	if (bq24297_i2c_write_u8(0x05, 0x8a))
 		printf("bq24297: could not turn off 40 sec watchdog\n");
 
 	if (!bq2429x_battery_present()) {
 		u8 reg;
-		/* increase bq24297 current limit to 2 A if we operate from no battery */
-		/* otherwise we can not safely boot into Linux */
+
+		printf("No battery found\n");
+
+		/* if we operate from no battery:
+		 * increase bq24297 current limit to 2 A
+		 * and reduce VINDPM minimum VBUS voltage to 3.88 V
+		 * Otherwise we can not safely boot into Linux, especially
+		 * with higher resistance of the USB cable.
+		 */
 
 		if (bq24297_i2c_read_u8(0x00, &reg))
 			printf("bq24297: no response from REG0\n");
 		else {
+			u8 nreg = reg;
 			int ilim = reg & 0x7; /* bit 0..2 are IINLIM */
-			printf("Iin_lim detected %d\n", ilim);
-			if (ilim < 6)
-				{
-				ilim=6;	/* increase to min. of 2A */
-				reg &= ~0x7;
-				reg |= ilim;
-				printf("Iin_lim changed %d\n", ilim);
-				if (bq24297_i2c_write_u8(0x00, reg))
-					printf("bq24297: could not set REG0 to %02x\n", reg);
+			printf("Iin_lim found: %d\n", ilim);
+			if (ilim < 6) {
+				ilim = 6;	/* increase to min. of 2A */
+				nreg &= ~0x7;
+				nreg |= ilim;
+				printf("Iin_lim changed %d\n", nreg & 0x7);
+			}
+			printf("Vin_dpm found: %d\n", (reg >> 3) & 0x0f);
+			nreg &= ~0x78;	/* bits 3..6 are VINDPM */
+			nreg |= (0 << 3);	/* set level 0 = 3.88V */
+			printf("Vin_dpm changed: %d\n", (nreg >> 3) & 0x0f);
+			if (nreg != reg) {
+				if (bq24297_i2c_write_u8(0x00, nreg))
+					printf("bq24297: could not set REG0 to %02x\n", nreg);
+				else
+					printf("bq24297: r0 := %02x\n", nreg);
 			}
 		}
 	}
