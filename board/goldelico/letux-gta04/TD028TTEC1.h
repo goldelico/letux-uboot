@@ -17,5 +17,6 @@ int jbt_reg_write(struct jbt_info *jbt, u_int8_t reg, u_int8_t data);
 int jbt_reg_write16(struct jbt_info *jbt, u_int8_t reg, u_int16_t data);
 
 int panel_check(void);
+int panel_reg_init(void);
 
 #endif
