@@ -486,6 +486,7 @@ int twl4030_init_battery_charging(void)
 	printf("AC charger voltage:     %d mV\n", twl4030_get_ac_charger_voltage());
 	printf("USB charger voltage:    %d mV\n", twl4030_get_usb_charger_voltage());
 	printf("Charging current:       %d mA\n", twl4030_get_battery_current());
+	printf("Charger present :       %d\n", charger_present);
 	return ret;
 }
 
