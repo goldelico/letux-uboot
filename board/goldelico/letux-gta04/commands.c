@@ -124,14 +124,11 @@ static int do_lcd_start(int argc, char *const argv[])
 
 static int do_lcd(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	int len;
-	
 	if (argc < 2) {
 		printf ("lcm: missing subcommand.\n");
 		return (-1);
 	}
 	
-	len = strlen (argv[1]);
 	if (strncmp ("ba", argv[1], 2) == 0) {
 		return do_lcd_backlight (argc, argv);
 	} else if (strncmp ("po", argv[1], 2) == 0) {
@@ -186,14 +183,11 @@ static int do_charge_off(int argc, char *const argv[])
 
 static int do_charge(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	int len;
-
 	if (argc < 2) {
 		printf("charge: missing subcommand.\n");
 		return -1;
 	}
 
-	len = strlen(argv[1]);
 	if (strncmp("au", argv[1], 2) == 0) {
 		return do_charge_auto(argc, argv);
 	} else if (strncmp("of", argv[1], 2) == 0) {
@@ -334,14 +328,11 @@ static int do_tsc_choose(int argc, char *const argv[])
 
 static int do_tsc(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	int len;
-	
 	if (argc < 2) {
 		printf ("tsc: missing subcommand.\n");
 		return (-1);
 	}
 	
-	len = strlen (argv[1]);
 	if (strncmp ("ge", argv[1], 2) == 0) {
 		return do_tsc_get (argc, argv);
 	} else if (strncmp ("lo", argv[1], 2) == 0) {
@@ -451,14 +442,11 @@ static int do_status_blink(int argc, char *const argv[])
 
 static int do_status_flash(int argc, char *const argv[])
 {
-	int len;
-	
 	if (argc < 3) {
 		printf ("status flash: missing subcommand.\n");
 		return (-1);
 	}
 	
-	len = strlen (argv[2]);
 	if (strncmp ("of", argv[2], 2) == 0) {
 		return status_set_flash (0);
 	} else if (strncmp ("on", argv[2], 2) == 0) {
@@ -485,14 +473,11 @@ static int do_status_vibra(int argc, char *const argv[])
 
 static int do_status(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	int len;
-	
 	if (argc < 2) {
 		printf ("status: missing subcommand.\n");
 		return (-1);
 	}
 	
-	len = strlen (argv[1]);
 	if (strncmp ("ge", argv[1], 2) == 0) {
 		return do_status_get (argc, argv);
 	} else if (strncmp ("se", argv[1], 2) == 0) {
@@ -560,14 +545,11 @@ static int do_gps_echo(int argc, char *const argv[])
 
 static int do_gps(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	int len;
-	
 	if (argc < 2) {
 		printf ("gps: missing subcommand.\n");
 		return (-1);
 	}
 	
-	len = strlen (argv[1]);
 	if (strncmp ("on", argv[1], 2) == 0) {
 		return do_gps_on (argc, argv);
 	} else if (strncmp ("of", argv[1], 2) == 0) {
