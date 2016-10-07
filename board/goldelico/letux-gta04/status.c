@@ -348,3 +348,46 @@ int status_set_vibra (int value)
 	 */
 	return 0;	
 }
+
+/* compatibility to u-boot led command */
+
+static int get_led_gpio(led_id_t mask)
+{
+	if(mask & (1<<0)) return GPIO_LED_AUX_RED;
+	if(mask & (1<<1)) return GPIO_LED_AUX_GREEN;
+	if(mask & (1<<2)) return GPIO_LED_POWER_RED;
+	if(mask & (1<<3)) return GPIO_LED_POWER_GREEN;
+	if(mask & (1<<4)) return GPIO_LED_VIBRA;
+	if(mask & (1<<5)) return GPIO_LED_UNUSED;
+	return 0;
+}
+
+void __led_init (led_id_t mask, int state)
+{
+	int toggle_gpio;
+
+	toggle_gpio = get_led_gpio(mask);
+
+	if (toggle_gpio && !gpio_request(toggle_gpio, "led"))
+		__led_set(mask, state);
+}
+
+void __led_toggle (led_id_t mask)
+{
+	int state, toggle_gpio;
+
+	toggle_gpio = get_led_gpio(mask);
+	if (toggle_gpio) {
+		state = gpio_get_value(toggle_gpio);
+		gpio_direction_output(toggle_gpio, !state);
+	}
+}
+
+void __led_set (led_id_t mask, int state)
+{
+	int toggle_gpio;
+
+	toggle_gpio = get_led_gpio(mask);
+	if (toggle_gpio)
+		gpio_direction_output(toggle_gpio, state);
+}
