@@ -664,7 +664,7 @@ U_BOOT_CMD(systest, 3, 0, do_systest, "System Test",
 		   );
 
 
-static int do_poweroff(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+int do_poweroff(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	backlight_set_level(0);
 	panel_enter_state(0);
@@ -674,8 +674,11 @@ static int do_poweroff(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	return (0);
 }
 
+// nobody uses this config yet...
+#ifndef CONFIG_CMD_POWEROFF
 U_BOOT_CMD(poweroff, 2, 0, do_poweroff, "Poweroff",
 		   "");
+#endif
 
 static int do_suspend(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
