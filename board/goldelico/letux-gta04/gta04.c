@@ -296,7 +296,7 @@ int misc_init_r(void)
 						 TWL4030_BB_CFG_BBISEL_500UA, TWL4030_PM_RECEIVER_BB_CFG);
 #endif
 	
-	dieid_num_r();
+	omap_die_id_display();
 
 #if 0	// check if watchdog is switched off
 	{	
