@@ -96,7 +96,6 @@ source "board/compulab/cm_t54/Kconfig"
 source "board/ti/omap5_uevm/Kconfig"
 source "board/ti/dra7xx/Kconfig"
 source "board/ti/am57xx/Kconfig"
-source "board/ti/beagle_x15/Kconfig"
 source "board/goldelico/letux-cortex15/Kconfig"
 source "board/pandora/pyra+lc15/Kconfig"
 
