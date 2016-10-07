@@ -12,6 +12,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_CLK		V_NS16550_CLK
 
 #define CONFIG_NR_DRAM_BANKS	2	/* CS1 may or may not be populated */
