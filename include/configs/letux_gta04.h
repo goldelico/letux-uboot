@@ -24,6 +24,7 @@
  * ti_armv7_common.h for backwards compatibility.
  */
 
+#define CONFIG_SYS_TEXT_BASE		0x80100000
 #define CONFIG_SPL_BSS_START_ADDR	0x80000000
 #define CONFIG_SPL_BSS_MAX_SIZE		(512 << 10)	/* 512 KB */
 #define CONFIG_SYS_SPL_MALLOC_START	0x80208000
@@ -81,6 +82,7 @@
 #define CONFIG_FASTBOOT_BUF_SIZE	0x07000000
 
 /* USB EHCI */
+#if 0	/* not very useful for GTA04 */
 #define CONFIG_CMD_USB
 #define CONFIG_USB_EHCI
 
@@ -92,6 +94,7 @@
 #define CONFIG_USB_ETHER_ASIX
 #define CONFIG_USB_ETHER_MCS7830
 #define CONFIG_USB_ETHER_SMSC95XX
+#endif
 
 /* GPIO banks */
 #define CONFIG_OMAP3_GPIO_5		/* GPIO128..159 is in GPIO bank 5 */
