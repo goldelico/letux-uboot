@@ -194,7 +194,7 @@ int panel_check(void)
 	int cnt1 = 0;
 
 #if 0
-	printf("panel_reg_init()\n");
+	printf("panel_check()\n");
 #endif
 	err = gpio_request(GPIO_CS, "cs");
 	SPI_CS(1);	// unselect
@@ -205,7 +205,7 @@ int panel_check(void)
 	err |= gpio_request(GPIO_DIN, "din");
 	if(err)
 		{
-		printf("panel_reg_init() - could not get GPIOs\n");
+		printf("panel_check() - could not get GPIOs\n");
 		return 1;
 		}
 	gpio_direction_output(GPIO_CS, 0);	// output
