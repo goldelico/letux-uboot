@@ -34,16 +34,28 @@
  */
 
 #include <common.h>
+#include <dm.h>
+#include <ns16550.h>
+#ifdef CONFIG_STATUS_LED
+#include <status_led.h>
+#endif
 #include <twl4030.h>
+#include <linux/mtd/nand.h>
 #include <asm/io.h>
 #include <asm/arch/mmc_host_def.h>
 #include <asm/arch/mux.h>
+#include <asm/arch/mem.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
-#include <asm/mach-types.h>
 #include <asm/gpio.h>
-#include <linux/mtd/nand.h>
+#include <asm/mach-types.h>
+#include <asm/omap_musb.h>
+#include <asm/errno.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <linux/usb/musb.h>
 #include "gta04.h"
+#include <command.h>
 
 char *muxname="unknown";
 char *devicetree="unknown";
@@ -120,6 +132,38 @@ int isXM(void)
 	return 0;
 }
 
+#define GTA04A2	 	7
+#define GTA04A3	 	3
+#define GTA04Ab2	1
+#define GTA04A4	 	5
+#define GTA04A5	 	6
+
+int get_gta04_revision(void)
+{
+	int revision = -1;
+
+	if (!gpio_request(171, "version-0") &&
+		!gpio_request(172, "version-1") &&
+		!gpio_request(173, "version-2")) {
+
+		gpio_direction_input(171);
+		gpio_direction_input(172);
+		gpio_direction_input(173);
+
+		revision = gpio_get_value(173) << 2 |
+			gpio_get_value(172) << 1 |
+			gpio_get_value(171);
+
+		/* should make gpios pulled down to save a little energy */
+
+		gpio_free(171);
+		gpio_free(172);
+		gpio_free(173);
+	}
+
+	return revision;
+}
+
 /*
  * Routine: misc_init_r
  * Description: Configure board specific parts
@@ -135,8 +179,6 @@ int isXM(void)
 
 int misc_init_r(void)
 {
-	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
-	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 	char devtree[256];
 
 	/* ITG3200 & HMC5883L VAUX2 = 2.8V */
@@ -169,43 +211,29 @@ int misc_init_r(void)
 	   on the board revision */
 
 	if(strcmp(devicetree, "omap3-gta04") == 0) {
-		int revision;
+		int revision = get_gta04_revision();
 
-		if (!gpio_request(171, "version-0") &&
-			!gpio_request(172, "version-1") &&
-			!gpio_request(173, "version-2")) {
-
-			gpio_direction_input(171);
-			gpio_direction_input(172);
-			gpio_direction_input(173);
-
-			revision = gpio_get_value(173) << 2 |
-			gpio_get_value(172) << 1 |
-			gpio_get_value(171);
-
-			gpio_free(171);
-			gpio_free(172);
-			gpio_free(173);
-			switch(revision) {
-				case 7:
-					strcpy(devtree, "omap3-gta04a2");
-					break;
-				case 1:	/* GTA04 Custom for +b2 */
-				case 3:
-					strcpy(devtree, "omap3-gta04a3");
-					break;
-				case 5:
-					strcpy(devtree, "omap3-gta04a4");
-					break;
-				case 6:
-					strcpy(devtree, "omap3-gta04a5");
-					break;
-				default:
-					printf("Error: unknown revision GPIOs: %x\n", revision);
+		switch(revision) {
+			case GTA04A2:
+				strcpy(devtree, "omap3-gta04a2");
+				break;
+			case GTA04Ab2:	/* GTA04 Custom for +b2 */
+			case GTA04A3:
+				strcpy(devtree, "omap3-gta04a3");
+				break;
+			case GTA04A4:
+				strcpy(devtree, "omap3-gta04a4");
+				break;
+			case GTA04A5:
+				strcpy(devtree, "omap3-gta04a5");
+				break;
+			default:
+				printf("Error: unknown revision GPIOs: %x\n", revision);
+				break;
+			case -1:
+				printf("Error: unable to acquire board revision GPIOs\n");
+				break;
 			}
-		} else {
-			printf("Error: unable to acquire board revision GPIOs\n");
-		}
 		strcat(devtree, peripheral);	/* append potential +b2/b3 suffix for peripheral board(s) */
 		devicetree=devtree;
 	}
@@ -238,7 +266,10 @@ int misc_init_r(void)
 	twl4030_power_reset_init();
 
 #if 0
+	{
 	// FIXME: check this!!!
+	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
+	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 	
 	/* Configure GPIOs to output */
 	writel(~(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1), &gpio6_base->oe);
@@ -250,6 +281,7 @@ int misc_init_r(void)
 		   &gpio6_base->setdataout);
 	writel(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
 		   GPIO15 | GPIO14 | GPIO13 | GPIO12, &gpio5_base->setdataout);
+	}
 #endif
 	
 #if 1	// duplicate with twl4030-additions
@@ -358,10 +390,83 @@ void set_muxconf_regs(void)
 	MUX_GTA04();
 }
 
-#ifdef CONFIG_GENERIC_MMC
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_GENERIC_MMC)
 int board_mmc_init(bd_t *bis)
 {
 	omap_mmc_init(0, 0, 0, -1, -1);
 	return 0;
+}
+#endif
+
+#if defined(CONFIG_SPL_BUILD)
+/*
+ * Routine: get_board_mem_timings
+ * Description: If we use SPL then there is no x-loader nor config header
+ * so we have to setup the DDR timings ourself on both banks.
+ */
+void get_board_mem_timings(struct board_sdrc_timings *timings)
+{
+	int pop_mfr, pop_id;
+
+	/*
+	 * We need to identify what PoP memory is on the board so that
+	 * we know what timings to use.  If we can't identify it then
+	 * we know it's an xM.  To map the ID values please see nand_ids.c
+	 */
+	identify_nand_chip(&pop_mfr, &pop_id);
+
+	timings->mr = MICRON_V_MR_165;
+
+	switch (get_board_revision()) {
+#if FIXME
+	// decode GTA04 variations
+	// get_gta04_revision()
+	case REVISION_C4:
+		if (pop_mfr == NAND_MFR_STMICRO && pop_id == 0xba) {
+			/* 512MB DDR */
+			timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
+			timings->ctrla = NUMONYX_V_ACTIMA_165;
+			timings->ctrlb = NUMONYX_V_ACTIMB_165;
+			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+			break;
+		} else if (pop_mfr == NAND_MFR_MICRON && pop_id == 0xba) {
+			/* Beagleboard Rev C4, 512MB Nand/256MB DDR*/
+			timings->mcfg = MICRON_V_MCFG_165(128 << 20);
+			timings->ctrla = MICRON_V_ACTIMA_165;
+			timings->ctrlb = MICRON_V_ACTIMB_165;
+			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+			break;
+		} else if (pop_mfr == NAND_MFR_MICRON && pop_id == 0xbc) {
+			/* Beagleboard Rev C5, 256MB DDR */
+			timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+			timings->ctrla = MICRON_V_ACTIMA_200;
+			timings->ctrlb = MICRON_V_ACTIMB_200;
+			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+			break;
+		}
+	case REVISION_XM_AB:
+	case REVISION_XM_C:
+		if (pop_mfr == 0) {
+			/* 256MB DDR */
+			timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+			timings->ctrla = MICRON_V_ACTIMA_200;
+			timings->ctrlb = MICRON_V_ACTIMB_200;
+			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+		} else {
+			/* 512MB DDR */
+			timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
+			timings->ctrla = NUMONYX_V_ACTIMA_165;
+			timings->ctrlb = NUMONYX_V_ACTIMB_165;
+			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+		}
+		break;
+#endif
+	default:
+		/* Assume 128MB and Micron/165MHz timings to be safe */
+		timings->mcfg = MICRON_V_MCFG_165(128 << 20);
+		timings->ctrla = MICRON_V_ACTIMA_165;
+		timings->ctrlb = MICRON_V_ACTIMB_165;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+	}
 }
 #endif
