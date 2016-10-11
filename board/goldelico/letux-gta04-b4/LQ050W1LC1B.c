@@ -27,11 +27,12 @@
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 #include <asm/mach-types.h>
 #include <twl4030.h>
-#include "../gta04/dssfb.h"
-#include "../gta04/panel.h"
-#include "../gta04/backlight.h"
+#include "../letux-gta04/dssfb.h"
+#include "../letux-gta04/panel.h"
+#include "../letux-gta04/backlight.h"
 #include "LQ050W1LC1B.h"
 
 #define mdelay(n) ({ unsigned long msec = (n); while (msec--) udelay(1000); })
@@ -42,13 +43,13 @@
 
 #endif
 
-#ifdef CONFIG_OMAP3_GTA04
+#ifdef CONFIG_TARGET_LETUX_GTA04_B4
 
 #define GPIO_POWER 12			/* McBSP5-CLKX enables 5V DC/DC (backlight) for the display */
 #define GPIO_BLSHUTDOWN 19		/* McBSP5-FSX controls Backlight SHUTDOWN (shutdown if high) */
 #define GPIO_SHUTDOWN 20		/* McBSP5-DX controls LVDS SHUTDOWN (shutdown if low) */
 
-#elif CONFIG_OMAP3_BEAGLE
+#elif CONFIG_TARGET_LETUX_BEAGLE_B4
 
 #define GPIO_POWER 162			/* McBSP1-CLKX enables 5V DC/DC (backlight) for the display */
 #define GPIO_BLSHUTDOWN 161		/* McBSP1-FSX controls Backlight SHUTDOWN (shutdown if high) */
@@ -103,12 +104,12 @@ static /*const*/ struct panel_config lcm_cfg =
 
 int panel_reg_init(void)
 {
-	omap_request_gpio(GPIO_SHUTDOWN);
-	omap_set_gpio_direction(GPIO_SHUTDOWN, 0);		// output
-	omap_request_gpio(GPIO_POWER);
-	omap_set_gpio_direction(GPIO_POWER, 0);		// output
-	omap_request_gpio(GPIO_BLSHUTDOWN);
-	omap_set_gpio_direction(GPIO_BLSHUTDOWN, 0);	// output
+	gpio_request(GPIO_SHUTDOWN, "shutdown");
+	gpio_direction_output(GPIO_SHUTDOWN, 0);		// output
+	gpio_request(GPIO_POWER, "power");
+	gpio_direction_output(GPIO_POWER, 0);		// output
+	gpio_request(GPIO_BLSHUTDOWN, "backlight");
+	gpio_direction_output(GPIO_BLSHUTDOWN, 0);	// output
 	return 0;
 }
 
@@ -132,19 +133,19 @@ int panel_display_onoff(int on)
 {
 	if(on)
 		{
-		omap_set_gpio_dataout(GPIO_POWER, 1);
+		gpio_direction_output(GPIO_POWER, 1);
 		mdelay(10);
-		omap_set_gpio_dataout(GPIO_SHUTDOWN, 1);
+		gpio_direction_output(GPIO_SHUTDOWN, 1);
 		mdelay(100);
-		omap_set_gpio_dataout(GPIO_BLSHUTDOWN, 0);
+		gpio_direction_output(GPIO_BLSHUTDOWN, 0);
 		}
 	else
 		{
-		omap_set_gpio_dataout(GPIO_BLSHUTDOWN, 1);
+		gpio_direction_output(GPIO_BLSHUTDOWN, 1);
 		mdelay(5);
-		omap_set_gpio_dataout(GPIO_SHUTDOWN, 0);
+		gpio_direction_output(GPIO_SHUTDOWN, 0);
 		mdelay(10);
-		omap_set_gpio_dataout(GPIO_POWER, 0);
+		gpio_direction_output(GPIO_POWER, 0);
 		mdelay(200);
 		}
 	return 0;
