@@ -12,7 +12,7 @@
 char *muxname="BeagleBoard";
 char *peripheral="";
 
-extern int get_board_revision(void);
+static int get_board_revision(void);
 
 int misc_init_r(void)
 {
@@ -28,8 +28,7 @@ int misc_init_r(void)
 		case REVISION_C4:
 			strcpy(devtree, "omap3-beagle");
 			break;
-		case REVISION_XM_A:
-		case REVISION_XM_B:
+		case REVISION_XM_AB:
 			strcpy(devtree, "omap3-beagle-xm-ab");
 			break;
 		case REVISION_XM_C:
@@ -45,10 +44,19 @@ int misc_init_r(void)
 	return 0;
 }
 
+/* FIXME: should be replaced with something more specific
+ * used in
+ *   letux-gta04/status.c
+ *   letux-gta04/jbt6k74.c
+ *   letux-gta04-b2/COM37H3M05DTC.c
+ * etc.
+ * maybe for defining different LED / LCD interfaces?
+ */
+
 int isXM(void)
 {
 	int rev=get_board_revision();
-	return (rev == REVISION_XM_A ||rev == REVISION_XM_B || rev == REVISION_XM_C);
+	return (rev == REVISION_XM_AB || rev == REVISION_XM_C);
 }
 
 #undef misc_init_r

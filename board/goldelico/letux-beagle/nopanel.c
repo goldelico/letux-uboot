@@ -39,8 +39,8 @@
 #include <asm/arch/gpio.h>
 #include <asm/mach-types.h>
 #include <asm/arch/dss.h>
-#include "../gta04/dssfb.h"
-#include "../gta04/panel.h"
+#include "../letux-gta04/dssfb.h"
+#include "../letux-gta04/panel.h"
 
 int panel_display_onoff(int on)
 {
