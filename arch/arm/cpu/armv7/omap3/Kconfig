@@ -145,8 +145,15 @@ config TARGET_LETUX_BEAGLE_B2
 	select DM_SERIAL
 	select DM_GPIO
 
-config CTARGET_LETUX_BEAGLE_B7
-	bool "Letux for Beagle Board Neo900"
+config TARGET_LETUX_BEAGLE_B4
+	bool "Letux for OpenPhoenux Beagle Hybrid B4"
+	select SUPPORT_SPL
+	select DM
+	select DM_SERIAL
+	select DM_GPIO
+
+config TARGET_LETUX_BEAGLE_B7
+	bool "Letux for Beagle-Board-XM based Neo900 prototype"
 	select SUPPORT_SPL
 	select DM
 	select DM_SERIAL
