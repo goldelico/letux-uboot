@@ -5,4 +5,4 @@
 #define BEAGLE_EXTRA_MUX MUX_BEAGLE_EXPANDER
 
 // take the basic beagle.c code
-#include "../beagle/beagle.c"
+#include "../letux-beagle/beagle.c"
