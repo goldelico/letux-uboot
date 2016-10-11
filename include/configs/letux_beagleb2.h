@@ -28,22 +28,7 @@
 
 #include "letux_beagle.h"	/* share config */
 
-#define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
-// #undef CONFIG_CMD_JFFS2
-// #define CONFIG_CMD_JFFS2	1	/* to access the rootfs in NAND flash */
-
-#if 0	// does not compile
-#define CONFIG_MUSB_HCD        1 /* Enable USB driver*/
-#define CONFIG_TWL4030_USB      1 /* Enable TWL4030 USB */
-#define CONFIG_USB_STORAGE
-#define CONFIG_USB_OMAP3530
-#define CONFIG_USB_HOST
-#define CONFIG_CMD_USB
-#endif
-
 #define CONFIG_CMD_SPI	1
-
-// FIXME: add configs for the partitions so that JFFS2 runs in the correct NAND partition
 
 #undef CONFIG_SYS_PROMPT
 #define CONFIG_SYS_PROMPT		"OGTA04@Beagle B2 # "
