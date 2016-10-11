@@ -140,6 +140,13 @@ config TARGET_LETUX_GTA04_B3
 	select DM_SERIAL
 	select DM_GPIO
 
+config TARGET_LETUX_GTA04_B4
+	bool "Letux 5004 / GTA04b4"
+	select SUPPORT_SPL
+	select DM
+	select DM_SERIAL
+	select DM_GPIO
+
 config TARGET_LETUX_GTA04_B7
 	bool "Letux for Neo900"
 	select SUPPORT_SPL
