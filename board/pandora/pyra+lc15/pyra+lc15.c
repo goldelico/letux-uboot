@@ -7,6 +7,7 @@
 /* move away definition by included file */
 #define board_init board_init_overwritten
 #define set_muxconf_regs_essential set_muxconf_regs_essential_inherited
+extern void set_muxconf_regs_essential_inherited(void);
 #define sysinfo sysinfo_disabled
 
 #include "../../goldelico/letux-cortex15/lc15.c"
