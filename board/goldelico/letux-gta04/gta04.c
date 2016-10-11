@@ -57,6 +57,11 @@
 #include "gta04.h"
 #include <command.h>
 
+#ifdef CONFIG_USB_EHCI
+#include <usb.h>
+#include <asm/ehci-omap.h>
+#endif
+
 char *muxname="unknown";
 char *devicetree="unknown";
 char *peripheral="";
@@ -390,11 +395,52 @@ void set_muxconf_regs(void)
 	MUX_GTA04();
 }
 
-#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_GENERIC_MMC)
+#if defined(CONFIG_GENERIC_MMC) && !defined(CONFIG_SPL_BUILD)
 int board_mmc_init(bd_t *bis)
 {
 	omap_mmc_init(0, 0, 0, -1, -1);
 	return 0;
+}
+#endif
+
+#if defined(CONFIG_GENERIC_MMC)
+void board_mmc_power_init(void)
+{
+	twl4030_power_mmc_init(0);
+}
+#endif
+
+#if defined(CONFIG_USB_EHCI) && !defined(CONFIG_SPL_BUILD)
+/* Call usb_stop() before starting the kernel */
+void show_boot_progress(int val)
+{
+	if (val == BOOTSTAGE_ID_RUN_OS)
+		usb_stop();
+}
+
+static struct omap_usbhs_board_data usbhs_bdata = {
+	.port_mode[0] = OMAP_EHCI_PORT_MODE_PHY,
+	.port_mode[1] = OMAP_EHCI_PORT_MODE_PHY,
+	.port_mode[2] = OMAP_USBHS_PORT_MODE_UNUSED
+};
+
+int ehci_hcd_init(int index, enum usb_init_type init,
+		struct ehci_hccr **hccr, struct ehci_hcor **hcor)
+{
+	return omap_ehci_hcd_init(index, &usbhs_bdata, hccr, hcor);
+}
+
+int ehci_hcd_stop(int index)
+{
+	return omap_ehci_hcd_stop();
+}
+
+#endif /* CONFIG_USB_EHCI */
+
+#if defined(CONFIG_USB_ETHER) && defined(CONFIG_USB_MUSB_GADGET)
+int board_eth_init(bd_t *bis)
+{
+	return usb_eth_initialize(bis);
 }
 #endif
 

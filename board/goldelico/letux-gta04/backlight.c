@@ -33,7 +33,12 @@
 
 // CHECKME!
 
-#if defined(CONFIG_TARGET_LETUX_GTA04_B2)
+#if defined(CONFIG_TARGET_LETUX_GTA04)
+
+#define GPIO_BACKLIGHT		57	/* = GPT11_PWM */
+#define GPT_BACKLIGHT		OMAP34XX_GPT11
+
+#elif defined(CONFIG_TARGET_LETUX_GTA04_B2)
 
 #define GPIO_BACKLIGHT		57
 #define GPT_BACKLIGHT		OMAP34XX_GPT11
@@ -48,9 +53,9 @@
 #define GPIO_BACKLIGHT		57
 #define GPT_BACKLIGHT		OMAP34XX_GPT11
 
-#elif defined(CONFIG_TARGET_LETUX_GTA04)
+#elif defined(CONFIG_TARGET_LETUX_GTA04_B7)
 
-#define GPIO_BACKLIGHT		57	/* = GPT11_PWM */
+#define GPIO_BACKLIGHT		19
 #define GPT_BACKLIGHT		OMAP34XX_GPT11
 
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B1)
@@ -70,7 +75,7 @@
 
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7)
 
-#define GPIO_BACKLIGHT		145	/* = GPT10_PWM (instead of UART2-RTS) */
+#define GPIO_BACKLIGHT		161
 #define GPT_BACKLIGHT		OMAP34XX_GPT10
 
 #endif
@@ -97,13 +102,15 @@ int backlight_init(void)
 #if USE_PWM
 	struct gptimer *gpt_base = (struct gptimer *)GPT_BACKLIGHT;
 
-#if defined(CONFIG_TARGET_LETUX_GTA04)
+#if defined(CONFIG_TARGET_LETUX_GTA04) || defined(CONFIG_TARGET_LETUX_GTA04_B2) || defined(CONFIG_TARGET_LETUX_GTA04_B3) || defined(CONFIG_TARGET_LETUX_GTA04_B4)
 	MUX_VAL(CP(GPMC_NCS6),		(IEN | PTD | DIS | M3)) /* Switch GPIO57 to GPT_11 - Backlight enable*/
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B1)
 	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M2)) /* switch GPIO145 to GPT10 */
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B2)
 	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M2)) /* switch GPIO146 to GPT11 */
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B4)
+	// tbd.
+#elif defined(CONFIG_TARGET_LETUX_GTA04_B7)
 	// tbd.
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7)
 	// tbd.
@@ -119,7 +126,7 @@ int backlight_init(void)
 	
 #else	// USE_PWM
 
-#if defined(CONFIG_TARGET_LETUX_GTA04)
+#if defined(CONFIG_TARGET_LETUX_GTA04) || defined(CONFIG_TARGET_LETUX_GTA04_B2) || defined(CONFIG_TARGET_LETUX_GTA04_B3) || defined(CONFIG_TARGET_LETUX_GTA04_B4)
 	MUX_VAL(CP(GPMC_NCS6),		(IEN | PTD | DIS | M4)) /*GPIO_57 - Backlight enable*/
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B1)
 	MUX_VAL(CP(UART2_RTS),		(IEN  | PTD | DIS | M4)) /*GPIO_145*/
@@ -127,6 +134,8 @@ int backlight_init(void)
 	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B4)
 // tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
+#elif defined(CONFIG_TARGET_LETUX_GTA04_B7)
+	// tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7)
 	// tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #else	
