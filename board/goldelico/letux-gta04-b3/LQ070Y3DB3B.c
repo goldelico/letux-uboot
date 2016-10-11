@@ -27,11 +27,12 @@
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 #include <asm/mach-types.h>
 #include <twl4030.h>
-#include "../gta04/dssfb.h"
-#include "../gta04/panel.h"
-#include "../gta04/backlight.h"
+#include "../letux-gta04/dssfb.h"
+#include "../letux-gta04/panel.h"
+#include "../letux-gta04/backlight.h"
 #include "LQ070Y3DB3B.h"
 
 #ifndef CONFIG_GOLDELICO_EXPANDER_B3
@@ -40,11 +41,11 @@
 
 #endif
 
-#ifdef CONFIG_OMAP3_GTA04
+#ifdef CONFIG_TARGET_LETUX_GTA04_B3
 
 #define GPIO_STBY 12
 
-#elif CONFIG_OMAP3_BEAGLE
+#elif CONFIG_TARGET_LETUX_BEAGLE_B3
 
 #define GPIO_STBY 158
 
@@ -97,9 +98,9 @@ static /*const*/ struct panel_config lcm_cfg =
 
 int panel_reg_init(void)
 {
-	omap_request_gpio(GPIO_STBY);
+	gpio_request(GPIO_STBY, "panel-stby");
 	printf("panel_reg_init() GPIO_%d\n", GPIO_STBY);
-	omap_set_gpio_direction(GPIO_STBY, 0);		// output
+	gpio_direction_output(GPIO_STBY, 0);		// output
 	return 0;
 }
 
@@ -121,7 +122,7 @@ int panel_enter_state(enum panel_state new_state)
 
 int panel_display_onoff(int on)
 {
-	omap_set_gpio_dataout(GPIO_STBY, on?1:0);	// on = no STBY
+	gpio_direction_output(GPIO_STBY, on?1:0);	// on = no STBY
 	return 0;
 }
 
