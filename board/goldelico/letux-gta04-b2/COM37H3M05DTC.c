@@ -27,6 +27,7 @@
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 #include <asm/mach-types.h>
 #include <twl4030.h>
 #include "../letux-gta04/dssfb.h"
@@ -34,17 +35,21 @@
 #include "../letux-gta04/backlight.h"
 #include "COM37H3M05DTC.h"
 
+// FIXME: should go to board config
+
 #ifndef CONFIG_GOLDELICO_EXPANDER_B2
 
 #error only for B2 board
 
 #endif
 
-#ifdef CONFIG_OMAP3_GTA04
+// FIXME: should go to board config
+
+#ifdef CONFIG_TARGET_LETUX_GTA04_B2
 
 #define GPIO_STBY 20
 
-#elif CONFIG_OMAP3_BEAGLE
+#elif CONFIG_TARGET_LETUX_BEAGLE_B2
 
 #define GPIO_STBY 158
 
@@ -97,8 +102,8 @@ static /*const*/ struct panel_config lcm_cfg =
 
 int panel_reg_init(void)
 {
-	omap_request_gpio(GPIO_STBY);
-	omap_set_gpio_direction(GPIO_STBY, 0);		// output
+	gpio_request(GPIO_STBY, "panel-stby");
+	gpio_direction_output(GPIO_STBY, 0);		// output
 	return 0;
 }
 
@@ -120,7 +125,7 @@ int panel_enter_state(enum panel_state new_state)
 
 int panel_display_onoff(int on)
 {
-	omap_set_gpio_dataout(GPIO_STBY, on?1:0);	// on = no STBY
+	gpio_direction_output(GPIO_STBY, on?1:0);	// on = no STBY
 	return 0;
 }
 

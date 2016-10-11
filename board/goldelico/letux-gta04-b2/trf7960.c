@@ -25,6 +25,7 @@
 #include <command.h>
 #include <spi.h>
 #include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 #include <malloc.h>
 
 /* board specific configuration */
@@ -147,11 +148,11 @@ static int bitbang_spi_xfer(struct spi_slave *slave, int bitlen, uchar writeBuff
 	uchar wb=0;
 	uchar rb=0;
 	if(first) { /* if not correctly done by pinmux */
-		omap_set_gpio_direction(McSPI3_CLK, 0);
-		omap_set_gpio_direction(McSPI3_SIMO, 0);
-		omap_set_gpio_direction(McSPI3_SOMI, 1);
-		omap_set_gpio_dataout(McSPI3_CLK, 0);
-		omap_set_gpio_dataout(McSPI3_SIMO, 0);	/* send out constant 0 bits (idle command) */
+		gpio_direction_output(McSPI3_CLK, 0);
+		gpio_direction_output(McSPI3_SIMO, 0);
+		gpio_direction_input(McSPI3_SOMI);
+		gpio_direction_output(McSPI3_CLK, 0);
+		gpio_direction_output(McSPI3_SIMO, 0);	/* send out constant 0 bits (idle command) */
 		first=0;
 		udelay(100);
 	}
@@ -159,34 +160,34 @@ static int bitbang_spi_xfer(struct spi_slave *slave, int bitlen, uchar writeBuff
 	printf("bitbang_spi_xfer %d bits\n", bitlen);
 #endif
 	if(flags & SPI_XFER_BEGIN) {
-		omap_set_gpio_dataout(McSPI3_CLK, 1);
+		gpio_direction_output(McSPI3_CLK, 1);
 		udelay(HALFBIT);	/* may be optional (>50ns) */
-		omap_set_gpio_dataout(McSPI3_SIMO, 1);	/* start condition (data transision while clock=1) */
+		gpio_direction_output(McSPI3_SIMO, 1);	/* start condition (data transision while clock=1) */
 		udelay(HALFBIT);		
 	}
-	omap_set_gpio_dataout(McSPI3_CLK, 0);
+	gpio_direction_output(McSPI3_CLK, 0);
 	for(bit=0; bit < bitlen; bit++)
 		{ /* write data */
 			if(bit%8 == 0)
 				wb=writeBuffer[bit/8];
-			omap_set_gpio_dataout(McSPI3_SIMO, (wb&0x80)?1:0);	/* send MSB first */
+			gpio_direction_output(McSPI3_SIMO, (wb&0x80)?1:0);	/* send MSB first */
 			wb <<= 1;
 			udelay(HALFBIT);
-			omap_set_gpio_dataout(McSPI3_CLK, 1);
+			gpio_direction_output(McSPI3_CLK, 1);
 			udelay(HALFBIT);
-			omap_set_gpio_dataout(McSPI3_CLK, 0);
-			rb = (rb<<1) | omap_get_gpio_datain(McSPI3_SOMI);	/* sample on falling edge and receive MSB first */
+			gpio_direction_output(McSPI3_CLK, 0);
+			rb = (rb<<1) | gpio_get_value(McSPI3_SOMI);	/* sample on falling edge and receive MSB first */
 			if(bit%8 == 7)
 				readBuffer[bit/8]=rb;
 		}
 	if(flags & SPI_XFER_END) {
-		omap_set_gpio_dataout(McSPI3_SIMO, 1);	/* set data to 1 */
+		gpio_direction_output(McSPI3_SIMO, 1);	/* set data to 1 */
 		udelay(HALFBIT);
-		omap_set_gpio_dataout(McSPI3_CLK, 1);
+		gpio_direction_output(McSPI3_CLK, 1);
 		udelay(HALFBIT);
-		omap_set_gpio_dataout(McSPI3_SIMO, 0);	/* stop condition (data transision while clock=1) */
+		gpio_direction_output(McSPI3_SIMO, 0);	/* stop condition (data transision while clock=1) */
 		udelay(HALFBIT);	/* may be optional (>50ns) */
-		omap_set_gpio_dataout(McSPI3_CLK, 0);
+		gpio_direction_output(McSPI3_CLK, 0);
 		udelay(HALFBIT);
 	}
 	return 0;
@@ -283,7 +284,7 @@ int prepareIrq(struct trf7960 *device, uchar *data, unsigned int bytes)
 	}
 #endif
 #if 0
-	while(device->irq >= 0 && omap_get_gpio_datain(device->irq)) {
+	while(device->irq >= 0 && gpio_get_value(device->irq)) {
 		printf("prepareIrq: IRQ pin already active!\n");
 		resetIRQ(device);
 	}
@@ -403,7 +404,7 @@ void waitIrq(struct trf7960 *device)
 #endif
 	if(device->irq >= 0)	{ /* check IRQ pin */
 		int cnt=2000;	// software timeout
-		while(!omap_get_gpio_datain(device->irq) && cnt-- > 0)
+		while(!gpio_get_value(device->irq) && cnt-- > 0)
 			udelay(500); /* wait for IRQ pin */
 		handleInterrupt(device);
 	}
@@ -425,32 +426,32 @@ int setPowerMode(struct trf7960 *device, int mode)
 	if(mode < TRF7960_POWER_DOWN || mode > TRF7960_POWER_RXTX_FULL)
 		return -1;
 	if(device->en >= 0)
-		omap_set_gpio_direction(device->en, 0);		/* make output */
+		gpio_direction_output(device->en, 0);		/* make output */
 	if(device->en2 >= 0)
-		omap_set_gpio_direction(device->en2, 0);	/* make output */
+		gpio_direction_output(device->en2, 0);	/* make output */
 	if(device->irq >= 0)
-		omap_set_gpio_direction(device->irq, 1);	/* make input */
+		gpio_direction_output(device->irq, 1);	/* make input */
 	if(mode == TRF7960_POWER_DOWN) {
 		if(device->slave) {
 			spi_free_slave(device->slave);
 			device->slave = NULL;
 		}
 		if(device->en >= 0)
-			omap_set_gpio_dataout(device->en, 0);
+			gpio_direction_output(device->en, 0);
 		if(device->en2 >= 0 && device->en != device->en2)
-			omap_set_gpio_dataout(device->en2, 0);	/* not tied togehter */
+			gpio_direction_output(device->en2, 0);	/* not tied togehter */
 	}
 	else if(mode == TRF7960_POWER_60kHz) {
 		if(device->en >= 0 && device->en2 >= 0 && device->en == device->en2)
 			return -1;	/* can't control them separately */
 		if(device->en >= 0)
-			omap_set_gpio_dataout(device->en, 0);
+			gpio_direction_output(device->en, 0);
 		if(device->en2 >= 0)
-			omap_set_gpio_dataout(device->en2, 1);
+			gpio_direction_output(device->en2, 1);
 	}
 	else {
 		if(device->en >= 0)
-			omap_set_gpio_dataout(device->en, 1);
+			gpio_direction_output(device->en, 1);
 		if(!device->slave) {
 			device->slave = spi_setup_slave(device->bus, device->cs, device->clock, SPI_MODE_0);
 			if(!device->slave)
@@ -789,7 +790,6 @@ static void found(struct trf7960 *device, uint64_t uid, int rssi)
 
 static int do_rfid(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
-	int len;
 	static int statusinit;
 	extern void status_set_status(int value);
 	extern int status_init(void);
@@ -804,10 +804,9 @@ static int do_rfid(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 		statusinit=1;
 	}
 	
-	len = strlen (argv[1]);
 	if (strncmp ("po", argv[1], 2) == 0) {
 		return setPowerMode(&rfid_board, simple_strtoul(argv[2], NULL, 10)) < 0?1:0;
-		
+
 #if 1
 	} else if (strncmp ("re", argv[1], 2) == 0) {
 		int r;
@@ -848,7 +847,7 @@ static int do_rfid(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 			printf("Invalid bitlen %d\n", bitlen);
 			return 1;
 		}
-		
+
 		if(spi_xfer(rfid_board.slave, bitlen, dout, din,
 					SPI_XFER_BEGIN | SPI_XFER_END) != 0) {
 			printf("Error during SPI transaction\n");
@@ -858,7 +857,8 @@ static int do_rfid(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 				printf("%02X", din[j]);
 			}
 			printf("\n");
-		}		
+		}
+		return rcode;
 #endif
 	} else if (strncmp ("sc", argv[1], 2) == 0) {
 		numfound=0;
@@ -928,7 +928,7 @@ static int do_rfid(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	} else {
 		printf ("rfid: unknown operation: %s\n", argv[1]);
 	}
-	
+
 	return (0);
 }
 
