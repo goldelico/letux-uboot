@@ -33,10 +33,19 @@
 #include <twl4030.h>
 #include "status.h"
 
-#if defined(CONFIG_TARGET_LETUX_GTA04)
+#if defined(CONFIG_TARGET_LETUX_GTA04) || defined(CONFIG_TARGET_LETUX_GTA04_B2) || defined(CONFIG_TARGET_LETUX_GTA04_B3) || defined(CONFIG_TARGET_LETUX_GTA04_B4) || defined(CONFIG_TARGET_LETUX_GTA04_B7)
+#define IS_GTA04
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE) || defined(CONFIG_TARGET_LETUX_BEAGLE_B1) || defined(CONFIG_TARGET_LETUX_BEAGLE_B2) || defined(CONFIG_TARGET_LETUX_BEAGLE_B4) || defined(CONFIG_TARGET_LETUX_BEAGLE_B7)
+#define IS_BEAGLE
+#else
+#error "unknown CONFIG_TARGET"
+#endif
 
-// no need to probe for LED controller (compiler should optimize unnecessary code)
-#define CHECK_TCA6507	0
+// FIXME: move these configs to include/configs/letux_*.h
+
+#if defined(IS_GTA04)
+
+#define CHECK_TCA6507	0	// no need to probe for LED controller (compiler should optimize unnecessary code)
 #define hasTCA6507 (1==1)
 
 #define GPIO_AUX		7		// AUX/User button
@@ -46,90 +55,84 @@
 #define GPIO_PENIRQ		160		// TSC must be set up to provide PENIRQ
 #define GPIO_KEYIRQ		176		// FIXME: was 63, 10 on GTA04A2 and A3
 
-// FIXME: other expander variants?
+// FIXME: no mainboard variantions?
 
-#elif defined(CONFIG_OMAP3_BEAGLE)
+#else	/* IS_GTA04 */
 
 static int hasTCA6507=0;
-
 #define GPIO_AUX_ACTIVE	1
-#define GPIO_KEYIRQ		-1
 
-#if defined(CONFIG_TARGET_LETUX_BEAGLE_B1)
-
-#define CHECK_TCA6507	1
-
-#define GPIO_AUX		136		// AUX/User button on expansion board
-#define GPIO_POWER		137		// POWER button
-#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
-#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
-
-#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B2) || defined(CONFIG_TARGET_LETUX_GTA04_B2)
-
-#define CHECK_TCA6507	1
-
-#define GPIO_AUX		136		// AUX/User button on expansion board
-#define GPIO_POWER		137		// POWER button
-#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
-#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
-#undef GPIO_KEYIRQ
-#define GPIO_KEYIRQ		138		// TRF79x0
-
-#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B4) || defined(CONFIG_TARGET_LETUX_GTA04_B4)
-
-#define CHECK_TCA6507	1
-
-#define GPIO_AUX		7		// AUX/User button sits on main board
-#define GPIO_POWER		-1		// POWER button
-#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
-#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
-#undef GPIO_KEYIRQ
-#define GPIO_KEYIRQ		138		// PPS interrupt
-
-#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7) || defined(CONFIG_TARGET_LETUX_GTA04_B7)
-
-#define CHECK_TCA6507	1
-
-#define GPIO_AUX		7		// AUX/User button sits on main board
-#define GPIO_POWER		-1		// POWER button
-#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
-#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
-#undef GPIO_KEYIRQ
-#define GPIO_KEYIRQ		138		// PPS interrupt
-
-#else
-
-// no CONFIG_GOLDELICO_EXPANDER
+#if defined(CONFIG_TARGET_LETUX_BEAGLE)
+// no expander
 
 #define GPIO_AUX		7		// AUX/User button
-#define GPIO_AUX_ACTIVE	1
 #define GPIO_POWER		-1		// N/A on BB (access through TPS65950)
 #define GPIO_GPSEXT		-1		// external GPS antenna is plugged in
 #define GPIO_PENIRQ		-1		// TSC must be set up to provide PENIRQ
 #define GPIO_KEYIRQ		-1		// FIXME: was 63, 10 on GTA04A2 and A3
 
-#endif
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B1)
+// openmoko beagle hybrid
+
+#define CHECK_TCA6507	1
+
+#define GPIO_AUX		136		// AUX/User button on expansion board
+#define GPIO_POWER		137		// POWER button
+#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+#define GPIO_KEYIRQ		-1
+
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B2)
+
+#define CHECK_TCA6507	1
+
+#define GPIO_AUX		136		// AUX/User button on expansion board
+#define GPIO_POWER		137		// POWER button
+#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+#define GPIO_KEYIRQ		138		// TRF79x0
+
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B4)
+
+#define CHECK_TCA6507	1
+
+#define GPIO_AUX		7		// AUX/User button sits on main board
+#define GPIO_POWER		-1		// POWER button
+#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+#define GPIO_KEYIRQ		138		// PPS interrupt
+
+#elif defined(CONFIG_GOLDELICO_EXPANDER_B7)
+// Neo900 demo
+
+#define GPIO_AUX		7		// AUX/User button sits on main board
+#define GPIO_POWER		-1		// POWER button
+#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+#define GPIO_KEYIRQ		138		// PPS interrupt
 
 #endif
+
+#endif	/* CONFIG_TARGET_LETUX_GTA04 */
 
 #define TWL4030_I2C_BUS		(1-1)	// I2C1
 #define TCA6507_BUS			(2-1)	// I2C2
 #define TCA6507_ADDRESS		0x45
 
 /* register numbers */
-#define TCA6507_SELECT0						0
-#define TCA6507_SELECT1						1
-#define TCA6507_SELECT2						2
-#define TCA6507_FADE_ON_TIME				3
-#define TCA6507_FULLY_ON_TIME				4
-#define TCA6507_FADR_OFF_TIME				5
+#define TCA6507_SELECT0			0
+#define TCA6507_SELECT1			1
+#define TCA6507_SELECT2			2
+#define TCA6507_FADE_ON_TIME			3
+#define TCA6507_FULLY_ON_TIME			4
+#define TCA6507_FADR_OFF_TIME			5
 #define TCA6507_FIRST_FULLY_OFF_TIME		6
 #define TCA6507_SECOND_FULLY_OFF_TIME		7
-#define TCA6507_MAXIMUM_INTENSITY			8
+#define TCA6507_MAXIMUM_INTENSITY		8
 #define TCA6507_ONE_SHOT_MASTER_INTENSITY	9
-#define TCA6507_INITIALIZATION				10
+#define TCA6507_INITIALIZATION			10
 
-#define TCA6507_AUTO_INCREMENT				16
+#define TCA6507_AUTO_INCREMENT			16
 
 static int thisIsXM = 0;
 
@@ -138,10 +141,10 @@ static int thisIsXM = 0;
 
 #define GPIO_LED_AUX_RED		(thisIsXM?88:70)		// AUX
 #define GPIO_LED_AUX_GREEN		(thisIsXM?89:71)		// AUX
-#define GPIO_LED_POWER_RED		78					// Power
-#define GPIO_LED_POWER_GREEN	79					// Power
+#define GPIO_LED_POWER_RED		78				// Power
+#define GPIO_LED_POWER_GREEN		79				// Power
 #define GPIO_LED_VIBRA			(thisIsXM?2:88)			// Vibracall motor
-#define GPIO_LED_UNUSED			(thisIsXM?3:89)			// unused
+#define GPIO_LED_UNUSED		(thisIsXM?3:89)			// unused
 
 static int status;
 
