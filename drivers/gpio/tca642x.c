@@ -241,12 +241,8 @@ int do_tca642x(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	}
 
 	/* arg2 used as chip number or pin number */
-	if (argc > 2)
+	if (argc > 2) {
 		ul_arg2 = simple_strtoul(argv[2], NULL, 10);
-
-	/* arg3 used as pin or invert value */
-	if (argc > 3) {
-		ul_arg3 = simple_strtoul(argv[3], NULL, 10) & 0x1;
 		if (ul_arg2 <= 7) {
 			gpio_bank = 0;
 		} else if ((ul_arg2 >= 10) && (ul_arg2 <= 17)) {
@@ -259,6 +255,10 @@ int do_tca642x(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			goto error;
 		}
 	}
+
+	/* arg3 used as pin or invert value */
+	if (argc > 3)
+		ul_arg3 = simple_strtoul(argv[3], NULL, 10) & 0x1;
 
 	switch ((int)c->cmd) {
 	case TCA642X_CMD_INFO:
@@ -277,7 +277,7 @@ int do_tca642x(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	case TCA642X_CMD_INPUT:
 		bank_shift = ul_arg2 - (gpio_bank * 10);
 		ret = tca642x_set_dir(chip, gpio_bank, (1 << bank_shift),
-				TCA642X_DIR_IN << bank_shift);
+				(TCA642X_DIR_IN << bank_shift));
 		val = (tca642x_get_val(chip, gpio_bank) &
 				(1 << bank_shift)) != 0;
 
