@@ -1,0 +1,5 @@
+fdtfile=am335x-letux-cortex8.dtb
+
+bootdir=/
+bootfile=uImage
+bootfilecmd=bootm
