@@ -11,6 +11,15 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
+static inline int board_is_osd3358(void)
+{
+#if defined(CONFIG_OSD3358)
+	return 1;
+#else
+	return 0;
+#endif
+}
+
 static inline int board_is_bone(void)
 {
 	return board_ti_is("A335BONE");
