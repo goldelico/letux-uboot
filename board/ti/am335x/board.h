@@ -33,7 +33,7 @@ static inline int board_is_evm_sk(void)
 
 static inline int board_is_idk(void)
 {
-	return !strncmp(board_ti_get_config(), "SKU#02", 6);
+	return board_ti_get_config() && !strncmp(board_ti_get_config(), "SKU#02", 6);
 }
 
 static inline int board_is_gp_evm(void)
