@@ -31,4 +31,10 @@ config NOR
 
 source "board/ti/common/Kconfig"
 
+config OSD3358
+	bool "Support for OSD3358 module (DRAM settings)"
+	help
+	  Say yes here if the am3358is part of the OSD3358 module. This
+	  setting will change how the DRAM controller is initialized.
+
 endif
