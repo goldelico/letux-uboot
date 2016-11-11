@@ -275,7 +275,7 @@ void am33xx_spl_board_init(void)
 	/* Get the frequency */
 	dpll_mpu_opp100.m = am335x_get_efuse_mpu_max_freq(cdev);
 
-	if (board_is_bone() || board_is_bone_lt()) {
+	if (board_is_bone() || board_is_bone_lt() || board_is_osd3358()) {
 		/* BeagleBone PMIC Code */
 		int usb_cur_lim;
 
@@ -308,7 +308,7 @@ void am33xx_spl_board_init(void)
 		 * Override what we have detected since we know if we have
 		 * a Beaglebone Black it supports 1GHz.
 		 */
-		if (board_is_bone_lt())
+		if (board_is_bone_lt() || board_is_osd3358())
 			dpll_mpu_opp100.m = MPUPLL_M_1000;
 
 		/*
@@ -416,6 +416,8 @@ const struct dpll_params *get_dpll_ddr_params(void)
 
 	if (board_is_evm_sk())
 		return &dpll_ddr_evm_sk;
+	else if (board_is_osd3358())
+		return &dpll_ddr_osd3358;
 	else if (board_is_bone_lt() || board_is_icev2())
 		return &dpll_ddr_bone_black;
 	else if (board_is_evm_15_or_later())
@@ -503,6 +505,12 @@ void sdram_init(void)
 	if (board_is_evm_sk())
 		config_ddr(303, &ioregs_evmsk, &ddr3_data,
 			   &ddr3_cmd_ctrl_data, &ddr3_emif_reg_data, 0);
+	else if (board_is_osd3358())
+#warning OSD3358 DDR3
+		config_ddr(400, &ioregs_bonelt,
+			&ddr3_osd3358_data,
+			&ddr3_osd3358_cmd_ctrl_data,
+			&ddr3_osd3358_emif_reg_data, 0);
 	else if (board_is_bone_lt())
 		config_ddr(400, &ioregs_bonelt,
 			   &ddr3_beagleblack_data,
@@ -724,7 +732,7 @@ int board_eth_init(bd_t *bis)
 		puts("Could not get board ID.\n");
 
 	if (board_is_bone() || board_is_bone_lt() ||
-	    board_is_idk()) {
+	    board_is_idk() || board_is_osd3358()) {
 		writel(MII_MODE_ENABLE, &cdev->miisel);
 		cpsw_slaves[0].phy_if = cpsw_slaves[1].phy_if =
 				PHY_INTERFACE_MODE_MII;

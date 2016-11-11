@@ -396,6 +396,12 @@ void enable_board_pin_mux(void)
 		configure_module_pin_mux(uart3_icev2_pin_mux);
 		configure_module_pin_mux(rmii1_pin_mux);
 		configure_module_pin_mux(spi0_pin_mux);
+	} else if (board_is_osd3358()) {
+		puts("Configure pinmux for OSD3358.");
+		configure_module_pin_mux(i2c1_pin_mux);
+		configure_module_pin_mux(mii1_pin_mux);
+		configure_module_pin_mux(mmc0_pin_mux);
+		configure_module_pin_mux(mmc1_pin_mux);
 	} else {
 		puts("Unknown board, cannot configure pinmux.");
 		hang();
