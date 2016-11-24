@@ -87,6 +87,59 @@
 				"fi;" \
 			"fi;" \
 		"fi;\0" \
+	"fdtfile=undefined\0" \
+	"bootpart=0:2\0" \
+	"bootdir=/boot\0" \
+	"bootfile=zImage\0" \
+	"bootfilecmd=bootz\0" \
+	"usbtty=cdc_acm\0" \
+	"vram=16M\0" \
+	"optargs=\0" \
+	"dofastboot=0\0" \
+	"loadbootscript=fatload mmc ${mmcdev} ${loadaddr} boot.scr\0" \
+	"loadimage=load mmc ${bootpart} ${loadaddr} ${bootdir}/${bootfile}\0" \
+	"mmcboot=mmc dev ${mmcdev}; " \
+		"if mmc rescan; then " \
+			"echo SD/MMC found on device ${mmcdev};" \
+			"setenv bootpart ${mmcdev}:1; " \
+			"if run loadbootenv; then " \
+				"echo Loaded environment from ${bootenv};" \
+				"run importbootenv;" \
+			"fi;" \
+			"if test -n $uenvcmd; then " \
+				"echo Running uenvcmd ...;" \
+				"run uenvcmd;" \
+			"fi;" \
+			"if run loadimage; then " \
+				"run loadfdt; " \
+				"echo Booting from mmc${mmcdev} ...; " \
+				"run args_mmc; " \
+				"${bootfilecmd} ${loadaddr} - ${fdtaddr}; " \
+			"fi;" \
+		"fi;\0" \
+	"findfdt="\
+		"if test $board_name = omap5_uevm; then " \
+			"setenv fdtfile omap5-uevm.dtb; fi; " \
+		"if test $board_name = dra7xx; then " \
+			"setenv fdtfile dra7-evm.dtb; fi;" \
+		"if test $board_name = dra72x-revc; then " \
+			"setenv fdtfile dra72-evm-revc.dtb; fi;" \
+		"if test $board_name = dra72x; then " \
+			"setenv fdtfile dra72-evm.dtb; fi;" \
+		"if test $board_name = beagle_x15; then " \
+			"setenv fdtfile am57xx-beagle-x15.dtb; fi;" \
+		"if test $board_name = am572x_idk; then " \
+			"setenv fdtfile am572x-idk.dtb; fi;" \
+		"if test $board_name = am57xx_evm; then " \
+			"setenv fdtfile am57xx-beagle-x15.dtb; fi;" \
+		"if test $fdtfile = undefined; then " \
+			"echo WARNING: Could not determine device tree to use; fi; \0" \
+	"loadfdt=load mmc ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile};\0" \
+	"testl=echo test left SD; setenv bootpart 0:1; setenv bootdir /; setenv bootfile uImage; setenv size 450000; for i in 1 2 3 4 5 6 7 8 9 10; do run loadimage; crc32 ${loadaddr} ${size}; done\0" \
+	"testr=echo test right SD; setenv bootpart 2:1; setenv bootdir /; setenv bootfile uImage; setenv size 450000; for i in 1 2 3 4 5 6 7 8 9 10; do run loadimage; crc32 ${loadaddr} ${size}; done\0" \
+	"testu=echo test uSD; setenv bootpart 1:1; setenv bootdir /; setenv bootfile uImage; setenv size 450000; for i in 1 2 3 4 5 6 7 8 9 10; do run loadimage; crc32 ${loadaddr} ${size}; done\0" \
+	"test2=setenv size 450000; while true; do crc32 ${loadaddr} ${size}; done\0" \
+	"testi2c=for i in 0 1 2 3 4; do i2c dev ${i}; i2c probe; done; i2c dev 0;\0" \
 
 /*
  * DDR information.  If the CONFIG_NR_DRAM_BANKS is not defined,
