@@ -195,6 +195,7 @@ config TARGET_UDOO
 config TARGET_UDOO_NEO
 	bool "UDOO Neo"
 	select SUPPORT_SPL
+	select MX6SX
 
 config TARGET_WANDBOARD
 	bool "wandboard"
