@@ -506,7 +506,6 @@ void sdram_init(void)
 		config_ddr(303, &ioregs_evmsk, &ddr3_data,
 			   &ddr3_cmd_ctrl_data, &ddr3_emif_reg_data, 0);
 	else if (board_is_osd3358())
-#warning OSD3358 DDR3
 		config_ddr(400, &ioregs_bonelt,
 			&ddr3_osd3358_data,
 			&ddr3_osd3358_cmd_ctrl_data,
