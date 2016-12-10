@@ -144,7 +144,18 @@ int isXM(void)
 
 int get_gta04_revision(void)
 {
-	int revision = -1;
+	int rev = -1;
+
+	static char revision[8] = {	/* revision table defined by pull-down R305, R306, R307 */
+		9,
+		6,
+		7,
+		3,
+		8,
+		4,
+		5,
+		2
+	};
 
 	if (!gpio_request(171, "version-0") &&
 		!gpio_request(172, "version-1") &&
@@ -154,7 +165,7 @@ int get_gta04_revision(void)
 		gpio_direction_input(172);
 		gpio_direction_input(173);
 
-		revision = gpio_get_value(173) << 2 |
+		rev = gpio_get_value(173) << 2 |
 			gpio_get_value(172) << 1 |
 			gpio_get_value(171);
 
@@ -163,9 +174,12 @@ int get_gta04_revision(void)
 		gpio_free(171);
 		gpio_free(172);
 		gpio_free(173);
+		rev = revision[rev];	/* 000 means GTA04A2 */
 	}
 
-	return revision;
+	printk("Found GTA04A%d\n", rev);
+
+	return rev;
 }
 
 /*
