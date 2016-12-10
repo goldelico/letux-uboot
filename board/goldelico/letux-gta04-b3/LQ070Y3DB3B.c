@@ -34,12 +34,6 @@
 #include "../letux-gta04/backlight.h"
 #include "LQ070Y3DB3B.h"
 
-#ifndef CONFIG_GOLDELICO_EXPANDER_B3
-
-#error only for B3 board
-
-#endif
-
 #ifdef CONFIG_TARGET_LETUX_GTA04_B3
 
 #define GPIO_STBY 12
@@ -48,6 +42,8 @@
 
 #define GPIO_STBY 158
 
+#else
+#error only for B3 board
 #endif
 
 // configure beagle board DSS for the LQ070Y3DB3B

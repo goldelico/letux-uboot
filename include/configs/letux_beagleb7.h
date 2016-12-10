@@ -24,8 +24,6 @@
  * MA 02111-1307 USA
  */
 
-#define CONFIG_GOLDELICO_EXPANDER_B7	y	/* working with BEAGLE and B7 extension board */
-
 #include "letux_beagle.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT

@@ -23,8 +23,6 @@
  * MA 02111-1307 USA
  */
 
-#define CONFIG_GOLDELICO_EXPANDER_B8 y
-
 #include "letux_gta04.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT

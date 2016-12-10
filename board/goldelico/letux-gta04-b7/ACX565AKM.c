@@ -36,12 +36,6 @@
 
 #define mdelay(n) ({ unsigned long msec = (n); while (msec--) udelay(1000); })
 
-#ifndef CONFIG_GOLDELICO_EXPANDER_B7
-
-#error only for B7 board
-
-#endif
-
 #ifdef CONFIG_TARGET_LETUX_GTA04_B7	/* Neo900 */
 
 #define GPIO_POWER 12			/* McBSP5-CLKX enables 5V DC/DC (backlight) for the display */
@@ -54,6 +48,8 @@
 #define GPIO_BLSHUTDOWN 161		/* McBSP1-FSX controls Backlight SHUTDOWN (shutdown if high) */
 #define GPIO_SHUTDOWN 158		/* McBSP1-DX controls LVDS SHUTDOWN (shutdown if low) */
 
+#else
+#error only for B7 boards
 #endif
 
 // configure beagle board DSS for the ACX565AKM

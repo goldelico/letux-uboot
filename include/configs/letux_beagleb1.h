@@ -24,8 +24,6 @@
  * MA 02111-1307 USA
  */
 
-#define CONFIG_GOLDELICO_EXPANDER_B1	1		/* working with BEAGLE and OMB Hybrid */
-
 #include "letux_beagle.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT

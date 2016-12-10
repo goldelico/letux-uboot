@@ -108,13 +108,13 @@ int backlight_init(void)
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B2)
 	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M2)) /* switch GPIO146 to GPT11 */
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B4)
-	// tbd.
+#error backlight not defined for beagle-b4
 #elif defined(CONFIG_TARGET_LETUX_GTA04_B7)
-	// tbd.
+#error backlight not defined for GTA04b7
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7)
-	// tbd.
+#error backlight not defined for beagle-b8
 #else	
-#error undefined CONFIG_GOLDELICO_EXPANDER
+#error undefined Letux device
 #endif
 	// 	writel(value, &gpt_base->registername);
 	// program registers for generating a 100-1000 Hz PWM signal
@@ -138,7 +138,7 @@ int backlight_init(void)
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7)
 	// tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #else	
-#error undefined CONFIG_GOLDELICO_EXPANDER
+#error unknown Letux board
 #endif
 
 	if(gpio_request(GPIO_BACKLIGHT, "backlight") == 0)	// 0 == ok
