@@ -23,7 +23,6 @@
 
 #include <common.h>
 #include <command.h>
-#include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>

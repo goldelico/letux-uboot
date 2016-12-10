@@ -24,7 +24,6 @@
 // FIXME: the b8 model uses a different panel!
 
 #include <common.h>
-#include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/sys_proto.h>

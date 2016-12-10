@@ -26,7 +26,6 @@
 
 
 #include <common.h>
-#include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/mach-types.h>
 #include <asm/arch/i2c.h>

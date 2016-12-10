@@ -50,7 +50,6 @@
 #include <asm/gpio.h>
 #include <asm/mach-types.h>
 #include <asm/omap_musb.h>
-#include <asm/errno.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <linux/usb/musb.h>
