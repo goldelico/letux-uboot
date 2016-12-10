@@ -24,8 +24,6 @@
  * MA 02111-1307 USA
  */
 
-#define CONFIG_GOLDELICO_EXPANDER_B2	1	/* working with BEAGLE and B2 Expander board */
-
 #include "letux_beagle.h"	/* share config */
 
 #define CONFIG_CMD_SPI	1

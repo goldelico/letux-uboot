@@ -70,7 +70,7 @@ static int hasTCA6507=0;
 #define GPIO_PENIRQ		-1		// TSC must be set up to provide PENIRQ
 #define GPIO_KEYIRQ		-1		// FIXME: was 63, 10 on GTA04A2 and A3
 
-#elif defined(CONFIG_GOLDELICO_EXPANDER_B1)
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B1)
 // openmoko beagle hybrid
 
 #define CHECK_TCA6507	1
@@ -81,7 +81,7 @@ static int hasTCA6507=0;
 #define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
 #define GPIO_KEYIRQ		-1
 
-#elif defined(CONFIG_GOLDELICO_EXPANDER_B2)
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B2) || defined(CONFIG_TARGET_LETUX_GTA04_B2)
 
 #define CHECK_TCA6507	1
 
@@ -91,7 +91,19 @@ static int hasTCA6507=0;
 #define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
 #define GPIO_KEYIRQ		138		// TRF79x0
 
-#elif defined(CONFIG_GOLDELICO_EXPANDER_B4)
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B4) || defined(CONFIG_TARGET_LETUX_GTA04_B2)
+
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B2) || defined(CONFIG_TARGET_LETUX_GTA04_B2)
+
+#define CHECK_TCA6507	1
+
+#define GPIO_AUX		136		// AUX/User button on expansion board
+#define GPIO_POWER		137		// POWER button
+#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+#define GPIO_KEYIRQ		138		// TRF79x0
+
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B3) || defined(CONFIG_TARGET_LETUX_GTA04_B3)
 
 #define CHECK_TCA6507	1
 
@@ -101,7 +113,7 @@ static int hasTCA6507=0;
 #define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
 #define GPIO_KEYIRQ		138		// PPS interrupt
 
-#elif defined(CONFIG_GOLDELICO_EXPANDER_B7)
+#elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7) || defined(CONFIG_TARGET_LETUX_GTA04_B2)
 // Neo900 demo
 
 #define GPIO_AUX		7		// AUX/User button sits on main board
@@ -163,7 +175,7 @@ void status_set_status(int value)
 		i2c_set_bus_num(TCA6507_BUS);	// write I2C2
 		// we could write a autoincrement address and all 3 bytes in a single message
 		// we could set the TCA to do smooth transitions
-#if defined(CONFIG_GOLDELICO_EXPANDER_B2)
+#if defined(CONFIG_TARGET_LETUX_BEAGLE_B2) || defined(CONFIG_TARGET_LETUX_GTA04_B2)
 		value |= (value >> 3) & 0x03;	// map power LEDs to AUX LEDs (we only have 2)
 #endif
 		i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);

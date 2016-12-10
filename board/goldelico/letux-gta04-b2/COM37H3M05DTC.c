@@ -36,14 +36,6 @@
 
 // FIXME: should go to board config
 
-#ifndef CONFIG_GOLDELICO_EXPANDER_B2
-
-#error only for B2 board
-
-#endif
-
-// FIXME: should go to board config
-
 #ifdef CONFIG_TARGET_LETUX_GTA04_B2
 
 #define GPIO_STBY 20
@@ -51,6 +43,10 @@
 #elif CONFIG_TARGET_LETUX_BEAGLE_B2
 
 #define GPIO_STBY 158
+
+#else
+
+#error only for B2 Expander boards
 
 #endif
 
