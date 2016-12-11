@@ -77,6 +77,11 @@
 #define GPIO_BACKLIGHT		161
 #define GPT_BACKLIGHT		OMAP34XX_GPT10
 
+#else
+
+#define GPIO_BACKLIGHT		-1
+#define GPT_BACKLIGHT		-1
+
 #endif
 
 #define USE_PWM	0
@@ -114,7 +119,7 @@ int backlight_init(void)
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7)
 #error backlight not defined for beagle-b8
 #else	
-#error undefined Letux device
+	return 0;	// no backlight
 #endif
 	// 	writel(value, &gpt_base->registername);
 	// program registers for generating a 100-1000 Hz PWM signal
@@ -138,7 +143,7 @@ int backlight_init(void)
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7)
 	// tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #else	
-#error unknown Letux board
+	return 0;	// no backlight
 #endif
 
 	if(gpio_request(GPIO_BACKLIGHT, "backlight") == 0)	// 0 == ok
