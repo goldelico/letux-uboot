@@ -76,6 +76,7 @@ int panel_reg_init(void)
 	return 1;
 }
 
+#if 0
 void backlight_set_level(int level) { return ; }
 int backlight_init(void) { return 0; }
 
@@ -104,5 +105,5 @@ int tsc2007_init(void) { return 0; }
 int read_adc(int adcnum) { return 0; }
 void print_adc(void) { return ; }
 int pendown(int *x, int *y) { return 0; }
-
+#endif
 
