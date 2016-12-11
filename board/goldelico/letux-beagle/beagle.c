@@ -1,3 +1,10 @@
+/*
+ * letux-beagle wrapper
+ *
+ * takes original TI files for beagle
+ * and adds some useful things
+ */
+
 #include <common.h>
 #include <twl4030.h>
 #include <asm/io.h>
@@ -44,7 +51,10 @@ int misc_init_r(void)
 	return 0;
 }
 
-/* FIXME: should be replaced with something more specific
+/*
+ * some of our extended drivers (e.g. display) call isXM
+ *
+ * FIXME: should be replaced with something more specific
  * used in
  *   letux-gta04/status.c
  *   letux-gta04/jbt6k74.c
