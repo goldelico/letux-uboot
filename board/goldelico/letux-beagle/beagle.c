@@ -24,12 +24,15 @@ static int get_board_revision(void);
 int misc_init_r(void)
 {
 	int orig_misc_init_r(void);
+	int rev;
 	char devtree[50]="unknown";
 	orig_misc_init_r();		// initializes board revision dependent mux (e.g. MUX_BEAGLE_C())
 #ifdef BEAGLE_EXTRA_MUX
-	BEAGLE_EXTRA_MUX();	// set MUX for expander board
+	BEAGLE_EXTRA_MUX();	// set additional MUX for expander board
 #endif
-	switch (get_board_revision()) {
+	rev = get_board_revision();
+	printf("board revision %d\n", rev);
+	switch (rev) {
 		case REVISION_AXBX:
 		case REVISION_CX:
 		case REVISION_C4:
