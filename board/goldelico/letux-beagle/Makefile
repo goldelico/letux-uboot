@@ -3,7 +3,6 @@ obj-y += ../../ti/beagle/led.o
 
 # extended commands
 
-ifdef NONONO
 ifndef CONFIG_SPL_BUILD
 obj-y += nopanel.o
 obj-y += ../letux-gta04/status.o
@@ -16,5 +15,4 @@ obj-y += ../letux-gta04/tsc2007.o
 obj-y += ../letux-gta04/dssfb.o
 obj-y += ../letux-gta04/gps.o
 obj-y += ../letux-gta04/systest.o
-endif
 endif
