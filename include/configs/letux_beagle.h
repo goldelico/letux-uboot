@@ -29,7 +29,7 @@
 #define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT		"GTA04@Beagle # "
+#define CONFIG_SYS_PROMPT		"Letux Beagle # "
 
 
 /* __CONFIG_H */

@@ -3,7 +3,7 @@
  * Nikolaus Schaller <hns@goldelico.com>
  *
  * Configuration settings for the TI OMAP3530 Beagle board with
- *               Openmoko Hybrid Display extension.
+ *               Neo900 display extension.
  *
  * See file CREDITS for list of people who contributed to this
  * project.

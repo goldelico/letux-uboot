@@ -3,7 +3,7 @@
  * Nikolaus Schaller <hns@goldelico.com>
  *
  * Configuration settings for the TI OMAP3530 Beagle board with
- *               Openmoko Hybrid Display extension.
+ *               Openmoko Hybrid Display 4 extension.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -27,7 +27,7 @@
 #include "letux_beagle.h"	/* share config */
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT		"GTA04@Beagle B4 # "
+#define CONFIG_SYS_PROMPT		"Letux Beagle B4 # "
 
 
 /* __CONFIG_H */

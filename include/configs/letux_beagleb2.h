@@ -3,7 +3,7 @@
  * Nikolaus Schaller <hns@goldelico.com>
  *
  * Configuration settings for the TI OMAP3530 Beagle board with
- *               Openmoko Hybrid Display extension.
+ *               Openmoko Hybrid Display 2 extension.
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -29,7 +29,7 @@
 #define CONFIG_CMD_SPI	1
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT		"OGTA04@Beagle B2 # "
+#define CONFIG_SYS_PROMPT		"Letux Beagle B2 # "
 
 
 /* __CONFIG_H */
