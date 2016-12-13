@@ -65,6 +65,17 @@ char *muxname="unknown";
 char *devicetree="unknown";
 char *peripheral="";
 
+static const struct ns16550_platdata gta04_serial = {
+	.base = OMAP34XX_UART3,
+	.reg_shift = 2,
+	.clock = V_NS16550_CLK
+};
+
+U_BOOT_DEVICE(gta04_uart) = {
+	"ns16550_serial",
+	&gta04_serial
+};
+
 #if 0	/* testing tool; you can call notify() anywhere even before initialization to see how far the code comes */
 
 /******************************************************************************
