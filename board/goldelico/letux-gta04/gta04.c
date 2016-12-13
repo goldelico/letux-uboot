@@ -132,37 +132,14 @@ int board_init(void)
 
 /*
  * Routine: get_board_revision
- * Description: Detect if we are running on a Beagle revision Ax/Bx,
- *		C1/2/3, C4 or xM. This can be done by reading
- *		the level of GPIO173, GPIO172 and GPIO171. This should
- *		result in
- *		GPIO173, GPIO172, GPIO171: 1 1 1 => Ax/Bx
- *		GPIO173, GPIO172, GPIO171: 1 1 0 => C1/2/3
- *		GPIO173, GPIO172, GPIO171: 1 0 1 => C4
- *		GPIO173, GPIO172, GPIO171: 0 0 0 => xM
  */
 
-int get_board_revision(void)
-{
-	return 6;	// on GTA04, configure default pinmux for C1/2/3
-}
-
-int isXM(void)
-{
-	return 0;
-}
-
-#define GTA04A2	 	7
-#define GTA04A3	 	3
-#define GTA04Ab2	1
-#define GTA04A4	 	5
-#define GTA04A5	 	6
 
 int get_gta04_revision(void)
 {
-	int rev = -1;
+	static int revision = -1;
 
-	static char revision[8] = {	/* revision table defined by pull-down R305, R306, R307 */
+	static char revtable[8] = {	/* revision table defined by pull-down R305, R306, R307 */
 		9,
 		6,
 		7,
@@ -173,30 +150,159 @@ int get_gta04_revision(void)
 		2
 	};
 
-	if (!gpio_request(171, "version-0") &&
-		!gpio_request(172, "version-1") &&
-		!gpio_request(173, "version-2")) {
+	if (revision == -1) {
+		if (!gpio_request(171, "rev0") &&
+		    !gpio_request(172, "rev1") &&
+		    !gpio_request(173, "rev2")) {
+			gpio_direction_input(171);
+			gpio_direction_input(172);
+			gpio_direction_input(173);
 
-		gpio_direction_input(171);
-		gpio_direction_input(172);
-		gpio_direction_input(173);
-
-		rev = gpio_get_value(173) << 2 |
-			gpio_get_value(172) << 1 |
-			gpio_get_value(171);
-
-		/* should make gpios pulled down to save a little energy */
-
-		gpio_free(171);
-		gpio_free(172);
-		gpio_free(173);
-		rev = revision[rev];	/* 000 means GTA04A2 */
+			revision = gpio_get_value(173) << 2 |
+				gpio_get_value(172) << 1 |
+				gpio_get_value(171);
+			revision = revtable[revision];
+		} else {
+			printf("Error: unable to acquire board revision GPIOs\n");
+		}
 	}
 
-	printk("Found GTA04A%d\n", rev);
-
-	return rev;
+	printf("Found GTA04A%d\n", revision);
+	return revision;
 }
+
+/* BeagleBoard revisions */
+#define REVISION_AXBX	0x7
+#define REVISION_CX	0x6
+#define REVISION_C4	0x5
+#define REVISION_XM_AB	0x0
+#define REVISION_XM_C	0x2
+
+int get_board_revision(void)
+{
+	return REVISION_C4;	// initialize like BB C4
+}
+
+int isXM(void)
+{
+printf("isXM\n");
+	return 0;
+}
+
+#if defined(CONFIG_SPL_BUILD)
+/*
+ * Routine: get_board_mem_timings
+ * Description: If we use SPL then there is no x-loader nor config header
+ * so we have to setup the DDR timings ourself on both banks.
+ */
+void get_board_mem_timings(struct board_sdrc_timings *timings)
+{
+	int pop_mfr, pop_id;
+
+	/*
+	 * We need to identify what PoP memory is on the board so that
+	 * we know what timings to use.  If we can't identify it then
+	 * we know it's an xM.  To map the ID values please see nand_ids.c
+	 */
+	identify_nand_chip(&pop_mfr, &pop_id);
+
+	timings->mr = MICRON_V_MR_165;
+
+
+	switch (get_board_revision()) {
+	case REVISION_C4:
+		if (pop_mfr == NAND_MFR_STMICRO && pop_id == 0xba) {
+			/* 512MB DDR */
+			timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
+			timings->ctrla = NUMONYX_V_ACTIMA_165;
+			timings->ctrlb = NUMONYX_V_ACTIMB_165;
+			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+			break;
+		} else if (pop_mfr == NAND_MFR_MICRON && pop_id == 0xba) {
+			/* Beagleboard Rev C4, 512MB Nand/256MB DDR*/
+			timings->mcfg = MICRON_V_MCFG_165(128 << 20);
+			timings->ctrla = MICRON_V_ACTIMA_165;
+			timings->ctrlb = MICRON_V_ACTIMB_165;
+			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+			break;
+		} else if (pop_mfr == NAND_MFR_MICRON && pop_id == 0xbc) {
+			/* Beagleboard Rev C5, 256MB DDR */
+			timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+			timings->ctrla = MICRON_V_ACTIMA_200;
+			timings->ctrlb = MICRON_V_ACTIMB_200;
+			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+			break;
+		}
+	case REVISION_XM_AB:
+	case REVISION_XM_C:
+		if (pop_mfr == 0) {
+// check for OneNAND!
+			if(pop_id == 0) {
+				// FIXME: SAMSUNG_MCP with 1GB DDR
+				// should do this: http://git.goldelico.com/?p=gta04-xloader.git;a=blob;f=board/omap3530beagle/omap3530beagle.c;h=97e9ffc9c5296073a6e81354548bea9c243a23e5;hb=f1cbec2c777e82b7375b3a931dc51db5ccf61e83#l688
+				/* 256MB DDR */
+				timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+				timings->ctrla = MICRON_V_ACTIMA_200;
+				timings->ctrlb = MICRON_V_ACTIMB_200;
+				timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+			} else {
+				/* 256MB DDR */
+				timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+				timings->ctrla = MICRON_V_ACTIMA_200;
+				timings->ctrlb = MICRON_V_ACTIMB_200;
+				timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+			}
+		} else {
+			/* 512MB DDR */
+			timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
+			timings->ctrla = NUMONYX_V_ACTIMA_165;
+			timings->ctrlb = NUMONYX_V_ACTIMB_165;
+			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+		}
+		break;
+	default:
+		/* Assume 128MB and Micron/165MHz timings to be safe */
+		timings->mcfg = MICRON_V_MCFG_165(128 << 20);
+		timings->ctrla = MICRON_V_ACTIMA_165;
+		timings->ctrlb = MICRON_V_ACTIMB_165;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+	}
+}
+
+int spl_start_uboot(void)
+{
+	// check if AUX button is pressed and return 1 to always start U-Boot
+	return 1;
+}
+
+#endif
+
+#ifdef CONFIG_USB_MUSB_OMAP2PLUS
+static struct musb_hdrc_config musb_config = {
+	.multipoint     = 1,
+	.dyn_fifo       = 1,
+	.num_eps        = 16,
+	.ram_bits       = 12,
+};
+
+static struct omap_musb_board_data musb_board_data = {
+	.interface_type	= MUSB_INTERFACE_ULPI,
+};
+
+static struct musb_hdrc_platform_data musb_plat = {
+#if defined(CONFIG_USB_MUSB_HOST)
+	.mode           = MUSB_HOST,
+#elif defined(CONFIG_USB_MUSB_GADGET)
+	.mode		= MUSB_PERIPHERAL,
+#else
+#error "Please define either CONFIG_USB_MUSB_HOST or CONFIG_USB_MUSB_GADGET"
+#endif
+	.config         = &musb_config,
+	.power          = 100,
+	.platform_ops	= &omap2430_ops,
+	.board_data	= &musb_board_data,
+};
+#endif
 
 /*
  * Routine: misc_init_r
@@ -213,7 +319,17 @@ int get_gta04_revision(void)
 
 int misc_init_r(void)
 {
+	struct control_prog_io *prog_io_base = (struct control_prog_io *)OMAP34XX_CTRL_BASE;
+	bool generate_fake_mac = false;
+	u32 value;
 	char devtree[256];
+
+	/* Enable i2c2 pullup resisters */
+	value = readl(&prog_io_base->io1);
+	value &= ~(PRG_I2C2_PULLUPRESX);
+	writel(value, &prog_io_base->io1);
+
+	MUX_GTA04();
 
 	/* ITG3200 & HMC5883L VAUX2 = 2.8V */
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
@@ -241,41 +357,7 @@ int misc_init_r(void)
 							TWL4030_PM_RECEIVER_DEV_GRP_P1);
 #endif
 
-	/* we must load different device trees depending
-	   on the board revision */
-
-	if(strcmp(devicetree, "omap3-gta04") == 0) {
-		int revision = get_gta04_revision();
-
-		switch(revision) {
-			case GTA04A2:
-				strcpy(devtree, "omap3-gta04a2");
-				break;
-			case GTA04Ab2:	/* GTA04 Custom for +b2 */
-			case GTA04A3:
-				strcpy(devtree, "omap3-gta04a3");
-				break;
-			case GTA04A4:
-				strcpy(devtree, "omap3-gta04a4");
-				break;
-			case GTA04A5:
-				strcpy(devtree, "omap3-gta04a5");
-				break;
-			default:
-				printf("Error: unknown revision GPIOs: %x\n", revision);
-				break;
-			case -1:
-				printf("Error: unable to acquire board revision GPIOs\n");
-				break;
-			}
-		strcat(devtree, peripheral);	/* append potential +b2/b3 suffix for peripheral board(s) */
-		devicetree=devtree;
-	}
-
-	setenv("mux", muxname);
-	setenv("devicetree", devicetree);
-	printf("Device Tree: %s\n", devicetree);
-
+// FIXME: mangle into device tree file
 	switch (get_cpu_family()) {
 		case CPU_OMAP34XX:
 			if ((get_cpu_rev() >= CPU_3XX_ES31) &&
@@ -408,7 +490,52 @@ int misc_init_r(void)
 		
 	}
 #endif				  
-				  
+
+#ifdef CONFIG_USB_MUSB_OMAP2PLUS
+	musb_register(&musb_plat, &musb_board_data, (void *)MUSB_BASE);
+#endif
+
+	if (generate_fake_mac)
+		omap_die_id_usbethaddr();
+
+	/* we must load different device trees depending
+	   on the board revision */
+
+	if(strcmp(devicetree, "omap3-gta04") == 0) {
+		int revision = get_gta04_revision();
+
+		switch(revision) {
+			case 2:
+				strcpy(devtree, "omap3-gta04a2");
+				break;
+			case 3:
+				strcpy(devtree, "omap3-gta04a3");
+				generate_fake_mac = true;
+				break;
+			case 4:
+				strcpy(devtree, "omap3-gta04a4");
+				generate_fake_mac = true;
+				break;
+			case 5:
+				strcpy(devtree, "omap3-gta04a5");
+				generate_fake_mac = true;
+				break;
+			default:
+				printf("Error: unknown GTA04 revision\n");
+				break;
+			case -1:
+				printf("Error: unable to acquire board revision GPIOs\n");
+				break;
+			}
+		strcat(devtree, peripheral);	/* append potential +b2/b3 suffix for peripheral board(s) */
+		devicetree=devtree;
+	}
+
+	setenv("mux", muxname);
+// FIXME: define "fdtfile" and include .dtb suffix
+	setenv("devicetree", devicetree);
+	printf("Device Tree: %s\n", devicetree);
+
 	return 0;
 }
 
@@ -421,7 +548,6 @@ int misc_init_r(void)
 void set_muxconf_regs(void)
 {
 	MUX_BEAGLE();
-	MUX_GTA04();
 }
 
 #if defined(CONFIG_GENERIC_MMC) && !defined(CONFIG_SPL_BUILD)
@@ -435,6 +561,12 @@ int board_mmc_init(bd_t *bis)
 #if defined(CONFIG_GENERIC_MMC)
 void board_mmc_power_init(void)
 {
+#if defined(CONFIG_SPL_BUILD)
+	int pop_mfr, pop_id;
+	get_gta04_revision();
+	identify_nand_chip(&pop_mfr, &pop_id);
+	printf("pop_mfr = %02x pop_id = %02x\n", pop_mfr, pop_id);
+#endif
 	twl4030_power_mmc_init(0);
 }
 #endif
@@ -456,6 +588,7 @@ static struct omap_usbhs_board_data usbhs_bdata = {
 int ehci_hcd_init(int index, enum usb_init_type init,
 		struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
+printf("ehci_hcd_init\n");
 	return omap_ehci_hcd_init(index, &usbhs_bdata, hccr, hcor);
 }
 
@@ -469,79 +602,7 @@ int ehci_hcd_stop(int index)
 #if defined(CONFIG_USB_ETHER) && defined(CONFIG_USB_MUSB_GADGET)
 int board_eth_init(bd_t *bis)
 {
+printf("board_eth_init\n");
 	return usb_eth_initialize(bis);
-}
-#endif
-
-#if defined(CONFIG_SPL_BUILD)
-/*
- * Routine: get_board_mem_timings
- * Description: If we use SPL then there is no x-loader nor config header
- * so we have to setup the DDR timings ourself on both banks.
- */
-void get_board_mem_timings(struct board_sdrc_timings *timings)
-{
-	int pop_mfr, pop_id;
-
-	/*
-	 * We need to identify what PoP memory is on the board so that
-	 * we know what timings to use.  If we can't identify it then
-	 * we know it's an xM.  To map the ID values please see nand_ids.c
-	 */
-	identify_nand_chip(&pop_mfr, &pop_id);
-
-	timings->mr = MICRON_V_MR_165;
-
-	switch (get_board_revision()) {
-#if FIXME
-	// decode GTA04 variations
-	// get_gta04_revision()
-	case REVISION_C4:
-		if (pop_mfr == NAND_MFR_STMICRO && pop_id == 0xba) {
-			/* 512MB DDR */
-			timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
-			timings->ctrla = NUMONYX_V_ACTIMA_165;
-			timings->ctrlb = NUMONYX_V_ACTIMB_165;
-			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
-			break;
-		} else if (pop_mfr == NAND_MFR_MICRON && pop_id == 0xba) {
-			/* Beagleboard Rev C4, 512MB Nand/256MB DDR*/
-			timings->mcfg = MICRON_V_MCFG_165(128 << 20);
-			timings->ctrla = MICRON_V_ACTIMA_165;
-			timings->ctrlb = MICRON_V_ACTIMB_165;
-			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
-			break;
-		} else if (pop_mfr == NAND_MFR_MICRON && pop_id == 0xbc) {
-			/* Beagleboard Rev C5, 256MB DDR */
-			timings->mcfg = MICRON_V_MCFG_200(256 << 20);
-			timings->ctrla = MICRON_V_ACTIMA_200;
-			timings->ctrlb = MICRON_V_ACTIMB_200;
-			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
-			break;
-		}
-	case REVISION_XM_AB:
-	case REVISION_XM_C:
-		if (pop_mfr == 0) {
-			/* 256MB DDR */
-			timings->mcfg = MICRON_V_MCFG_200(256 << 20);
-			timings->ctrla = MICRON_V_ACTIMA_200;
-			timings->ctrlb = MICRON_V_ACTIMB_200;
-			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
-		} else {
-			/* 512MB DDR */
-			timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
-			timings->ctrla = NUMONYX_V_ACTIMA_165;
-			timings->ctrlb = NUMONYX_V_ACTIMB_165;
-			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
-		}
-		break;
-#endif
-	default:
-		/* Assume 128MB and Micron/165MHz timings to be safe */
-		timings->mcfg = MICRON_V_MCFG_165(128 << 20);
-		timings->ctrla = MICRON_V_ACTIMA_165;
-		timings->ctrlb = MICRON_V_ACTIMB_165;
-		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
-	}
 }
 #endif
