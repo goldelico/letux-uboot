@@ -31,7 +31,6 @@ int misc_init_r(void)
 	BEAGLE_EXTRA_MUX();	// set additional MUX for expander board
 #endif
 	rev = get_board_revision();
-	printf("board revision %d\n", rev);
 	switch (rev) {
 		case REVISION_AXBX:
 		case REVISION_CX:
