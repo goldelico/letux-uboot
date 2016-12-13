@@ -363,7 +363,9 @@ int status_set_vibra (int value)
 	return 0;	
 }
 
-/* compatibility to u-boot led command */
+/* compatibility to u-boot led command like beagleboard */
+
+#if defined(IS_GTA04)
 
 static int get_led_gpio(led_id_t mask)
 {
@@ -405,3 +407,5 @@ void __led_set (led_id_t mask, int state)
 	if (toggle_gpio)
 		gpio_direction_output(toggle_gpio, state);
 }
+
+#endif
