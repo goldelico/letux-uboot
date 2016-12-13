@@ -26,10 +26,14 @@
 
 #include "omap3_beagle.h"	/* share config */
 
+#undef MTDPARTS_DEFAULT
+#define MTDPARTS_DEFAULT		"mtdparts=nand:512k(x-loader),"\
+					"1920k(u-boot),128k(u-boot-env),"\
+					"6m(kernel),-(fs)"
+
 #define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
 
 #undef CONFIG_SYS_PROMPT
 #define CONFIG_SYS_PROMPT		"Letux Beagle # "
-
 
 /* __CONFIG_H */
