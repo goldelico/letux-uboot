@@ -20,5 +20,5 @@ void muxinit(void)
 #undef MUX_GTA04
 #define MUX_GTA04() muxinit()
 
-// take the original beagle.c code
+// take the original gta04.c code
 #include "../letux-gta04/gta04.c"
