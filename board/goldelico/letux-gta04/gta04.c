@@ -99,10 +99,14 @@ static inline void myudelay(unsigned long us)
 void notify(int number)
 { // flash LCD backlight (on A3 board only or remove R209!)
 	BLOFF();
-	myudelay(200*1000);
-	BLON();
-	myudelay(50*1000);	// flash
-	BLOFF();
+	myudelay(1500*1000);
+	while(number-- > 0)
+		{ // flash n times
+		BLON();
+		myudelay(200*1000);
+		BLOFF();
+		myudelay(200*1000);
+		}
 	myudelay(1500*1000);
 }
 
