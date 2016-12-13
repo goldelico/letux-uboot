@@ -182,11 +182,22 @@ void get_board_mem_timings(struct board_sdrc_timings *timings)
 	case REVISION_XM_AB:
 	case REVISION_XM_C:
 		if (pop_mfr == 0) {
-			/* 256MB DDR */
-			timings->mcfg = MICRON_V_MCFG_200(256 << 20);
-			timings->ctrla = MICRON_V_ACTIMA_200;
-			timings->ctrlb = MICRON_V_ACTIMB_200;
-			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+// check for OneNAND!
+			if(pop_id == 0) {
+				// FIXME: SAMSUNG_MCP with 1GB DDR
+				// should do this: http://git.goldelico.com/?p=gta04-xloader.git;a=blob;f=board/omap3530beagle/omap3530beagle.c;h=97e9ffc9c5296073a6e81354548bea9c243a23e5;hb=f1cbec2c777e82b7375b3a931dc51db5ccf61e83#l688
+				/* 256MB DDR */
+				timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+				timings->ctrla = MICRON_V_ACTIMA_200;
+				timings->ctrlb = MICRON_V_ACTIMB_200;
+				timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+			} else {
+				/* 256MB DDR */
+				timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+				timings->ctrla = MICRON_V_ACTIMA_200;
+				timings->ctrlb = MICRON_V_ACTIMB_200;
+				timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+			}
 		} else {
 			/* 512MB DDR */
 			timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
@@ -533,6 +544,11 @@ int board_mmc_init(bd_t *bis)
 #if defined(CONFIG_GENERIC_MMC)
 void board_mmc_power_init(void)
 {
+#if defined(CONFIG_SPL_BUILD)
+	int pop_mfr, pop_id;
+	identify_nand_chip(&pop_mfr, &pop_id);
+	printk("pop_mfr = %02x pop_id = %02x\n", pop_mfr, pop_id);
+#endif
 	twl4030_power_mmc_init(0);
 }
 #endif
