@@ -185,7 +185,6 @@ int get_board_revision(void)
 
 int isXM(void)
 {
-printf("isXM\n");
 	return 0;
 }
 
@@ -589,7 +588,6 @@ static struct omap_usbhs_board_data usbhs_bdata = {
 int ehci_hcd_init(int index, enum usb_init_type init,
 		struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
-printf("ehci_hcd_init\n");
 	return omap_ehci_hcd_init(index, &usbhs_bdata, hccr, hcor);
 }
 
@@ -603,7 +601,6 @@ int ehci_hcd_stop(int index)
 #if defined(CONFIG_USB_ETHER) && defined(CONFIG_USB_MUSB_GADGET)
 int board_eth_init(bd_t *bis)
 {
-printf("board_eth_init\n");
 	return usb_eth_initialize(bis);
 }
 #endif
