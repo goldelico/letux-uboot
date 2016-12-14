@@ -322,7 +322,7 @@ int misc_init_r(void)
 	struct control_prog_io *prog_io_base = (struct control_prog_io *)OMAP34XX_CTRL_BASE;
 	bool generate_fake_mac = false;
 	u32 value;
-	char devtree[256];
+	char devtree[50];
 
 	/* Enable i2c2 pullup resisters */
 	value = readl(&prog_io_base->io1);
@@ -501,7 +501,8 @@ int misc_init_r(void)
 	/* we must load different device trees depending
 	   on the board revision */
 
-	if(strcmp(devicetree, "omap3-gta04") == 0) {
+	strcpy(devtree, devicetree);
+	if(strcmp(devtree, "omap3-gta04") == 0) {
 		int revision = get_gta04_revision();
 
 		switch(revision) {
@@ -528,13 +529,13 @@ int misc_init_r(void)
 				break;
 			}
 		strcat(devtree, peripheral);	/* append potential +b2/b3 suffix for peripheral board(s) */
-		devicetree=devtree;
 	}
 
 	setenv("mux", muxname);
-// FIXME: define "fdtfile" and include .dtb suffix
-	setenv("devicetree", devicetree);
-	printf("Device Tree: %s\n", devicetree);
+	setenv("devicetree", devtree);
+	strcat(devtree, ".dtb");
+	setenv("fdtfile", devtree);
+	printf("Device Tree: %s\n", devtree);
 
 	return 0;
 }
