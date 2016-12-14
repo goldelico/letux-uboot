@@ -233,3 +233,15 @@ int board_init(void)
 }
 
 #endif
+
+/* FIXME:
+ * overwrite/augment board_misc_int
+ * to get the mainboard revision resistors
+ *
+ * readenv("devicetree")
+ * strip off .dtb
+ * append sprintf(devtree, "%s+pyra-v%d.%d", devtree, rev/10, rev%10);
+	strcat(devtree, ".dtb");
+	setenv("fdtfile", devtree);
+	printf("Device Tree: %s\n", devtree);
+ */
