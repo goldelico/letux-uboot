@@ -82,6 +82,8 @@
 #define GPIO_BACKLIGHT		-1
 #define GPT_BACKLIGHT		-1
 
+#error undefined board
+
 #endif
 
 #define USE_PWM	0
@@ -119,6 +121,7 @@ int backlight_init(void)
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7)
 #error backlight not defined for beagle-b8
 #else	
+	printf("no PWM backlight\n");
 	return 0;	// no backlight
 #endif
 	// 	writel(value, &gpt_base->registername);
@@ -126,7 +129,7 @@ int backlight_init(void)
 	// or PWM synchronized to VSYNC (to avoid flicker)
 	printf("did backlight_init() on PWM\n");
 
-#error todo
+#error PWM not implemented
 	
 #else	// USE_PWM
 
@@ -137,12 +140,13 @@ int backlight_init(void)
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B2)
 	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B4)
-// tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
+	// tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #elif defined(CONFIG_TARGET_LETUX_GTA04_B7)
 	// tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B7)
 	// tbd.	MUX_VAL(CP(UART2_TX),		(IEN  | PTD | DIS | M4)) /*GPIO_146*/
-#else	
+#else
+	printf("no backlight\n");
 	return 0;	// no backlight
 #endif
 
