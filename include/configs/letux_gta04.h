@@ -11,6 +11,12 @@
 
 #include "letux_beagle.h"	/* share basic configs */
 
+/* beagle board only defines GPIO_5 and GPIO_6 */
+/* checkme if we need them all */
+#define CONFIG_OMAP3_GPIO_2	/* GPIO32..63 is in GPIO bank 2 */
+#define CONFIG_OMAP3_GPIO_3	/* GPIO64..95 is in GPIO bank 3 */
+#define CONFIG_OMAP3_GPIO_4	/* GPIO96..127 is in GPIO bank 4 */
+
 /* Status LED */
 /* undef? - we have no such status leds in u-boot */
 #define CONFIG_STATUS_LED		1
