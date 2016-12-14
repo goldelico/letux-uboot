@@ -48,6 +48,8 @@ int misc_init_r(void)
 	setenv("mux", muxname);
 	strcat(devtree, peripheral);
 	setenv("devicetree", devtree);
+	strcat(devtree, ".dtb");
+	setenv("fdtfile", devtree);
 	printf("Device Tree: %s\n", devtree);
 
 	return 0;
