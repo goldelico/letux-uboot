@@ -71,40 +71,40 @@ int board_mmc_init(bd_t *bis)
  * to board revision (see schematics).
  */
 
-const struct pad_conf_entry padconf_version_pd_lc15[] = {
+static const struct pad_conf_entry padconf_version_pd_lc15[] = {
 	{LLIB_WAKEREQOUT, (IEN | PTD | M6)}, /* gpio 2_32 */
 	{C2C_CLKOUT0, (IEN | PTD | M6)}, /* gpio 2_33 */
 };
 
-const struct pad_conf_entry padconf_version_pu_lc15[] = {
+static const struct pad_conf_entry padconf_version_pu_lc15[] = {
 	{LLIB_WAKEREQOUT, (IEN | PTU | M6)}, /* gpio 2_32 */
 	{C2C_CLKOUT0, (IEN | PTU | M6)}, /* gpio 2_33 */
 };
 
 /* operational mode */
-const struct pad_conf_entry padconf_version_operation_lc15[] = {
+static const struct pad_conf_entry padconf_version_operation_lc15[] = {
 	{LLIB_WAKEREQOUT, (IEN | M6)}, /* gpio 2_32 */
 	{C2C_CLKOUT0, (IEN | M6)}, /* gpio 2_33 */
 };
 
-const int versions[]={
+static const int versions[]={
 	[0xc] = 49,	/* no resistors */
 	[0xd] = 50,	/* gpio2_32 pu, gpio2_33 floating */
 	[0x8] = 51,	/* gpio2_32 pd, gpio2_33 floating */
-	[0xe] = 0,	/* gpio2_32 floating, gpio2_33 pu */
-	[0x4] = 0,	/* gpio2_32 floating, gpio2_33 pd */
-	[0x0] = 0,	/* gpio2_32 pd, gpio2_33 pd */
-	[0x5] = 0,	/* gpio2_32 pu, gpio2_33 pd */
-	[0xa] = 0,	/* gpio2_32 pd, gpio2_33 pu */
-	[0xf] = 0,	/* gpio2_32 pu, gpio2_33 pu */
+	[0xe] = 52,	/* gpio2_32 floating, gpio2_33 pu */
+	[0x4] = 53,	/* gpio2_32 floating, gpio2_33 pd */
+	[0xf] = 54,	/* gpio2_32 pu, gpio2_33 pu */
+	[0x0] = 55,	/* gpio2_32 pd, gpio2_33 pd */
+	[0x5] = 56,	/* gpio2_32 pu, gpio2_33 pd */
+	[0xa] = 57,	/* gpio2_32 pd, gpio2_33 pu */
 };
 
 int get_board_version(void)
 { /* read get board version from resistors */
 	static int vers;
 	if (!vers) {
-		gpio_request(32, "version-0");	/* version resistors */
-		gpio_request(33, "version-1");
+		gpio_request(32, "R32");	/* version resistors */
+		gpio_request(33, "R33");
 		do_set_mux((*ctrl)->control_padconf_core_base,
 			   padconf_version_pd_lc15,
 			   sizeof(padconf_version_pd_lc15) /
@@ -121,7 +121,7 @@ int get_board_version(void)
 			   padconf_version_operation_lc15,
 			   sizeof(padconf_version_operation_lc15) /
 			   sizeof(struct pad_conf_entry));
-#if 1
+#if 0
 		printf("version code 0x%01x\n", vers);
 #endif
 		vers = versions[vers&0xf];
@@ -129,6 +129,18 @@ int get_board_version(void)
 	}
 	return vers;
 }
+
+/* FIXME:
+ * overwrite board_misc_init of hack into board_mmc_init
+ *
+ * prepare to set fdtfile matching the board revision
+ *
+ * sprintf(devtree, "letux-cortex-15-v%d.%d", vers/10, vers%10);
+	strcat(devtree, ".dtb");
+	setenv("fdtfile", devtree);
+	printf("Device Tree: %s\n", devtree);
+*/
+
 
 /* SPL only code */
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_OS_BOOT)
