@@ -6,14 +6,18 @@
 
 /* move away definition by included file */
 #define board_init board_init_overwritten
-#define set_muxconf_regs_essential set_muxconf_regs_essential_inherited
-extern void set_muxconf_regs_essential_inherited(void);
+#define set_muxconf_regs set_muxconf_regs_inherited
+
+static void more_set_fdtfile(char *devtree);
+#define CONFIG_MORE_FDT more_set_fdtfile
+
+extern void set_muxconf_regs_inherited(void);
 #define sysinfo sysinfo_disabled
 
 #include "../../goldelico/letux-cortex15/lc15.c"
 
 #undef sysinfo
-#undef set_muxconf_regs_essential
+#undef set_muxconf_regs
 #undef board_init
 
 const struct omap_sysinfo sysinfo = {
@@ -43,13 +47,18 @@ const struct pad_conf_entry core_padconf_array_essential_pyra[] = {
 	{I2C4_SDA, (PTU | IEN | M0)}, /* I2C4_SDA */
 	/* some resets */
 	{MCSPI1_CS1, (PTU | IEN | M6)}, /* GPIO5_144: peripheral reset */
+	{RFBI_DATA5, (PTD | IEN | M6)}, /* GPIO6_171: pull down modem ignite */
 	{HSI2_CAFLAG, (PTU | IEN | M6)}, /* GPIO3_80: usb hub reset */
 	{TIMER8_PWM_EVT, (PTU | IEN | M6)}, /* GPIO8_230: keyboard backlight - pulled high */
+	/* main board revision detection */
+	{RFBI_HSYNC0, (PTU | IEN | M6)}, /* GPIO6_160: rev1 */
+	{GPIO6_182, (PTU | IEN | M6)}, /* GPIO6_182: rev2 */
+	{GPIO6_185, (PTU | IEN | M6)}, /* GPIO6_185: rev3 */
 };
 
-void set_muxconf_regs_essential(void)
+void set_muxconf_regs(void)
 {
-	set_muxconf_regs_essential_inherited();
+	set_muxconf_regs_inherited();
 	do_set_mux((*ctrl)->control_padconf_core_base,
 		   core_padconf_array_essential_pyra,
 		   sizeof(core_padconf_array_essential_pyra) /
@@ -152,6 +161,68 @@ struct tca642x_bank_info pyra_tca642x_init[] = {
 	  .configuration_reg = P20_SD_HS_AMP | P21_CHG_STAT | P22_PWR_GREEN | P23_PWR_BLUE },	/* all others are outputs */
 };
 
+/*
+ * Board Revision Detection
+ *
+ * gpio6_160, gpio6_182 and gpio6_185 can optionally be pulled down
+ * by 10k resistors.
+ */
+
+static int get_pyra_mainboard_revision(void)
+{
+	static int revision = -1;
+
+	static char revtable[8] = {	/* revision table defined by pull-down R1901, R1902, R1903 */
+		[7] = 49,
+		[6] = 50,
+		[5] = 51,
+		[3] = 52,
+		[4] = 53,
+		[2] = 54,
+		[1] = 55,
+		[0] = 56,
+	};
+
+	if (revision == -1) {
+		if (!gpio_request(160, "rev1") &&
+		    !gpio_request(182, "rev2") &&
+		    !gpio_request(185, "rev3")) {
+			gpio_direction_input(160);
+			gpio_direction_input(182);
+			gpio_direction_input(185);
+
+			revision = gpio_get_value(185) << 2 |
+				gpio_get_value(182) << 1 |
+				gpio_get_value(160);
+#if 0
+			printf("version code 0x%01x\n", revision);
+#endif
+			revision = revtable[revision];
+		} else {
+			printf("Error: unable to acquire board revision GPIOs\n");
+		}
+	}
+
+	/* FIXME: turn off pull-up to save up ca. 50-750µA */
+
+	printf("Found Pyra %d.%d\n", revision/10, revision%10);
+	return revision;
+}
+
+/* called from set_fdtfile in lc15.c */
+static void more_set_fdtfile(char *devtree)
+{
+	int len;
+	int rev = get_pyra_mainboard_revision();
+
+	len = strlen(devtree);
+	if (len < 5)
+		return;	/* some error */
+
+	/* extend by overwriting ".dtb" */
+	sprintf(devtree+len-4, "+%s-v%d.%d.dtb", "pyra", rev/10, rev%10);
+}
+
 /**
  * @brief board_init for Pyra
  *
@@ -233,15 +304,3 @@ int board_init(void)
 }
 
 #endif
-
-/* FIXME:
- * overwrite/augment board_misc_int
- * to get the mainboard revision resistors
- *
- * readenv("devicetree")
- * strip off .dtb
- * append sprintf(devtree, "%s+pyra-v%d.%d", devtree, rev/10, rev%10);
-	strcat(devtree, ".dtb");
-	setenv("fdtfile", devtree);
-	printf("Device Tree: %s\n", devtree);
- */
