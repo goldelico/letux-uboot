@@ -3,7 +3,8 @@
  */
 
 /* move away definition by included file */
-#define board_mmc_init board_mmc_init_overwritten
+#define board_mmc_init board_mmc_init_inherited
+#define misc_init_r misc_init_r_inherited
 #if !defined(sysinfo)
 #define sysinfo sysinfo_disabled
 
@@ -21,41 +22,7 @@ const struct omap_sysinfo sysinfo = {
 
 #endif
 #undef board_mmc_init
-
-/* U-Boot only code */
-#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_GENERIC_MMC)
-
-/*
- * the Letux Cortex 15
- * supports 3 MMC interfaces
- */
-
-#include <mmc.h>
-
-int board_mmc_init(bd_t *bis)
-{
-	int uSD = 0;	// could ask GPIO3_82 state
-	debug("special board_mmc_init for LC15\n");
-	writel(0x02, 0x4A009120);	/* enable MMC3 module */
-	writel(0x02, 0x4A009128);	/* enable MMC4 module */
-
-	/* MMC1 = left SD */
-	omap_mmc_init(0, uSD?MMC_MODE_8BIT:0, 0, -1, -1);
-	/* MMC2 = eMMC (8 bit) / uSD (4 bit) */
-	omap_mmc_init(1, 0, 0, -1, -1);
-#if 0
-	/* MMC3 = WLAN */
-	omap_mmc_init(2, MMC_MODE_8BIT|MMC_MODE_4BIT, 0, -1, -1);
-#endif
-	/* SDIO4 = right SD */
-	omap_mmc_init(3, 0, 0, -1, -1);
-
-//	printf("%08x: %08x\n", 0x4A009120, readl(0x4A009120));
-//	printf("%08x: %08x\n", 0x4A009128, readl(0x4A009128));
-	return 0;
-}
-
-#endif
+#undef misc_init_r
 
 /*
  * Board Revision Detection
@@ -99,24 +66,32 @@ static const int versions[]={
 	[0xa] = 57,	/* gpio2_32 pd, gpio2_33 pu */
 };
 
-int get_board_version(void)
+static int get_board_version(void)
 { /* read get board version from resistors */
 	static int vers;
 	if (!vers) {
 		gpio_request(32, "R32");	/* version resistors */
 		gpio_request(33, "R33");
+		gpio_direction_input(32);
+		gpio_direction_input(33);
+
+		/* pull both down */
 		do_set_mux((*ctrl)->control_padconf_core_base,
 			   padconf_version_pd_lc15,
 			   sizeof(padconf_version_pd_lc15) /
 			   sizeof(struct pad_conf_entry));
 		vers = gpio_get_value(32) | (gpio_get_value(33) << 1);
+
+		/* pull both up */
 		do_set_mux((*ctrl)->control_padconf_core_base,
 			   padconf_version_pu_lc15,
 			   sizeof(padconf_version_pu_lc15) /
 			   sizeof(struct pad_conf_entry));
 		vers |= (gpio_get_value(32) << 2) | (gpio_get_value(33) << 3);
+
 		gpio_free(32);
 		gpio_free(33);
+
 		do_set_mux((*ctrl)->control_padconf_core_base,
 			   padconf_version_operation_lc15,
 			   sizeof(padconf_version_operation_lc15) /
@@ -125,22 +100,76 @@ int get_board_version(void)
 		printf("version code 0x%01x\n", vers);
 #endif
 		vers = versions[vers&0xf];
-		printf("LC15 V%d.%d\n", vers/10, vers%10);
+		printf("Found LC15 V%d.%d\n", vers/10, vers%10);
 	}
 	return vers;
 }
 
-/* FIXME:
- * overwrite board_misc_init of hack into board_mmc_init
- *
- * prepare to set fdtfile matching the board revision
- *
- * sprintf(devtree, "letux-cortex-15-v%d.%d", vers/10, vers%10);
-	strcat(devtree, ".dtb");
-	setenv("fdtfile", devtree);
-	printf("Device Tree: %s\n", devtree);
-*/
+/* U-Boot only code */
+#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_GENERIC_MMC)
 
+static void set_fdtfile(void)
+{
+	char devtree[60];
+	int vers = get_board_version();
+
+	if (!vers)
+		return;	/* can't handle */
+
+	sprintf(devtree, "letux-cortex-15-v%d.%d.dtb", vers/10, vers%10);
+#if defined(CONFIG_MORE_FDT)
+	CONFIG_MORE_FDT(devtree);	/* for main board detection */
+#endif
+	setenv("fdtfile", devtree);
+
+	printf("Device Tree: %s\n", devtree);
+}
+
+int misc_init_r(void)
+{
+	int r = misc_init_r_inherited();	/* from evm.c */
+	if (!r)
+		{
+#if defined(CONFIG_MORE_MISC_INIT_R)
+		CONFIG_MORE_MISC_INIT_R();	/* for main board detection */
+#endif
+		set_fdtfile();
+		}
+	return r;
+}
+
+/*
+ * the Letux Cortex 15
+ * supports 3 MMC interfaces
+ */
+
+#include <mmc.h>
+
+int board_mmc_init(bd_t *bis)
+{
+	int uSD = 0;	// could ask GPIO3_82 state
+	debug("special board_mmc_init for LC15\n");
+	writel(0x02, 0x4A009120);	/* enable MMC3 module */
+	writel(0x02, 0x4A009128);	/* enable MMC4 module */
+
+	/* MMC1 = left SD */
+	omap_mmc_init(0, uSD?MMC_MODE_8BIT:0, 0, -1, -1);
+	/* MMC2 = eMMC (8 bit) / uSD (4 bit) */
+	omap_mmc_init(1, 0, 0, -1, -1);
+#if 0
+	/* MMC3 = WLAN */
+	omap_mmc_init(2, MMC_MODE_8BIT|MMC_MODE_4BIT, 0, -1, -1);
+#endif
+	/* SDIO4 = right SD */
+	omap_mmc_init(3, 0, 0, -1, -1);
+
+//	printf("%08x: %08x\n", 0x4A009120, readl(0x4A009120));
+//	printf("%08x: %08x\n", 0x4A009128, readl(0x4A009128));
+
+	return 0;
+}
+
+#endif
 
 /* SPL only code */
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_OS_BOOT)
@@ -173,7 +202,7 @@ int set_mmc_switch(void)
 	int hard_select = 7;	/* gpio to select uSD or eMMC by external hw signal */
 	int soft_select = 86;	/* gpio to select uSD or eMMC */
 	int control = 76;	/* control between SW and HW select */
-#if 0
+#if 1
 	printf("set_mmc_switch for LC15 called\n");
 #endif
 	if (vers <= 49)
@@ -225,12 +254,12 @@ int set_mmc_switch(void)
 	return 0;
 }
 
-/* mis-use as a hook to inject code before U-Boot is started */
-
 int spl_start_uboot(void)
 {
+	/* mis-use as a hook to inject code before U-Boot is started */
 	set_mmc_switch();
-	return 1;	/* no boot to Linux */
+
+	return 1;	/* set to 0 to try Falcon boot to Linux */
 }
 
 #endif
