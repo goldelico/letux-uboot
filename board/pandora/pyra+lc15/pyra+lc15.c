@@ -110,7 +110,9 @@ int bq2429x_battery_present(void)
 		return 0;
 	}
 
+#if 0
 	printf("bq24297: r9 = %02x\n", reg);
+#endif
 
 	return !(reg & 0x03);	/* no NTC fault - assume battery is inserted */
 }
@@ -199,13 +201,13 @@ static int get_pyra_mainboard_revision(void)
 #endif
 			revision = revtable[revision];
 		} else {
-			printf("Error: unable to acquire board revision GPIOs\n");
+			printf("Error: unable to get board revision GPIOs\n");
 		}
 	}
 
 	/* FIXME: turn off pull-up to save up ca. 50-750µA */
 
-	printf("Found Pyra %d.%d\n", revision/10, revision%10);
+	printf("Found Pyra MB V%d.%d\n", revision/10, revision%10);
 	return revision;
 }
 
@@ -236,7 +238,7 @@ int board_init(void)
 	gd->bd->bi_boot_params = (0x80000000 + 0x100); /* boot param addr */
 
 #if 1
-	printk("reset peripherals\n");
+	printk("Reset:  peripherals\n");
 	/* but now reset peripherals */
 	gpio_request(144, "peripheral-reset");
 	gpio_direction_output(144, 0);	/* reset all peripheral chips (incl. tca6424) */
@@ -257,11 +259,14 @@ int board_init(void)
 	if (!bq2429x_battery_present()) {
 		u8 reg;
 
-		printf("No battery found\n");
+		printf("bq24297: no battery found\n");
 
 		/* if we operate from no battery:
-		 * increase bq24297 current limit to 2 A
-		 * and reduce VINDPM minimum VBUS voltage to 3.88 V
+		 * assume we are powered elsewhere and not through standard USB
+		 *
+		 * -> increase bq24297 current limit to at least 2A
+		 * -> reduce VINDPM minimum VBUS voltage to 3.88 V
+		 *
 		 * Otherwise we can not safely boot into Linux, especially
 		 * with higher resistance of the USB cable.
 		 */
@@ -271,22 +276,32 @@ int board_init(void)
 		else {
 			u8 nreg = reg;
 			int ilim = reg & 0x7; /* bit 0..2 are IINLIM */
+#if 1
 			printf("Iin_lim found: %d\n", ilim);
+#endif
 			if (ilim < 6) {
-				ilim = 6;	/* increase to min. of 2A */
+				ilim = 6;	/* increase to 2A */
 				nreg &= ~0x7;
 				nreg |= ilim;
+#if 1
 				printf("Iin_lim changed %d\n", nreg & 0x7);
+#endif
 			}
+#if 1
 			printf("Vin_dpm found: %d\n", (reg >> 3) & 0x0f);
+#endif
 			nreg &= ~0x78;	/* bits 3..6 are VINDPM */
 			nreg |= (0 << 3);	/* set level 0 = 3.88V */
+#if 1
 			printf("Vin_dpm changed: %d\n", (nreg >> 3) & 0x0f);
+#endif
 			if (nreg != reg) {
 				if (bq24297_i2c_write_u8(0x00, nreg))
 					printf("bq24297: could not set REG0 to %02x\n", nreg);
+#if 1
 				else
 					printf("bq24297: r0 := %02x\n", nreg);
+#endif
 			}
 		}
 	}
