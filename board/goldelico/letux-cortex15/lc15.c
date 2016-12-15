@@ -163,8 +163,10 @@ int board_mmc_init(bd_t *bis)
 	/* SDIO4 = right SD */
 	omap_mmc_init(3, 0, 0, -1, -1);
 
-//	printf("%08x: %08x\n", 0x4A009120, readl(0x4A009120));
-//	printf("%08x: %08x\n", 0x4A009128, readl(0x4A009128));
+#if 0
+	printf("%08x: %08x\n", 0x4A009120, readl(0x4A009120));
+	printf("%08x: %08x\n", 0x4A009128, readl(0x4A009128));
+#endif
 
 	return 0;
 }
@@ -202,12 +204,12 @@ int set_mmc_switch(void)
 	int hard_select = 7;	/* gpio to select uSD or eMMC by external hw signal */
 	int soft_select = 86;	/* gpio to select uSD or eMMC */
 	int control = 76;	/* control between SW and HW select */
-#if 1
+#if 0
 	printf("set_mmc_switch for LC15 called\n");
 #endif
 	if (vers <= 49)
-		return 1;
-	if (vers <= 50) {
+		return 1;	/* has no working mmc switch */
+	if (vers == 50) {
 		/* board revision 5.0 shares the revision gpios with mmc_switch control */
 		soft_select = 32;
 		control = 33;
@@ -224,6 +226,7 @@ int set_mmc_switch(void)
 		   sizeof(struct pad_conf_entry));
 
 	/* is BOOTSEL active? Then we did boot SPL from µSD */
+	gpio_direction_input(hard_select);
 	val = gpio_get_value(hard_select);
 
 #if 1
