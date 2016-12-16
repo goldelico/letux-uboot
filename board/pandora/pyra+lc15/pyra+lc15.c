@@ -8,7 +8,6 @@
 #define board_init board_init_overwritten
 #define set_muxconf_regs set_muxconf_regs_inherited
 
-static void more_set_fdtfile(char *devtree);
 #define CONFIG_MORE_FDT more_set_fdtfile
 
 extern void set_muxconf_regs_inherited(void);
@@ -212,7 +211,7 @@ static int get_pyra_mainboard_revision(void)
 }
 
 /* called from set_fdtfile in lc15.c */
-static void more_set_fdtfile(char *devtree)
+void CONFIG_MORE_FDT(char *devtree)
 {
 	int len;
 	int rev = get_pyra_mainboard_revision();
