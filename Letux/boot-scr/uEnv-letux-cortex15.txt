@@ -1,4 +1,4 @@
-fdtfile=omap5-letux-cortex15.dtb
+# fdtfile=omap5-letux-cortex15.dtb
 
 bootdir=/
 bootfile=uImage
