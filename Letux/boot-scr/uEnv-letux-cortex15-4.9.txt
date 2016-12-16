@@ -1,4 +1,0 @@
-fdtfile=omap5-letux-cortex15-v4.9.dtb
-
-bootfile=uImage
-bootfilecmd=bootm
