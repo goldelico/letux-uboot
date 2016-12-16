@@ -110,15 +110,18 @@ static int get_board_version(void)
 
 static void set_fdtfile(void)
 {
-	char devtree[60];
+	char devtree[256];
 	int vers = get_board_version();
 
 	if (!vers)
 		return;	/* can't handle */
 
-	sprintf(devtree, "letux-cortex-15-v%d.%d.dtb", vers/10, vers%10);
+	sprintf(devtree, "omap5-letux-cortex15-v%d.%d.dtb", vers/10, vers%10);
 #if defined(CONFIG_MORE_FDT)
+	{
+	void CONFIG_MORE_FDT(char *devtree);
 	CONFIG_MORE_FDT(devtree);	/* for main board detection */
+	}
 #endif
 	setenv("fdtfile", devtree);
 
@@ -131,6 +134,7 @@ int misc_init_r(void)
 	if (!r)
 		{
 #if defined(CONFIG_MORE_MISC_INIT_R)
+		void CONFIG_MORE_MISC_INIT_R(void);
 		CONFIG_MORE_MISC_INIT_R();	/* for main board detection */
 #endif
 		set_fdtfile();
