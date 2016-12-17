@@ -93,6 +93,12 @@ static int hasTCA6507=0;
 
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B4) || defined(CONFIG_TARGET_LETUX_GTA04_B2)
 
+#define GPIO_AUX		136		// AUX/User button on expansion board
+#define GPIO_POWER		137		// POWER button
+#define GPIO_GPSEXT		144		// external GPS antenna is plugged in
+#define GPIO_PENIRQ		157		// TSC must be set up to provide PENIRQ
+#define GPIO_KEYIRQ		-1
+
 #elif defined(CONFIG_TARGET_LETUX_BEAGLE_B2) || defined(CONFIG_TARGET_LETUX_GTA04_B2)
 
 #define CHECK_TCA6507	1
