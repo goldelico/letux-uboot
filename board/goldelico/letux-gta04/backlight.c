@@ -79,10 +79,7 @@
 
 #else
 
-#define GPIO_BACKLIGHT		-1
 #define GPT_BACKLIGHT		-1
-
-#error undefined board
 
 #endif
 
@@ -94,8 +91,10 @@ void backlight_set_level(int level)	// 0..255
 	level=255-level;	// reversed polarity by T401
 #endif
 #if USE_PWM
+#if defined(GPT_BACKLIGHT)
 	struct gptimer *gpt_base = (struct gptimer *)GPT_BACKLIGHT;
 	// 	writel(value, &gpt_base->registername);
+#endif
 #elif defined(GPIO_BACKLIGHT)
 	gpio_direction_output(GPIO_BACKLIGHT, level >= 128);	// for simplicity we just have on/off
 	level=(level >= 128)?255:0;
@@ -106,7 +105,9 @@ void backlight_set_level(int level)	// 0..255
 int backlight_init(void)
 {
 #if USE_PWM
+#if defined(GPT_BACKLIGHT)
 	struct gptimer *gpt_base = (struct gptimer *)GPT_BACKLIGHT;
+#endif
 
 #if defined(CONFIG_TARGET_LETUX_GTA04) || defined(CONFIG_TARGET_LETUX_GTA04_B2) || defined(CONFIG_TARGET_LETUX_GTA04_B3) || defined(CONFIG_TARGET_LETUX_GTA04_B4)
 	MUX_VAL(CP(GPMC_NCS6),		(IEN | PTD | DIS | M3)) /* Switch GPIO57 to GPT_11 - Backlight enable*/
@@ -150,6 +151,7 @@ int backlight_init(void)
 	return 0;	// no backlight
 #endif
 
+#if defined(GPIO_BACKLIGHT)
 	if(gpio_request(GPIO_BACKLIGHT, "backlight") == 0)	// 0 == ok
 		{
 		gpio_direction_output(GPIO_BACKLIGHT, 0);		// output
@@ -160,6 +162,7 @@ int backlight_init(void)
 		printf("backlight_init() on GPIO_%d failed\n", GPIO_BACKLIGHT);		
 		}
 
+#endif
 #endif	// USE_PWM
 	return 0;
 }
