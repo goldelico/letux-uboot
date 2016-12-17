@@ -5,7 +5,6 @@ obj-y += ../../ti/beagle/led.o
 
 ifndef CONFIG_SPL_BUILD
 obj-y += ../letux-gta04-b7/ACX565AKM.o
-obj-y += ../letux-gta04/jbt6k74.o
 obj-y += ../letux-gta04/status.o
 obj-y += ../letux-gta04/shutdown.o
 obj-y += ../letux-gta04/commands.o
