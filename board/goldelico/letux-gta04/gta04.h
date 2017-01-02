@@ -26,7 +26,7 @@
 const omap3_sysinfo sysinfo = {
 	DDR_STACKED,
 	"GTA04",
-#if defined(CONFIG_ENV_IS_IN_ONENAND)
+#if defined(CONFIG_ONENAND_BOOT)
 	"OneNAND",
 #else
 	"NAND",
@@ -34,7 +34,6 @@ const omap3_sysinfo sysinfo = {
 };
 
 extern char *muxname;	// MUX settings name
-extern char *devicetree;	// device tree file name - can be used to load a matching .dtb for the kernel
 extern char *peripheral;
 
 /*
@@ -376,7 +375,7 @@ MUX_VAL(CP(D2D_MBUSFLAG),	(IEN  | PTD | DIS | M0)) /*d2d_mbusflag*/\
 MUX_VAL(CP(D2D_SBUSFLAG),	(IEN  | PTD | DIS | M0)) /*d2d_sbusflag*/\
 MUX_VAL(CP(SDRC_CKE0),		(IDIS | PTU | EN  | M0)) /*sdrc_cke0*/\
 MUX_VAL(CP(SDRC_CKE1),		(IDIS | PTU | EN  | M0)) /*sdrc_cke1*/\
-muxname="BB", devicetree="omap3-beagle"
+muxname="BB"
 
 #define MUX_BEAGLE_C() \
 MUX_VAL(CP(MCBSP3_DX),		(IEN  | PTD | DIS | M4)) /*GPIO_140*/\
@@ -385,7 +384,7 @@ MUX_VAL(CP(MCBSP3_CLKX),	(IEN  | PTD | DIS | M4)) /*GPIO_141*/\
 MUX_VAL(CP(UART2_CTS),		(IEN  | PTU | EN  | M0)) /*UART2_CTS*/\
 MUX_VAL(CP(UART2_RTS),		(IDIS | PTD | DIS | M0)) /*UART2_RTS*/\
 MUX_VAL(CP(UART2_TX),		(IDIS | PTD | DIS | M0)) /*UART2_TX*/\
-muxname="BB-C", devicetree="omap3-beagle"
+muxname="BB-C"
 
 #define MUX_BEAGLE_XM() \
 MUX_VAL(CP(GPMC_NCS5),		(IDIS | PTD | EN  | M4)) /*GPIO_56*/\
@@ -416,7 +415,7 @@ MUX_VAL(CP(SYS_BOOT3),		(IDIS | PTD | DIS | M3)) /*DSS_DATA20*/\
 MUX_VAL(CP(SYS_BOOT4),		(IDIS | PTD | DIS | M3)) /*DSS_DATA21*/\
 MUX_VAL(CP(SYS_BOOT5),		(IDIS | PTD | DIS | M3)) /*DSS_DATA22*/\
 MUX_VAL(CP(SYS_BOOT6),		(IDIS | PTD | DIS | M3)) /*DSS_DATA23*/\
-muxname="BB-XM", devicetree="omap3-beagle-xm"
+muxname="BB-XM"
 
 /*
  * IEN  - Input Enable
@@ -475,9 +474,9 @@ MUX_VAL(CP(MCSPI1_SOMI),	(IEN  | PTU | EN  | M4)) /*GPIO_173 - Version sense*/\
 MUX_VAL(CP(MCSPI1_CS0),		(IEN  | PTD | EN  | M4)) /*GPIO_174 - USB-PHY-RESET*/\
 MUX_VAL(CP(MCSPI1_CS1),		(IEN  | PTU | DIS | M4)) /*GPIO_175/MMC3CMD - WAKE_WWAN */\
 MUX_VAL(CP(MCSPI1_CS2),		(IEN  | PTD | DIS | M4)) /*GPIO_176/MMC3CLK - 3G_WOE */\
-muxname="GTA04A2", devicetree="omap3-gta04a2"
+muxname="GTA04A2"
 
-#else 	// GTA04A3ff has some improved mux assignments
+#else 	// GTA04A3ff has some improved/modified mux assignments
 
 #define MUX_GTA04() \
 MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M4)) /*GPIO_12 - Display serial clock*/\
@@ -534,10 +533,10 @@ MUX_VAL(CP(MCSPI1_CLK),		(IEN  | PTU | EN  | M4)) /*GPIO_171 - Version sense*/\
 MUX_VAL(CP(MCSPI1_SIMO),	(IEN  | PTU | EN  | M4)) /*GPIO_172 - Version sense*/\
 MUX_VAL(CP(MCSPI1_SOMI),	(IEN  | PTU | EN  | M4)) /*GPIO_173 - Version sense*/\
 MUX_VAL(CP(MCSPI1_CS0),		(IEN  | PTU | EN  | M4)) /*GPIO_174 - USB-PHY-RESET*/\
-MUX_VAL(CP(MCSPI1_CS1),		(IEN  | PTD | DIS | M4)) /*GPIO_175/MMC3CMD - WAKE_WWAN/ON_KEY */\
-MUX_VAL(CP(MCSPI1_CS2),		(IEN  | PTD | DIS | M4)) /*GPIO_176/MMC3CLK - 3G_WOE/ KEY_IRQ */\
+MUX_VAL(CP(MCSPI1_CS1),		(IEN  | PTU | EN | M4)) /*GPIO_175/MMC3CMD - WAKE_WWAN/ON_KEY / IrDA SHDN */\
+MUX_VAL(CP(MCSPI1_CS2),		(IEN  | PTD | EN | M4)) /*GPIO_176/MMC3CLK - 3G_WOE/ KEY_IRQ */\
 MUX_VAL(CP(SYS_CLKOUT2),	(IEN  | PTD | DIS | M4)) /*GPIO_186 - WWAN_RESET (GTA04A4ff) */\
-muxname="GTA04A3+", devicetree="omap3-gta04"
+muxname="GTA04A3+"
 
 #if 0 // test HSUSB2 wiring
 /* USB EHCI (port 2) */\

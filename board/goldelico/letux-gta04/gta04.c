@@ -64,7 +64,6 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 char *muxname="unknown";
-char *devicetree="unknown";
 char *peripheral="";
 
 static const struct ns16550_platdata gta04_serial = {
@@ -271,10 +270,10 @@ void get_board_mem_timings(struct board_sdrc_timings *timings)
 int spl_start_uboot(void)
 {
 	// check if AUX button is pressed and return 1 to always start U-Boot
-	return 1;
+	return 1;	/* set to 0 to try Falcon boot to Linux */
 }
 
-#endif
+#endif	/* defined(CONFIG_SPL_BUILD) */
 
 #ifdef CONFIG_USB_MUSB_OMAP2PLUS
 static struct musb_hdrc_config musb_config = {
@@ -318,17 +317,8 @@ static struct musb_hdrc_platform_data musb_plat = {
 
 int misc_init_r(void)
 {
-	struct control_prog_io *prog_io_base = (struct control_prog_io *)OMAP34XX_CTRL_BASE;
 	bool generate_fake_mac = false;
-	u32 value;
 	char devtree[50];
-
-	/* Enable i2c2 pullup resisters */
-	value = readl(&prog_io_base->io1);
-	value &= ~(PRG_I2C2_PULLUPRESX);
-	writel(value, &prog_io_base->io1);
-
-	MUX_GTA04();
 
 	/* ITG3200 & HMC5883L VAUX2 = 2.8V */
 	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
@@ -500,41 +490,41 @@ int misc_init_r(void)
 	/* we must load different device trees depending
 	   on the board revision */
 
-	strcpy(devtree, devicetree);
-	if(strcmp(devtree, "omap3-gta04") == 0) {
-		int revision = get_gta04_revision();
+	strcpy(devtree, "unknown");
 
-		switch(revision) {
-			case 2:
-				strcpy(devtree, "omap3-gta04a2");
-				break;
-			case 3:
-				strcpy(devtree, "omap3-gta04a3");
-				generate_fake_mac = true;
-				break;
-			case 4:
-				strcpy(devtree, "omap3-gta04a4");
-				generate_fake_mac = true;
-				break;
-			case 5:
-				strcpy(devtree, "omap3-gta04a5");
-				generate_fake_mac = true;
-				break;
-			default:
-				printf("Error: unknown GTA04 revision\n");
-				break;
-			case -1:
-				printf("Error: unable to acquire board revision GPIOs\n");
-				break;
-			}
-		strcat(devtree, peripheral);	/* append potential +b2/b3 suffix for peripheral board(s) */
-	}
-
+	switch(get_gta04_revision()) {
+		case 2:
+			strcpy(devtree, "omap3-gta04a2");
+			break;
+		case 3:
+			strcpy(devtree, "omap3-gta04a3");
+			generate_fake_mac = true;
+			break;
+		case 4:
+			strcpy(devtree, "omap3-gta04a4");
+			generate_fake_mac = true;
+			break;
+		case 5:
+			strcpy(devtree, "omap3-gta04a5");
+			generate_fake_mac = true;
+			break;
+		default:
+			printf("Error: unknown GTA04 revision\n");
+			break;
+		case -1:
+			printf("Error: unable to acquire board revision GPIOs\n");
+			break;
+		}
+	strcat(devtree, peripheral);	/* append potential +b2/b3 suffix for peripheral board(s) */
 	setenv("mux", muxname);
 	setenv("devicetree", devtree);
 	strcat(devtree, ".dtb");
 	setenv("fdtfile", devtree);
 	printf("Device Tree: %s\n", devtree);
+
+	gpio_request(175, "irda");
+	gpio_direction_input(175);
+	printf("gpio175 = %d\n", gpio_get_value(175));
 
 	return 0;
 }
@@ -547,7 +537,16 @@ int misc_init_r(void)
  */
 void set_muxconf_regs(void)
 {
+	struct control_prog_io *prog_io_base = (struct control_prog_io *)OMAP34XX_CTRL_BASE;
+	u32 value;
+
 	MUX_BEAGLE();
+	MUX_GTA04();
+
+	/* Enable i2c2 pullup resisters */
+	value = readl(&prog_io_base->io1);
+	value &= ~(PRG_I2C2_PULLUPRESX);
+	writel(value, &prog_io_base->io1);
 }
 
 #if defined(CONFIG_GENERIC_MMC) && !defined(CONFIG_SPL_BUILD)
@@ -558,18 +557,34 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
-#if defined(CONFIG_GENERIC_MMC)
+#if defined(CONFIG_GENERIC_MMC) && defined(CONFIG_SPL_BUILD)
+
+static void gta04a5(void)
+{
+	// seems to be too late to avoid spurious RX characters through IrDA receiver
+	// hence we do it already by MUX_GTA04() - but there we can't check the board revision!
+	// so we coud better revert it for non-A5 boards
+	return;
+#if 1
+	printf("gta04a5\n");
+#endif
+	/* turn off IrDA receiver */
+	printf("turn off IrDA\n");
+	MUX_VAL(CP(MCSPI1_CS1), (IEN  | PTU | EN | M4)) /*GPIO_175/MMC3CMD - IrDA (GTA04A5 only) */;
+}
+
 void board_mmc_power_init(void)
 {
-#if defined(CONFIG_SPL_BUILD)
 	int pop_mfr, pop_id;
-	get_gta04_revision();
 	identify_nand_chip(&pop_mfr, &pop_id);
 	printf("pop_mfr = %02x pop_id = %02x\n", pop_mfr, pop_id);
-#endif
+
 	twl4030_power_mmc_init(0);
+
+	if (get_gta04_revision() == 5)
+		gta04a5();
 }
-#endif
+#endif	/* defined(CONFIG_GENERIC_MMC) */
 
 #if defined(CONFIG_USB_EHCI) && !defined(CONFIG_SPL_BUILD)
 /* Call usb_stop() before starting the kernel */
@@ -603,4 +618,4 @@ int board_eth_init(bd_t *bis)
 {
 	return usb_eth_initialize(bis);
 }
-#endif
+#endif	/* CONFIG_USB_ETHER */
