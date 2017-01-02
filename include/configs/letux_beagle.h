@@ -26,10 +26,30 @@
 
 #include "omap3_beagle.h"	/* share config */
 
+#undef MTDIDS_DEFAULT
 #undef MTDPARTS_DEFAULT
+#if defined(CONFIG_CMD_ONENAND)
+#undef CONFIG_CMD_NAND
+#undef CONFIG_NAND_OMAP_GPMC
+#undef CONFIG_ENV_IS_IN_NAND
+#undef CONFIG_SPL_NAND_SUPPORT
+#define CONFIG_CMD_MTDPARTS
+#define CONFIG_SYS_ONENAND_BASE	ONENAND_MAP
+#if !defined(CONFIG_ENV_IS_NOWHERE)
+#define CONFIG_ENV_IS_IN_ONENAND
+#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
+#endif	/* CONFIG_ENV_IS_NOWHERE */
+#define MTDIDS_DEFAULT			"nand0=onenand"
+#define MTDPARTS_DEFAULT		"mtdparts=onenand:512k(x-loader),"\
+					"1920k(u-boot),128k(u-boot-env),"\
+					"6m(kernel),-(fs)"
+
+#else	/* CONFIG_CMD_ONENAND */
 #define MTDPARTS_DEFAULT		"mtdparts=nand:512k(x-loader),"\
 					"1920k(u-boot),128k(u-boot-env),"\
 					"6m(kernel),-(fs)"
+
+#endif	/* CONFIG_CMD_ONENAND */
 
 #define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
 
