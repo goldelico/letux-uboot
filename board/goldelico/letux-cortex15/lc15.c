@@ -151,7 +151,7 @@ int misc_init_r(void)
 
 int board_mmc_init(bd_t *bis)
 {
-	int uSD = 0;	// could ask GPIO3_82 state
+	int uSD = 0;	// should ask GPIO3_82 state to get the correct bus width
 	debug("special board_mmc_init for LC15\n");
 	writel(0x02, 0x4A009120);	/* enable MMC3 module */
 	writel(0x02, 0x4A009128);	/* enable MMC4 module */
