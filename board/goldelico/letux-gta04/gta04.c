@@ -10,7 +10,7 @@
  *	Richard Woodruff <r-woodruff2@ti.com>
  *	Syed Mohammed Khasim <khasim@ti.com>
  *
- * Authos:
+ * Author:
  *  Nikolaus Schaller <hns@goldelico.com>
  *  adapted to GTA04
  *
@@ -195,14 +195,27 @@ int isXM(void)
  */
 void get_board_mem_timings(struct board_sdrc_timings *timings)
 {
-	int pop_mfr, pop_id;
+	int pop_mfr = 0x11, pop_id = 0x11;
 
 	/*
 	 * We need to identify what PoP memory is on the board so that
 	 * we know what timings to use.  If we can't identify it then
 	 * we know it's an xM.  To map the ID values please see nand_ids.c
 	 */
+
+/// FIXME: this does not work for OneNAND!
+
+#if defined(CONFIG_CMD_ONENAND)
+	// force Samsung OneNAND
+	pop_mfr = 1;
+	pop_id = 0;
+	// OneNAND version = 0x0232
+	// but #define NAND_MFR_SAMSUNG 0xec
+#else
+	// FIXME: this should not be called by OneNAND
+	// OneNAND could be decoded by SYS_BOOT settings!
 	identify_nand_chip(&pop_mfr, &pop_id);
+#endif
 
 	timings->mr = MICRON_V_MR_165;
 
@@ -576,8 +589,19 @@ static void gta04a5(void)
 void board_mmc_power_init(void)
 {
 	int pop_mfr, pop_id;
+
+#if defined(CONFIG_CMD_ONENAND)
+	// force Samsung OneNAND
+	pop_mfr = 1;
+	pop_id = 0;
+	// OneNAND version = 0x0232
+	// but #define NAND_MFR_SAMSUNG 0xec
+#else
+	// FIXME: this should not be called by OneNAND
+	// OneNAND could be decoded by SYS_BOOT settings!
 	identify_nand_chip(&pop_mfr, &pop_id);
 	printf("pop_mfr = %02x pop_id = %02x\n", pop_mfr, pop_id);
+#endif
 
 	twl4030_power_mmc_init(0);
 
