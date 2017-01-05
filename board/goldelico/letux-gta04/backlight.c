@@ -30,6 +30,8 @@
 #include <asm/mach-types.h>
 #include "backlight.h"
 
+static int backlight_init_done=0;
+
 // CHECKME!
 
 #if defined(CONFIG_TARGET_LETUX_GTA04)
@@ -87,6 +89,8 @@
 
 void backlight_set_level(int level)	// 0..255
 {
+	if(!backlight_init_done)
+		return;
 #if defined(CONFIG_TARGET_LETUX_GTA04_B4)
 	level=255-level;	// reversed polarity by T401
 #endif
@@ -164,5 +168,6 @@ int backlight_init(void)
 
 #endif
 #endif	// USE_PWM
+	backlight_init_done=1;
 	return 0;
 }
