@@ -195,8 +195,10 @@
 		"bootz ${loadaddr} - ${fdtaddr}\0" \
 	"nandboot=echo Booting from nand ...; " \
 		"run nandargs; " \
-		"nand read ${loadaddr} 280000 400000; " \
-		"bootm ${loadaddr}\0" \
+		"if onenand read ${loadaddr} 280000 400000; then " \
+			"bootm ${loadaddr}; fi\0" \
+		"if nand read ${loadaddr} 280000 400000; then " \
+			"bootm ${loadaddr}; fi\0" \
 	"ramboot=echo Booting from ramdisk ...; " \
 		"run ramargs; " \
 		"bootm ${loadaddr}\0" \
@@ -264,7 +266,7 @@
 
 #define CONFIG_SYS_ENV_SECT_SIZE	(128 << 10)	/* 128 KiB */
 #define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
-#define CONFIG_ENV_ADDR			SMNAND_ENV_OFFSET
+#define CONFIG_ENV_ADDR		SMNAND_ENV_OFFSET
 
 #define CONFIG_OMAP3_SPI
 
