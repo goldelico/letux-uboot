@@ -28,26 +28,44 @@
 
 #undef MTDIDS_DEFAULT
 #undef MTDPARTS_DEFAULT
+
 #if defined(CONFIG_CMD_ONENAND)
+
 #undef CONFIG_CMD_NAND
 #undef CONFIG_NAND_OMAP_GPMC
 #undef CONFIG_ENV_IS_IN_NAND
 #undef CONFIG_SPL_NAND_SUPPORT
+
 #define CONFIG_CMD_MTDPARTS
 #define CONFIG_SYS_ONENAND_BASE	ONENAND_MAP
+#define CONFIG_MTD_DEVICE
+#define CONFIG_MTD_PARTITIONS	/* required for UBI partition support */
+
 #if !defined(CONFIG_ENV_IS_NOWHERE)
 #define CONFIG_ENV_IS_IN_ONENAND
-#define CONFIG_ENV_OFFSET		SMNAND_ENV_OFFSET
+#undef CONFIG_ENV_OFFSET
+#define CONFIG_ENV_OFFSET		0x240000
+#undef CONFIG_ENV_ADDR
+#define CONFIG_ENV_ADDR		CONFIG_ENV_OFFSET
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_SIZE		(256 << 10)	/* 256 KiB */
 #endif	/* CONFIG_ENV_IS_NOWHERE */
-#define MTDIDS_DEFAULT			"nand0=onenand"
-#define MTDPARTS_DEFAULT		"mtdparts=onenand:512k(x-loader),"\
-					"1920k(u-boot),128k(u-boot-env),"\
-					"6m(kernel),-(fs)"
+#define MTDIDS_DEFAULT			"onenand0=onenand"
+#define MTDPARTS_DEFAULT		"mtdparts=onenand:"\
+					"512k(x-loader),"\
+					"1792k(u-boot),"\
+					"256k(u-boot-env),"\
+					"6m(kernel),"\
+					"-(fs)"
 
 #else	/* CONFIG_CMD_ONENAND */
-#define MTDPARTS_DEFAULT		"mtdparts=nand:512k(x-loader),"\
-					"1920k(u-boot),128k(u-boot-env),"\
-					"6m(kernel),-(fs)"
+
+#define MTDPARTS_DEFAULT		"mtdparts=nand:"\
+					"512k(x-loader),"\
+					"1920k(u-boot),"\
+					"128k(u-boot-env),"\
+					"6m(kernel),"\
+					"-(fs)"
 
 #endif	/* CONFIG_CMD_ONENAND */
 
@@ -55,5 +73,8 @@
 
 #undef CONFIG_SYS_PROMPT
 #define CONFIG_SYS_PROMPT		"Letux Beagle # "
+
+#define CONFIG_SYS_MEMTEST_START	0x90000000
+#define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + 500 * SZ_1M)
 
 /* __CONFIG_H */
