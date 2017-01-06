@@ -30,6 +30,11 @@ int identify_nand_chip(int *mfr, int *id)
 {
 	int loops = 1000;
 
+#if !defined(CONFIG_NAND_OMAP_GPMC)
+	return 1;	/* don't call for OneNAND */
+	// FIXME: we could ask BootROM or SYSBOOT gpios for NAND/OneNAND
+#endif
+
 	/* Make sure that we have setup GPMC for NAND correctly. */
 	set_gpmc_cs0(MTD_DEV_TYPE_NAND);
 
