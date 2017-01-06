@@ -195,7 +195,7 @@ int isXM(void)
  */
 void get_board_mem_timings(struct board_sdrc_timings *timings)
 {
-	int pop_mfr = 0x11, pop_id = 0x11;
+	int pop_mfr = 0, pop_id = 0;
 
 	/*
 	 * We need to identify what PoP memory is on the board so that
@@ -203,81 +203,81 @@ void get_board_mem_timings(struct board_sdrc_timings *timings)
 	 * we know it's an xM.  To map the ID values please see nand_ids.c
 	 */
 
-/// FIXME: this does not work for OneNAND!
-
-#if defined(CONFIG_CMD_ONENAND)
-	// force Samsung OneNAND
-	pop_mfr = 1;
-	pop_id = 0;
-	// OneNAND version = 0x0232
-	// but #define NAND_MFR_SAMSUNG 0xec
-#else
-	// FIXME: this should not be called by OneNAND
-	// OneNAND could be decoded by SYS_BOOT settings!
 	identify_nand_chip(&pop_mfr, &pop_id);
-#endif
 
 	timings->mr = MICRON_V_MR_165;
 
-
-	switch (get_board_revision()) {
-	case REVISION_C4:
-		if (pop_mfr == NAND_MFR_STMICRO && pop_id == 0xba) {
-			/* 512MB DDR */
-			timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
-			timings->ctrla = NUMONYX_V_ACTIMA_165;
-			timings->ctrlb = NUMONYX_V_ACTIMB_165;
-			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
-			break;
-		} else if (pop_mfr == NAND_MFR_MICRON && pop_id == 0xba) {
-			/* Beagleboard Rev C4, 512MB Nand/256MB DDR*/
-			timings->mcfg = MICRON_V_MCFG_165(128 << 20);
-			timings->ctrla = MICRON_V_ACTIMA_165;
-			timings->ctrlb = MICRON_V_ACTIMB_165;
-			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
-			break;
-		} else if (pop_mfr == NAND_MFR_MICRON && pop_id == 0xbc) {
-			/* Beagleboard Rev C5, 256MB DDR */
-			timings->mcfg = MICRON_V_MCFG_200(256 << 20);
-			timings->ctrla = MICRON_V_ACTIMA_200;
-			timings->ctrlb = MICRON_V_ACTIMB_200;
-			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
-			break;
-		}
-	case REVISION_XM_AB:
-	case REVISION_XM_C:
-		if (pop_mfr == 0) {
-// check for OneNAND!
-			if(pop_id == 0) {
-				// FIXME: SAMSUNG_MCP with 1GB DDR
-				// should do this: http://git.goldelico.com/?p=gta04-xloader.git;a=blob;f=board/omap3530beagle/omap3530beagle.c;h=97e9ffc9c5296073a6e81354548bea9c243a23e5;hb=f1cbec2c777e82b7375b3a931dc51db5ccf61e83#l688
-				/* 256MB DDR */
-				timings->mcfg = MICRON_V_MCFG_200(256 << 20);
-				timings->ctrla = MICRON_V_ACTIMA_200;
-				timings->ctrlb = MICRON_V_ACTIMB_200;
-				timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
-			} else {
-				/* 256MB DDR */
-				timings->mcfg = MICRON_V_MCFG_200(256 << 20);
-				timings->ctrla = MICRON_V_ACTIMA_200;
-				timings->ctrlb = MICRON_V_ACTIMB_200;
-				timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
-			}
-		} else {
-			/* 512MB DDR */
-			timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
-			timings->ctrla = NUMONYX_V_ACTIMA_165;
-			timings->ctrlb = NUMONYX_V_ACTIMB_165;
-			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
-		}
-		break;
-	default:
-		/* Assume 128MB and Micron/165MHz timings to be safe */
+	if (pop_mfr == NAND_MFR_STMICRO && pop_id == 0xba) {
+		/* 512MB DDR */
+		timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
+		timings->ctrla = NUMONYX_V_ACTIMA_165;
+		timings->ctrlb = NUMONYX_V_ACTIMB_165;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+	} else if (pop_mfr == NAND_MFR_MICRON && pop_id == 0xba) {
+		/* Beagleboard Rev C4, 512MB Nand/256MB DDR*/
 		timings->mcfg = MICRON_V_MCFG_165(128 << 20);
 		timings->ctrla = MICRON_V_ACTIMA_165;
 		timings->ctrlb = MICRON_V_ACTIMB_165;
 		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+	} else if (pop_mfr == NAND_MFR_MICRON && pop_id == 0xbc) {
+		/* Beagleboard Rev C5, 256MB DDR */
+		timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+		timings->ctrla = MICRON_V_ACTIMA_200;
+		timings->ctrlb = MICRON_V_ACTIMB_200;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+	} else 	if (pop_mfr == 0 && pop_id == 0) {
+		// FIXME: SAMSUNG_MCP with 1GB DDR
+		// should do this: http://git.goldelico.com/?p=gta04-xloader.git;a=blob;f=board/omap3530beagle/omap3530beagle.c;h=97e9ffc9c5296073a6e81354548bea9c243a23e5;hb=f1cbec2c777e82b7375b3a931dc51db5ccf61e83#l688
+		/* 256MB DDR */
+		timings->mcfg = SAMSUNG_V_MCFG_165(512 << 20);
+		timings->ctrla = SAMSUNG_V_ACTIMA_165;
+		timings->ctrlb = SAMSUNG_V_ACTIMB_165;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+		/*
+		 * this is a working set of parameters for the SAMSUNG_MCP on GTA04A5
+		 * can certainly be optimized
+		 */
+		timings->mcfg = NUMONYX_V_MCFG_165(256 << 20);
+		timings->ctrla = NUMONYX_V_ACTIMA_165;
+		timings->ctrlb = NUMONYX_V_ACTIMB_165;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+	} else if (pop_mfr == 0) {
+		/* 256MB DDR */
+		timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+		timings->ctrla = MICRON_V_ACTIMA_200;
+		timings->ctrlb = MICRON_V_ACTIMB_200;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+	} else {
+		/* 512MB DDR */
+		timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
+		timings->ctrla = NUMONYX_V_ACTIMA_165;
+		timings->ctrlb = NUMONYX_V_ACTIMB_165;
+		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
 	}
+
+	// debugging/developing Samsung RAM+OneNAND for GTA04A5
+
+#if 0
+	/* 512MB DDR - boots but fails in kernel */
+	timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
+	timings->ctrla = NUMONYX_V_ACTIMA_165;
+	timings->ctrlb = NUMONYX_V_ACTIMB_165;
+	timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+#endif
+#if 0
+	/* 512MB DDR - works */
+	timings->mcfg = NUMONYX_V_MCFG_165(256 << 20);
+	timings->ctrla = NUMONYX_V_ACTIMA_165;
+	timings->ctrlb = NUMONYX_V_ACTIMB_165;
+	timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
+#endif
+#if 0
+	/* 512MB DDR - works */
+	timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+	timings->ctrla = MICRON_V_ACTIMA_200;
+	timings->ctrlb = MICRON_V_ACTIMB_200;
+	timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
+#endif
 }
 
 int spl_start_uboot(void)
@@ -588,21 +588,12 @@ static void gta04a5(void)
 
 void board_mmc_power_init(void)
 {
-	int pop_mfr, pop_id;
+	int pop_mfr = 0, pop_id = 0;
 
-#if defined(CONFIG_CMD_ONENAND)
-	// force Samsung OneNAND
-	pop_mfr = 1;
-	pop_id = 0;
-	// OneNAND version = 0x0232
-	// but #define NAND_MFR_SAMSUNG 0xec
-#else
-	// FIXME: this should not be called by OneNAND
-	// OneNAND could be decoded by SYS_BOOT settings!
 	identify_nand_chip(&pop_mfr, &pop_id);
+#if 1
 	printf("pop_mfr = %02x pop_id = %02x\n", pop_mfr, pop_id);
 #endif
-
 	twl4030_power_mmc_init(0);
 
 	if (get_gta04_revision() == 5)
