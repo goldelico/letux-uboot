@@ -287,9 +287,15 @@ static int sleep_to_standby(struct jbt_info *jbt)
 }
 
 /* frontend function */
+
+static char initialized = false;
+
 int panel_enter_state(enum panel_state new_state)
 {
 	int rc = -EINVAL;
+
+	if (!initialized)
+		return rc;
 
 	DEBUGP("entering(old_state=%u, new_state=%u)\n", jbt->state, new_state);
 
@@ -349,6 +355,9 @@ int panel_enter_state(enum panel_state new_state)
 
 int panel_display_onoff(int on)
 {
+	if (!initialized)
+		return -EINVAL;
+
 	DEBUGP("entering\n");
 	if (on)
 		return jbt_reg_write_nodata(jbt, JBT_REG_DISPLAY_ON);
@@ -377,6 +386,8 @@ int board_video_init(GraphicDevice *pGD)
 	if (get_cpu_family() == CPU_OMAP36XX)
 		lcm_cfg.divisor	= (0x0001<<16)|(DSS1_FCLK3730/PIXEL_CLOCK); /* get Pixel Clock divisor from dss1_fclk */
 	dssfb_init(&lcm_cfg);
+
+	initialized = true;
 
 	printf("did board_video_init()\n");
 	return 0;
