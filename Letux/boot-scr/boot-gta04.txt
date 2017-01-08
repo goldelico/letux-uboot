@@ -2,9 +2,10 @@
 # boot.scr
 #
 # Boot script for Beagle Hybrid / Panda Hybrid / GTA04 / Neo900
+# Requires 2016.11 or later U-Boot / MLO
 #
 # Author: H. Nikolaus Schaller
-# Copyright Golden Delicious Computers 2010-2015
+# Copyright Golden Delicious Computers 2010-2017
 # licensed under GPL 2.0
 #
 #
@@ -68,39 +69,39 @@ if test "x${scriptversion}" != "x${VERSION}"
 	setenv omapfbvram	0:8M,1:4M
 
 	# load boot script from mmc (first FAT partition only) or nand wherever we find it
-# i2c dev 0
-# mmc rescan ${mmc}
-# if load mmc ${mmc} ${bootaddr} boot.scr
-# then
-#   echo did load bootscript from mmc
-# elif nand read ${bootaddr} 250000 10000
-# then
-#   echo did load bootscript from nand
-# fi
-	setenv loadbootscript 'i2c dev 0; mmc rescan ${mmc}; if load mmc ${mmc} ${bootaddr} boot.scr; then echo did load bootscript from mmc; elif nand read ${bootaddr} 250000 10000; then echo did load bootscript from nand; fi'	
+	setenv loadbootscript '
+i2c dev 0
+mmc rescan
+if load mmc ${mmc} ${bootaddr} boot.scr
+then
+  echo did load bootscript from mmc;
+elif ${nand_cmd} read ${bootaddr} 250000 10000
+then
+  echo did load bootscript from nand
+fi'
 
 	# load zipped/uncompressed image from mmc (first FAT partition only) or nand wherever we find it
-# i2c dev 0
-# mmc rescan ${mmc}
-# if load mmc ${mmc} ${imgaddr} ${imgfile}.rgb16
-# then
-#   ;
-# elif load mmc ${mmc} ${imgtempaddr} ${imgfile}.rgb16z
-# then
-#   unzip ${imgtempaddr} ${imgaddr}
-# elif nand read ${imgtempaddr} ${imgnandaddr} 40000
-# then
-#   unzip ${imgtempaddr} ${imgaddr}
-# fi
-	setenv loadimg 'i2c dev 0; mmc rescan ${mmc}; if load mmc ${mmc} ${imgaddr} ${imgfile}.rgb16; then; elif load mmc ${mmc} ${imgtempaddr} ${imgfile}.rgb16z; then unzip ${imgtempaddr} ${imgaddr}; elif nand read ${imgtempaddr} ${imgnandaddr} 40000; then unzip ${imgtempaddr} ${imgaddr}; fi'
+	setenv loadimg '
+i2c dev 0
+mmc rescan
+if load mmc ${mmc} ${imgaddr} ${imgfile}.rgb16
+then
+  ;
+elif load mmc ${mmc} ${imgtempaddr} ${imgfile}.rgb16z
+then
+  unzip ${imgtempaddr} ${imgaddr}
+elif ${nand_cmd} read ${imgtempaddr} ${imgnandaddr} 40000
+then
+  unzip ${imgtempaddr} ${imgaddr}
+fi'
 	setenv showimg 'run loadimg; lcm fb ${imgaddr};'
 
 	# predefine default boot arguments (unless overwritten by bootargs.scr)
-	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${mmcroot} rootfstype=${mmcrootfstype}'
+	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand_cmd} root=${mmcroot} rootfstype=${mmcrootfstype}'
 	setenv mmcroot "/dev/mmcblk${kernelmmc}p2 rw"
 	setenv mmcrootfstype "ext4,ext3,btrfs rootwait"
 
-	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${nandroot} rootfstype=${nandrootfstype}'
+	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand_cmd} root=${nandroot} rootfstype=${nandrootfstype}'
 	setenv nandroot "ubi0:gta04-rootfs"
 	setenv nandrootfstype "ubifs"
 
@@ -109,91 +110,120 @@ if test "x${scriptversion}" != "x${VERSION}"
 	setenv kernelloading 'status set 18'	# orange
 	setenv kernelloaded 'status set 10'	# green
 
-# run kernelloading
-# i2c dev 0
-# mmc rescan ${mmc}
-# DONE=0
-# KERNEL=0
-# FDT=0
-# run nandargs	# start with default arguments for rootfs in NAND
-# for p in $bootorder
-# do
-#   if itest $DONE == 0
-#   then
-#     if load mmc ${mmc}:${p} ${loadaddr} uImage
-#     then
-#       echo found kernel /uImage on partition $p
-#       setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
-#       run mmcargs	# start with default mmc args
-#       KERNEL=1
-#       DONE=1
-#     elif load mmc ${mmc}:${p} ${loadaddr} /boot/uImage
-#     then
-#       echo found kernel /boot/uImage on partition $p
-#       setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
-#       run mmcargs	# start with default mmc args
-#       KERNEL=1
-#       DONE=1
-#     fi
-#     if load mmc ${mmc}:${p} ${imgtempaddr} bootargs.scr
-#     then
-#       setenv PARTITION $p
-#       setenv PARTITIONTYPE FAT
-#       source ${imgtempaddr}
-#       DONE=1
-#     elif load mmc ${mmc}:${p} ${imgtempaddr} /boot/bootargs.scr
-#     then
-#       setenv PARTITION $p
-#       setenv PARTITIONTYPE EXT
-#       source ${imgtempaddr}
-#       DONE=1
-#     fi
-#     if load mmc ${mmc}:${p} ${loadaddrfdt} ${devicetree}.dtb
-#     then
-#       FDT=1
-#     elif load mmc ${mmc}:${p} ${loadaddrfdt} /boot/${devicetree}.dtb
-#     then
-#       FDT=1
-#     fi
-#   fi
-# done
-# if itest $KERNEL == 0
-# then
-#    if nand read ${loadaddr} 280000 600000
-#    then
-#      echo fallback to NAND kernel
-#      FDT=0
-#    else
-#      status blink
-#    fi
-# fi
-# run kernelloaded
-
-	setenv loadkernel 'run kernelloading;i2c dev 0;mmc rescan ${mmc};DONE=0;KERNEL=0;FDT=0;run nandargs;echo trying partitions $bootorder;for p in $bootorder;do;if itest $DONE == 0;then;if load mmc ${mmc}:${p} ${loadaddr} uImage;then;echo found kernel /uImage on partition $p;setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw";run mmcargs;KERNEL=1;DONE=1;elif load mmc ${mmc}:${p} ${loadaddr} /boot/uImage;then;echo found kernel /boot/uImage on EXT partition $p;setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw";run mmcargs;KERNEL=1;DONE=1;fi;if load mmc ${mmc}:${p} ${imgtempaddr} bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE FAT;source ${imgtempaddr};DONE=1;elif load mmc ${mmc}:${p} ${imgtempaddr} /boot/bootargs.scr;then;setenv PARTITION $p;setenv PARTITIONTYPE EXT;source ${imgtempaddr};DONE=1;fi;if load mmc ${mmc}:${p} ${loadaddrfdt} ${devicetree}.dtb;then;FDT=1;elif load mmc ${mmc}:${p} ${loadaddrfdt} /boot/${devicetree}.dtb;then;FDT=1;fi;fi;done;if itest $KERNEL == 0;then;if nand read ${loadaddr} 280000 600000;then;echo fallback to NAND kernel;FDT=0;else;status blink;fi;fi;run kernelloaded'
+	setenv loadkernel '
+run kernelloading
+i2c dev 0
+mmc rescan
+DONE=0;KERNEL=0;FDT=0
+run nandargs
+echo trying partitions $bootorder
+for p in $bootorder
+do
+  if itest $DONE == 0
+  then
+    if load mmc ${mmc}:${p} ${loadaddr} uImage
+    then
+      echo found kernel /uImage on partition $p
+      setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
+      run mmcargs
+      KERNEL=1;DONE=1
+    elif load mmc ${mmc}:${p} ${loadaddr} /boot/uImage
+    then
+      echo found kernel /boot/uImage on EXT partition $p
+      setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
+      run mmcargs
+      KERNEL=1;DONE=1
+    fi
+    if load mmc ${mmc}:${p} ${imgtempaddr} bootargs.scr
+    then
+      setenv PARTITION $p
+      setenv PARTITIONTYPE FAT
+      source ${imgtempaddr}
+      DONE=1
+    elif load mmc ${mmc}:${p} ${imgtempaddr} /boot/bootargs.scr
+    then
+      setenv PARTITION $p
+      setenv PARTITIONTYPE EXT
+      source ${imgtempaddr}
+      DONE=1
+    fi
+    if load mmc ${mmc}:${p} ${loadaddrfdt} ${devicetree}.dtb
+    then
+      FDT=1
+    elif load mmc ${mmc}:${p} ${loadaddrfdt} /boot/${devicetree}.dtb
+    then
+      FDT=1
+    fi
+  fi
+done
+if itest $KERNEL == 0
+then
+  if ${nand_cmd} read ${loadaddr} 280000 600000
+  then
+    echo fallback to NAND kernel
+    FDT=0
+  else
+    status blink
+  fi
+fi
+run kernelloaded'
 
 	# boot with kernel/rootfs from specified source
-	setenv boot 'if itest $FDT == 1; then bootm ${loadaddr} - ${loadaddrfdt}; else bootm ${loadaddr}; fi;'
-	setenv mmcboot 'if run loadkernel; then run boot; fi;'
-	setenv nandboot 'run kernelloading; if nand read ${loadaddr} 280000 600000; then run nandargs; run kernelloaded; bootm ${loadaddr}; fi;'
+	setenv boot '
+if itest $FDT == 1
+then
+  bootm ${loadaddr} - ${loadaddrfdt}
+else
+  bootm ${loadaddr}
+fi'
+	setenv mmcboot '
+if run loadkernel
+then
+  run boot
+fi'
+	setenv nandboot '
+run kernelloading
+if ${nand_cmd} read ${loadaddr} 280000 600000
+then
+  run nandargs
+  run kernelloaded
+  bootm ${loadaddr}
+fi'
 
 	# run the boot script - and fall back to direct kernel boot
-	setenv bootcmd 'if run loadbootscript; then run bootscript; else run mmcboot; fi;'
+	setenv bootcmd '
+if run loadbootscript
+then
+  run bootscript
+else
+  run mmcboot
+fi'
 	setenv bootscript 'echo Running bootscript ...; source ${bootaddr}'
 
-	# write new script version number permanently
-	setenv scriptversion "${VERSION}"
+	# check if we can really flash and determine flash type
 	if nand read ${loadaddr} 280000 4
 	then
 		# we have some nand that can be flashed
+		setenv nand_cmd nand	# nand - command for read/erase/write
+		flash=yes	# trigger flashing
+	elif onenand read ${loadaddr} 280000 4
+	then
+		# we have some onenand that can be flashed
+		setenv nand_cmd onenand	# onenand - command for read/erase/write
 		flash=yes	# trigger flashing
 	else
+		setenv nand_cmd false	# can't flash read/erase/write
 		flash=no
 		echo "can not flash - must always boot from SD card"
 	fi
-fi
+
+	# write new script version number permanently
+	setenv scriptversion "${VERSION}"
+
+fi	# test "x${scriptversion}" != "x${VERSION}"
 
 echo *** initializing LCM ***
-if lcm start || test "${flash}" = "yes"
+if lcm start || test "x${flash}" = "xyes"
 then
 
 	if test "x${flash}" = "xyes"
@@ -334,31 +364,31 @@ then
 
 				status set 10
 				i2c dev 0
-				if fatload mmc ${mmc} 0x80200000 x-load.flash
+				if fatload mmc ${mmc} 0x80200000 MLO.nand
 				then
 					status set 18
 					echo *** flashing Xloader ***
 #					nand unlock
-					nandecc hw
+#					nandecc hw
 					# write some copies
-					nand erase 0 80000
-					nand write 0x80200000 0 20000
-					nand write 0x80200000 20000 20000
-					nand write 0x80200000 40000 20000
-					nand write 0x80200000 60000 20000
+					${nand_cmd} erase 0 80000
+					${nand_cmd} write 0x80200000 0 20000
+					${nand_cmd} write 0x80200000 20000 20000
+					${nand_cmd} write 0x80200000 40000 20000
+					${nand_cmd} write 0x80200000 60000 20000
 					echo *** Xloader flashed ***
 				fi
 				
 				status set 10
 				# the official u-boot partition goes from 0x80000 to 0x27ffff i.e. 2 MByte
 				
-				if fatload mmc ${mmc} 0x80300000 u-boot.flash
+				if fatload mmc ${mmc} 0x80300000 u-boot.img.nand
 				then
 					echo *** flashing U-Boot ***
 					status set 18
-					nandecc sw
-					nand erase 80000 1e0000
-					nand write 0x80300000 80000 150000
+#					nandecc sw
+					${nand_cmd} erase 80000 1e0000
+					${nand_cmd} write 0x80300000 80000 150000
 					echo *** write our new environment ***
 					saveenv
 
@@ -371,8 +401,8 @@ then
 						then
 						echo *** flashing splash ***
 						status set 18
-						nandecc sw
-						nand write 0x80300000 1d0000 40000
+#						nandecc sw
+						${nand_cmd} write 0x80300000 1d0000 40000
 						status set 10
 					fi
 
@@ -381,8 +411,8 @@ then
 						then
 						echo *** flashing menu ***
 						status set 18
-						nandecc sw
-						nand write 0x80300000 210000 40000
+#						nandecc sw
+						${nand_cmd} write 0x80300000 210000 40000
 						status set 18
 					fi
 
@@ -391,8 +421,8 @@ then
 						then
 						echo *** flashing boot.scr ***
 						status set 18
-						nandecc sw
-						nand write 0x80300000 250000 10000
+#						nandecc sw
+						${nand_cmd} write 0x80300000 250000 10000
 					fi
 					echo *** U-Boot flashed ***
 				fi
@@ -412,6 +442,7 @@ then
 				# reset	# resets CPU only but not BootROM boot order!
 				# we simply show the menu
 			else
+				printenv
 				echo *** Could not decode ***
 				status blink
 			fi
@@ -421,7 +452,7 @@ then
 		if run loadkernel
 		then 
 #			lcm backlight 0	# switch off before booting (?)
-			printenv
+#			printenv
 			lcm power 0
 			lcm off	# avoid wash-out
 			run boot
@@ -438,7 +469,8 @@ else	# LCM did not init (e.g. we run without display)
 	fi
 fi
 
-echo *** Could not run ***
+printenv
+echo *** Could not boot ***
 lcm color ff0000
 lcm fb 0
 status blink
