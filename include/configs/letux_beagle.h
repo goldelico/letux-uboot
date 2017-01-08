@@ -1,5 +1,5 @@
 /*
- * (C) Copyright 2010
+ * (C) Copyright 2010-2017
  * Nikolaus Schaller <hns@goldelico.com>
  *
  * Configuration settings for the TI OMAP3530 Beagle board with
@@ -26,6 +26,11 @@
 
 #include "omap3_beagle.h"	/* share config */
 
+/*
+ * allow either NAND or OneNAND variant
+ * select by defining CONFIG_CMD_ONENAND in defconfig
+ */
+
 #undef MTDIDS_DEFAULT
 #undef MTDPARTS_DEFAULT
 
@@ -48,7 +53,7 @@
 #undef CONFIG_ENV_ADDR
 #define CONFIG_ENV_ADDR		CONFIG_ENV_OFFSET
 #undef CONFIG_ENV_SIZE
-#define CONFIG_ENV_SIZE		(256 << 10)	/* 256 KiB */
+#define CONFIG_ENV_SIZE		(256 << 10)	/* 256 KiB (bigger eraseblock) */
 #endif	/* CONFIG_ENV_IS_NOWHERE */
 #define MTDIDS_DEFAULT			"onenand0=onenand"
 #define MTDPARTS_DEFAULT		"mtdparts=onenand:"\
@@ -60,6 +65,16 @@
 
 #else	/* CONFIG_CMD_ONENAND */
 
+#define CONFIG_ENV_IS_IN_NAND		1
+#define CONFIG_SPL_NAND_SUPPORT	1
+
+#undef CONFIG_ENV_OFFSET
+#define CONFIG_ENV_OFFSET		0x260000
+#undef CONFIG_ENV_ADDR
+#define CONFIG_ENV_ADDR		CONFIG_ENV_OFFSET
+#undef CONFIG_ENV_SIZE
+#define CONFIG_ENV_SIZE		(128 << 10)	/* 128 KiB */
+#define MTDIDS_DEFAULT			"nand0=nand"
 #define MTDPARTS_DEFAULT		"mtdparts=nand:"\
 					"512k(x-loader),"\
 					"1920k(u-boot),"\
