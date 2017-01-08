@@ -322,34 +322,21 @@ static struct musb_hdrc_platform_data musb_plat = {
 
 #define TCA6507_BUS			(2-1)	// I2C2
 #define TCA6507_ADDRESS		0x45
+#define ITG3200_BUS			(2-1)	// I2C2
+#define ITG3200_ADDRESS		0x68
 
 /* register numbers */
 #define TCA6507_SELECT0						0
 #define TCA6507_SELECT1						1
 #define TCA6507_SELECT2						2
 
-int misc_init_r(void)
+static void tps65950_init(void)
 {
-	bool generate_fake_mac = false;
-	char devtree[50];
+	twl4030_power_init();
 
-	/* ITG3200 & HMC5883L VAUX2 = 2.8V */
-	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
-							/*TWL4030_PM_RECEIVER_VAUX2_VSEL_28*/ 0x09,
-							TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
-							TWL4030_PM_RECEIVER_DEV_GRP_P1);
-	/* Camera VAUX3 = 2.5V */
-	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX3_DEDICATED,
-							/*TWL4030_PM_RECEIVER_VAUX3_VSEL_25*/ 0x02,
-							TWL4030_PM_RECEIVER_VAUX3_DEV_GRP,
-							TWL4030_PM_RECEIVER_DEV_GRP_P1);
-
-	i2c_set_bus_num(TCA6507_BUS);	// write I2C2
-	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
-	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT1, 0);
-	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT2, 0x40);	// pull down reset for WLAN&BT chip
-
-	i2c_set_bus_num(0);	// write I2C1
+	// we have no LEDs on TPS65950 on GTA04
+	// but a power on/off button (8 seconds)
+	twl4030_power_reset_init();
 
 #if 0 // FIXME: enable only on demand if we want to test BT/WIFI - and apply RESET
 	/* Bluetooth VAUX4 = 3.3V -- CHECKME: 3.3 V is not officially supported! We use 0x09 = 2.8V here*/
@@ -359,49 +346,6 @@ int misc_init_r(void)
 							TWL4030_PM_RECEIVER_DEV_GRP_P1);
 #endif
 
-// FIXME: mangle into device tree file
-	switch (get_cpu_family()) {
-		case CPU_OMAP34XX:
-			if ((get_cpu_rev() >= CPU_3XX_ES31) &&
-				(get_sku_id() == SKUID_CLK_720MHZ))
-				setenv("mpurate", "720");
-			else
-				setenv("mpurate", "600");
-			break;
-		case CPU_OMAP36XX:
-			/* check the "Speed Binned" bit for AM/DM37xx
-			 in the Control Device Status Register */
-			if(readw(0x4800244C) & (1<<9))
-				setenv("mpurate", "1000");
-			else
-				setenv("mpurate", "800");
-			break;
-	}
-	twl4030_power_init();
-	
-	// we have no LEDs on TPS on GTA04
-	// but a power on/off button (8 seconds)
-	twl4030_power_reset_init();
-
-#if 0
-	{
-	// FIXME: check this!!!
-	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
-	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
-	
-	/* Configure GPIOs to output */
-	writel(~(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1), &gpio6_base->oe);
-	writel(~(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
-			 GPIO15 | GPIO14 | GPIO13 | GPIO12), &gpio5_base->oe);
-	
-	/* Set GPIOs */
-	writel(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1,
-		   &gpio6_base->setdataout);
-	writel(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
-		   GPIO15 | GPIO14 | GPIO13 | GPIO12, &gpio5_base->setdataout);
-	}
-#endif
-	
 #if 1	// duplicate with twl4030-additions
 	
 #define TWL4030_BB_CFG_BBCHEN		(1 << 4)
@@ -414,10 +358,53 @@ int misc_init_r(void)
 						 TWL4030_BB_CFG_BBISEL_500UA, TWL4030_PM_RECEIVER_BB_CFG);
 #endif
 	
-	omap_die_id_display();
+}
 
+static void tca6507_reset(void)
+{
+	i2c_set_bus_num(TCA6507_BUS);	// write I2C2
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT0, 0);
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT1, 0);
+	i2c_reg_write(TCA6507_ADDRESS, TCA6507_SELECT2, 0x40);	// pull down reset for WLAN&BT chip
+	i2c_set_bus_num(0);	// write I2C1
+}
+
+static void itg3200_reset(void)
+{
+	/*
+	 * if the GTA04 is connected to USB power first and
+	 * the battery is inserted after this, all power rails
+	 * have oscillated until the battery is available
+	 * this makes the ITG3200 Power On Reset fail.
+	 * (GTA04A3 and GTA04A4 only)
+	 */
+
+	i2c_set_bus_num(ITG3200_BUS);	// write I2C2
+	if(i2c_probe(ITG3200_ADDRESS))
+		{ // ITG3200 does not respond
+		printf("ITG3200 does not respond\n");
+		// FIXME: temporarily switch off VAUX2
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
+								/*TWL4030_PM_RECEIVER_VAUX2_VSEL_28*/ 0x09,
+								TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
+								TWL4030_PM_RECEIVER_DEV_GRP_P1);
+		udelay(30*1000);	// wait a little until power drops
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
+								/*TWL4030_PM_RECEIVER_VAUX2_VSEL_28*/ 0x09,
+								TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
+								TWL4030_PM_RECEIVER_DEV_GRP_P1);
+		udelay(10*1000);	// wait a little until power stabilizes and ITG did reset
+		if(i2c_probe(ITG3200_ADDRESS))	 // ITG3200 does not respond
+			printf("ITG3200 still does not respond\n");
+		else
+			printf("ITG3200 now ok\n");
+		}
+	i2c_set_bus_num(0);	// write I2C1
+}
+
+static void check_watchdog(void)
+{
 #if 0	// check if watchdog is switched off
-	{	
 		struct _watchdog {
 			u32 widr;	/* 0x00 r */
 			u8 res1[0x0c];
@@ -490,8 +477,51 @@ int misc_init_r(void)
 		printf("wwps = %08x\n", readl(&wd2_base->wwps));
 		printf("wspr = %08x\n", readl(&wd2_base->wspr));
 		
-	}
 #endif				  
+}
+
+int misc_init_r(void)
+{
+	bool generate_fake_mac = false;
+	char devtree[50];
+
+	/* ITG3200 & HMC5883L VAUX2 = 2.8V */
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
+							/*TWL4030_PM_RECEIVER_VAUX2_VSEL_28*/ 0x09,
+							TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
+							TWL4030_PM_RECEIVER_DEV_GRP_P1);
+	/* Camera VAUX3 = 2.5V */
+	twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX3_DEDICATED,
+							/*TWL4030_PM_RECEIVER_VAUX3_VSEL_25*/ 0x02,
+							TWL4030_PM_RECEIVER_VAUX3_DEV_GRP,
+							TWL4030_PM_RECEIVER_DEV_GRP_P1);
+
+	tca6507_reset();
+
+	tps65950_init();
+
+#if 0
+	{
+	// FIXME: check this!!!
+	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
+	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
+
+	/* Configure GPIOs to output */
+	writel(~(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1), &gpio6_base->oe);
+	writel(~(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
+			 GPIO15 | GPIO14 | GPIO13 | GPIO12), &gpio5_base->oe);
+
+	/* Set GPIOs */
+	writel(GPIO23 | GPIO10 | GPIO8 | GPIO2 | GPIO1,
+		   &gpio6_base->setdataout);
+	writel(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
+		   GPIO15 | GPIO14 | GPIO13 | GPIO12, &gpio5_base->setdataout);
+	}
+#endif
+
+	omap_die_id_display();
+
+	check_watchdog();
 
 #ifdef CONFIG_USB_MUSB_OMAP2PLUS
 	musb_register(&musb_plat, &musb_board_data, (void *)MUSB_BASE);
@@ -510,10 +540,12 @@ int misc_init_r(void)
 			strcpy(devtree, "omap3-gta04a2");
 			break;
 		case 3:
+			itg3200_reset();
 			strcpy(devtree, "omap3-gta04a3");
 			generate_fake_mac = true;
 			break;
 		case 4:
+			itg3200_reset();
 			strcpy(devtree, "omap3-gta04a4");
 			generate_fake_mac = true;
 			break;
@@ -535,9 +567,32 @@ int misc_init_r(void)
 	setenv("fdtfile", devtree);
 	printf("Device Tree: %s\n", devtree);
 
+// FIXME: mangle into device tree file
+// or make kernel auto-detect
+
+	switch (get_cpu_family()) {
+		case CPU_OMAP34XX:
+			if ((get_cpu_rev() >= CPU_3XX_ES31) &&
+				(get_sku_id() == SKUID_CLK_720MHZ))
+				setenv("mpurate", "720");
+			else
+				setenv("mpurate", "600");
+			break;
+		case CPU_OMAP36XX:
+			/* check the "Speed Binned" bit for AM/DM37xx
+			 in the Control Device Status Register */
+			if(readw(0x4800244C) & (1<<9))
+				setenv("mpurate", "1000");
+			else
+				setenv("mpurate", "800");
+			break;
+	}
+
+#if 0	// debugging for GTA04A5 IrDA control
 	gpio_request(175, "irda");
 	gpio_direction_input(175);
 	printf("gpio175 = %d\n", gpio_get_value(175));
+#endif
 
 	return 0;
 }
