@@ -427,7 +427,20 @@ then
 					echo *** U-Boot flashed ***
 				fi
 
-				# please flash kernel and rootfs from Linux
+				if test "x$FASTBOOT" = "xyes"
+				then
+					echo "flashing kernel for fast boot (falcon mode)"
+					if run loadkernel
+					then
+						# fixme: adjust parameters
+						spl export bootm ${loadaddr} - ${loadaddrfdt}
+						# somehow get address and size of image
+						# write to nand
+					fi
+
+				else
+					echo please flash kernel and rootfs from Linux
+				fi
 
 				status set 8
 				flash=no	# don't flash again
