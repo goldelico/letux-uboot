@@ -364,7 +364,7 @@ then
 
 				status set 10
 				i2c dev 0
-				if fatload mmc ${mmc} 0x80200000 MLO.nand
+				if fatload mmc ${mmc} 0x80200000 MLO.flash
 				then
 					status set 18
 					echo *** flashing Xloader ***
@@ -382,7 +382,7 @@ then
 				status set 10
 				# the official u-boot partition goes from 0x80000 to 0x27ffff i.e. 2 MByte
 				
-				if fatload mmc ${mmc} 0x80300000 u-boot.img.nand
+				if fatload mmc ${mmc} 0x80300000 u-boot.img.flash
 				then
 					echo *** flashing U-Boot ***
 					status set 18
