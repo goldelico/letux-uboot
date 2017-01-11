@@ -40,4 +40,4 @@ MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTD | EN  | M4)) /* 18 GPIO_159 / McBSP1-DR		- c
 MUX_VAL(CP(MCBSP1_CLKR),	(IDIS | PTD | EN  | M4)) /* 20 GPIO_156 / McBSP1-CLR	- GPS ON/OFF */\
 MUX_VAL(CP(MCBSP1_FSR),		(IEN  | PTU | EN  | M4)) /* 22 GPIO_157 / McBSP1-FSR	- PENIRQ */\
 \
-muxname="BeagleBoardB7", peripheral="+gta04b7"
+muxname="BeagleBoardB7", peripheral="+b7"

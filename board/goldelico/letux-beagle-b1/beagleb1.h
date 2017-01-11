@@ -24,4 +24,4 @@ MUX_VAL(CP(MCBSP1_DR),		(IEN  | PTU | DIS | M4)) /*GPIO_159 / McBSP1-DR -> Displ
 MUX_VAL(CP(MCBSP_CLKS),		(IEN  | PTU | DIS | M0)) /*GPIO_??? / McBSP_CLKS */\
 MUX_VAL(CP(MCBSP1_FSX),		(IDIS | PTU | EN  | M4)) /*GPIO_161 / McBSP1-FSX -> Display CS */\
 MUX_VAL(CP(MCBSP1_CLKX),	(IDIS | PTU | EN  | M4)) /*GPIO_162 / McBSP1-CLKX -> Display SCL */\
-muxname="BeagleBoardB1", peripheral="+gta04b1"
+muxname="BeagleBoardB1", peripheral="+b1"

@@ -21,7 +21,7 @@ MUX_VAL(CP(MCBSP4_DR),		(IEN  | PTD | DIS | M0)) /*GPIO_153 / MCBSP4_DR*/\
 MUX_VAL(CP(MCBSP4_DX),		(IEN  | PTD | DIS | M0)) /*GPIO_154 / MCBSP4_DX*/\
 MUX_VAL(CP(MCBSP4_FSX),		(IEN  | PTD | DIS | M0)) /*GPIO_155 / MCBSP4_FSX*/\
 MUX_VAL(CP(MCBSP_CLKS),		(IDIS | PTD | DIS | M4)) /*GPIO_160 / PENIRQ*/\
-muxname="GTA04B7", devicetree="omap3-neo900"
+muxname="GTA04B7", peripheral="+b2"
 
 #if 0
 MUX_VAL(CP(UART3_CTS_RCTX),	(IDIS | PTD | DIS | M0)) /*GPIO_163 / UART3-CTS*/\
