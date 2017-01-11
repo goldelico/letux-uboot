@@ -1,6 +1,9 @@
 #
 # boot.scr
 #
+# please convert this source into a boot.scr:
+# mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n 'Boot Script' -d boot-gta04.txt boot.scr
+#
 # Boot script for Beagle Hybrid / Panda Hybrid / GTA04 / Neo900
 # Requires 2016.11 or later U-Boot / MLO
 #

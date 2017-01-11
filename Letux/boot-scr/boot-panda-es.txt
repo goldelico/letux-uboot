@@ -1,4 +1,7 @@
-# boot gta04 kernel with device tree on Pandaboard-ES
+# boot letux kernel with device tree on Pandaboard-ES
+#
+# please convert this source into a boot.scr:
+# mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n 'Boot Script' -d boot-panda-es.txt boot.scr
 
 setenv devicetree omap4-panda-es+gta04
 setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel

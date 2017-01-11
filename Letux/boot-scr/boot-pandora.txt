@@ -1,5 +1,8 @@
 # this file makes the SD card bootable on the OpenPandora
 #
+# please convert this source into a boot.scr:
+# mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n 'Boot Script' -d boot-pandora.txt boot.scr
+#
 # operation:
 #  1. press right shoulder button
 #  2. power on

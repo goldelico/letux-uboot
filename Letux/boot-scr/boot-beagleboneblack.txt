@@ -1,3 +1,6 @@
+# please convert this source into a boot.scr:
+# mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n 'Boot Script' -d boot-beagleboneblack.txt boot.scr
+
 # assume we have the EXP43 connected
 setenv devicetree am335x-boneblack+gta04
 setenv defaultdisplay   lcd
