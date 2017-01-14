@@ -626,6 +626,7 @@ int board_mmc_init(bd_t *bis)
 #endif
 
 #if defined(CONFIG_GENERIC_MMC) && defined(CONFIG_SPL_BUILD)
+#endif	/* defined(CONFIG_GENERIC_MMC) */
 
 static void gta04a5(void)
 {
@@ -644,17 +645,17 @@ static void gta04a5(void)
 void board_mmc_power_init(void)
 {
 	int pop_mfr = 0, pop_id = 0;
-
+#if defined(CONFIG_SPL_BUILD)
 	identify_nand_chip(&pop_mfr, &pop_id);
 #if 1
 	printf("pop_mfr = %02x pop_id = %02x\n", pop_mfr, pop_id);
+#endif
 #endif
 	twl4030_power_mmc_init(0);
 
 	if (get_gta04_revision() == 5)
 		gta04a5();
 }
-#endif	/* defined(CONFIG_GENERIC_MMC) */
 
 #if defined(CONFIG_USB_EHCI) && !defined(CONFIG_SPL_BUILD)
 /* Call usb_stop() before starting the kernel */
