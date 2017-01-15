@@ -63,6 +63,11 @@
 					"6m(kernel),"\
 					"-(fs)"
 
+/* needed to be able to load u-boot from OneNAND partition */
+
+#define CONFIG_SYS_ONENAND_U_BOOT_OFFS 0x80000
+#define CONFIG_SYS_ONENAND_PAGE_SIZE 0x4000
+
 #else	/* CONFIG_CMD_ONENAND */
 
 #define CONFIG_ENV_IS_IN_NAND		1
