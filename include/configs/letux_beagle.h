@@ -53,7 +53,7 @@
 #undef CONFIG_ENV_ADDR
 #define CONFIG_ENV_ADDR		CONFIG_ENV_OFFSET
 #undef CONFIG_ENV_SIZE
-#define CONFIG_ENV_SIZE		(256 << 10)	/* 256 KiB (bigger eraseblock) */
+#define CONFIG_ENV_SIZE		(256 << 10)	/* 256 KiB */
 #endif	/* CONFIG_ENV_IS_NOWHERE */
 #define MTDIDS_DEFAULT			"onenand0=onenand"
 #define MTDPARTS_DEFAULT		"mtdparts=onenand:"\
@@ -69,16 +69,16 @@
 #define CONFIG_SPL_NAND_SUPPORT	1
 
 #undef CONFIG_ENV_OFFSET
-#define CONFIG_ENV_OFFSET		0x260000
+#define CONFIG_ENV_OFFSET		0x240000
 #undef CONFIG_ENV_ADDR
 #define CONFIG_ENV_ADDR		CONFIG_ENV_OFFSET
 #undef CONFIG_ENV_SIZE
-#define CONFIG_ENV_SIZE		(128 << 10)	/* 128 KiB */
+#define CONFIG_ENV_SIZE		(256 << 10)	/* 256 KiB */
 #define MTDIDS_DEFAULT			"nand0=nand"
 #define MTDPARTS_DEFAULT		"mtdparts=nand:"\
 					"512k(x-loader),"\
-					"1920k(u-boot),"\
-					"128k(u-boot-env),"\
+					"1792k(u-boot),"\
+					"256k(u-boot-env),"\
 					"6m(kernel),"\
 					"-(fs)"
 
