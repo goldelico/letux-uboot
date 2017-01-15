@@ -14,14 +14,14 @@
 #
 # NAND Flash addresses (@ 256 MByte/2 GBit)
 #
-# 0x0000 0000	0x0007 ffff	08 0000		512 KB	X-Loader (flash image) - note the loader must fit into 64k SRAM!
-# 0x0008 0000	0x001c ffff	15 0000		1.3 MB	U-Boot (flash image)
-# 0x001d 0000	0x0020 ffff	04 0000		256 KB	splash.rgb16z
-# 0x0021 0000	0x0024 ffff	04 0000		256 KB	menu.rgb16z
-# 0x0025 0000	0x0025 ffff	01 0000		64 KB	boot.scr
-# 0x0026 0000	0x0027 ffff	02 0000		128 KB	U-Boot parameters written by saveenv
+# 0x0000 0000	0x0007 ffff	08 0000		512 KB	X-Loader (flash image) - note that the loader must fit into 64k SRAM!
+# 0x0008 0000	0x001a ffff	13 0000		1.3 MB	U-Boot (flash image)
+# 0x001b 0000	0x001b ffff	01 0000		64 KB	boot.scr (written together with u-boot)
+# 0x001c 0000	0x001f ffff	04 0000		256 KB	splash.rgb16z
+# 0x0020 0000	0x0023 ffff	04 0000		256 KB	menu.rgb16z
+# 0x0024 0000	0x0027 ffff	04 0000		256 KB	U-Boot parameters written by saveenv
 # 0x0028 0000	0x00a7 ffff	60 0000		6 MB	Kernel (flash image loaded by nandboot)
-# 0x0088 0000	0x0fff ffff			250 MB	(or more) file system (e.g. jffs)
+# 0x0088 0000	0xXfff ffff			250 MB	(or more) file system (e.g. jffs)
 #
 # To flash into NAND from command line:
 #
@@ -78,7 +78,7 @@ mmc rescan
 if load mmc ${mmc} ${bootaddr} boot.scr
 then
   echo did load bootscript from mmc;
-elif ${nand_cmd} read ${bootaddr} 250000 10000
+elif ${nand_cmd} read ${bootaddr} 1b0000 10000
 then
   echo did load bootscript from nand
 fi'
@@ -236,7 +236,7 @@ then
 		echo *** loading splash from MMC ***
 		setenv imgaddr 80400000
 		setenv imgfile splash
-		setenv imgnandaddr 1d0000
+		setenv imgnandaddr 1c0000
 		run showimg
 	fi
 
@@ -256,7 +256,7 @@ then
 				echo *** loading boot menu image ***
 				setenv imgaddr 80600000
 				setenv imgfile menu
-				setenv imgnandaddr 210000
+				setenv imgnandaddr 200000
 				run showimg
 
 				tsc choose 3 3	# 3 columns 3 rows -> value 1 .. 9
@@ -264,7 +264,7 @@ then
 				# restore boot image
 				# setenv imgaddr 80400000
 				# setenv imgfile splash
-				# setenv imgnandaddr 1d0000
+				# setenv imgnandaddr 1c0000
 				# run showimg
 			fi
 			
@@ -361,72 +361,63 @@ then
 				run mmcboot
 			elif test "x${flash}" = "xyes" || tsc selection 99
 			then 
-				echo *** NAND flash ***
-				# note: MLO is configured to load U-Boot from MMC
-				# while X-Loader is loading U-Boot from NAND
+				echo *** flashing NAND (${nand_cmd}) ***
 
-				status set 10
 				i2c dev 0
+				status set 10
+				mw.b 0x80200000 0xff 0x80000
 				if fatload mmc ${mmc} 0x80200000 MLO.flash
 				then
 					status set 18
 					echo *** flashing Xloader ***
+					# make copies
+					cp.l 0x80200000 0x80220000 20000
+					cp.l 0x80200000 0x80240000 20000
+					cp.l 0x80200000 0x80260000 20000
 #					nand unlock
 #					nandecc hw
-					# write some copies
 					${nand_cmd} erase 0 80000
-					${nand_cmd} write 0x80200000 0 20000
-					${nand_cmd} write 0x80200000 20000 20000
-					${nand_cmd} write 0x80200000 40000 20000
-					${nand_cmd} write 0x80200000 60000 20000
+					${nand_cmd} write 0x80200000 0 80000
 					echo *** Xloader flashed ***
 				fi
 				
 				status set 10
-				# the official u-boot partition goes from 0x80000 to 0x27ffff i.e. 2 MByte
-				
-				if fatload mmc ${mmc} 0x80300000 u-boot.img.flash
+				# the complete u-boot partition goes from 0x80000 to 0x23ffff i.e. 2.3 MByte
+				mw.b 0x80280000 0xff 0x1c0000
+				if fatload mmc ${mmc} 0x80280000 u-boot.img.flash
 				then
 					echo *** flashing U-Boot ***
 					status set 18
-#					nandecc sw
-					${nand_cmd} erase 80000 1e0000
-					${nand_cmd} write 0x80300000 80000 150000
-					echo *** write our new environment ***
-					saveenv
 
 					# read&write compressed splash image to nand
-					# there is just room for 614 kByte
-					# since u-boot is approx 260 kByte
+					# share with u-boot partition (ca. 1.25 MByte)
+					# since u-boot is approx 380 kByte
+					# there is room for 614 kByte
 
-					status set 10
-					if fatload mmc ${mmc} 0x80300000 splash.rgb16z
-						then
-						echo *** flashing splash ***
-						status set 18
-#						nandecc sw
-						${nand_cmd} write 0x80300000 1d0000 40000
-						status set 10
+					if fatload mmc ${mmc} 0x803b0000 boot.scr
+					then
+						echo *** adding boot.scr ***
+					fi
+
+					if fatload mmc ${mmc} 0x803c0000 splash.rgb16z
+					then
+						echo *** adding splash image ***
+					fi
+
+					if fatload mmc ${mmc} 0x80400000 menu.rgb16z
+					then
+						echo *** adding menu image ***
 					fi
 
 					status set 10
-					if fatload mmc ${mmc} 0x80300000 menu.rgb16z
-						then
-						echo *** flashing menu ***
-						status set 18
-#						nandecc sw
-						${nand_cmd} write 0x80300000 210000 40000
-						status set 18
-					fi
+#					nandecc sw
+					# erase and write full u-boot + splash etc. area
+					${nand_cmd} erase 80000 1c0000
+					${nand_cmd} write 0x80280000 80000 1c0000
+					status set 18
 
-					status set 10
-					if fatload mmc ${mmc} 0x80300000 boot.scr
-						then
-						echo *** flashing boot.scr ***
-						status set 18
-#						nandecc sw
-						${nand_cmd} write 0x80300000 250000 10000
-					fi
+					echo *** write our new environment ***
+					saveenv
 					echo *** U-Boot flashed ***
 				fi
 
