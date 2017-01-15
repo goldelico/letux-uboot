@@ -626,35 +626,38 @@ int board_mmc_init(bd_t *bis)
 #endif
 
 #if defined(CONFIG_GENERIC_MMC) && defined(CONFIG_SPL_BUILD)
-#endif	/* defined(CONFIG_GENERIC_MMC) */
 
-static void gta04a5(void)
+static void gta04_power_init(void)
 {
-	// seems to be too late to avoid spurious RX characters through IrDA receiver
-	// hence we do it already by MUX_GTA04() - but there we can't check the board revision!
-	// so we coud better revert it for non-A5 boards
-	return;
-#if 1
-	printf("gta04a5\n");
-#endif
-	/* turn off IrDA receiver */
-	printf("turn off IrDA\n");
-	MUX_VAL(CP(MCSPI1_CS1), (IEN  | PTU | EN | M4)) /*GPIO_175/MMC3CMD - IrDA (GTA04A5 only) */;
-}
-
-void board_mmc_power_init(void)
-{
-	int pop_mfr = 0, pop_id = 0;
 #if defined(CONFIG_SPL_BUILD)
+	int pop_mfr = 0, pop_id = 0;
 	identify_nand_chip(&pop_mfr, &pop_id);
 #if 1
 	printf("pop_mfr = %02x pop_id = %02x\n", pop_mfr, pop_id);
 #endif
 #endif
-	twl4030_power_mmc_init(0);
+	// seems to be too late to avoid spurious RX characters through IrDA receiver
+	// hence we do it already by MUX_GTA04() - but there we can't check the board revision!
+	// so we coud better revert it for non-A5 boards
+	return;
+	if (get_gta04_revision() == 5) {
+#if 1
+		printf("gta04a5\n");
+#endif
+		/* turn off IrDA receiver */
+		printf("turn off IrDA\n");
+		MUX_VAL(CP(MCSPI1_CS1), (IEN  | PTU | EN | M4)) /*GPIO_175/MMC3CMD - IrDA (GTA04A5 only) */;
+	}
+}
 
-	if (get_gta04_revision() == 5)
-		gta04a5();
+#endif	/* defined(CONFIG_GENERIC_MMC) */
+
+void board_mmc_power_init(void)
+{
+	twl4030_power_mmc_init(0);
+#if defined(CONFIG_SPL_BUILD)
+	gta04_power_init();
+#endif
 }
 
 #if defined(CONFIG_USB_EHCI) && !defined(CONFIG_SPL_BUILD)
