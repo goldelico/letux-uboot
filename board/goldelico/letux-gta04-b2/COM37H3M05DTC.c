@@ -113,6 +113,9 @@ const char *panel_state(void)
 }
 
 /* frontend function */
+
+static char initialized = false;
+
 int panel_enter_state(enum panel_state new_state)
 {
 	return 0;
@@ -120,6 +123,9 @@ int panel_enter_state(enum panel_state new_state)
 
 int panel_display_onoff(int on)
 {
+	if (!initialized)
+		return -EINVAL;
+
 	gpio_direction_output(GPIO_STBY, on?1:0);	// on = no STBY
 	return 0;
 }
@@ -153,6 +159,8 @@ int board_video_init(GraphicDevice *pGD)
 		lcm_cfg.divisor	= (0x0001<<16)|(DSS1_FCLK3730/PIXEL_CLOCK); /* get Pixel Clock divisor from dss1_fclk */
 	dssfb_init(&lcm_cfg);
 	
+	initialized = true;
+
 	printf("did board_video_init()\n");
 	return 0;
 }
