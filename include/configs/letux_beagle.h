@@ -66,7 +66,7 @@
 /* needed to be able to load u-boot from OneNAND partition */
 
 #define CONFIG_SYS_ONENAND_U_BOOT_OFFS 0x80000
-#define CONFIG_SYS_ONENAND_PAGE_SIZE 0x4000
+#define CONFIG_SYS_ONENAND_PAGE_SIZE 4096
 
 #else	/* CONFIG_CMD_ONENAND */
 
