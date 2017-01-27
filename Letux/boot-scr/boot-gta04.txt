@@ -78,7 +78,7 @@ mmc rescan
 if load mmc ${mmc} ${bootaddr} boot.scr
 then
   echo did load bootscript from mmc;
-elif ${nand_cmd} read ${bootaddr} 1b0000 10000
+elif ${nand_cmd} read ${bootaddr} 1b0000 40000
 then
   echo did load bootscript from nand
 fi'
