@@ -100,6 +100,7 @@ int omap3_dss_set_fb(void *addr)
 			//			printf("gfx_ba[0]: %08x\n", &gfx->gfx_ba[0]);
 			writel((u32) addr, &gfx->gfx_ba[0]);
 			writel((u32) addr, &gfx->gfx_ba[1]);
+			flush_cache((unsigned long) addr, 4*16*65536);	// flush D-cache to FB RAM (4MB)
 			//			printf("framebuffer address: %08x\n", addr);
 			writel(0, &gfx->gfx_position);
 			//			printf("size_lcd: %08x\n", readl(&dispc->size_lcd));
