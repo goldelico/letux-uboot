@@ -124,7 +124,7 @@ int bq2429x_battery_present(void)
 #define P01_HDMI_LS_OE	0x02
 #define P02_NONE	0x04
 #define P03_NONE	0x08
-#define P04_VIBRA	0x10
+#define P04_VIBRA	0x10	/* n/a in Revision 5.1 and later */
 #define P05_FAULT2	0x20
 #define P06_NONE	0x40
 #define P07_NONE	0x80
@@ -135,14 +135,15 @@ int bq2429x_battery_present(void)
 #define P13_CHG_INT	0x08
 #define P14_NONE	0x10
 #define P15_NONE	0x20
-#define P16_MICPRES	0x40
+#define P16_MICPRES	0x40	/* MIC-INT in Revision 5.1 and later */
 #define P17_EN_MODEM	0x80
 
 #define P20_SD_HS_AMP	0x01
 #define P21_CHG_STAT	0x02
-#define P22_PWR_GREEN	0x04
+#define P22_PWR_GREEN	0x04	/* NONE in Revision 5.1 and later */
 #define P23_PWR_BLUE	0x08
-#define P24_EN_ESATA	0x10
+#define P23_EN_OTG	0x08	/* EN_OTG in Revision 5.1 and later */
+#define P24_EN_ESATA	0x10	/* NONE in Revision 5.1 and later */
 #define P25_FAULT2	0x20
 #define P26_NONE	0x40
 #define P27_NONE	0x80
