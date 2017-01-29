@@ -20,7 +20,8 @@
 # 0x001c 0000	0x001f ffff	04 0000		256 KB	splash.rgb16z
 # 0x0020 0000	0x0023 ffff	04 0000		256 KB	menu.rgb16z
 # 0x0024 0000	0x0027 ffff	04 0000		256 KB	U-Boot parameters written by saveenv
-# 0x0028 0000	0x00a7 ffff	60 0000		6 MB	Kernel (flash image loaded by nandboot)
+# 0x0028 0000	0x0083 ffff	5c 0000		5.7 MB	Kernel (flash image loaded by nandboot)
+# 0x0084 0000	0x0087 ffff	04 0000		256 KB	DTB (flash image loaded by nandboot)
 # 0x0088 0000	0xXfff ffff			250 MB	(or more) file system (e.g. jffs)
 #
 # To flash into NAND from command line:
@@ -161,10 +162,17 @@ do
 done
 if itest $KERNEL == 0
 then
-  if ${nand_cmd} read ${loadaddr} 280000 600000
+  echo fallback to NAND kernel
+  if ${nand_cmd} read ${loadaddr} 280000 5c0000
   then
-    echo fallback to NAND kernel
-    FDT=0
+    echo NAND kernel found
+    if ${nand_cmd} read ${loadaddrfdt} 840000 40000
+    then
+      echo NAND DTB found
+      FDT=1
+    else
+      FDT=0
+    fi
   else
     status blink
   fi
