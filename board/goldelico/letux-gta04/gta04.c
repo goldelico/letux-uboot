@@ -237,7 +237,13 @@ void get_board_mem_timings(struct board_sdrc_timings *timings)
 		 * this is a working set of parameters for the SAMSUNG_MCP on GTA04A5
 		 * can certainly be optimized
 		 */
-		timings->mcfg = NUMONYX_V_MCFG_165(256 << 20);
+		timings->mcfg =  V_MCFG_RASWIDTH(14) |
+				 V_MCFG_CASWIDTH(11) |
+				 V_MCFG_RAMSIZE(512 << 20) |
+				 V_MCFG_ADDRMUXLEGACY_FLEX |
+				 V_MCFG_B32NOT16_32 |
+				 V_MCFG_DEEPPD_EN |
+				 V_MCFG_RAMTYPE_DDR;
 		timings->ctrla = NUMONYX_V_ACTIMA_165;
 		timings->ctrlb = NUMONYX_V_ACTIMB_165;
 		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
