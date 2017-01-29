@@ -203,6 +203,13 @@ else
 fi'
 	setenv bootscript 'echo Running bootscript ...; source ${bootaddr}'
 
+# optionally update the boot order if AUX button is pressed after choosing a touch menu entry
+	setenv persistbootorder '
+if status check 1
+then
+  saveenv
+fi'
+
 	# check if we can really flash and determine flash type
 	if nand read ${loadaddr} 280000 4
 	then
@@ -327,7 +334,7 @@ then
 				setenv bootorder "1 2 3 4"
 				echo new boot order $bootorder
 				setenv defaultdisplay lcd
-				saveenv
+				run persistbootorder
 				run mmcboot
 			elif tsc selection 2
 			then 
@@ -337,7 +344,7 @@ then
 				setenv bootorder "2 3 4 1"
 				echo new boot order $bootorder
 				setenv defaultdisplay lcd
-				saveenv
+				run persistbootorder
 				run mmcboot
 			elif tsc selection 3
 			then 
@@ -347,7 +354,7 @@ then
 				setenv bootorder "3 4 1 2"
 				echo new boot order $bootorder
 				setenv defaultdisplay lcd
-				saveenv
+				run persistbootorder
 				run mmcboot
 			elif tsc selection 4
 			then 
@@ -357,7 +364,7 @@ then
 				setenv bootorder "4 1 2 3"
 				echo new boot order $bootorder
 				setenv defaultdisplay lcd
-				saveenv
+				run persistbootorder
 				run mmcboot
 			elif test "x${flash}" = "xyes" || tsc selection 99
 			then 
