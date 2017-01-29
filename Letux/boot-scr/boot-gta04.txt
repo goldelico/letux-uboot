@@ -68,7 +68,7 @@ if test "x${scriptversion}" != "x${VERSION}"
 	setenv console		ttyO2,115200n8
 	setenv defaultdisplay	lcd
 	setenv bootorder	"1 2 3 4"
-	setenv nand		4		# mtd4 is nand
+	setenv nand		4		# mtd4: rootfs partition number in nand
 	setenv vram		12M
 	setenv omapfbvram	0:8M,1:4M
 
@@ -101,11 +101,11 @@ fi'
 	setenv showimg 'run loadimg; lcm fb ${imgaddr};'
 
 	# predefine default boot arguments (unless overwritten by bootargs.scr)
-	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand_cmd} root=${mmcroot} rootfstype=${mmcrootfstype}'
+	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${mmcroot} rootfstype=${mmcrootfstype}; echo did set bootargs for mmc'
 	setenv mmcroot "/dev/mmcblk${kernelmmc}p2 rw"
 	setenv mmcrootfstype "ext4,ext3,btrfs rootwait"
 
-	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand_cmd} root=${nandroot} rootfstype=${nandrootfstype}'
+	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${nandroot} rootfstype=${nandrootfstype}; echo did set bootargs for ${nand_cmd}'
 	setenv nandroot "ubi0:gta04-rootfs"
 	setenv nandrootfstype "ubifs"
 
