@@ -228,22 +228,18 @@ void get_board_mem_timings(struct board_sdrc_timings *timings)
 	} else 	if (pop_mfr == 0 && pop_id == 0) {
 		// FIXME: SAMSUNG_MCP with 1GB DDR
 		// should do this: http://git.goldelico.com/?p=gta04-xloader.git;a=blob;f=board/omap3530beagle/omap3530beagle.c;h=97e9ffc9c5296073a6e81354548bea9c243a23e5;hb=f1cbec2c777e82b7375b3a931dc51db5ccf61e83#l688
-		/* 256MB DDR */
-		timings->mcfg = SAMSUNG_V_MCFG_165(512 << 20);
-		timings->ctrla = SAMSUNG_V_ACTIMA_165;
-		timings->ctrlb = SAMSUNG_V_ACTIMB_165;
-		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
 		/*
 		 * this is a working set of parameters for the SAMSUNG_MCP on GTA04A5
 		 * can certainly be optimized
 		 */
-		timings->mcfg =  V_MCFG_RASWIDTH(14) |
-				 V_MCFG_CASWIDTH(11) |
-				 V_MCFG_RAMSIZE(512 << 20) |
-				 V_MCFG_ADDRMUXLEGACY_FLEX |
-				 V_MCFG_B32NOT16_32 |
-				 V_MCFG_DEEPPD_EN |
-				 V_MCFG_RAMTYPE_DDR;
+#define SAMSUNG_MCP(size) (((SAMSUNG_V_MCFG_165(size)) & \
+					 ~(V_MCFG_CASWIDTH_10B | \
+					   V_MCFG_BANKALLOCATION_RBC)) | \
+				 V_MCFG_CASWIDTH(11) | \
+				 V_MCFG_B32NOT16_32 | \
+				 V_MCFG_DEEPPD_EN)
+		/* 512MB DDR */
+		timings->mcfg = SAMSUNG_MCP(512 << 20);
 		timings->ctrla = NUMONYX_V_ACTIMA_165;
 		timings->ctrlb = NUMONYX_V_ACTIMB_165;
 		timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
@@ -271,14 +267,14 @@ void get_board_mem_timings(struct board_sdrc_timings *timings)
 	timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
 #endif
 #if 0
-	/* 512MB DDR - works */
+	/* 2x256MB DDR - works */
 	timings->mcfg = NUMONYX_V_MCFG_165(256 << 20);
 	timings->ctrla = NUMONYX_V_ACTIMA_165;
 	timings->ctrlb = NUMONYX_V_ACTIMB_165;
 	timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
 #endif
 #if 0
-	/* 512MB DDR - works */
+	/* 2x256MB DDR - works? */
 	timings->mcfg = MICRON_V_MCFG_200(256 << 20);
 	timings->ctrla = MICRON_V_ACTIMA_200;
 	timings->ctrlb = MICRON_V_ACTIMB_200;
