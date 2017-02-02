@@ -355,9 +355,9 @@ static void tps65950_init(void)
 #define TWL4030_BB_CFG_BBISEL_500UA	2
 	
 	/* Enable battery backup capacitor (3.2V, 0.5mA charge current) */
-	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER,
+	twl4030_i2c_write_u8(TWL4030_CHIP_PM_RECEIVER, TWL4030_PM_RECEIVER_BB_CFG,
 						 TWL4030_BB_CFG_BBCHEN | TWL4030_BB_CFG_BBSEL_3200MV |
-						 TWL4030_BB_CFG_BBISEL_500UA, TWL4030_PM_RECEIVER_BB_CFG);
+						 TWL4030_BB_CFG_BBISEL_500UA);
 #endif
 	
 }
