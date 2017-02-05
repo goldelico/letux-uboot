@@ -106,7 +106,7 @@ static int get_board_version(void)
 }
 
 /* U-Boot only code */
-#if !defined(CONFIG_SPL_BUILD) && defined(CONFIG_GENERIC_MMC)
+#if !defined(CONFIG_SPL_BUILD)
 
 static void set_fdtfile(void)
 {
@@ -142,24 +142,140 @@ int misc_init_r(void)
 	return r;
 }
 
+#endif
+
 /*
  * the Letux Cortex 15
  * supports 3 MMC interfaces
+ * and we have an mmc switch for 4-bit µSD and 8 bit eMMC
  */
 
 #include <mmc.h>
 
+/*
+ * add eMMC/uSD switch logic here
+ * so that we can boot from the internal uSD
+ * and release/press the boot button without
+ * throwing the eMMC/uSD switch.
+ */
+
+#if defined(CONFIG_SPL_BUILD)
+
+const struct pad_conf_entry wkupconf_mmcmux_lc15[] = {
+	{DRM_EMU1, (IEN | PTU | M6)}, /* gpio 1_wk7 */
+};
+
+const struct pad_conf_entry padconf_mmcmux_lc15[] = {
+	{HSI2_ACFLAG, (IEN | M6)}, /* gpio 3_82 */
+	{HSI2_CAREADY, (IEN | M6)}, /* gpio 3_76 */
+};
+
+/* FIXME: board revision 5.0 uses different gpios */
+
+const struct pad_conf_entry padconf_mmcmux_lc15_50[] = {
+};
+
+#endif
+
 int board_mmc_init(bd_t *bis)
 {
-	int uSD = 0;	// should ask GPIO3_82 state to get the correct bus width
-	debug("special board_mmc_init for LC15\n");
+	int hard_select = 7;	/* gpio to select uSD (0) or eMMC (1) by external hw signal */
+	int soft_select = 82;	/* gpio to select uSD (1) or eMMC (0) */
+	int control = 76;	/* control between SW (1) and HW (0) select */
+
+	int val;	/* is the value of soft_select gpio after processing */
+
+	int vers = get_board_version();
+#if 1
+	printf("board_mmc_init for LC15 %d called\n", vers);
+#endif
+	if (vers <= 49) {
+		 /* has no working mmc switch! */
+		soft_select = 0;
+		hard_select = 0;
+		control = 0;
+	}
+
+	if (vers == 50) {
+		/* board revision 5.0 shares the revision gpios with mmc_switch control */
+		soft_select = 32;
+		control = 33;
+	}
+
+	gpio_request(hard_select, "bootsel");		/* BOOTSEL button */
+	gpio_request(soft_select, "soft-select");	/* chooses uSD and not eMMC */
+	gpio_request(control, "mmc-control");		/* MMC switch control */
+
+#if defined(CONFIG_SPL_BUILD)
+
+	/* in MLO we ask the external hard_select, copy to soft_select and change the control */
+
+
+	/* make gpio1_wk7 an input so that we can read the state of the BOOTSEL button */
+	do_set_mux((*ctrl)->control_padconf_wkup_base,
+		   wkupconf_mmcmux_lc15,
+		   sizeof(wkupconf_mmcmux_lc15) /
+		   sizeof(struct pad_conf_entry));
+
+	/* is BOOTSEL active? Then we did boot SPL from µSD */
+	gpio_direction_input(hard_select);
+	val = !gpio_get_value(hard_select);	/* is inverted */
+
+#if 1
+	printk("  gpio%d = %s\n", hard_select, val?"uSD":"eMMC");
+#endif
+
+	/* pass hard-select to soft-select so that the user can now
+	 * release/press the button without disturbing the setting
+	 */
+	gpio_direction_output(soft_select, val);
+	/* switch to soft control */
+	gpio_direction_output(control, 1);
+
+	/* make the control gpios active outputs */
+	/* note: never make gpio3_82 an output on V5.0 boards! */
+	if (vers == 50) {
+		do_set_mux((*ctrl)->control_padconf_wkup_base,
+			   padconf_mmcmux_lc15_50,
+			   sizeof(padconf_mmcmux_lc15_50) /
+			   sizeof(struct pad_conf_entry));
+	} else if (vers > 50) {
+		do_set_mux((*ctrl)->control_padconf_core_base,
+			   padconf_mmcmux_lc15,
+			   sizeof(padconf_mmcmux_lc15) /
+			   sizeof(struct pad_conf_entry));
+	}
+#if 1
+	/* read back */
+	printk("  gpio%d = %d (mmc1=%s)\n", soft_select, gpio_get_value(soft_select), gpio_get_value(soft_select)?"uSD":"eMMC");
+	printk("  gpio%d = %d (ctrl=%s)\n", control, gpio_get_value(control), gpio_get_value(control)?"soft":"hard");
+#endif
+
+#else	/* defined(CONFIG_SPL_BUILD) */
+
+	/* in U-Boot we just fetch the state of the soft_select */
+
+	gpio_direction_input(soft_select);
+	val = gpio_get_value(soft_select);
+
+#if 1
+	printf("board_mmc_init for LC15 - soft_select = gpio %d val: %d\n", soft_select, val);
+#endif
+
+#endif	/* defined(CONFIG_SPL_BUILD) */
+
+	gpio_free(hard_select);
+	gpio_free(soft_select);
+	gpio_free(control);
+
 	writel(0x02, 0x4A009120);	/* enable MMC3 module */
 	writel(0x02, 0x4A009128);	/* enable MMC4 module */
 
 	/* MMC1 = left SD */
-	omap_mmc_init(0, uSD?MMC_MODE_8BIT:0, 0, -1, -1);
+	omap_mmc_init(0, 0, 0, -1, -1);
 	/* MMC2 = eMMC (8 bit) / uSD (4 bit) */
-	omap_mmc_init(1, 0, 0, -1, -1);
+	/* NOTE: the mask defines which bits are removed! */
+	omap_mmc_init(1, val?MMC_MODE_8BIT:0, 0, -1, -1);
 #if 0
 	/* MMC3 = WLAN */
 	omap_mmc_init(2, MMC_MODE_8BIT|MMC_MODE_4BIT, 0, -1, -1);
@@ -175,97 +291,12 @@ int board_mmc_init(bd_t *bis)
 	return 0;
 }
 
-#endif
-
 /* SPL only code */
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_OS_BOOT)
 
-/*
- * add eMMC/uSD switch logic here
- * so that we can boot from the internal uSD
- * and release/press the boot button without
- * throwing the eMMC/uSD switch.
- */
-
-const struct pad_conf_entry wkupconf_mmcmux_lc15[] = {
-	{DRM_EMU1, (IEN | PTU | M6)}, /* gpio 1_wk7 */
-};
-
-const struct pad_conf_entry padconf_mmcmux_lc15[] = {
-	{HSI2_ACFLAG, (IEN | M6)}, /* gpio 3_82 */
-	{HSI2_CAREADY, (IEN | M6)}, /* gpio 3_76 */
-};
-
-/* board revision 5.0 uses different gpios */
-
-const struct pad_conf_entry padconf_mmcmux_lc15_50[] = {
-};
-
-int set_mmc_switch(void)
-{
-	int val;
-	int vers = get_board_version();
-	int hard_select = 7;	/* gpio to select uSD or eMMC by external hw signal */
-	int soft_select = 86;	/* gpio to select uSD or eMMC */
-	int control = 76;	/* control between SW and HW select */
-#if 0
-	printf("set_mmc_switch for LC15 called\n");
-#endif
-	if (vers <= 49)
-		return 1;	/* has no working mmc switch */
-	if (vers == 50) {
-		/* board revision 5.0 shares the revision gpios with mmc_switch control */
-		soft_select = 32;
-		control = 33;
-	}
-
-	gpio_request(hard_select, "bootsel");		/* BOOTSEL button */
-	gpio_request(soft_select, "soft-select");	/* choose uSD and not eMMC */
-	gpio_request(control, "mmc-control");	/* MMC switch control */
-
-	/* make gpio1_wk7 an input so that we can read the state of the BOOTSEL button */
-	do_set_mux((*ctrl)->control_padconf_wkup_base,
-		   wkupconf_mmcmux_lc15,
-		   sizeof(wkupconf_mmcmux_lc15) /
-		   sizeof(struct pad_conf_entry));
-
-	/* is BOOTSEL active? Then we did boot SPL from µSD */
-	gpio_direction_input(hard_select);
-	val = gpio_get_value(hard_select);
-
-#if 1
-	printk("  gpio%d = %s\n", hard_select, val?"eMMC":"uSD");
-#endif
-
-	/* pass hard-select to soft-select so that the user can release/press the button */
-	gpio_direction_output(soft_select, !val);
-	/* switch to soft control */
-	gpio_direction_output(control, 1);
-
-	/* make the control gpios active outputs */
-	/* note: never make gpio3_82 an output on V5.0 boards */
-	if (vers > 50)
-		do_set_mux((*ctrl)->control_padconf_core_base,
-			   padconf_mmcmux_lc15,
-			   sizeof(padconf_mmcmux_lc15) /
-			   sizeof(struct pad_conf_entry));
-
-#if 1
-	/* read back */
-	printk("  gpio%d = %d (mmc1=%s)\n", soft_select, gpio_get_value(soft_select), gpio_get_value(soft_select)?"uSD":"eMMC");
-	printk("  gpio%d = %d (ctrl=%s)\n", control, gpio_get_value(control), gpio_get_value(control)?"soft":"hard");
-#endif
-	gpio_free(hard_select);
-	gpio_free(soft_select);
-	gpio_free(control);
-	return 0;
-}
-
 int spl_start_uboot(void)
 {
-	/* mis-use as a hook to inject code before U-Boot is started */
-	set_mmc_switch();
-
+	/* make it depend on pressing some shoulder button */
 	return 1;	/* set to 0 to try Falcon boot to Linux */
 }
 
