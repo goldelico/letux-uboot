@@ -81,12 +81,13 @@ void omap_die_id_get_board_serial(struct tag_serialnr *serialnr)
 
 void omap_die_id_usbethaddr(void)
 {
-	unsigned int die_id[4] = { 0 };
-	unsigned char mac[6] = { 0 };
-
-	omap_die_id((unsigned int *)&die_id);
-
+#if defined(CONFIG_CMD_NET)
 	if (!getenv("usbethaddr")) {
+		unsigned int die_id[4] = { 0 };
+		unsigned char mac[6] = { 0 };
+
+		omap_die_id((unsigned int *)&die_id);
+
 		/*
 		 * Create a fake MAC address from the processor ID code.
 		 * First byte is 0x02 to signify locally administered.
@@ -100,6 +101,7 @@ void omap_die_id_usbethaddr(void)
 
 		eth_setenv_enetaddr("usbethaddr", mac);
 	}
+#endif
 }
 
 void omap_die_id_display(void)
