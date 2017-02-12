@@ -288,7 +288,21 @@ u32 get_device_type(void)
  */
 int print_cpuinfo(void)
 {
+#ifdef CONFIG_ARMV7_LPAE
+	if (is_hyp())
+		puts("LPAE build running in hypervisor mode!\n");
+	else
+		puts("LPAE build, not running in hypervisor mode\n");
+#endif
+
+	u32 rev = cortex_rev();
 	puts("CPU  : ");
+	if ((rev & 0xFF0FFF00) == 0x410FC000) {
+		printf("ARM Cortex-A%u r%up%u\n", rev >> 4 & 15,
+				rev >> 20 & 15, rev & 15 );
+	}
+
+	puts("SoC  : ");
 	omap_rev_string();
 
 	return 0;
