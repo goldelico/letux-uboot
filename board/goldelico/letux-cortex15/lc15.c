@@ -255,7 +255,6 @@ int board_mmc_init(bd_t *bis)
 
 	/* in U-Boot we just fetch the state of the soft_select */
 
-	gpio_direction_input(soft_select);
 	val = gpio_get_value(soft_select);
 
 #if 1
