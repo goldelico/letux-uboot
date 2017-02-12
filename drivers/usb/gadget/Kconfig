@@ -106,6 +106,9 @@ if USB_GADGET_DOWNLOAD
 config G_DNL_MANUFACTURER
 	string "Vendor name of USB device"
 
+config G_DNL_PRODUCT
+	string "Product name of USB device"
+
 config G_DNL_VENDOR_NUM
 	hex "Vendor ID of USB device"
 
