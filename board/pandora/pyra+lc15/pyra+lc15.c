@@ -175,7 +175,7 @@ static int get_pyra_mainboard_revision(void)
 	static int revision = -1;
 
 	static char revtable[8] = {	/* revision table defined by pull-down R1901, R1902, R1903 */
-		[7] = 49,
+		[7] = 49 + 1,	/* some 5.0 boards have wrong version resistors so they report themselves as 4.9 */
 		[6] = 50,
 		[5] = 51,
 		[3] = 52,
