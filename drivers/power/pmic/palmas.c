@@ -90,6 +90,7 @@ static struct dm_pmic_ops palmas_ops = {
 };
 
 static const struct udevice_id palmas_ids[] = {
+	{ .compatible = "ti,palmas",	.data = PALMAS },  // twl6035/37
 	{ .compatible = "ti,tps659038", .data = TPS659038 },
 	{ .compatible = "ti,tps65917" , .data = TPS65917 },
 	{ }
