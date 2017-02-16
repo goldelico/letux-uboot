@@ -150,7 +150,7 @@ int tca642x_set_inital_state(uchar chip, struct tca642x_bank_info init_data[])
 
 	for (i = 0; i < 3; i++) {
 		config_reg = tca642x_regs[i].configuration_reg;
-		ret = tca642x_reg_write(chip, config_reg, 0xff,
+		ret = tca642x_reg_write(chip, config_reg, 0,
 				init_data[i].configuration_reg);
 		polarity_reg = tca642x_regs[i].polarity_reg;
 		ret = tca642x_reg_write(chip, polarity_reg, 0xff,
@@ -158,6 +158,9 @@ int tca642x_set_inital_state(uchar chip, struct tca642x_bank_info init_data[])
 		output_reg = tca642x_regs[i].output_reg;
 		ret = tca642x_reg_write(chip, output_reg, 0xff,
 				init_data[i].output_reg);
+		config_reg = tca642x_regs[i].configuration_reg;
+		ret = tca642x_reg_write(chip, config_reg, 0xff,
+				init_data[i].configuration_reg);
 	}
 
 	return ret;
