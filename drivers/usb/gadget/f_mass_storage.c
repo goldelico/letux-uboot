@@ -344,7 +344,7 @@ struct fsg_common {
 	unsigned int		bad_lun_okay:1;
 	unsigned int		running:1;
 
-	int			thread_wakeup_needed;
+	int volatile		thread_wakeup_needed;
 	struct completion	thread_notifier;
 	struct task_struct	*thread_task;
 
