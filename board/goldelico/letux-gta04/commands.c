@@ -673,12 +673,6 @@ int do_poweroff(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	return (0);
 }
 
-// nobody uses this config yet...
-#ifndef CONFIG_CMD_POWEROFF
-U_BOOT_CMD(poweroff, 2, 0, do_poweroff, "Poweroff",
-		   "");
-#endif
-
 static int do_suspend(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 {
 	backlight_set_level(0);
