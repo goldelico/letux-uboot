@@ -30,4 +30,19 @@
 #undef CONFIG_ENV_OFFSET
 #endif
 
+/* should this better go to omap5_uevm? */
+
+#ifdef CONFIG_USB_GADGET
+#define CONFIG_USB_FUNCTION_MASS_STORAGE
+#endif
+
+#define CONFIG_SCSI
+#define CONFIG_LIBATA
+#define CONFIG_SCSI_AHCI
+#define CONFIG_SCSI_AHCI_PLAT
+#define CONFIG_SYS_SCSI_MAX_SCSI_ID	1
+#define CONFIG_SYS_SCSI_MAX_LUN		1
+#define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
+						CONFIG_SYS_SCSI_MAX_LUN)
+
 #endif /* __CONFIG_LETUX_CORTEX15_H */
