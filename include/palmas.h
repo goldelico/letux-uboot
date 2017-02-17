@@ -104,18 +104,33 @@
 #define BB_VSEL_VBAT		(3 << 1)
 #define BB_CHRG_EN		(1 << 0)
 
+
+#ifndef CONFIG_SYS_I2C_PALMAS_BUS_NUM
+#define CONFIG_SYS_I2C_PALMAS_BUS_NUM	(0)
+#endif
+
 /*
  * Functions to read and write from TPS659038/TWL6035/TWL6037
  * or other Palmas family of TI PMICs
  */
 static inline int palmas_i2c_write_u8(u8 chip_no, u8 reg, u8 val)
 {
-	return i2c_write(chip_no, reg, 1, &val, 1);
+	int saved_bus = i2c_get_bus_num();
+	int ret = i2c_set_bus_num(CONFIG_SYS_I2C_PALMAS_BUS_NUM);
+	if (!ret)
+		ret = i2c_write(chip_no, reg, 1, &val, 1);
+	i2c_set_bus_num(saved_bus);
+	return ret;
 }
 
 static inline int palmas_i2c_read_u8(u8 chip_no, u8 reg, u8 *val)
 {
-	return i2c_read(chip_no, reg, 1, val, 1);
+	int saved_bus = i2c_get_bus_num();
+	int ret = i2c_set_bus_num(CONFIG_SYS_I2C_PALMAS_BUS_NUM);
+	if (!ret)
+		ret = i2c_read(chip_no, reg, 1, val, 1);
+	i2c_set_bus_num(saved_bus);
+	return ret;
 }
 
 void palmas_init_settings(void);
