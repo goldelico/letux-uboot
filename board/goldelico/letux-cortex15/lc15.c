@@ -173,6 +173,8 @@ const struct pad_conf_entry padconf_mmcmux_lc15[] = {
 /* FIXME: board revision 5.0 uses different gpios */
 
 const struct pad_conf_entry padconf_mmcmux_lc15_50[] = {
+//	{HSI2_ACFLAG, (IEN | M6)}, /* gpio 3_32 */
+//	{HSI2_CAREADY, (IEN | M6)}, /* gpio 3_33 */
 };
 
 #endif
@@ -187,13 +189,13 @@ int board_mmc_init(bd_t *bis)
 
 	int vers = get_board_version();
 #if 1
-	printf("board_mmc_init for LC15 %d called\n", vers);
+	printf("board_mmc_init called (vers = %d)\n", vers);
 #endif
 	if (vers <= 49) {
 		 /* has no working mmc switch! */
-		soft_select = 0;
-		hard_select = 0;
-		control = 0;
+		soft_select = -1;
+		hard_select = -1;
+		control = -1;
 	}
 
 	if (vers == 50) {
@@ -209,7 +211,9 @@ int board_mmc_init(bd_t *bis)
 #if defined(CONFIG_SPL_BUILD)
 
 	/* in MLO we ask the external hard_select, copy to soft_select and change the control */
-
+#if 1
+	printf("  MLO\n");
+#endif
 
 	/* make gpio1_wk7 an input so that we can read the state of the BOOTSEL button */
 	do_set_mux((*ctrl)->control_padconf_wkup_base,
@@ -222,7 +226,7 @@ int board_mmc_init(bd_t *bis)
 	val = !gpio_get_value(hard_select);	/* is inverted */
 
 #if 1
-	printk("  gpio%d = %s\n", hard_select, val?"uSD":"eMMC");
+	printk("  hard: gpio%d = %s\n", hard_select, val?"uSD":"eMMC");
 #endif
 
 	/* pass hard-select to soft-select so that the user can now
@@ -247,18 +251,21 @@ int board_mmc_init(bd_t *bis)
 	}
 #if 1
 	/* read back */
-	printk("  gpio%d = %d (mmc1=%s)\n", soft_select, gpio_get_value(soft_select), gpio_get_value(soft_select)?"uSD":"eMMC");
-	printk("  gpio%d = %d (ctrl=%s)\n", control, gpio_get_value(control), gpio_get_value(control)?"soft":"hard");
+	printk("  soft: gpio%d = %d (mmc1=%s)\n", soft_select, gpio_get_value(soft_select), gpio_get_value(soft_select)?"uSD":"eMMC");
+	printk("  ctrl: gpio%d = %d (ctrl=%s)\n", control, gpio_get_value(control), gpio_get_value(control)?"soft":"hard");
 #endif
 
 #else	/* defined(CONFIG_SPL_BUILD) */
 
 	/* in U-Boot we just fetch the state of the soft_select */
+#if 1
+	printf("  U-Boot\n");
+#endif
 
 	val = gpio_get_value(soft_select);
 
 #if 1
-	printf("board_mmc_init for LC15 - soft_select = gpio %d val: %d\n", soft_select, val);
+	printk("  soft: gpio%d = %d (mmc1=%s)\n", soft_select, val, val?"uSD":"eMMC");
 #endif
 
 #endif	/* defined(CONFIG_SPL_BUILD) */
