@@ -172,3 +172,11 @@ int twl603x_enable_bb_charge(u8 bb_fields)
 		       val, err);
 	return err;
 }
+
+/*
+ * power off TWL6035/37.
+ */
+int twl603x_poweroff(bool restart)
+{
+	return palmas_i2c_write_u8(TWL603X_CHIP_P1, 0xa0, restart?0x03:0x00);
+}
