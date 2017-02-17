@@ -297,6 +297,13 @@ int board_mmc_init(bd_t *bis)
 	return 0;
 }
 
+int do_poweroff(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+{
+	twl603x_poweroff(false);
+	printf ("failed to power down\n");
+	return (0);
+}
+
 /* SPL only code */
 #if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_OS_BOOT)
 
