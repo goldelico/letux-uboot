@@ -181,6 +181,17 @@ const struct pad_conf_entry padconf_mmcmux_lc15_50[] = {
 
 #endif
 
+static void simple_ram_test(void)
+{
+	static int v[2];
+	v[0] = 0x12345678;
+	dsb();
+	v[1] = 0;
+	dsb();
+	if (v[0] != 0x12345678)
+		printf("WARNING: DDR RAM is not working! (%x)\n", v[0]);
+}
+
 int board_mmc_init(bd_t *bis)
 {
 	int hard_select = 7;	/* gpio to select uSD (0) or eMMC (1) by external hw signal */
@@ -189,6 +200,7 @@ int board_mmc_init(bd_t *bis)
 
 	int val;	/* is the value of soft_select gpio after processing */
 
+	simple_ram_test();
 	int vers = get_board_version();
 #if 1
 	printf("board_mmc_init called (vers = %d)\n", vers);
