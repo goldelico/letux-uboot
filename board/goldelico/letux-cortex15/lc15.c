@@ -68,8 +68,10 @@ static const int versions[]={
 
 static int get_board_version(void)
 { /* read get board version from resistors */
-	static int vers;
-	if (!vers) {
+	/* careful with static variables:
+	 * zero vars go to DRAM, which may be not initialized yet in MLO! */
+	static int vers = -1;
+	if (vers == -1) {
 		gpio_request(32, "R32");	/* version resistors */
 		gpio_request(33, "R33");
 		gpio_direction_input(32);
