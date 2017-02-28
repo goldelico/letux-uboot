@@ -82,7 +82,6 @@ static int get_board_version(void)
 			   padconf_version_pd_lc15,
 			   sizeof(padconf_version_pd_lc15) /
 			   sizeof(struct pad_conf_entry));
-		udelay(2);
 		vers = gpio_get_value(32) | (gpio_get_value(33) << 1);
 
 		/* pull both up */
@@ -90,7 +89,6 @@ static int get_board_version(void)
 			   padconf_version_pu_lc15,
 			   sizeof(padconf_version_pu_lc15) /
 			   sizeof(struct pad_conf_entry));
-		udelay(2);
 		vers |= (gpio_get_value(32) << 2) | (gpio_get_value(33) << 3);
 
 		gpio_free(32);
