@@ -166,8 +166,8 @@ struct tca642x_bank_info pyra_tca642x_init[] = {
 /*
  * Board Revision Detection
  *
- * gpio6_160, gpio6_182 and gpio6_185 can be pulled down
- * by optional 1k resistors.
+ * gpio6_160, gpio6_182 and gpio6_185 can optionally be pulled down
+ * by 10k resistors.
  */
 
 static int get_pyra_mainboard_revision(void)
@@ -192,7 +192,6 @@ static int get_pyra_mainboard_revision(void)
 			gpio_direction_input(160);
 			gpio_direction_input(182);
 			gpio_direction_input(185);
-			udelay(2);
 
 			revision = gpio_get_value(185) << 2 |
 				gpio_get_value(182) << 1 |
