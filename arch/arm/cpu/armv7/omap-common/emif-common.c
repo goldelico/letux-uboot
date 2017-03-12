@@ -1402,6 +1402,28 @@ static void do_bug0039_workaround(u32 base)
 	__raw_writel(clkctrl,  (*prcm)->cm_memif_clkstctrl);
 }
 
+static u32 dq_test( u32 addr )
+{
+	u64 const tests[] = {
+		0x00000000ffffffff,
+		0xffffffff00000000,
+		0xaaaaaaaa55555555,
+		0x55555555aaaaaaaa,
+	};
+	u32 fail = 0;
+	int i;
+	for(i = 0; i < sizeof(tests)/8; i++) {
+		u64 w = tests[i];
+		writel(w >> 32, addr);
+		writeq(w, addr);
+		u64 x = readq(addr);
+//		printf( "dq test at 0x%08x: %016llx -> %016llx\n", addr, w, x );
+		x ^= w;
+		fail |= (u32)( x | x >> 32 );
+	}
+	return fail;
+}
+
 /*
  * SDRAM initialization:
  * SDRAM initialization has two parts:
@@ -1462,6 +1484,25 @@ void sdram_init(void)
 
 	/* Do some testing after the init */
 	if (!in_sdram) {
+		extern int twl603x_poweroff(bool restart);
+		u32 dq = dq_test( 0x80000000 );
+		u32 fail = dq;
+		if( dq )
+			printf( "emif 0 rank 0 dq test failed: 0x%08x\n", dq );
+		fail |= dq = dq_test( 0x80000000 | 128 );
+		if( dq )
+			printf( "emif 1 rank 0 dq test failed: 0x%08x\n", dq );
+#ifdef CONFIG_DUAL_RANK_DDR3
+		fail |= dq = dq_test( 0x80000000 | 1 << 16 );
+		if( dq )
+			printf( "emif 0 rank 1 dq test failed: 0x%08x\n", dq );
+		fail |= dq = dq_test( 0x80000000 | 1 << 16 | 128 );
+		if( dq )
+			printf( "emif 1 rank 1 dq test failed: 0x%08x\n", dq );
+#endif
+		if( fail )
+			twl603x_poweroff(false);
+
 		size_prog = omap_sdram_size();
 		size_prog = log_2_n_round_down(size_prog);
 		size_prog = (1 << size_prog);
@@ -1470,8 +1511,7 @@ void sdram_init(void)
 						size_prog);
 		/* Compare with the size programmed */
 		if (size_detect != size_prog) {
-			extern int twl603x_poweroff(bool restart);
-			printf("### SDRAM: identified: %x expected: %x ###\n",
+			printf("SDRAM: identified: %x expected: %x ###\n",
 				size_detect, size_prog);
 			twl603x_poweroff(false);
 		} else
