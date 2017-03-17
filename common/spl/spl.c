@@ -116,9 +116,20 @@ int spl_parse_image_header(struct spl_image_info *spl_image,
 		}
 		spl_image->os = image_get_os(header);
 		spl_image->name = image_get_name(header);
+#ifdef CONFIG_USE_TINY_PRINTF
+		{
+		char name[IH_NMLEN+1];
+		strncpy(name, spl_image->name, IH_NMLEN);
+		name[IH_NMLEN] = '\0';
+		debug("spl: payload image: %s load addr: 0x%x size: %d\n",
+			name,
+			spl_image->load_addr, spl_image->size);
+		}
+#else
 		debug("spl: payload image: %-.*s load addr: 0x%x size: %d\n",
 			(int)IH_NMLEN, spl_image->name,
 			spl_image->load_addr, spl_image->size);
+#endif
 	} else {
 #ifdef CONFIG_SPL_PANIC_ON_RAW_IMAGE
 		/*
