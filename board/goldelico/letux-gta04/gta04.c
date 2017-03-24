@@ -562,6 +562,9 @@ int misc_init_r(void)
 			printf("Error: unable to acquire board revision GPIOs\n");
 			break;
 		}
+#if defined(CONFIG_ONENAND_BOOT)
+	strcat(devtree, "one");	/* choose a DTB that tells kernel that we have OneNAND */
+#endif
 	strcat(devtree, peripheral);	/* append potential +b2/b3 suffix for peripheral board(s) */
 	setenv("mux", muxname);
 	setenv("devicetree", devtree);
