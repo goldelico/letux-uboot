@@ -18,6 +18,17 @@
 #include <asm/utils.h>
 #include <linux/compiler.h>
 
+#ifdef CONFIG_OMAP54XX
+static bool emif_initialized(void)
+{
+	return readl(0x4ae06b34) == 0;
+}
+static void mark_emif_initialized(void)
+{
+	writel(0x3, 0x4ae06b34);
+}
+#endif
+
 static int emif1_enabled = -1, emif2_enabled = -1;
 
 void set_lpmode_selfrefresh(u32 base)
@@ -1409,14 +1420,18 @@ static u32 dq_test( u32 addr )
 		0xffffffff00000000,
 		0xaaaaaaaa55555555,
 		0x55555555aaaaaaaa,
+		0x2a6d300f8084c98b,
+		0x113c8a14b97b46cb,
+		0xc2e01913669ad83c,
+		0x10b4d95cf888f6c7,
 	};
 	u32 fail = 0;
 	int i;
 	for(i = 0; i < sizeof(tests)/8; i++) {
 		u64 w = tests[i];
-		writel(w >> 32, addr);
-		writeq(w, addr);
-		u64 x = readq(addr);
+		__raw_writel(w >> 32, addr);
+		__raw_writeq(w, addr);
+		u64 x = __raw_readq(addr);
 //		printf( "dq test at 0x%08x: %016llx -> %016llx\n", addr, w, x );
 		x ^= w;
 		fail |= (u32)( x | x >> 32 );
@@ -1447,10 +1462,21 @@ void sdram_init(void)
 	struct emif_reg_struct *emif = (struct emif_reg_struct *)EMIF1_BASE;
 	u32 sdram_type = emif_sdram_type(emif->emif_sdram_config);
 
-	debug(">>sdram_init()\n");
-
 	if (omap_hw_init_context() == OMAP_INIT_CONTEXT_UBOOT_AFTER_SPL)
 		return;
+
+	debug(">>sdram_init()\n");
+
+#ifdef CONFIG_OMAP54XX
+	extern int twl603x_poweroff(bool restart);
+	if( warm_reset() && ! emif_initialized() ) {
+		printf( "\e[1;31m### warm reset, EMIF not initialized\e[m\n" );
+		twl603x_poweroff( true );
+	} else if( emif_initialized() && ! warm_reset() ) {
+		printf( "\e[1;31m### cold reset, EMIF retained context\e[m\n" );
+		twl603x_poweroff( true );
+	}
+#endif
 
 	in_sdram = running_from_sdram();
 	debug("in_sdram = %d\n", in_sdram);
@@ -1484,7 +1510,6 @@ void sdram_init(void)
 
 	/* Do some testing after the init */
 	if (!in_sdram) {
-		extern int twl603x_poweroff(bool restart);
 		u32 dq = dq_test( 0x80000000 );
 		u32 fail = dq;
 		if( dq )
@@ -1538,6 +1563,9 @@ void sdram_init(void)
 			do_bug0039_workaround(EMIF1_BASE);
 		if (emif2_enabled)
 			do_bug0039_workaround(EMIF2_BASE);
+#ifdef CONFIG_OMAP54XX
+		mark_emif_initialized();
+#endif
 	}
 
 	debug("<<sdram_init()\n");
