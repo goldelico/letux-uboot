@@ -58,4 +58,11 @@
 #define CONFIG_G_DNL_PRODUCT_NUM	0xd022
 #define CONFIG_SYS_CACHELINE_SIZE	64
 
+/*
+ * set stdout-path in dtb chosen-node to the selected uart
+ * replaces console=ttyO2... cmdline option
+ * uses previously defined CONFIG_CONS_INDEX
+ */
+#define CONFIG_OF_STDOUT_VIA_ALIAS
+
 #endif /* __CONFIG_H */
