@@ -22,13 +22,14 @@
 # 0x0024 0000	0x0027 ffff	04 0000		256 KB	U-Boot parameters written by saveenv
 # 0x0028 0000	0x0083 ffff	5c 0000		5.7 MB	Kernel (flash image loaded by nandboot)
 # 0x0084 0000	0x0087 ffff	04 0000		256 KB	DTB (flash image loaded by nandboot)
-# 0x0088 0000	0xXfff ffff			250 MB	(or more) file system (e.g. jffs)
+# 0x0088 0000	0xXfff ffff			>250 MB	file system (e.g. ubifs)
 #
-# To flash into NAND from command line:
+# This script automatically reflashes if it detects a different version
+# To manually trigger self-flash into NAND from command line:
 #
 # 1. break into U-Boot command line
-# 2. flash=yes
-# 3. boot
+# 2.   flash=yes
+# 3.   run bootcmd
 #
 # booting tries to load:
 #    boot script		/boot.scr (FAT) from partition 1, then /boot/boot.scr (EXT) from partition 1, then NAND
@@ -47,18 +48,25 @@ status set 8	# give fast feedback that U-Boot did start (red power led)
 
 # we have to add an "x" because the test command treats empty string as equal to anything
 
-if test "x${scriptversion}" != "x${VERSION}"
+if test "x${scriptversion}" != "x${VERSION}" || test "x${flash}" = "xyes"
 	then
 
 	# set up default environment
+
+	FDTFILE=${fdtfile}	# save
+	env default -a
+	setenv fdtfile ${FDTFILE}	# restore for later use
+
 	# this setting boots from MMC if available and falls back to NAND
 	# (except for MLO/X-Loader which is located depending on the AUX button)
+	# NOTE: it contains a lot of stuff to stay compatible with older kernels
 
 	echo *** initializing GTA04 environment ***
-	
+
 	setenv mmc		0		# MMC number where this boot.scr is found
 	setenv kernelmmc	0		# MMC number where the rootfs is found by the kernel
 	setenv bootdelay	1
+	# FIXME: latest U-Boot has kernel_addr_r, initrd_addr_r, fdtaddr and fdt_addr_r for such purposes
 	setenv imgtempaddr	0x80800000	# address where we load compressed splash image
 	setenv bootaddr 	0x81800000	# address where we load the boot script
 	setenv loadaddrfdt	0x81c00000	# address where we load the flattened device tree
@@ -151,10 +159,10 @@ do
       source ${imgtempaddr}
       DONE=1
     fi
-    if load mmc ${mmc}:${p} ${loadaddrfdt} ${devicetree}.dtb
+    if load mmc ${mmc}:${p} ${loadaddrfdt} ${fdtfile}
     then
       FDT=1
-    elif load mmc ${mmc}:${p} ${loadaddrfdt} /boot/${devicetree}.dtb
+    elif load mmc ${mmc}:${p} ${loadaddrfdt} /boot/${fdtfile}
     then
       FDT=1
     fi
