@@ -30,6 +30,11 @@
 #undef CONFIG_ENV_OFFSET
 #endif
 
+#ifdef CONFIG_DUAL_RANK_DDR3
+#undef CONFIG_NR_DRAM_BANKS
+#define CONFIG_NR_DRAM_BANKS	2
+#endif
+
 /* should this better go to omap5_uevm? */
 
 #ifdef CONFIG_USB_GADGET

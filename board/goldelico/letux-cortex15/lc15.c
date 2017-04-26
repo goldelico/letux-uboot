@@ -24,6 +24,62 @@ const struct omap_sysinfo sysinfo = {
 #undef board_mmc_init
 #undef misc_init_r
 
+#include <asm/emif.h>
+
+#ifdef CONFIG_DUAL_RANK_DDR3
+
+/* also known as "4GB RAM CPU board"
+ *
+ * If somehow possible, we should try to auto-detect the RAM size and
+ * choose 2GB or 4GB automatically.
+ *
+ * NOTE: please run a kernel with LPAE enabled to make use of the 4GB RAM!
+ */
+
+const struct emif_regs emif_regs_ddr3_532_mhz_2cs_es2 = {
+	.sdram_config_init              = 0x61851B3A,
+	.sdram_config                   = 0x61851B3A,
+	.sdram_config2			= 0x0,
+	.ref_ctrl                       = 0x00001035,
+	.sdram_tim1                     = 0xCCCF36B3,
+	.sdram_tim2                     = 0x308F7FDA,
+	.sdram_tim3                     = 0x027F88A8,
+	.read_idle_ctrl                 = 0x00050000,
+	.zq_config                      = 0xD007190B,
+	.temp_alert_config              = 0x00000000,
+	.emif_ddr_phy_ctlr_1_init       = 0x0030400A,
+	.emif_ddr_phy_ctlr_1            = 0x0034400A,
+	.emif_ddr_ext_phy_ctrl_1        = 0x04040100,
+	.emif_ddr_ext_phy_ctrl_2        = 0x00000000,
+	.emif_ddr_ext_phy_ctrl_3        = 0x00000000,
+	.emif_ddr_ext_phy_ctrl_4        = 0x00000000,
+	.emif_ddr_ext_phy_ctrl_5        = 0x4350D435,
+	.emif_rd_wr_lvl_rmp_win         = 0x00000000,
+	.emif_rd_wr_lvl_rmp_ctl         = 0x80000000,
+	.emif_rd_wr_lvl_ctl             = 0x00000000,
+	.emif_rd_wr_exec_thresh         = 0x40000305
+};
+
+void emif_get_reg_dump(u32 emif_nr, const struct emif_regs **regs)
+{
+	*regs = &emif_regs_ddr3_532_mhz_2cs_es2;
+}
+
+void dram_init_banksize(void)
+{ /* make U-Boot pass the same as bootarg "mem=2032M@0x80000000 mem=2048M@0x200000000" would do */
+	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;	// == 0x80000000
+	gd->bd->bi_dram[0].size = 2032*(1024UL*1024);		// first 2GB
+	gd->bd->bi_dram[1].start = 0x200000000UL;
+	gd->bd->bi_dram[1].size = 2048*(1024UL*1024);		// second 2GB
+#if 0	// get back "stolen" memory
+	gd->bd->bi_dram[1].start = 0x2FF000000UL;
+	gd->bd->bi_dram[1].size = 2064*(1024UL*1024);
+#endif
+	/* report 4 GB during boot */
+	gd->ram_size = gd->bd->bi_dram[0].size + gd->bd->bi_dram[1].size;
+}
+#endif
+
 /*
  * Board Revision Detection
  *

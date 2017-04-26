@@ -9,4 +9,7 @@ config SYS_VENDOR
 config SYS_CONFIG_NAME
 	default "letux_cortex15"
 
+config DUAL_RANK_DDR3
+	bool "Dual-rank memory (4GB)"
+
 endif
