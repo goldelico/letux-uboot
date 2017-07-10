@@ -1,0 +1,19 @@
+# please convert this source into a boot.scr:
+# mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n 'Boot Script' -d boot-udoo-neo.txt boot.scr
+
+setenv console ttymxc0,115200n8
+kernel=uImage
+fdt_addr_r=${fdt_addr}
+setenv bootargs "root=/dev/mmcblk0p2 rw rootfstype=ext4,ext3 console=${console}"
+
+#if load ${devtype} ${devnum}:${distro_bootpart} fdt_addr_r /boot/bootargs.scr
+#then
+#	source fdt_addr_r
+#fi
+
+echo load FTD from ${prefix}${fdt_file}
+load ${devtype} ${devnum}:${distro_bootpart} ${fdt_addr_r} ${prefix}${fdt_file}
+echo load Kernel from ${prefix}${kernel}
+load ${devtype} ${devnum}:${distro_bootpart} ${kernel_addr_r} ${prefix}${kernel}
+
+bootm ${kernel_addr_r} - ${fdt_addr_r}
