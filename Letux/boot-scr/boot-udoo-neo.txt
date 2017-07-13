@@ -3,8 +3,12 @@
 
 setenv console ttymxc0,115200n8
 kernel=uImage
+rootfs_mmc=0
+rootfs_part=1
+
 fdt_addr_r=${fdt_addr}
-setenv bootargs "root=/dev/mmcblk0p2 rw rootfstype=ext4,ext3 console=${console}"
+setenv bootargs "root=/dev/mmcblk${rootfs_mmc}p${rootfs_part} rw rootfstype=ext4,ext3 console=${console} uart_from_osc clk_ignore_unused cpuidle.off=1 consoleblank=0"
+prefix=/boot/
 
 #if load ${devtype} ${devnum}:${distro_bootpart} fdt_addr_r /boot/bootargs.scr
 #then
