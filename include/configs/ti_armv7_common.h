@@ -59,7 +59,7 @@
 #define DEFAULT_MMC_TI_ARGS \
 	"mmcdev=0\0" \
 	"mmcrootfstype=ext4 rootwait\0" \
-	"finduuid=part uuid mmc ${mmcdev}:2 uuid\0" \
+	"finduuid=part uuid mmc ${mmcdev}:2 uuid; echo uuid of mmc ${mmcdev}:2 = ${uuid}\0" \
 	"args_mmc=run finduuid;setenv bootargs console=${console} " \
 		"${optargs} " \
 		"root=PARTUUID=${uuid} rw " \
@@ -67,10 +67,10 @@
 	"loadbootscript=load mmc ${mmcdev} ${loadaddr} boot.scr\0" \
 	"bootscript=echo Running bootscript from mmc${mmcdev} ...; " \
 		"source ${loadaddr}\0" \
-	"bootenvfile=uEnv.txt\0" \
+	"bootenv=uEnv.txt\0" \
 	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \
 		"env import -t ${loadaddr} ${filesize}\0" \
-	"loadbootenv=fatload mmc ${mmcdev} ${loadaddr} ${bootenvfile}\0" \
+	"loadbootenv=fatload mmc ${mmcdev} ${loadaddr} ${bootenv}\0" \
 	"envboot=mmc dev ${mmcdev}; " \
 		"if mmc rescan; then " \
 			"echo SD/MMC found on device ${mmcdev};" \
@@ -78,7 +78,7 @@
 				"run bootscript;" \
 			"else " \
 				"if run loadbootenv; then " \
-					"echo Loaded env from ${bootenvfile};" \
+					"echo Loaded env from ${bootenv};" \
 					"run importbootenv;" \
 				"fi;" \
 				"if test -n $uenvcmd; then " \
@@ -240,6 +240,7 @@
 #define CONFIG_DOS_PARTITION
 #define CONFIG_FAT_WRITE
 #define CONFIG_PARTITION_UUIDS
+#define CONFIG_PARTITION_TYPE_GUID
 #define CONFIG_CMD_PART
 #endif
 
