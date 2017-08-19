@@ -250,6 +250,33 @@ static void simple_ram_test(void)
 	}
 }
 
+#define INT1_MASK	0x11
+#define INT1_VBAT_MON	(1u << 7)
+#define INT2_MASK	0x16
+#define INT2_VAC_ACOK	(1u << 7)
+
+static void configure_palmas(void)
+{
+	/*
+	 * mask some interrupts so the board doesn't boot when USB is connected,
+	 * so that the device can be charged while off
+	 * VAC_ACOK has to be masked, and for some reason VBAT_MON too
+	 */
+	u8 val = 0;
+	int ret;
+
+	ret  = palmas_i2c_read_u8(TWL603X_CHIP_P2, INT2_MASK, &val);
+	val |= INT2_VAC_ACOK;
+	if (!ret)
+		ret |= palmas_i2c_write_u8(TWL603X_CHIP_P2, INT2_MASK, val);
+	ret |= palmas_i2c_read_u8(TWL603X_CHIP_P2, INT1_MASK, &val);
+	val |= INT1_VBAT_MON;
+	if (!ret)
+		ret |= palmas_i2c_write_u8(TWL603X_CHIP_P2, INT1_MASK, val);
+	if (ret)
+		printf("WARNING: palmas irq masking failed\n");
+}
+
 int board_mmc_init(bd_t *bis)
 {
 	int hard_select = 7;	/* gpio to select uSD (0) or eMMC (1) by external hw signal */
@@ -365,6 +392,8 @@ int board_mmc_init(bd_t *bis)
 	printf("%08x: %08x\n", 0x4A009120, readl(0x4A009120));
 	printf("%08x: %08x\n", 0x4A009128, readl(0x4A009128));
 #endif
+
+	configure_palmas();
 
 	return 0;
 }
