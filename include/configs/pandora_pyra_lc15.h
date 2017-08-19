@@ -21,4 +21,18 @@
 
 #define CONFIG_SPL_ABORT_ON_RAW_IMAGE 1
 
+#define BOOT_TARGET_DEVICES(func) \
+	func(MMC , mmc,  0) \
+	func(MMC , mmc,  1) \
+	func(USB , usb,  0) \
+
+#undef CONFIG_EXTRA_ENV_SETTINGS
+#undef CONFIG_BOOTCOMMAND
+
+#include <config_distro_bootcmd.h>
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	DEFAULT_LINUX_BOOT_ENV \
+	BOOTENV \
+
 #endif /* __CONFIG_PANDORA_PYRA_LC15_H */
