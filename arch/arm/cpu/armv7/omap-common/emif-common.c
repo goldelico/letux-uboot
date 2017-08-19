@@ -1470,12 +1470,12 @@ void sdram_init(void)
 						size_prog);
 		/* Compare with the size programmed */
 		if (size_detect != size_prog) {
-			printf("SDRAM: identified size not same as expected"
-				" size identified: %x expected: %x\n",
-				size_detect,
-				size_prog);
+			extern int twl603x_poweroff(bool restart);
+			printf("### SDRAM: identified: %x expected: %x ###\n",
+				size_detect, size_prog);
+			twl603x_poweroff(false);
 		} else
-			debug("get_ram_size() successful");
+			debug("get_ram_size() successful\n");
 	}
 
 #if defined(CONFIG_TI_SECURE_DEVICE)

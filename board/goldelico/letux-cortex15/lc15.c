@@ -244,8 +244,10 @@ static void simple_ram_test(void)
 	dsb();
 	v[1] = 0;
 	dsb();
-	if (v[0] != 0x12345678)
-		printf("WARNING: DDR RAM is not working! (%x)\n", v[0]);
+	if (v[0] != 0x12345678) {
+		printf("FATAL: DDR RAM is not working! (%x)\n", v[0]);
+		twl603x_poweroff(false);
+	}
 }
 
 int board_mmc_init(bd_t *bis)
