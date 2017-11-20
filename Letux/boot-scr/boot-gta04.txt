@@ -71,6 +71,7 @@ if test "x${scriptversion}" != "x${VERSION}" || test "x${flash}" = "xyes"
 	setenv bootaddr 	0x81800000	# address where we load the boot script
 	setenv loadaddrfdt	0x81c00000	# address where we load the flattened device tree
 	setenv loadaddr		0x82000000	# address where we load the kernel
+	setenv loadaddrinitrd	0x83000000	# address where we load the initrd image
 	# setenv console	ttyS2,115200n8
 	# for newer kernels with OMAP console (unfortunately U-Boot can't find out)
 	setenv console		ttyO2,115200n8
@@ -79,6 +80,10 @@ if test "x${scriptversion}" != "x${VERSION}" || test "x${flash}" = "xyes"
 	setenv nand		4		# mtd4: rootfs partition number in nand
 	setenv vram		12M
 	setenv omapfbvram	0:8M,1:4M
+
+	setenv dfu_info_ram 'setenv dfu_alt_info kernel ram ${loadaddr} 0x800000\\\;fdt ram ${loadaddrfdt} 0x40000 \\\;rd ram ${loadaddrinitrd} 0x4000000\\\;script ram ${imgtempaddr} 0x40000'
+	setenv dfu_info_mmc 'setenv dfu_alt_info mmcp1 part 0 1\\\;mmcp2 part 0 2\\\;mmcp3 part 0 3\\\;mmcp4 part 0 4'
+
 
 	# load boot script from mmc (first FAT partition only) or nand wherever we find it
 	setenv loadbootscript '
