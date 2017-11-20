@@ -463,18 +463,24 @@ int dfu_config_entities(char *env, char *interface, char *devstr)
 	dfu = calloc(sizeof(*dfu), dfu_alt_num);
 	if (!dfu)
 		return -1;
-	for (i = 0; i < dfu_alt_num; i++) {
+	for (i = 0; i < dfu_alt_num;) {
 
 		s = strsep(&env, ";");
 		ret = dfu_fill_entity(&dfu[i], s, alt_num_cnt, interface,
 				      devstr);
 		if (ret) {
-			free(dfu);
-			return -1;
+			dfu_alt_num--;
+			continue;
 		}
 
 		list_add_tail(&dfu[i].list, &dfu_list);
+
+		i++;
 		alt_num_cnt++;
+	}
+	if (!i) {
+		free(dfu);
+		return -1;
 	}
 
 	return 0;
