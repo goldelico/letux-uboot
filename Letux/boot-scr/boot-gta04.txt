@@ -297,18 +297,22 @@ then
 			fi
 			
 			if tsc selection 7
-			then
-				lcm color 00ff00	# turn screen green (feedback to touch press)
-				lcm fb 0
-				echo *** LED mirror ***
-				status mirror
-			elif tsc selection 8
-			then
-				lcm color 0000ff	# turn screen blue
-				lcm fb 0
-				echo *** LED blink ***
-				# systest all
-				status blink
+                        then
+				# musb in uboot gets mad when charging is enabled
+                                i2c dev 0
+                                charge off
+				# no reboot here, because we want to use the stuff loaded to ram disk
+                                setenv dfureset 'source ${imgtempaddr}'
+				run dfu_info_ram
+                                dfu 0 ram 0
+                        elif tsc selection 8
+                        then
+				# musb in uboot gets mad when charging is enabled
+                                i2c dev 0
+                                charge off
+                                setenv dfureset 'reset'
+                                run dfu_info_mmc
+                                dfu 0 mmc 0
 			elif tsc selection 9
 			then
 				echo *** TSC test ***
