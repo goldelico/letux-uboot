@@ -203,7 +203,7 @@ static inline void dfu_set_defer_flush(struct dfu_entity *dfu)
 int dfu_write_from_mem_addr(struct dfu_entity *dfu, void *buf, int size);
 
 /* Device specific */
-#ifdef CONFIG_DFU_MMC
+#if defined(CONFIG_DFU_MMC) && !defined(CONFIG_SPL_BUILD)
 extern int dfu_fill_entity_mmc(struct dfu_entity *dfu, char *devstr, char *s);
 #else
 static inline int dfu_fill_entity_mmc(struct dfu_entity *dfu, char *devstr,
@@ -214,7 +214,7 @@ static inline int dfu_fill_entity_mmc(struct dfu_entity *dfu, char *devstr,
 }
 #endif
 
-#ifdef CONFIG_DFU_NAND
+#if defined(CONFIG_DFU_NAND) && !defined(CONFIG_SPL_BUILD)
 extern int dfu_fill_entity_nand(struct dfu_entity *dfu, char *devstr, char *s);
 #else
 static inline int dfu_fill_entity_nand(struct dfu_entity *dfu, char *devstr,
@@ -236,7 +236,7 @@ static inline int dfu_fill_entity_ram(struct dfu_entity *dfu, char *devstr,
 }
 #endif
 
-#ifdef CONFIG_DFU_SF
+#if defined(CONFIG_DFU_SF) && !defined(CONFIG_SPL_BUILD)
 extern int dfu_fill_entity_sf(struct dfu_entity *dfu, char *devstr, char *s);
 #else
 static inline int dfu_fill_entity_sf(struct dfu_entity *dfu, char *devstr,
