@@ -204,8 +204,11 @@ static int spl_ram_load_image(struct spl_image_info *spl_image,
 	header = (struct image_header *)CONFIG_SPL_LOAD_FIT_ADDRESS;
 
 #if defined(CONFIG_SPL_DFU_SUPPORT)
-	if (bootdev->boot_device == BOOT_DEVICE_DFU)
-		spl_dfu_cmd(0, "dfu_alt_info_ram", "ram", "0");
+	if (bootdev->boot_device == BOOT_DEVICE_DFU) {
+		int ret = spl_dfu_cmd(0, "dfu_alt_info_ram", "ram", "0");
+		if (ret)
+			return ret;
+	}
 #endif
 
 	if (IS_ENABLED(CONFIG_SPL_LOAD_FIT) &&
