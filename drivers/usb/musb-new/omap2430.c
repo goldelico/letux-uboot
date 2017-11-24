@@ -432,8 +432,13 @@ static int omap2430_musb_enable(struct musb *musb)
 #else
 #ifdef CONFIG_TWL4030_USB
 	if (twl4030_usb_ulpi_init()) {
+#ifdef CONFIG_SPL_BUILD
+		printf("ERROR: %s Could not initialize PHY\n",
+		       __PRETTY_FUNCTION__);
+#else
 		serial_printf("ERROR: %s Could not initialize PHY\n",
 				__PRETTY_FUNCTION__);
+#endif
 	}
 #endif
 
