@@ -21,10 +21,13 @@ obj-$(CONFIG_USB_GADGET_DOWNLOAD) += g_dnl.o
 obj-$(CONFIG_USB_FUNCTION_THOR) += f_thor.o
 ifndef CONFIG_SPL_BUILD
 obj-$(CONFIG_USB_FUNCTION_DFU) += f_dfu.o
-endif
 obj-$(CONFIG_USB_FUNCTION_MASS_STORAGE) += f_mass_storage.o
 obj-$(CONFIG_USB_FUNCTION_FASTBOOT) += f_fastboot.o
+else
+obj-$(CONFIG_SPL_DFU_SUPPORT) += f_dfu.o
 endif
+endif
+
 ifdef CONFIG_USB_ETHER
 obj-y += ether.o
 obj-$(CONFIG_USB_ETH_RNDIS) += rndis.o
