@@ -111,26 +111,7 @@ static int twl4030_usb_charger_enable(int enable)
 						  +	 REG_BOOT_BCI);
 		if (ret)
 			return ret;
-		
-		/* Enabling interfacing with usb thru OCP */
-		ret = clear_n_set(TWL4030_CHIP_USB, 0, PHY_DPLL_CLK,
-						  +	 REG_PHY_CLK_CTRL);
-		if (ret)
-			return ret;
-		
-		value = 0;
-		
-		while (!(value & PHY_DPLL_CLK)) {
-			udelay(10);
-			ret = twl4030_i2c_read_u8(TWL4030_CHIP_USB,
-									  +	 REG_PHY_CLK_CTRL_STS, &value);
-			if (ret)
-				return ret;
-		}
-		
-		/* OTG_EN (POWER_CTRL[5]) to 1 */
-		ret = clear_n_set(TWL4030_CHIP_USB, 0, OTG_EN,
-						  +	 REG_POWER_CTRL);
+		ret = twl4030_usb_ulpi_init();
 		if (ret)
 			return ret;
 		
