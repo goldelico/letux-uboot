@@ -12,3 +12,7 @@ No data is needed on mmc or nand
 usb-start-kernel.sh:
 expects an uboot waiting for dfu usb input and loads a kernel
 optionally including a ramdisk
+
+usb-flash-uboot-gta04.sh
+flashes spl+uboot+images into nand
+
