@@ -5,20 +5,28 @@ if [ $# -lt 2 ]; then
 fi
 set -e
 NAND=$1
-if [ "$NAND" = nand ]; then
-  MLO=MLO
-elif [ "$NAND" = onenand ]; then
-  MLO=MLO.flash
-else
-  echo unknown nand "$2"
+if [ "$NAND" != nand -a "$NAND" != onenand ]; then
+  echo unknown nand "$1"
   exit 1
 fi
 TMPFILE=$(tempfile)
 dd if=/dev/zero bs=$((0x1000)) count=$((0x1c0+0x80)) | tr '\0' '\377' >"$TMPFILE"
-dd if="$2/$MLO" bs=$((0x1000)) of="$TMPFILE" conv=notrunc
-dd if="$2/$MLO" bs=$((0x1000)) seek=$((0x20)) of="$TMPFILE" conv=notrunc
-dd if="$2/$MLO" bs=$((0x1000)) seek=$((0x40)) of="$TMPFILE" conv=notrunc
-dd if="$2/$MLO" bs=$((0x1000)) seek=$((0x60)) of="$TMPFILE" conv=notrunc
+if [ $NAND = nand ] ; then
+  dd if="$2/MLO" bs=$((0x1000)) of="$TMPFILE" conv=notrunc
+  dd if="$2/MLO" bs=$((0x1000)) seek=$((0x20)) of="$TMPFILE" conv=notrunc
+  dd if="$2/MLO" bs=$((0x1000)) seek=$((0x40)) of="$TMPFILE" conv=notrunc
+  dd if="$2/MLO" bs=$((0x1000)) seek=$((0x60)) of="$TMPFILE" conv=notrunc
+else
+  SECTORS=`wc -c <"$2/MLO"`
+  SECTORS=$((SECTORS / 2048))
+  for COPIES in 0 1 2 3 
+  do 
+    for SEC in `seq 0 1 $SECTORS`
+    do
+      dd if="$2/MLO" bs=2048 skip=$SEC of="$TMPFILE" count=1 seek=$(($SEC*2+$COPIES*0x20000/2048)) conv=notrunc
+    done
+  done
+fi
 
 dd if="$2/u-boot.img" bs=$((0x1000)) seek=$((0x80)) of="$TMPFILE" conv=notrunc
 dd if="$2/boot.scr" bs=$((0x1000)) seek=$((0x1b0)) of="$TMPFILE" conv=notrunc
