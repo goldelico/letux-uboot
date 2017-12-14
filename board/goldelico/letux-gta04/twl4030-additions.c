@@ -87,24 +87,27 @@ static int twl4030_ac_charger_enable(int enable)
 /*
  * Disable/Enable USB Charge funtionality.
  */
-static int twl4030_usb_charger_enable(int enable)
+static int twl4030_usb_charger_enable(int enable, int high_current)
 {
-	u8 value;
 	int ret;
 	
 	if (enable) {
-		/* enable access to BCIIREF1 */
-		ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+		/* we just stick to default current here, we cannot
+		 * be sure that the 852 mA can be delivered
+		 */
+		if(high_current) {
+			/* enable access to BCIIREF1 */
+			ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
 								   +	 REG_BCIMFKEY, 0xE7);
-		if (ret)
-			return ret;
+			if (ret)
+				return ret;
 		
-		/* set charging current = 852mA */
-		ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
+			/* set charging current = 852mA */
+			ret = twl4030_i2c_write_u8(TWL4030_CHIP_MAIN_CHARGE,
 								   +	 REG_BCIIREF1, 0xFF);
-		if (ret)
-			return ret;
-		
+			if (ret)
+				return ret;
+		}
 		/* forcing the field BCIAUTOUSB (BOOT_BCI[1]) to 1 */
 		ret = clear_n_set(TWL4030_CHIP_PM_MASTER, 0,
 						  +	 (CONFIG_DONE | BCIAUTOWEN | BCIAUTOUSB),
@@ -456,7 +459,7 @@ int twl4030_init_battery_charging(void)
 		 * charger is attached, otherwise the main battery voltage
 		 * cannot be read
 		 */
-		ret = twl4030_usb_charger_enable(1);
+		ret = twl4030_usb_charger_enable(1, 0);
 		if (ret)
 			return ret;
 	}
