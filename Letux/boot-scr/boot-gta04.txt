@@ -40,6 +40,9 @@
 
 VERSION=0123456789	# incremented by build script so that we re-initialize the boot environment or reflash x-loader and u-boot
 
+# enable charging so that we can flash and boot with almost empty battery until Linux driver takes over
+charge auto
+
 echo "*** if you boot from NAND don-t worry about error messages when U-Boot tries to read a non-existing MMC ***"
 
 i2c dev 0
