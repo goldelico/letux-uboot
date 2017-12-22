@@ -125,7 +125,7 @@
 				"bootscript ram 0x81800000 0x40000\0"
 #endif
 #undef CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND		"dfu 0 ram 0;source 0x80800000"
+#define CONFIG_BOOTCOMMAND		"charge auto;dfu 0 ram 0;source 0x80800000"
 #endif /* CONFIG_SPL_DFU_SUPPORT */
 
 #define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
