@@ -10,7 +10,7 @@ fi
 
 set -e
 echo Power on you gta04 with aux button pressed
-pusb -f spl
+pusb -f spl -d 0xd00e
 # wait for dfu to appear
 sleep 1
 dfu-util -a uboot -D "$UBOOT"
