@@ -46,7 +46,9 @@ int misc_init_r(void)
 	}
 	
 	setenv("mux", muxname);
-	strcat(devtree, peripheral);
+	/* well, letux kernels define these names as e.g. "omap3-beagle-xm-ab+gta04b1.dtb" */
+	strcat(devtree, "+gta04");
+	strcat(devtree, peripheral+1);	/* strip off + */
 	setenv("devicetree", devtree);
 	strcat(devtree, ".dtb");
 	setenv("fdtfile", devtree);
