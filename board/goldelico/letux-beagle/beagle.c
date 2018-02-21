@@ -52,6 +52,9 @@ int misc_init_r(void)
 	setenv("fdtfile", devtree);
 	printf("Device Tree: %s\n", devtree);
 
+	/* unset beaglerev variable to trick findfdt into idleness  */
+	setenv("beaglerev", "undefined");
+
 	return 0;
 }
 
