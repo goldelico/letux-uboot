@@ -2,12 +2,12 @@
 # mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n 'Boot Script' -d boot-beagleboneblack.txt boot.scr
 
 # assume we have the EXP43 connected
-setenv devicetree am335x-boneblack+gta04
+setenv devicetree am335x-boneblack+letux
 setenv defaultdisplay   lcd
 
-setenv mmc 0		# mmc number as seen by u-boot where it looks for kernel
+setenv mmc 1		# mmc number as seen by u-boot where it looks for kernel
 # we should have some mechanism so that u-boot and kernel use the same mmc numbering scheme or we have problems specifying the right rootfs
-setenv kernelmmc 1	# mmc number as seen by kernel
+setenv kernelmmc 0	# mmc number as seen by kernel
 setenv PARTITION 1	# partition where kernel is found (simulates the partition selection mechanism of the GTA04)
 setenv PARTITIONTYPE FAT
 
@@ -15,14 +15,14 @@ setenv PARTITIONTYPE FAT
 setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rw rootwait earlyprintk fixrtc'
 
 DONE=0
-for m in 1 0 # scan uSD and eMMC
+for m in 0 1 # scan uSD and eMMC
 do
 	mmc rescan # ${m}
 	for p in 1 2 3 4 # scan all partitions
 	do
-		# echo try mmc ${m}:${p}
 		if itest $DONE == 0
 		then  # try to load device tree and kernel binary
+			echo try mmc ${m}:${p} for kernel + DT
 			if fatload mmc ${m}:${p} 0x80300000 uImage
 			then
 				echo found kernel /uImage on mmc ${m}:${p}
