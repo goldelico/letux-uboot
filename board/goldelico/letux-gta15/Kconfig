@@ -1,0 +1,15 @@
+if TARGET_GTA15
+
+config SYS_BOARD
+	default "gta15"
+
+config SYS_VENDOR
+	default "goldelico"
+
+config SYS_CONFIG_NAME
+	default "letux_lc15"
+
+config DUAL_RANK_DDR3
+	bool "Dual-rank memory (4GB)"
+
+endif
