@@ -1,0 +1,6 @@
+LC15 Eval Board with LC15 CPU
+M:	Nikolaus Schaller <hns@goldelico.com>
+S:	Maintained
+F:	board/goldelico/letux-lc15evm
+F:	include/configs/letux_lc15_evm.h
+F:	configs/letux_lc15_evm_defconfig

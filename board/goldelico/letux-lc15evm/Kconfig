@@ -1,0 +1,15 @@
+if TARGET_LC15EVM
+
+config SYS_BOARD
+	default "lc15evm"
+
+config SYS_VENDOR
+	default "goldelico"
+
+config SYS_CONFIG_NAME
+	default "letux_lc15_evm"
+
+config DUAL_RANK_DDR3
+	bool "Dual-rank memory (4GB)"
+
+endif
