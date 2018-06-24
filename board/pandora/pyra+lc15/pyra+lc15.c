@@ -48,7 +48,11 @@ const struct pad_conf_entry core_padconf_array_essential_pyra[] = {
 	{MCSPI1_CS1, (PTU | IEN | M6)}, /* GPIO5_144: peripheral reset */
 	{RFBI_DATA5, (PTD | IEN | M6)}, /* GPIO6_171: pull down modem ignite */
 	{HSI2_CAFLAG, (PTU | IEN | M6)}, /* GPIO3_80: usb hub reset */
+#if defined(CONFIG_SPL_BUILD)
+	{TIMER8_PWM_EVT, (PTD | IEN | M6)}, /* GPIO8_230: keyboard backlight - pulled low */
+#else
 	{TIMER8_PWM_EVT, (PTU | IEN | M6)}, /* GPIO8_230: keyboard backlight - pulled high */
+#endif
 	/* main board revision detection */
 	{RFBI_HSYNC0, (PTU | IEN | M6)}, /* GPIO6_160: rev1 */
 	{GPIO6_182, (PTU | IEN | M6)}, /* GPIO6_182: rev2 */
