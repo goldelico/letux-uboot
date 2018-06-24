@@ -120,6 +120,63 @@ int bq2429x_battery_present(void)
 	return !(reg & 0x03);	/* no NTC fault - assume battery is inserted */
 }
 
+int bq24297_setup(void)
+{
+	if (bq24297_i2c_write_u8(0x05, 0x8a))
+		printf("bq24297: could not turn off 40 sec watchdog\n");
+
+	if (!bq2429x_battery_present()) {
+		u8 reg;
+
+		printf("bq24297: no battery found\n");
+
+		/* if we operate from no battery:
+		 * assume we are powered elsewhere and not through standard USB
+		 *
+		 * -> increase bq24297 current limit to at least 2A
+		 * -> reduce VINDPM minimum VBUS voltage to 3.88 V
+		 *
+		 * Otherwise we can not safely boot into Linux, especially
+		 * with higher resistance of the USB cable.
+		 */
+
+		if (bq24297_i2c_read_u8(0x00, &reg))
+			printf("bq24297: no response from REG0\n");
+		else {
+			u8 nreg = reg;
+			int ilim = reg & 0x7; /* bit 0..2 are IINLIM */
+#if 1
+			printf("Iin_lim found: %d\n", ilim);
+#endif
+			if (ilim < 6) {
+				ilim = 6;	/* increase to 2A */
+				nreg &= ~0x7;
+				nreg |= ilim;
+#if 1
+				printf("Iin_lim changed %d\n", nreg & 0x7);
+#endif
+			}
+#if 1
+			printf("Vin_dpm found: %d\n", (reg >> 3) & 0x0f);
+#endif
+			nreg &= ~0x78;	/* bits 3..6 are VINDPM */
+			nreg |= (0 << 3);	/* set level 0 = 3.88V */
+#if 1
+			printf("Vin_dpm changed: %d\n", (nreg >> 3) & 0x0f);
+#endif
+			if (nreg != reg) {
+				if (bq24297_i2c_write_u8(0x00, nreg))
+					printf("bq24297: could not set REG0 to %02x\n", nreg);
+#if 1
+				else
+					printf("bq24297: r0 := %02x\n", nreg);
+#endif
+			}
+		}
+	}
+	return 0;
+}
+
 /**
  * @brief tca642x_init - Pyra default values for the GPIO expander
  * input reg, output reg, polarity reg, configuration reg (0=output)
@@ -256,59 +313,7 @@ int board_init(void)
 // we initialize the tca6424! Why?
 // What is (sometimes) turned on and draws too much energy?
 // WWAN-Module? USB DC/DC?
-
-	if (bq24297_i2c_write_u8(0x05, 0x8a))
-		printf("bq24297: could not turn off 40 sec watchdog\n");
-
-	if (!bq2429x_battery_present()) {
-		u8 reg;
-
-		printf("bq24297: no battery found\n");
-
-		/* if we operate from no battery:
-		 * assume we are powered elsewhere and not through standard USB
-		 *
-		 * -> increase bq24297 current limit to at least 2A
-		 * -> reduce VINDPM minimum VBUS voltage to 3.88 V
-		 *
-		 * Otherwise we can not safely boot into Linux, especially
-		 * with higher resistance of the USB cable.
-		 */
-
-		if (bq24297_i2c_read_u8(0x00, &reg))
-			printf("bq24297: no response from REG0\n");
-		else {
-			u8 nreg = reg;
-			int ilim = reg & 0x7; /* bit 0..2 are IINLIM */
-#if 1
-			printf("Iin_lim found: %d\n", ilim);
-#endif
-			if (ilim < 6) {
-				ilim = 6;	/* increase to 2A */
-				nreg &= ~0x7;
-				nreg |= ilim;
-#if 1
-				printf("Iin_lim changed %d\n", nreg & 0x7);
-#endif
-			}
-#if 1
-			printf("Vin_dpm found: %d\n", (reg >> 3) & 0x0f);
-#endif
-			nreg &= ~0x78;	/* bits 3..6 are VINDPM */
-			nreg |= (0 << 3);	/* set level 0 = 3.88V */
-#if 1
-			printf("Vin_dpm changed: %d\n", (nreg >> 3) & 0x0f);
-#endif
-			if (nreg != reg) {
-				if (bq24297_i2c_write_u8(0x00, nreg))
-					printf("bq24297: could not set REG0 to %02x\n", nreg);
-#if 1
-				else
-					printf("bq24297: r0 := %02x\n", nreg);
-#endif
-			}
-		}
-	}
+	bq24297_setup();
 
 #if defined(CONFIG_TCA642X)
 	extern int tca642x_info(uchar chip);
