@@ -313,7 +313,8 @@ int board_init(void)
 // we initialize the tca6424! Why?
 // What is (sometimes) turned on and draws too much energy?
 // WWAN-Module? USB DC/DC?
-	bq24297_setup();
+	// XXX HACK: too late to do it here, called from common/board_r.c now
+	// bq24297_setup();
 
 #if defined(CONFIG_TCA642X)
 	extern int tca642x_info(uchar chip);

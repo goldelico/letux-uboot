@@ -748,6 +748,8 @@ static int run_main_loop(void)
 	return 0;
 }
 
+int bq24297_setup(void);
+
 /*
  * Over time we hope to remove these functions with code fragments and
  * stub funtcions, and instead call the relevant function directly.
@@ -758,6 +760,12 @@ static int run_main_loop(void)
  * TODO: perhaps reset the watchdog in the initcall function after each call?
  */
 init_fnc_t init_sequence_r[] = {
+#ifdef CONFIG_TARGET_PYRA_LC15
+	/* Pyra HACK: must raise the bq24297 current limit early, otherwise the
+	 * CPU may crash anytime when running without battery, on my board it
+	 * usually happens in initr_malloc() */
+	bq24297_setup,
+#endif
 	initr_trace,
 	initr_reloc,
 	/* TODO: could x86/PPC have this also perhaps? */
