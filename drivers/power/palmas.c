@@ -45,7 +45,7 @@ int palmas_mmc1_poweron_ldo(void)
 	}
 	return 0;
 #else
-#if defined(CONFIG_TARGET_PYRA_LC15) || defined(CONFIG_TARGET_LC15)
+#if defined(CONFIG_TARGET_PYRA_LC15) || defined(CONFIG_TARGET_LC15) || defined(CONFIG_TARGET_LC15_EVM) || defined(CONFIG_TARGET_GTA15)
 	/* use LDO2 for SDIO4 slot */
 	val = LDO_VOLT_3V0;
 	if (palmas_i2c_write_u8(TWL603X_CHIP_P1, LDO2_VOLTAGE, val)) {
