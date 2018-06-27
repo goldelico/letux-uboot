@@ -64,6 +64,9 @@ config TARGET_LC15_EVM
 config TARGET_PYRA_LC15
 	bool "Pyra Handheld with LC15 CPU"
 
+config TARGET_GTA15
+	bool "GTA15 Smartphone (aka Pyra Phone)"
+
 endchoice
 
 config SYS_SOC
@@ -101,6 +104,7 @@ source "board/ti/dra7xx/Kconfig"
 source "board/ti/am57xx/Kconfig"
 source "board/goldelico/letux-cortex15/Kconfig"
 source "board/goldelico/letux-lc15evm/Kconfig"
+source "board/goldelico/letux-gta15/Kconfig"
 source "board/pandora/pyra+lc15/Kconfig"
 
 endif

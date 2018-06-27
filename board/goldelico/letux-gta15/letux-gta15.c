@@ -1,5 +1,5 @@
 /*
- * basically the same as the Letux Cortex 15
+ * basically the same as the Letux GTA15 (aka Pyra Phone)
  * except that we change the UART3 pinmux because it is wired up
  * differently
  */
@@ -124,7 +124,7 @@ int bq2429x_battery_present(void)
 #define P01_HDMI_LS_OE	0x02
 #define P02_NONE	0x04
 #define P03_NONE	0x08
-#define P04_VIBRA	0x10	/* n/a in Revision 5.1 and later */
+#define P04_NONE	0x10
 #define P05_FAULT2	0x20	/* also L-RED */
 #define P06_NONE	0x40
 #define P07_NONE	0x80
@@ -135,15 +135,15 @@ int bq2429x_battery_present(void)
 #define P13_CHG_INT	0x08
 #define P14_NONE	0x10
 #define P15_NONE	0x20
-#define P16_MICPRES	0x40	/* MIC-INT in Revision 5.1 and later */
+#define P16_MICINT	0x40
 #define P17_EN_MODEM	0x80
 
 #define P20_SD_HS_AMP	0x01
 #define P21_CHG_STAT	0x02	/* also PWR-RED */
-#define P22_PWR_GREEN	0x04	/* NONE in Revision 5.1 and later */
-#define P23_PWR_BLUE	0x08
+#define P22_NONE	0x04
+#define P23_NONE	0x08
 #define P23_EN_OTG	0x08	/* EN_OTG in Revision 5.1 and later */
-#define P24_EN_ESATA	0x10	/* NONE in Revision 5.1 and later */
+#define P24_NONE	0x10
 #define P25_FAULT1	0x20	/* also R-RED */
 #define P26_NONE	0x40
 #define P27_NONE	0x80
@@ -156,7 +156,7 @@ struct tca642x_bank_info pyra_tca642x_init[] = {
 	{ .input_reg = 0x00,
 	  .output_reg = 0x00,
 	  .polarity_reg = 0x00,
-	  .configuration_reg = P16_MICPRES | P13_CHG_INT },	/* all others are outputs */
+	  .configuration_reg = P16_MICINT | P13_CHG_INT },	/* all others are outputs */
 	{ .input_reg = 0x00,
 	  .output_reg = 0x00,
 	  .polarity_reg = 0x00,
@@ -175,14 +175,14 @@ static int get_pyra_mainboard_revision(void)
 	static int revision = -1;
 
 	static char revtable[8] = {	/* revision table defined by pull-down R1901, R1902, R1903 */
-		[7] = 49 + 1,	/* some 5.0 boards have wrong version resistors so they report themselves as 4.9 */
-		[6] = 50,
-		[5] = 51,
-		[3] = 52,
-		[4] = 53,
-		[2] = 54,
-		[1] = 55,
-		[0] = 56,
+		[7] = 10,
+		[6] = 11,
+		[5] = 12,
+		[3] = 13,
+		[4] = 14,
+		[2] = 15,
+		[1] = 16,
+		[0] = 17,
 	};
 
 	if (revision == -1) {
@@ -207,7 +207,7 @@ static int get_pyra_mainboard_revision(void)
 
 	/* FIXME: turn off pull-up to save up ca. 50-750µA */
 
-	printf("Found Pyra MB V%d.%d\n", revision/10, revision%10);
+	printf("Found GTA15 MB V%d.%d\n", revision/10, revision%10);
 	return revision;
 }
 
@@ -222,11 +222,11 @@ void CONFIG_MORE_FDT(char *devtree)
 		return;	/* some error */
 
 	/* extend by overwriting ".dtb" */
-	sprintf(devtree+len-4, "+%s-v%d.%d.dtb", "pyra", rev/10, rev%10);
+	sprintf(devtree+len-4, "+%s-v%d.%d.dtb", "gta15", rev/10, rev%10);
 }
 
 /**
- * @brief board_init for Pyra
+ * @brief board_init for Pyra Phone
  *
  * @return 0
  */

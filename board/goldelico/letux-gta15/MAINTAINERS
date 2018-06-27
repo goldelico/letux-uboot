@@ -3,4 +3,4 @@ M:	Nikolaus Schaller <hns@goldelico.com>
 S:	Maintained
 F:	board/goldelico/gta15
 F:	include/configs/letux_gta15_defconfig.h
-F:	configs/getux_gta15_defconfig
+F:	configs/letux_gta15_defconfig
