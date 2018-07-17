@@ -164,6 +164,10 @@ do
       setenv devnum ${mmc}
       setenv prefix boot/
       setenv distro_bootpart $p
+      # fix bootargs - especially root= - before launching bootargs.scr
+      setenv mmcroot "/dev/mmcblk${kernelmmc}p${p}"
+      setenv mmcrootfstype "ext4,ext3,btrfs rootwait"
+      run mmcargs
       source ${imgtempaddr}
       DONE=1
     fi
