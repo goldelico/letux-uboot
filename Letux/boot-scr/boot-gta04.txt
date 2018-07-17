@@ -159,6 +159,11 @@ do
     then
       setenv PARTITION $p
       setenv PARTITIONTYPE EXT
+      # set distro-boot expected dynamic variables
+      setenv devtype mmc
+      setenv devnum ${mmc}
+      setenv prefix boot/
+      setenv distro_bootpart $p
       source ${imgtempaddr}
       DONE=1
     fi
