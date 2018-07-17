@@ -69,11 +69,10 @@ if test "x${scriptversion}" != "x${VERSION}" || test "x${flash}" = "xyes"
 	setenv mmc		0		# MMC number where this boot.scr is found
 	setenv kernelmmc	0		# MMC number where the rootfs is found by the kernel
 	setenv bootdelay	1
-	# FIXME: latest U-Boot has kernel_addr_r, initrd_addr_r, fdtaddr and fdt_addr_r for such purposes
 	setenv imgtempaddr	0x80800000	# address where we load compressed splash image
-	setenv bootaddr 	0x81800000	# address where we load the boot script
-	setenv loadaddrfdt	0x81c00000	# address where we load the flattened device tree
-	setenv loadaddr		0x82000000	# address where we load the kernel
+	setenv scriptaddr 	0x81800000	# address where we load the boot script
+	setenv fdt_addr_r	0x81c00000	# address where we load the flattened device tree
+	setenv kernel_addr_r	0x82000000	# address where we load the kernel
 	# setenv console	ttyS2,115200n8
 	# for newer kernels with OMAP console (unfortunately U-Boot can't find out)
 	setenv console		ttyO2,115200n8
@@ -87,10 +86,10 @@ if test "x${scriptversion}" != "x${VERSION}" || test "x${flash}" = "xyes"
 	setenv loadbootscript '
 i2c dev 0
 mmc rescan
-if load mmc ${mmc} ${bootaddr} boot.scr
+if load mmc ${mmc} ${scriptaddr} boot.scr
 then
   echo did load bootscript from mmc;
-elif ${nand_cmd} read ${bootaddr} 1b0000 40000
+elif ${nand_cmd} read ${scriptaddr} 1b0000 40000
 then
   echo did load bootscript from nand
 fi'
@@ -136,13 +135,13 @@ for p in $bootorder
 do
   if itest $DONE == 0
   then
-    if load mmc ${mmc}:${p} ${loadaddr} uImage
+    if load mmc ${mmc}:${p} ${kernel_addr_r} uImage
     then
       echo found kernel /uImage on partition $p
       setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
       run mmcargs
       KERNEL=1;DONE=1
-    elif load mmc ${mmc}:${p} ${loadaddr} /boot/uImage
+    elif load mmc ${mmc}:${p} ${kernel_addr_r} /boot/uImage
     then
       echo found kernel /boot/uImage on EXT partition $p
       setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
@@ -167,10 +166,10 @@ do
       source ${imgtempaddr}
       DONE=1
     fi
-    if load mmc ${mmc}:${p} ${loadaddrfdt} ${fdtfile}
+    if load mmc ${mmc}:${p} ${fdt_addr_r} ${fdtfile}
     then
       FDT=1
-    elif load mmc ${mmc}:${p} ${loadaddrfdt} /boot/${fdtfile}
+    elif load mmc ${mmc}:${p} ${fdt_addr_r} /boot/${fdtfile}
     then
       FDT=1
     fi
@@ -179,10 +178,10 @@ done
 if itest $KERNEL == 0
 then
   echo fallback to NAND kernel
-  if ${nand_cmd} read ${loadaddr} 280000 5c0000
+  if ${nand_cmd} read ${kernel_addr_r} 280000 5c0000
   then
     echo NAND kernel found
-    if ${nand_cmd} read ${loadaddrfdt} 840000 40000
+    if ${nand_cmd} read ${fdt_addr_r} 840000 40000
     then
       echo NAND DTB found
       FDT=1
@@ -199,9 +198,9 @@ run kernelloaded'
 	setenv boot '
 if itest $FDT == 1
 then
-  bootm ${loadaddr} - ${loadaddrfdt}
+  bootm ${kernel_addr_r} - ${fdt_addr_r}
 else
-  bootm ${loadaddr}
+  bootm ${kernel_addr_r}
 fi'
 	setenv mmcboot '
 if run loadkernel
@@ -210,11 +209,11 @@ then
 fi'
 	setenv nandboot '
 run kernelloading
-if ${nand_cmd} read ${loadaddr} 280000 600000
+if ${nand_cmd} read ${kernel_addr_r} 280000 600000
 then
   run nandargs
   run kernelloaded
-  bootm ${loadaddr}
+  bootm ${kernel_addr_r}
 fi'
 
 	# run the boot script - and fall back to direct kernel boot
@@ -225,7 +224,7 @@ then
 else
   run mmcboot
 fi'
-	setenv bootscript 'echo Running bootscript ...; source ${bootaddr}'
+	setenv bootscript 'echo Running bootscript ...; source ${scriptaddr}'
 
 # optionally update the boot order if AUX button is pressed after choosing a touch menu entry
 	setenv persistbootorder '
@@ -235,12 +234,12 @@ then
 fi'
 
 	# check if we can really flash and determine flash type
-	if nand read ${loadaddr} 280000 4
+	if nand read ${kernel_addr_r} 280000 4
 	then
 		# we have some nand that can be flashed
 		setenv nand_cmd nand	# nand - command for read/erase/write
 		flash=yes	# trigger flashing
-	elif onenand read ${loadaddr} 280000 4
+	elif onenand read ${kernel_addr_r} 280000 4
 	then
 		# we have some onenand that can be flashed
 		setenv nand_cmd onenand	# onenand - command for read/erase/write
@@ -458,7 +457,7 @@ then
 					if run loadkernel
 					then
 						# fixme: adjust parameters
-						spl export bootm ${loadaddr} - ${loadaddrfdt}
+						spl export bootm ${kernel_addr_r} - ${fdt_addr_r}
 						# somehow get address and size of image
 						# write to nand
 					fi
