@@ -410,6 +410,15 @@ void musb_hnp_stop(struct musb *musb)
 }
 #endif
 
+#ifdef CONFIG_CMD_DFU
+static u8 last_int_usb;
+
+bool dfu_usb_get_reset(void)
+{
+	return !!(last_int_usb & MUSB_INTR_RESET);
+}
+#endif
+
 /*
  * Interrupt Service Routine to record USB "global" interrupts.
  * Since these do not happen often and signify things of
@@ -432,6 +441,11 @@ static irqreturn_t musb_stage0_irq(struct musb *musb, u8 int_usb,
 
 	dev_dbg(musb->controller, "<== Power=%02x, DevCtl=%02x, int_usb=0x%x\n", power, devctl,
 		int_usb);
+
+
+#ifdef CONFIG_CMD_DFU
+	last_int_usb = int_usb;
+#endif
 
 #ifndef __UBOOT__
 	/* in host mode, the peripheral may issue remote wakeup.

@@ -520,7 +520,7 @@ enum command_ret_t cmd_process(int flag, int argc, char * const argv[],
 	if (argc > cmdtp->maxargs)
 		rc = CMD_RET_USAGE;
 
-#if defined(CONFIG_CMD_BOOTD)
+#if defined(CONFIG_CMD_BOOTD) && !defined(CONFIG_SPL_BUILD)
 	/* avoid "bootd" recursion */
 	else if (cmdtp->cmd == do_bootd) {
 		if (flag & CMD_FLAG_BOOTD) {

@@ -16,7 +16,14 @@
 #define BOOT_DEVICE_XIPWAIT	0x07
 #define BOOT_DEVICE_MMC2_2      0x08
 #define BOOT_DEVICE_UART	0x10
-#define BOOT_DEVICE_USB		0x11
+/* according to DM3730 TRM, a boot in usb gadget mode is done,
+ * so it is not searching for e.g. usb storage devices,
+ * so better define it to DFU
+ */
+#define BOOT_DEVICE_DFU		0x11
+
+/* dummy */
+#define BOOT_DEVICE_RAM		0x22
 
 #define MMC_BOOT_DEVICES_START	BOOT_DEVICE_MMC2
 #define MMC_BOOT_DEVICES_END	BOOT_DEVICE_MMC1

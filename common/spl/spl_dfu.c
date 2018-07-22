@@ -33,6 +33,10 @@ exit:
 	return ret;
 }
 
+__weak void spl_gadget_init(void)
+{
+}
+
 int spl_dfu_cmd(int usbctrl, char *dfu_alt_info, char *interface, char *devstr)
 {
 	char *str_env;
@@ -51,7 +55,7 @@ int spl_dfu_cmd(int usbctrl, char *dfu_alt_info, char *interface, char *devstr)
 		error("unable to set env variable \"dfu_alt_info\"!\n");
 		return -EINVAL;
 	}
-
+	spl_gadget_init();
 	/* invoke dfu command */
 	return run_dfu(usbctrl, interface, devstr);
 }

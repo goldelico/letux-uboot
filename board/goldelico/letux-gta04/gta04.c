@@ -316,7 +316,14 @@ static struct musb_hdrc_platform_data musb_plat = {
 	.board_data	= &musb_board_data,
 };
 #endif
-
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_DFU_SUPPORT)
+void spl_gadget_init(void)
+{
+#ifdef CONFIG_USB_MUSB_OMAP2PLUS
+	musb_register(&musb_plat, &musb_board_data, (void *)MUSB_BASE);
+#endif
+}
+#endif
 /*
  * Routine: misc_init_r
  * Description: Configure board specific parts

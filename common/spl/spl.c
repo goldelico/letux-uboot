@@ -204,8 +204,11 @@ static int spl_ram_load_image(struct spl_image_info *spl_image,
 	header = (struct image_header *)CONFIG_SPL_LOAD_FIT_ADDRESS;
 
 #if defined(CONFIG_SPL_DFU_SUPPORT)
-	if (bootdev->boot_device == BOOT_DEVICE_DFU)
-		spl_dfu_cmd(0, "dfu_alt_info_ram", "ram", "0");
+	if (bootdev->boot_device == BOOT_DEVICE_DFU) {
+		int ret = spl_dfu_cmd(0, "dfu_alt_info_ram", "ram", "0");
+		if (ret)
+			return ret;
+	}
 #endif
 
 	if (IS_ENABLED(CONFIG_SPL_LOAD_FIT) &&
@@ -224,6 +227,18 @@ static int spl_ram_load_image(struct spl_image_info *spl_image,
 		 * the flash. For now, it will temporary fixed to address
 		 * pointed by U-Boot.
 		 */
+
+#if defined(CONFIG_SPL_DFU_SUPPORT)
+		if (bootdev->boot_device == BOOT_DEVICE_DFU) {
+			int ret = spl_parse_image_header(spl_image, header);
+			if (ret)
+				return ret;
+			memcpy((void *)spl_image->load_addr,
+			       (void *)(CONFIG_SPL_LOAD_FIT_ADDRESS),
+			       spl_image->size);
+			return 0;
+		}
+#endif
 		header = (struct image_header *)
 			(CONFIG_SYS_TEXT_BASE -	sizeof(struct image_header));
 

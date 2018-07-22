@@ -30,7 +30,6 @@
  * allow either NAND or OneNAND variant
  * select by defining CONFIG_CMD_ONENAND in defconfig
  */
-
 #undef MTDIDS_DEFAULT
 #undef MTDPARTS_DEFAULT
 
@@ -88,6 +87,46 @@
 					"-(fs)"
 
 #endif	/* CONFIG_CMD_ONENAND */
+
+#ifdef CONFIG_SPL_DFU_SUPPORT
+#define CONFIG_SPL_BOARD_INIT
+/* place to store uboot image (can be fit or legacy,
+ * will be relocated
+ */
+#define CONFIG_SPL_LOAD_FIT_ADDRESS 0x83000000
+#undef CONFIG_SPL_NAND_SUPPORT
+#undef CONFIG_ENV_IS_IN_NAND
+#undef CONFIG_ENV_IS_IN_ONENAND
+#define CONFIG_ENV_IS_NOWHERE
+#undef CONFIG_EXTRA_ENV_SETTINGS
+#undef CONFIG_SPL_TEXT_BASE
+#define CONFIG_SPL_TEXT_BASE           0x40200000
+
+#ifdef CONFIG_SPL_BUILD
+
+/* define uboot dfu download section
+ * spl claims only 512KByte of SDRAM, so limit buffer
+ */
+#define CONFIG_EXTRA_ENV_SETTINGS "dfu_alt_info_ram="\
+				"uboot ram 0x83000000 0x800000\0"\
+				"dfu_bufsiz=0x20000"
+#else
+#define CONFIG_EXTRA_ENV_SETTINGS "loadaddr=0x82000000\0"\
+				"imgtempaddr=0x80800000\0"\
+				"bootaddr=0x81800000\0"\
+				"loadaddrfdt=0x81c00000\0"\
+				"loadaddrinitrd=0x83000000\0"\
+				"console=ttyO2,115200n8\0"\
+				"dfu_alt_info="\
+				"kernel ram 0x82000000 0x800000;"\
+				"fdt ram 0x81c00000 0x40000;"\
+				"rd ram 0x83000000 0x4000000;"\
+				"script ram 0x80800000 0x40000;"\
+				"bootscript ram 0x81800000 0x40000\0"
+#endif
+#undef CONFIG_BOOTCOMMAND
+#define CONFIG_BOOTCOMMAND		"charge auto;dfu 0 ram 0;source 0x80800000"
+#endif /* CONFIG_SPL_DFU_SUPPORT */
 
 #define CONFIG_CMD_UNZIP	1	/* for reducing size of splash image */
 
