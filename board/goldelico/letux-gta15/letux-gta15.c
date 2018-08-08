@@ -117,7 +117,7 @@ int bq2429x_battery_present(void)
 }
 
 /**
- * @brief tca642x_init - Pyra default values for the GPIO expander
+ * @brief tca642x_init - set default values for the GPIO expander
  * input reg, output reg, polarity reg, configuration reg (0=output)
  */
 #define P00_HDMI_CT_HPD	0x01
@@ -138,11 +138,10 @@ int bq2429x_battery_present(void)
 #define P16_MICINT	0x40
 #define P17_EN_MODEM	0x80
 
-#define P20_SD_HS_AMP	0x01
+#define P20_NONE	0x01
 #define P21_CHG_STAT	0x02	/* also PWR-RED */
 #define P22_NONE	0x04
 #define P23_NONE	0x08
-#define P23_EN_OTG	0x08	/* EN_OTG in Revision 5.1 and later */
 #define P24_NONE	0x10
 #define P25_FAULT1	0x20	/* also R-RED */
 #define P26_NONE	0x40
@@ -152,7 +151,7 @@ struct tca642x_bank_info pyra_tca642x_init[] = {
 	{ .input_reg = 0x00,	/* not really initialized */
 	  .output_reg = 0x00,
 	  .polarity_reg = 0x00,
-	  .configuration_reg = 0x00 },	/* all others are outputs */
+	  .configuration_reg = P05_FAULT2 },	/* all others are outputs */
 	{ .input_reg = 0x00,
 	  .output_reg = 0x00,
 	  .polarity_reg = 0x00,
@@ -160,7 +159,7 @@ struct tca642x_bank_info pyra_tca642x_init[] = {
 	{ .input_reg = 0x00,
 	  .output_reg = 0x00,
 	  .polarity_reg = 0x00,
-	  .configuration_reg = P20_SD_HS_AMP | P21_CHG_STAT | P22_PWR_GREEN | P23_PWR_BLUE },	/* all others are outputs */
+	  .configuration_reg = P21_CHG_STAT | P25_FAULT1 },	/* all others are outputs */
 };
 
 /*
