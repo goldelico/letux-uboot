@@ -39,7 +39,7 @@ const struct omap_sysinfo sysinfo = {
 const struct emif_regs emif_regs_ddr3_532_mhz_2cs_es2 = {
 	.sdram_config_init              = 0x61851B3A,
 	.sdram_config                   = 0x61851B3A,
-	.sdram_config2			= 0x0,
+	.sdram_config2                  = 0x0,
 	.ref_ctrl                       = 0x000040F1,
 	.ref_ctrl_final                 = 0x00001035,
 	.sdram_tim1                     = 0xCCCF36B3,
@@ -63,6 +63,8 @@ const struct emif_regs emif_regs_ddr3_532_mhz_2cs_es2 = {
 
 void emif_get_reg_dump(u32 emif_nr, const struct emif_regs **regs)
 {
+	// FIXME: somehow find out if we have 2GB or 4GB installed
+	// e.g. by trying different EMIF setups at low speed
 	*regs = &emif_regs_ddr3_532_mhz_2cs_es2;
 }
 
@@ -197,6 +199,8 @@ int misc_init_r(void)
 		CONFIG_MORE_MISC_INIT_R();	/* for main board detection */
 #endif
 		set_fdtfile();
+		if (gd->ram_size > 2*1024UL*1024UL*1024UL)
+			setenv("kernelsuffix", ".lpae");
 		}
 	return r;
 }
@@ -245,8 +249,37 @@ static void simple_ram_test(void)
 	dsb();
 	v[1] = 0;
 	dsb();
-	if (v[0] != 0x12345678)
-		printf("WARNING: DDR RAM is not working! (%x)\n", v[0]);
+	if (v[0] != 0x12345678) {
+		printf("FATAL: DDR RAM is not working! (%lx: %x)\n", (unsigned long) v, v[0]);
+		twl603x_poweroff(false);
+	}
+}
+
+#define INT1_MASK	0x11
+#define INT1_VBAT_MON	(1u << 7)
+#define INT2_MASK	0x16
+#define INT2_VAC_ACOK	(1u << 7)
+
+static void configure_palmas(void)
+{
+	/*
+	 * mask some interrupts so the board doesn't boot when USB is connected,
+	 * so that the device can be charged while off
+	 * VAC_ACOK has to be masked, and for some reason VBAT_MON too
+	 */
+	u8 val = 0;
+	int ret;
+
+	ret  = palmas_i2c_read_u8(TWL603X_CHIP_P2, INT2_MASK, &val);
+	val |= INT2_VAC_ACOK;
+	if (!ret)
+		ret |= palmas_i2c_write_u8(TWL603X_CHIP_P2, INT2_MASK, val);
+	ret |= palmas_i2c_read_u8(TWL603X_CHIP_P2, INT1_MASK, &val);
+	val |= INT1_VBAT_MON;
+	if (!ret)
+		ret |= palmas_i2c_write_u8(TWL603X_CHIP_P2, INT1_MASK, val);
+	if (ret)
+		printf("WARNING: palmas irq masking failed\n");
 }
 
 int board_mmc_init(bd_t *bis)
@@ -365,6 +398,9 @@ int board_mmc_init(bd_t *bis)
 	printf("%08x: %08x\n", 0x4A009128, readl(0x4A009128));
 #endif
 
+#if 0	// include if plugging in/out USB cables shall not wakeup Palmas
+	configure_palmas();
+#endif
 	return 0;
 }
 
