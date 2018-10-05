@@ -37,8 +37,8 @@ const struct omap_sysinfo sysinfo = {
  */
 
 const struct emif_regs emif_regs_ddr3_532_mhz_2cs_es2 = {
-	.sdram_config_init              = 0x61851B3A,
-	.sdram_config                   = 0x61851B3A,
+	.sdram_config_init              = 0x61951BBA,
+	.sdram_config                   = 0x61951BBA,
 	.sdram_config2                  = 0x0,
 	.ref_ctrl                       = 0x000040F1,
 	.ref_ctrl_final                 = 0x00001035,
