@@ -26,12 +26,17 @@ const struct omap_sysinfo sysinfo = {
 
 #include <asm/emif.h>
 
+/* careful with static variables:
+ * zero vars go to DRAM, which may be not initialized yet in MLO! */
+static int vers = -1;
+static int ram = -1;
+
 #ifdef CONFIG_DUAL_RANK_DDR3
 
 /* also known as "4GB RAM CPU board"
  *
- * If somehow possible, we should try to auto-detect the RAM size and
- * choose 2GB or 4GB automatically.
+ * We should try to auto-detect the RAM size and
+ * choose 2GB or 4GB automatically and getrid of CONFIG_DUAL_RANK_DDR3
  *
  * NOTE: please run a kernel with LPAE enabled to make use of the 4GB RAM!
  */
@@ -61,10 +66,14 @@ const struct emif_regs emif_regs_ddr3_532_mhz_2cs_es2 = {
 	.emif_rd_wr_exec_thresh         = 0x40000305
 };
 
+static int get_board_version(void);
+
 void emif_get_reg_dump(u32 emif_nr, const struct emif_regs **regs)
 {
-	// FIXME: somehow find out if we have 2GB or 4GB installed
-	// e.g. by trying different EMIF setups at low speed
+	get_board_version();
+	if (ram != 4)
+		printf("4GB RAM board encoding expected (%d)\n", ram);
+	// if ram == 2 use different setup
 	*regs = &emif_regs_ddr3_532_mhz_2cs_es2;
 }
 
@@ -86,7 +95,7 @@ void dram_init_banksize(void)
 /*
  * Board Revision Detection
  *
- * gpio2_32 and gpio2_33 can optionally be pulled up or down
+ * gpio2_32, gpio2_33 and gpio_34 can optionally be pulled up or down
  * by 10k resistors. These are stronger than the internal
  * pull-up or pull-down resistors of the omap5 pads.
  * by trying to pull them up/down and check who wins, we
@@ -95,73 +104,99 @@ void dram_init_banksize(void)
  * omap5 pull-up or -down.
  * Which resistors are installed changes from board revision
  * to board revision (see schematics).
+ * gpio2_33 is used for RAM size detection and
+ * gpio2_32 & gpio_34 for board revision
  */
 
 static const struct pad_conf_entry padconf_version_pd_lc15[] = {
 	{LLIB_WAKEREQOUT, (IEN | PTD | M6)}, /* gpio 2_32 */
 	{C2C_CLKOUT0, (IEN | PTD | M6)}, /* gpio 2_33 */
+	{C2C_CLKOUT1, (IEN | PTD | M6)}, /* gpio 2_34 */
 };
 
 static const struct pad_conf_entry padconf_version_pu_lc15[] = {
 	{LLIB_WAKEREQOUT, (IEN | PTU | M6)}, /* gpio 2_32 */
 	{C2C_CLKOUT0, (IEN | PTU | M6)}, /* gpio 2_33 */
+	{C2C_CLKOUT1, (IEN | PTU | M6)}, /* gpio 2_34 */
 };
 
 /* operational mode */
 static const struct pad_conf_entry padconf_version_operation_lc15[] = {
 	{LLIB_WAKEREQOUT, (IEN | M6)}, /* gpio 2_32 */
 	{C2C_CLKOUT0, (IEN | M6)}, /* gpio 2_33 */
+	{C2C_CLKOUT1, (IEN | M6)}, /* gpio 2_34 */
 };
 
+/* there are two U and D bits for each gpio - 00=PD 10=FLT 11=PU */
+#define PULLEDUP 3
+#define PULLEDDOWN 0
+#define FLOATING 2
+
+/* bit 1/0 = gpio2_32, bit 3/2 = gpio2_34 */
+
 static const int versions[]={
-	[0xc] = 49,	/* no resistors */
-	[0xd] = 50,	/* gpio2_32 pu, gpio2_33 floating */
-	[0x8] = 51,	/* gpio2_32 pd, gpio2_33 floating */
-	[0xe] = 52,	/* gpio2_32 floating, gpio2_33 pu */
-	[0x4] = 53,	/* gpio2_32 floating, gpio2_33 pd */
-	[0xf] = 54,	/* gpio2_32 pu, gpio2_33 pu */
-	[0x0] = 55,	/* gpio2_32 pd, gpio2_33 pd */
-	[0x5] = 56,	/* gpio2_32 pu, gpio2_33 pd */
-	[0xa] = 57,	/* gpio2_32 pd, gpio2_33 pu */
+#if 0	// deprecated version codes
+	[(FLOATING << 0) + (FLOATING << 2)] = 49,
+	[(PULLEDUP << 0) + (FLOATING << 2)] = 50,
+#endif
+	[(PULLEDDOWN << 0) + (FLOATING << 2)] = 51,	// v5.1.2
+	[(PULLEDUP << 0) + (FLOATING << 2)] = 52,	// v5.1.3
+	[(FLOATING << 0) + (FLOATING << 2)] = 53,	// V5.3
+	[(FLOATING << 0) + (PULLEDDOWN << 2)] = 54,
+	[(FLOATING << 0) + (PULLEDUP << 2)] = 55,
+	/* others tbd. */
+};
+
+/* bit 1/0 = gpio2_33 */
+
+static const int rams[]={
+	[FLOATING] = 2,
+	[PULLEDDOWN] = 4,
+	[PULLEDUP] = 8,
 };
 
 static int get_board_version(void)
 { /* read get board version from resistors */
-	/* careful with static variables:
-	 * zero vars go to DRAM, which may be not initialized yet in MLO! */
-	static int vers = -1;
 	if (vers == -1) {
-		gpio_request(32, "R32");	/* version resistors */
-		gpio_request(33, "R33");
+		gpio_request(32, "R2701/2");	/* version resistors */
+		gpio_request(33, "R2703/4");
+		gpio_request(34, "R27tbd");
 		gpio_direction_input(32);
 		gpio_direction_input(33);
+		gpio_direction_input(34);
 
-		/* pull both down */
+		/* pull all down */
 		do_set_mux((*ctrl)->control_padconf_core_base,
 			   padconf_version_pd_lc15,
 			   sizeof(padconf_version_pd_lc15) /
 			   sizeof(struct pad_conf_entry));
-		vers = gpio_get_value(32) | (gpio_get_value(33) << 1);
+		ram = gpio_get_value(33) << 0;
+		vers = (gpio_get_value(32) << 0) | (gpio_get_value(34) << 2);
 
-		/* pull both up */
+		/* pull all up */
 		do_set_mux((*ctrl)->control_padconf_core_base,
 			   padconf_version_pu_lc15,
 			   sizeof(padconf_version_pu_lc15) /
 			   sizeof(struct pad_conf_entry));
-		vers |= (gpio_get_value(32) << 2) | (gpio_get_value(33) << 3);
+		ram |= (gpio_get_value(33) << 1);
+		vers |= (gpio_get_value(32) << 1) | (gpio_get_value(34) << 3);
 
 		gpio_free(32);
 		gpio_free(33);
+		gpio_free(34);
 
+		/* safe mode */
 		do_set_mux((*ctrl)->control_padconf_core_base,
 			   padconf_version_operation_lc15,
 			   sizeof(padconf_version_operation_lc15) /
 			   sizeof(struct pad_conf_entry));
-#if 0
+#if 1
+		printf("ram code 0x%01x\n", ram);
 		printf("version code 0x%01x\n", vers);
 #endif
 		vers = versions[vers&0xf];
-		printf("Found LC15 V%d.%d\n", vers/10, vers%10);
+		ram = rams[ram&3];
+		printf("Found LC15 V%d.%d with %dGB RAM\n", vers/10, vers%10, ram);
 	}
 	return vers;
 }
