@@ -3,3 +3,5 @@ fdtfile=omap5-uevm.dtb
 bootdir=/
 bootfile=uImage
 bootfilecmd=bootm
+
+console=ttyO2,115200n8
