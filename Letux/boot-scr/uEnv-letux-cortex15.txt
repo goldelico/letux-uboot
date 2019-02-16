@@ -3,3 +3,5 @@
 bootdir=/
 bootfile=uImage
 bootfilecmd=bootm
+
+console=ttyO2,115200n8
