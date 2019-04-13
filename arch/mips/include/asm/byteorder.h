@@ -5,6 +5,11 @@
  *
  * Copyright (C) 1996, 99, 2003 by Ralf Baechle
  */
+
+#ifndef __MIPSEL__
+#define __MIPSEL__
+#endif
+
 #ifndef _ASM_BYTEORDER_H
 #define _ASM_BYTEORDER_H
 
