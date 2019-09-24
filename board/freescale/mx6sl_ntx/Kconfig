@@ -1,0 +1,12 @@
+if TARGET_MX6SL_NTX
+
+config SYS_BOARD
+	default "mx6sl_ntx"
+
+config SYS_VENDOR
+	default "freescale"
+
+config SYS_CONFIG_NAME
+	default "mx6sl_ntx"
+
+endif

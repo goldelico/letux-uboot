@@ -51,7 +51,7 @@ void imx_iomux_v3_setup_pad(iomux_v3_cfg_t pad)
 			sel_input_ofs += IOMUX_LPSR_SEL_INPUT_OFS;
 	}
 #else
-#if 0
+#if TARGET_MX6SLL_NTX
 	if (is_cpu_type(MXC_CPU_MX6ULL) || is_cpu_type(MXC_CPU_MX6SLL)) {
 		if (lpsr == IOMUX_CONFIG_LPSR) {
 			base = (void *)IOMUXC_SNVS_BASE_ADDR;

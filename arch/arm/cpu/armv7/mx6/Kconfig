@@ -116,6 +116,12 @@ config TARGET_MX6SLL_ARM2
 
 config TARGET_MX6SLL_NTX
 	bool "mx6sll ntx"
+	select MX6SLL
+	select DM
+	select DM_THERMAL
+
+config TARGET_MX6SL_NTX
+	bool "mx6sl ntx"
 	select MX6SL
 	select DM
 	select DM_THERMAL
