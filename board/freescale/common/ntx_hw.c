@@ -290,7 +290,7 @@ static const NTX_GPIO gt_ntx_gpio_TPRST= {
 #ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_SD1_DATA2__GPIO5_IO13|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control  .
 #else
-	MX6_PAD_SD1_DAT2__GPIO5_IO13|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control  .
+	MX6SL_PAD_SD1_DAT2__GPIO5_IO13|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control  .
 #endif
 	5, // gpio group .
 	13, // gpio number .
@@ -300,7 +300,11 @@ static const NTX_GPIO gt_ntx_gpio_TPRST= {
 	0, // 1:input ; 0:output ; 2:btn .
 };
 static const NTX_GPIO gt_ntx_gpio_TPRST2= {
+#ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_GPIO4_IO18__GPIO4_IO18|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control  .
+#else
+	MX6SL_PAD_GPIO4_IO18__GPIO4_IO18|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control  .
+#endif
 	4, // gpio group .
 	18, // gpio number .
 	1, // default output value .
@@ -312,7 +316,7 @@ static NTX_GPIO gt_ntx_gpio_LED_G= {
 #ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_SD1_DATA6__GPIO5_IO07|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control .
 #else
-	MX6_PAD_SD1_DAT6__GPIO5_IO07|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control .
+	MX6SL_PAD_SD1_DAT6__GPIO5_IO07|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control .
 #endif
 	5, // gpio group .
 	7, // gpio number .
@@ -334,7 +338,7 @@ static NTX_GPIO gt_ntx_gpio_LED_R= {
 #ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_SD1_DATA5__GPIO5_IO09|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control .
 #else
-	MX6_PAD_SD1_DAT5__GPIO5_IO09|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control .
+	MX6SL_PAD_SD1_DAT5__GPIO5_IO09|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control .
 #endif
 	5, // gpio group .
 	9, // gpio number .
@@ -357,7 +361,7 @@ static NTX_GPIO gt_ntx_gpio_LED_B= {
 #ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_SD1_DATA7__GPIO5_IO10|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control .
 #else
-	MX6_PAD_SD1_DAT7__GPIO5_IO10|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control .
+	MX6SL_PAD_SD1_DAT7__GPIO5_IO10|MUX_PAD_CTRL(LED_PAD_CTRL),  // pin pad/mux control .
 #endif
 	5, // gpio group .
 	10, // gpio number .
@@ -379,7 +383,7 @@ static const NTX_GPIO gt_ntx_gpio_WIFI_3V3_ON= {
 #ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_SD2_DATA6__GPIO4_IO29,  // pin pad/mux control .
 #else
-	MX6_PAD_SD2_DAT6__GPIO4_IO29,  // pin pad/mux control .
+	MX6SL_PAD_SD2_DAT6__GPIO4_IO29,  // pin pad/mux control .
 #endif
 	4, // gpio group .
 	29, // gpio number .
@@ -392,7 +396,7 @@ static const NTX_GPIO gt_ntx_gpio_power_key= {
 #ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_SD1_DATA1__GPIO5_IO08|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
 #else
-	MX6_PAD_SD1_DAT1__GPIO5_IO08|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
+	MX6SL_PAD_SD1_DAT1__GPIO5_IO08|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
 #endif
 	5, // gpio group .
 	8, // gpio number .
@@ -411,7 +415,11 @@ static const NTX_GPIO gt_ntx_gpio_power_key_2= {
 	2, // 1:input ; 0:output ; 2:btn .
 };
 static const NTX_GPIO gt_ntx_gpio_home_key= {
+#ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_KEY_COL0__GPIO3_IO24|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
+#else
+	MX6SL_PAD_KEY_COL0__GPIO3_IO24|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
+#endif
 	3, // gpio group .
 	24, // gpio number .
 	0, // key down value .
@@ -433,7 +441,11 @@ static const NTX_GPIO gt_ntx_gpio_EPDPMIC_VIN= {
 	0, // 1:input ; 0:output ; 2:btn .
 };
 static const NTX_GPIO gt_ntx_gpio_EPDPMIC_VCOM= {
+#ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_EPDC_VCOM0__GPIO2_IO03 | MUX_PAD_CTRL(EPDC_PAD_CTRL),  // pin pad/mux control  .
+#else
+	MX6SL_PAD_EPDC_VCOM0__GPIO2_IO03 | MUX_PAD_CTRL(EPDC_PAD_CTRL),  // pin pad/mux control  .
+#endif
 	2, // gpio group .
 	3, // gpio number .
 	0, // default output value .
@@ -455,7 +467,11 @@ static const NTX_GPIO gt_ntx_gpio_EPDPMIC_PWRGOOD= {
 	1, // 1:input ; 0:output ; 2:btn .
 };
 static const NTX_GPIO gt_ntx_gpio_bootcfg_23= {
+#ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_LCD_DATA11__GPIO2_IO31|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
+#else
+	MX6SL_PAD_LCD_DAT11__GPIO2_IO31|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
+#endif
 	2, // gpio group .
 	31, // gpio number .
 	0, // NC .
@@ -464,7 +480,11 @@ static const NTX_GPIO gt_ntx_gpio_bootcfg_23= {
 	1, // 1:input ; 0:output ; 2:btn .
 };
 static const NTX_GPIO gt_ntx_gpio_bootcfg_24= {
+#ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_LCD_DATA12__GPIO3_IO00|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
+#else
+	MX6SL_PAD_LCD_DAT12__GPIO3_IO00|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
+#endif
 	3, // gpio group .
 	0, // gpio number .
 	0, // NC .
@@ -473,7 +493,11 @@ static const NTX_GPIO gt_ntx_gpio_bootcfg_24= {
 	1, // 1:input ; 0:output ; 2:btn .
 };
 static const NTX_GPIO gt_ntx_gpio_hallsensor_key= {
+#ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_SD1_DATA4__GPIO5_IO12|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
+#else
+	MX6SL_PAD_SD1_DAT4__GPIO5_IO12|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
+#endif
 	5, // gpio group .
 	12, // gpio number .
 	0, // key down value .

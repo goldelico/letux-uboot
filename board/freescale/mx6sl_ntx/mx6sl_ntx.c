@@ -72,13 +72,13 @@ struct i2c_pads_info i2c_pad_info1 = {
 /* I2C2 for LCD and ADV */
 struct i2c_pads_info i2c_pad_info2 = {
 	.scl = {
-		.i2c_mode = MX6_PAD_I2C2_SCL__I2C2_SCL | PC,
-		.gpio_mode = MX6_PAD_I2C2_SCL__GPIO3_IO14 | PC,
+		.i2c_mode = MX6SL_PAD_I2C2_SCL__I2C2_SCL | PC,
+		.gpio_mode = MX6SL_PAD_I2C2_SCL__GPIO3_IO14 | PC,
 		.gp = IMX_GPIO_NR(3, 14),
 	},
 	.sda = {
-		.i2c_mode = MX6_PAD_I2C2_SDA__I2C2_SDA | PC,
-		.gpio_mode = MX6_PAD_I2C2_SDA__GPIO3_IO15 | PC,
+		.i2c_mode = MX6SL_PAD_I2C2_SDA__I2C2_SDA | PC,
+		.gpio_mode = MX6SL_PAD_I2C2_SDA__GPIO3_IO15 | PC,
 		.gp = IMX_GPIO_NR(3, 15),
 	},
 };
@@ -87,13 +87,13 @@ struct i2c_pads_info i2c_pad_info2 = {
 struct i2c_pads_info i2c_pad_info3 = {
 	.scl = {
 		/* conflict with usb_otg2_pwr */
-		.i2c_mode = MX6_PAD_REF_CLK_24M__I2C3_SCL | PC,
-		.gpio_mode = MX6_PAD_REF_CLK_24M__GPIO3_IO21 | PC,
+		.i2c_mode = MX6SL_PAD_REF_CLK_24M__I2C3_SCL | PC,
+		.gpio_mode = MX6SL_PAD_REF_CLK_24M__GPIO3_IO21 | PC,
 		.gp = IMX_GPIO_NR(3, 21),
 	},
 	.sda = {
 		/* conflict with usb_otg2_oc */
-		.i2c_mode = MX6_PAD_REF_CLK_32K__I2C3_SDA | PC,
+		.i2c_mode = MX6SL_PAD_REF_CLK_32K__I2C3_SDA | PC,
 		.gpio_mode = MX6_PAD_REF_CLK_32K__GPIO_3_22 | PC,
 		.gp = IMX_GPIO_NR(3, 22),
 	},
@@ -109,24 +109,24 @@ int dram_init(void)
 }
 
 static iomux_v3_cfg_t const wdog_pads[] = {
-	MX6_PAD_WDOG_B__WDOG1_B | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6SL_PAD_WDOG_B__WDOG1_B | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 static iomux_v3_cfg_t const led_pads[] = {
-	MX6_PAD_SD1_DAT6__GPIO5_IO07 | MUX_PAD_CTRL(UART_PAD_CTRL),		// ON_LED
-	MX6_PAD_EPDC_PWR_CTRL3__GPIO_2_10 | MUX_PAD_CTRL(UART_PAD_CTRL),	// FL_EN
-	MX6_PAD_KEY_ROW2__GPIO_3_29 | MUX_PAD_CTRL(UART_PAD_CTRL),
+	MX6SL_PAD_SD1_DAT6__GPIO5_IO07 | MUX_PAD_CTRL(UART_PAD_CTRL),		// ON_LED
+	MX6_PAD_EPDC_PWRCTRL3__GPIO_2_10 | MUX_PAD_CTRL(UART_PAD_CTRL),	// FL_EN
+	MX6SL_PAD_KEY_ROW2__GPIO3_IO29 | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
 static iomux_v3_cfg_t const led_pads_emmc[] = {
 	MX6_PAD_GPIO4_IO22__GPIO4_IO22 | MUX_PAD_CTRL(UART_PAD_CTRL),		// ON_LED
-	MX6_PAD_EPDC_PWR_CTRL3__GPIO2_IO10 | MUX_PAD_CTRL(UART_PAD_CTRL),	// FL_EN
-	MX6_PAD_KEY_ROW2__GPIO_3_29 | MUX_PAD_CTRL(UART_PAD_CTRL),
+	MX6_PAD_EPDC_PWRCTRL3__GPIO_2_10 | MUX_PAD_CTRL(UART_PAD_CTRL),	// FL_EN
+	MX6SL_PAD_KEY_ROW2__GPIO3_IO29 | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
 static iomux_v3_cfg_t const uart1_pads[] = {
-	MX6_PAD_UART1_TXD__UART1_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
-	MX6_PAD_UART1_RXD__UART1_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
+	MX6_PAD_UART1_TXD__UART1_TXD | MUX_PAD_CTRL(UART_PAD_CTRL),
+	MX6_PAD_UART1_RXD__UART1_RXD | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
 /* 8bit SD1 */
@@ -681,15 +681,15 @@ void epdc_power_off(void)
 #define USB_OTHERREGS_OFFSET	0x800
 #define UCTRL_PWR_POL		(1 << 9)
 iomux_v3_cfg_t const usb_otg1_pads[] = {
-	MX6_PAD_KEY_COL4__USB_OTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_KEY_ROW4__USB_OTG1_OC  | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_EPDC_PWR_COM__USB_OTG1_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
+	MX6SL_PAD_KEY_COL4__USB_OTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6SL_PAD_KEY_ROW4__USB_OTG1_OC  | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6SL_PAD_EPDC_PWRCOM__USB_OTG1_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
 };
 
 iomux_v3_cfg_t const usb_otg2_pads[] = {
-	MX6_PAD_KEY_COL5__USB_OTG2_PWR   | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_ECSPI2_SCLK__USB_OTG2_OC | MUX_PAD_CTRL(NO_PAD_CTRL),
-	MX6_PAD_EPDC_PWR_IRQ__USB_OTG2_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
+	MX6SL_PAD_KEY_COL5__USB_OTG2_PWR   | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6SL_PAD_ECSPI2_SCLK__USB_OTG2_OC | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX6SL_PAD_EPDC_PWRINT__USB_OTG2_ID | MUX_PAD_CTRL(OTG_ID_PAD_CTRL),
 };
 
 int board_usb_phy_mode(int port)

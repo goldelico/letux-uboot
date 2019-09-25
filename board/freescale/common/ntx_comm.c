@@ -2234,7 +2234,11 @@ static const NTX_GPIO gt_ntx_gpio_bat_low= {
 #elif defined(_MX6SL_) || defined(_MX6SLL_)//][
 
 static const NTX_GPIO gt_ntx_gpio_bat_low= {
+#ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_KEY_COL2__GPIO3_IO28,  // pin pad/mux control .
+#else
+	MX6SL_PAD_KEY_COL2__GPIO3_IO28,  // pin pad/mux control .
+#endif
 	3, // gpio group .
 	28, // gpio number .
 	0, // NC .
