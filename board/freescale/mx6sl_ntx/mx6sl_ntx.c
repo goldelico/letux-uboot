@@ -119,7 +119,7 @@ static iomux_v3_cfg_t const led_pads[] = {
 };
 
 static iomux_v3_cfg_t const led_pads_emmc[] = {
-	MX6_PAD_GPIO4_IO22__GPIO4_IO22 | MUX_PAD_CTRL(UART_PAD_CTRL),		// ON_LED
+	MX6SL_PAD_FEC_TX_EN__GPIO4_IO22 | MUX_PAD_CTRL(UART_PAD_CTRL),		// ON_LED
 	MX6_PAD_EPDC_PWRCTRL3__GPIO_2_10 | MUX_PAD_CTRL(UART_PAD_CTRL),	// FL_EN
 	MX6SL_PAD_KEY_ROW2__GPIO3_IO29 | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
