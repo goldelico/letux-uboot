@@ -124,5 +124,6 @@ enum {
 	MX6_PAD_EPDC_SDCE0__GPIO_1_27				= IOMUX_PAD(0x03F0, 0x0100, 5, 0x0000, 0, 0),
 	MX6_PAD_EPDC_SDCE1__GPIO_1_28				= IOMUX_PAD(0x03F4, 0x0104, 5, 0x0000, 0, 0),
 	MX6_PAD_EPDC_SDCE2__GPIO_1_29				= IOMUX_PAD(0x03F8, 0x0108, 5, 0x0000, 0, 0),
+#include "mx6sl-pins-kernel.h"
 };
 #endif	/* __ASM_ARCH_MX6_MX6SL_PINS_H__ */
