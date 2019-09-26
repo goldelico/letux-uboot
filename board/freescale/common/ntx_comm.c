@@ -2536,11 +2536,12 @@ BOOTMODE_ENTRY:
 	}
 	
 
-
+#if 0
 	if(!gpbKernelAddr && 0==iBootType) {
 		// bootm to load ntx kernel .
 		_load_ntxkernel(&gpbKernelAddr,&gdwKernelSize);
 	}
+#endif
 
 	dwBootArgsLen=strlen(O_pszKernCmdLine);
 	if(dwBootArgsLen>=I_dwKernCmdLineSize) {
