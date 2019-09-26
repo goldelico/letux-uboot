@@ -241,6 +241,12 @@ static int _sdhc_setup(int iSDHC_idx,bd_t *bis)
 	return 0;
 }
 
+#ifdef CONFIG_LDO_BYPASS_CHECK
+void ldo_mode_set(int ldo_bypass)
+{
+}
+#endif
+
 int board_mmc_init(bd_t *bis)
 {
 #if 1
