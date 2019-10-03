@@ -746,7 +746,7 @@ int ntxup_wait_touch_recovery(void)
 							break;
 						}
 						else {
-							printf ("Wrong points combination ! 0x%x\n",flag);
+							printf ("Wrong points combination ! 0x%lx\n",flag);
 						}
 					}
 					else {
@@ -1670,7 +1670,7 @@ static int do_get_droid_ver(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 		/* Loading ok, update default load address */
 
 		if(iDebug) {
-			printf ("%d bytes read ok\n", chklen);
+			printf ("%lu bytes read ok\n", chklen);
 		}
 	}while(0);
 

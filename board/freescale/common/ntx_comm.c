@@ -2361,7 +2361,7 @@ void isBatCritical (void)
 					}
 					i = ricoh_read_adc (1);
 					if (!IS_BATT_CRITIAL_LOW() || (BATTERY_USB_THRESHOLD < i)) {
-						printf("\nBattery critical !! charge completed, take (%d) secs\n", waitTime*interval, i);
+						printf("\nBattery critical !! charge completed, take (%d) secs - %d\n", waitTime*interval, i);
 						printf ("RC5T619 battery %dmv. (0x%X , battery low %d)\n", i*5000/4095, i, IS_BATT_CRITIAL_LOW());
 						return;
 					}
@@ -3028,7 +3028,7 @@ int ntx_wait_powerkey(int iWaitSecs,int iWaitPwrKeyStatChgTimes,int iChkEnterPwr
 
 
 	if(dwPwrkeyStatChgCnt) {
-		printf("%s():power key stat changed %d!!!\n",__FUNCTION__,dwPwrkeyStatChgCnt);
+		printf("%s():power key stat changed %lu!!!\n",__FUNCTION__,dwPwrkeyStatChgCnt);
 		return (int)dwPwrkeyStatChgCnt;
 	}
 

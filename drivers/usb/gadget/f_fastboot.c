@@ -2547,7 +2547,7 @@ static void do_bootm_on_complete(struct usb_ep *ep, struct usb_request *req)
 #endif
 
 	//puts("Booting kernel..\n");
-	printf("Booting kernel @ %p ...\n",load_addr);
+	printf("Booting kernel @ %p ...\n",(void *)load_addr);
 	
 	sprintf(boot_addr_start, "0x%lx", load_addr);
 #ifdef CONFIG_FSL_FASTBOOT //[
