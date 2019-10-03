@@ -2240,8 +2240,8 @@ void ntx_hw_late_init(void)
 
 	ntx_keys_setup();
 
-#if defined(_MX6Q_) //[
-#else //][!
+#if defined(_MX6Q_)
+#else
 
 
 	if(9==gptNtxHwCfg->m_val.bCustomer) {
@@ -2294,8 +2294,8 @@ void ntx_hw_late_init(void)
 			RC5T619_set_charger_params(USB_CHARGER_SDP);
 	}
 
-#endif//] _MX6SL_ || _MX6SLL_ || _MX6ULL_
+#endif
 
-#endif //]
+#endif
 }
 

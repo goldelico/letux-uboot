@@ -96,19 +96,19 @@
 		"fi;\0" \
 
 
-#ifdef CONFIG_MFG //[
+#ifdef CONFIG_MFG
 	#define CONFIG_BOOTCOMMAND \
 	   "mmc dev ${mmcdev};" \
 	   "run bootcmd_mfg; " \
 
-#else //][!CONFIG_MFG
+#else
 	#define CONFIG_BOOTCOMMAND \
 	   "mmc dev ${mmcdev};" \
 	   "if run loadimage; then " \
 	    "run mmcboot; " \
 	   "fi; " \
 
-#endif //] CONFIG_MFG
+#endif
 
 /* Miscellaneous configurable options */
 #define CONFIG_CMD_MEMTEST

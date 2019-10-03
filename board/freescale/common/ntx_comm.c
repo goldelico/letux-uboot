@@ -13,12 +13,12 @@
 #include <common.h>
 #include <timer.h>
 
-#ifdef CONFIG_FASTBOOT //[
+#ifdef CONFIG_FASTBOOT
 	#include <fastboot.h>
-#endif //]CONFIG_FASTBOOT
-#ifdef CONFIG_FSL_FASTBOOT //[
+#endif
+#ifdef CONFIG_FSL_FASTBOOT
 	#include <fsl_fastboot.h>
-#endif //]CONFIG_FSL_FASTBOOT
+#endif
 #include "ntx_hwconfig.h"
 #include "ntx_hw.h"
 
@@ -35,21 +35,21 @@
 #define SD_OFFSET_SECS_KERNEL		2048
 #define SD_OFFSET_SECS_INITRD		12288
 #define SD_OFFSET_SECS_INITRD2		8192
-#ifdef _MX6Q_//[
+#ifdef _MX6Q_
 	#define SD_OFFSET_SECS_HWCFG		1524
 #else 
 	#define SD_OFFSET_SECS_HWCFG		1024
-#endif //]_MX6Q_
+#endif
 #define SD_OFFSET_SECS_WAVEFORM		14336
 #define SD_OFFSET_SECS_LOGO			18432
 #define SD_OFFSET_SECS_LOGO2			34816
 #define SD_OFFSET_SECS_DTB		1286
 
-#ifdef ADVANCE_WAVEFORM_FILE//[
+#ifdef ADVANCE_WAVEFORM_FILE
 	#define SD_OFFSET_SECS_BOOTWAVEFORM		SD_OFFSET_SECS_WAVEFORM
-#else //][!ADVANCE_WAVEFORM_FILE
+#else
 	#define SD_OFFSET_SECS_BOOTWAVEFORM		55296
-#endif //] ADVANCE_WAVEFORM_FILE
+#endif
 
 #define SD_OFFSET_SECS_NTXFW		1030
 
@@ -65,8 +65,8 @@
 
 //#define USE_HWCONFIG
 
-#ifdef USE_HWCONFIG//[
-#else //][!USE_HWCONFIG
+#ifdef USE_HWCONFIG
+#else
 const char gszNtxHwCfgMagic[]="HW CONFIG ";// hw config tool magic .
 
 const char * gszPCBA[]={ 
@@ -84,7 +84,7 @@ const char * gszPCBA[]={
 	"E70Q00","H40000","NC","E60QJ0","E60QL0",// 55~59
 	"E60QM0", // 60~65
 };
-#endif //]USE_HWCONFIG
+#endif
 
 #define NTX_HWCFG_PRELOAD_ADDR	0x9FFFFE00
 #define NTX_SN_PRELOAD_ADDR			0x9FFFFC00
@@ -157,10 +157,10 @@ int ntx_is_fastboot_abort_inusbremove(void);
 #define GET_ESD_NUM()	GET_SD_NUM(e)
 
 
-#ifdef FASTBOOT_TIMEOUT_SETTING//[
+#ifdef FASTBOOT_TIMEOUT_SETTING
 extern unsigned long fastboot_connection_timeout_us_set(unsigned long dwTimeoutSetUS);
 extern int fastboot_connection_abortchk_setup(int (*fastboot_abort_check_fn)(void));
-#else //][!FASTBOOT_TIMEOUT_SETTING
+#else
 #warning "[WARNING] FASTBOOT_TIMEOUT_SETTING not defined !!"
 
 unsigned long fastboot_connection_timeout_us_set(unsigned long dwTimeOutUS)
@@ -172,7 +172,7 @@ int fastboot_connection_abort_at_usb_remove_chk_setup(int (*func)(void))
 	return 0;
 }
 
-#endif //] FASTBOOT_TIMEOUT_SETTING
+#endif
 
 
 int ntx_gpio_init(NTX_GPIO *I_pt_gpio)
@@ -188,12 +188,12 @@ int ntx_gpio_init(NTX_GPIO *I_pt_gpio)
 		return -1;
 	}
 	
-#ifdef _MX50_ //[
+#ifdef _MX50_
 	imx_request_iomux(I_pt_gpio->PIN, I_pt_gpio->PIN_CFG);
 	imx_iomux_set_pad(I_pt_gpio->PIN, I_pt_gpio->PIN_PAD_CFG);
-#else //][ !_MX50_
+#else
 	imx_iomux_v3_setup_pad(I_pt_gpio->tIOMUXv3_PAD_CFG);
-#endif //] _MX50_
+#endif
 	
 	switch(I_pt_gpio->GPIO_Grp) {
 	case 1:
@@ -217,7 +217,7 @@ int ntx_gpio_init(NTX_GPIO *I_pt_gpio)
 		dwGPIO_data_addr = GPIO5_BASE_ADDR + 0x0;
 		break;
 
-#ifndef _MX6ULL_ //[
+#ifndef _MX6ULL_
 	case 6:
 		dwGPIO_dir_addr = GPIO6_BASE_ADDR + 0x4;
 		dwGPIO_data_addr = GPIO6_BASE_ADDR + 0x0;
@@ -226,7 +226,7 @@ int ntx_gpio_init(NTX_GPIO *I_pt_gpio)
 		dwGPIO_dir_addr = GPIO7_BASE_ADDR + 0x4;
 		dwGPIO_data_addr = GPIO7_BASE_ADDR + 0x0;
 		break;
-#endif //] _MX6ULL_
+#endif
 
 	default :
 		printf("%s():%s [ERROR] GPIO group number error (%hd)!!\n",
@@ -521,7 +521,7 @@ static int _read_mmc(int I_iSDDevNum,unsigned char *O_pbBuf,
 {
 	int iRet = 0;
 	char cCmdA[128+1];
-#ifdef MMC_CMD_SEPERATED_SDNUM//[
+#ifdef MMC_CMD_SEPERATED_SDNUM
 
 	static int giCurSDDevNum=-1;
 
@@ -538,13 +538,13 @@ static int _read_mmc(int I_iSDDevNum,unsigned char *O_pbBuf,
 	printf("%s\n",cCmdA);
 	run_command(cCmdA, 0);//
 
-#else //][!MMC_CMD_SEPERATED_SDNUM	
+#else	
 
 	sprintf(cCmdA,"mmc read %d 0x%x 0x%x 0x%x",I_iSDDevNum,(unsigned)O_pbBuf,
 			(unsigned)(I_dwBinSectorNum),(unsigned)I_dwBinReadSectors);
 	run_command(cCmdA, 0);//
 
-#endif //]MMC_CMD_SEPERATED_SDNUM
+#endif
 
 	return iRet;
 }
@@ -697,7 +697,7 @@ void NtxHiddenMem_append_kcmdline(char *I_pcCmdlineBufA,unsigned long I_ulCmdlin
 
 	//printf("%s(%d)\n",__FUNCTION__,__LINE__);
 
-#if !defined(_MX6Q_) //[
+#if !defined(_MX6Q_)
 	pcTemp = strstr(I_pcCmdlineBufA,"fbmem=");
 	if(pcTemp) {
 		pcTemp2 = strstr(pcTemp,"M");
@@ -708,7 +708,7 @@ void NtxHiddenMem_append_kcmdline(char *I_pcCmdlineBufA,unsigned long I_ulCmdlin
 		gdwRAM_ReservedSize += (unsigned long)(dwTemp2<<20);
 		printf("fbmem=%dM ,reserved size=%u\n",(int)dwTemp2,(unsigned)gdwRAM_ReservedSize);
 	}
-#endif //](_MX6Q_)
+#endif
 
 	//printf("%s(%d)\n",__FUNCTION__,__LINE__);
 	if(49==gptNtxHwCfg->m_val.bPCB) {	// only register ram console for E60QDx
@@ -825,11 +825,11 @@ static unsigned char * NtxHiddenMem_load_ntxbin(NtxHiddenMem *IO_ptNtxHiddenMem,
 
 				gptNtxHiddenMemInfoA[gdwNtxHiddenMemIdx]->dwLoadSects = dwBinSectsToLoad;
 
-#if 0 //[ debug informations .
+#if 0
 				printf("[%d]%s added\n",gdwNtxHiddenMemIdx,gptNtxHiddenMemInfoA[gdwNtxHiddenMemIdx]->pszName);
 				printf(" mem start=%p\n",gptNtxHiddenMemInfoA[gdwNtxHiddenMemIdx]->pbMemStart);
 				printf(" mem size=%d\n",gptNtxHiddenMemInfoA[gdwNtxHiddenMemIdx]->dwMemSize);
-#endif //] debug informations .
+#endif
 
 				gdwNtxHiddenMemIdx++;
 			}
@@ -904,7 +904,7 @@ int ntx_read_file_in_ext4(int dev,int part,const char *filename,unsigned long *O
 
 void _load_boot_waveform(void)
 {
-#ifdef CONFIG_SPLASH_SCREEN//[
+#ifdef CONFIG_SPLASH_SCREEN
 	unsigned long dwChk;
 	unsigned long dwBinSectsToLoad ;
 	unsigned long dwBinBytesToLoad ;
@@ -915,9 +915,9 @@ void _load_boot_waveform(void)
 		return ;
 	}
 
-#ifdef ADVANCE_WAVEFORM_FILE//[
+#ifdef ADVANCE_WAVEFORM_FILE
 	gpbWaveform = NtxHiddenMem_load_ntxbin(&gtNtxHiddenMem_waveform,&gdwWaveformSize);
-#else //][!ADVANCE_WAVEFORM_FILE
+#else
 	iLoadDeviceNum = GET_ISD_NUM();
 
 	dwChk = _load_ntx_bin_header(iLoadDeviceNum,SD_OFFSET_SECS_BOOTWAVEFORM,
@@ -933,9 +933,9 @@ void _load_boot_waveform(void)
 
 		gdwWaveformSize = dwChk;
 	}
-#endif//]ADVANCE_WAVEFORM_FILE
+#endif
 
-#endif //] CONFIG_SPLASH_SCREEN
+#endif
 }
 
 void _load_ntx_sn(void)
@@ -945,7 +945,7 @@ void _load_ntx_sn(void)
 	_load_ntx_bin(GET_ISD_NUM(),SD_OFFSET_SECS_SNMAC,1,pbSectTempBuf,512);
 	memcpy(gcNTX_SN,pbSectTempBuf,512);
 
-#ifdef CONFIG_MFG //[
+#ifdef CONFIG_MFG
 	if( !( 'S'==gcNTX_SN[0] && 'N'==gcNTX_SN[1] && '-'==gcNTX_SN[2] ) )
 	{
 		// serail no from MFGTool .
@@ -955,7 +955,7 @@ void _load_ntx_sn(void)
 		gcNTX_SN[i++]='N';
 		gcNTX_SN[i++]='-';
 
-#if 0 //[
+#if 0
 		{
 			int j;
 			unsigned long long u64_cur_tick = get_ticks();
@@ -975,7 +975,7 @@ void _load_ntx_sn(void)
 				}
 			}
 		}
-#else //][
+#else
 		{
 			char *pc;
 			int j;
@@ -988,13 +988,13 @@ void _load_ntx_sn(void)
 				gcNTX_SN[i]=pc[j];
 			}
 		}
-#endif //]
+#endif
 
 		gcNTX_SN[i]='\0';
 
 	}
 
-#endif //] CONFIG_MFG
+#endif
 	gpszNTX_SN = &gcNTX_SN[3];
 	if('S'==gpszNTX_SN[0] && 'N'==gpszNTX_SN[1] && '-'==gpszNTX_SN[2] ) {
 		printf("NTXSN:\"%s\"\n",gpszNTX_SN);
@@ -1011,9 +1011,9 @@ void _load_isd_hwconfig(void)
 #ifdef CONFIG_MFG
 	gptNtxHwCfg = NTX_HWCFG_PRELOAD_ADDR;
 	gdwNtxHwCfgSize = 110;
-#ifdef CONFIG_MFG_FASTBOOT //[
+#ifdef CONFIG_MFG_FASTBOOT
 	giNtxHwCfgSrc = NTX_HWCFG_SRC_RAM;
-#endif //]CONFIG_MFG_FASTBOOT
+#endif
 	return;
 #endif
 	
@@ -1021,7 +1021,7 @@ void _load_isd_hwconfig(void)
 		return ;
 	}
 
-#if 0//[
+#if 0
 	ptNtxHwCfg = NTX_HWCFG_PRELOAD_ADDR;
 	if(gszNtxHwCfgMagic[0]==ptNtxHwCfg->m_hdr.cMagicNameA[0] &&\
 		gszNtxHwCfgMagic[1]==ptNtxHwCfg->m_hdr.cMagicNameA[1] &&\
@@ -1040,7 +1040,7 @@ void _load_isd_hwconfig(void)
 		printf("ISD hwconfig loaded from RAM !\n");
 	}
 	else 
-#endif //]
+#endif
 	{
 		gptNtxHwCfg = (NTX_HWCONFIG *)NtxHiddenMem_load_ntxbin(&gtNtxHiddenMem_HwCfg,&gdwNtxHwCfgSize);
 	}
@@ -1079,9 +1079,9 @@ volatile unsigned long gdwKernelSize=0; // kernel size in byte .
 
 static int _load_ntxkernel(unsigned char **O_ppbKernelAddr,unsigned long *O_pdwKernelSize)
 {
-#ifdef CONFIG_MFG //[
+#ifdef CONFIG_MFG
 	return 0;
-#else //][!CONFIG_MFG
+#else
 	//char cCmdA[128];
 	volatile unsigned char *pbMagic ;
 	unsigned long dwReadSectors;
@@ -1117,7 +1117,7 @@ static int _load_ntxkernel(unsigned char **O_ppbKernelAddr,unsigned long *O_pdwK
 			SD_OFFSET_SECS_KERNEL,DEFAULT_LOAD_KERNEL_SZ);
 	}
 	else {
-#ifdef AUTO_DETECT_KIMGSIZE//[
+#ifdef AUTO_DETECT_KIMGSIZE
 
 		_read_mmc(gi_mmc_num_kernel,(unsigned char *)offset,\
 			(unsigned long)(SD_OFFSET_SECS_KERNEL-1),1);
@@ -1136,12 +1136,12 @@ static int _load_ntxkernel(unsigned char **O_ppbKernelAddr,unsigned long *O_pdwK
 				(unsigned long)(SD_OFFSET_SECS_KERNEL),dwReadSectors);
 		}
 		else 
-#endif //] AUTO_DETECT_KIMGSIZE
+#endif
 		{
-#ifdef AUTO_DETECT_KIMGSIZE//[
+#ifdef AUTO_DETECT_KIMGSIZE
 
 			printf("no kernel image signature !\n");
-#endif //]AUTO_DETECT_KIMGSIZE
+#endif
 			dwImgSize = DEFAULT_LOAD_KERNEL_SZ;
 			_read_mmc(gi_mmc_num_kernel,(unsigned char *)offset,\
 				SD_OFFSET_SECS_KERNEL,DEFAULT_LOAD_KERNEL_SZ);
@@ -1157,7 +1157,7 @@ static int _load_ntxkernel(unsigned char **O_ppbKernelAddr,unsigned long *O_pdwK
 	}
 
 	return 0;
-#endif //]CONFIG_MFG
+#endif
 }
 static int do_load_ntxkernel(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
@@ -1180,9 +1180,9 @@ unsigned long gdwRDsize=0; // initrd size in byte .
 
 static int _load_ntxrd(unsigned char **O_ppbRDaddr,unsigned long *O_pdwRDsize)
 {
-#ifdef CONFIG_MFG //[
+#ifdef CONFIG_MFG
 	return 0;
-#else //][!CONFIG_MFG
+#else
 	int iRet = 0;
 	int i;
 	ulong offset = 0;
@@ -1190,10 +1190,10 @@ static int _load_ntxrd(unsigned char **O_ppbRDaddr,unsigned long *O_pdwRDsize)
 	unsigned char *L_pbRDAddr=0;
 	unsigned long L_dwRDSize=0;
 
-#ifdef CONFIG_RD_LOADADDR //[
+#ifdef CONFIG_RD_LOADADDR
 	/* pre-set offset from CONFIG_RD_LOADADDR */
 	offset = CONFIG_RD_LOADADDR;
-#endif //]CONFIG_RD_LOADADDR
+#endif
 
 	/* pre-set offset from $rd_loadaddr */
 	if ((s = getenv("rd_loadaddr")) != NULL) {
@@ -1213,7 +1213,7 @@ static int _load_ntxrd(unsigned char **O_ppbRDaddr,unsigned long *O_pdwRDsize)
 		gi_mmc_num_kernel = GET_ISD_NUM() ;
 	}
 
-#ifdef CONFIG_CMD_EXT4//[ load INITRD from EMMC "rootfs/boot/uinitramfs"
+#ifdef CONFIG_CMD_EXT4	// load INITRD from EMMC "rootfs/boot/uinitramfs"
 	if(0==L_pbRDAddr) {
 
 		char *filename = NULL;
@@ -1268,10 +1268,10 @@ static int _load_ntxrd(unsigned char **O_ppbRDaddr,unsigned long *O_pdwRDsize)
 
 		} while(0);
 	}
-#endif//]CONFIG_CMD_EXT4
+#endif
 
 
-#if 1//[ load INITRD from EMMC offset .
+#if 1	// load INITRD from EMMC offset .
 
 	if(0==L_pbRDAddr) 
 	{
@@ -1296,7 +1296,7 @@ static int _load_ntxrd(unsigned char **O_ppbRDaddr,unsigned long *O_pdwRDsize)
 		//pbMagic = gpbSectorBuffer+(512-16) ;
 		pbMagic = (unsigned char *)(offset+(512-16)) ;
 		
-#ifdef AUTO_DETECT_KIMGSIZE//[
+#ifdef AUTO_DETECT_KIMGSIZE
 
 		for (i=0;i<sizeof(dwOffsetSecsINITRDA)/sizeof(dwOffsetSecsINITRDA[0]);i++) {
 
@@ -1333,7 +1333,7 @@ static int _load_ntxrd(unsigned char **O_ppbRDaddr,unsigned long *O_pdwRDsize)
 
 		} // initrd offset loop .
 
-#else //][!
+#else 
 
 		{
 
@@ -1342,9 +1342,9 @@ static int _load_ntxrd(unsigned char **O_ppbRDaddr,unsigned long *O_pdwRDsize)
 		
 		}
 
-#endif //] AUTO_DETECT_KIMGSIZE
-	}// 
-#endif //]
+#endif
+	}
+#endif
 
 
 loadrd_end:
@@ -1357,7 +1357,7 @@ loadrd_end:
 	}
 
 	return iRet;
-#endif //]CONFIG_MFG
+#endif
 }
 
 static int do_load_ntxrd(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
@@ -1380,9 +1380,9 @@ unsigned long gdwDTBsize=0; // DTB size in byte .
 
 static int _load_ntxdtb(unsigned char **O_ppbDTBAddr,unsigned long *O_pdwDTBSize)
 {
-#ifdef CONFIG_MFG //[
+#ifdef CONFIG_MFG
 	return 0;
-#else //][!CONFIG_MFG
+#else
 
 	//char cCmdA[128];
 	volatile unsigned char *pbMagic ;
@@ -1407,7 +1407,7 @@ static int _load_ntxdtb(unsigned char **O_ppbDTBAddr,unsigned long *O_pdwDTBSize
 	
 	//pbMagic = gpbSectorBuffer+(512-16) ;
 	pbMagic = (unsigned char *)(offset+(512-16)) ;
-#ifdef AUTO_DETECT_KIMGSIZE//[
+#ifdef AUTO_DETECT_KIMGSIZE
 
 	_read_mmc(gi_mmc_num_kernel,(unsigned char *)offset,\
 			(unsigned long)(SD_OFFSET_SECS_DTB-1),1);
@@ -1426,12 +1426,12 @@ static int _load_ntxdtb(unsigned char **O_ppbDTBAddr,unsigned long *O_pdwDTBSize
 			(unsigned long)(SD_OFFSET_SECS_DTB),dwReadSectors);
 	}
 	else 
-#endif //] AUTO_DETECT_KIMGSIZE
+#endif
 	{
-#ifdef AUTO_DETECT_KIMGSIZE//[
+#ifdef AUTO_DETECT_KIMGSIZE
 
 		printf("no dtb signature !\n");
-#endif //]AUTO_DETECT_KIMGSIZE
+#endif
 		return -2;
 	}
 
@@ -1443,7 +1443,7 @@ static int _load_ntxdtb(unsigned char **O_ppbDTBAddr,unsigned long *O_pdwDTBSize
 	}
 
 	return 0;
-#endif //]CONFIG_MFG
+#endif
 }
 
 static int do_load_ntxdtb(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
@@ -1527,13 +1527,13 @@ static int _detect_bootmode(void)
 		return NTX_BOOTMODE_FASTBOOT;
 	}
 
-#if 1 //[ debug code .
+#if 1
 	printf("\n hwcfgp=%p,pcb=%d,customer=%d\n\n",gptNtxHwCfg,\
 			gptNtxHwCfg->m_val.bPCB,gptNtxHwCfg->m_val.bCustomer);
-#endif //]
+#endif
 
 	switch(gptNtxHwCfg->m_val.bPCB) {
-#ifdef _MX50_ //[
+#ifdef _MX50_
 	case 16://E60630.
 	case 18://E50600.
 		if(ntxup_is_ext_card_inserted() && 1==ntxup_wait_key_esdupg()) {
@@ -1557,7 +1557,7 @@ static int _detect_bootmode(void)
 		else
 			iRet = NTX_BOOTMODE_ISD;
 		break;
-#endif //] _MX50_
+#endif
 
 	default :
 		
@@ -1586,7 +1586,7 @@ static int _detect_bootmode(void)
 
 		iBootESD=(gptEsdNtxHwCfg&&NTXHWCFG_TST_FLAG(gptEsdNtxHwCfg->m_val.bBootOpt,0))?1:0;
 
-#ifdef USB_OTG_FASTBOOT_MODE//[
+#ifdef USB_OTG_FASTBOOT_MODE
 		//printf("## fastboot mode OTG USB test&debug ##\n");	iUSB_in|=USB_CHARGER_OTG;//test&debug only .
 		if(iUSB_in&USB_CHARGER_OTG) {
 			printf("\n**********************************\n\n");
@@ -1598,7 +1598,7 @@ static int _detect_bootmode(void)
 			fastboot_connection_abort_at_usb_remove_chk_setup(&ntx_is_fastboot_abort_inusbremove);
 		}
 		else
-#endif //]USB_OTG_FASTBOOT_MODE
+#endif
 		if(2!=gptNtxHwCfg->m_val.bUIStyle) 
 		{
 			if (12==gptNtxHwCfg->m_val.bKeyPad) {
@@ -1709,10 +1709,10 @@ static int _detect_bootmode(void)
 			//_load_ntxrd(&gpbRDaddr,&gdwRDsize);
 		}
 
-#if 1//[ debug code .
+#if 1
 		printf("ESDin=%d,UPGKey=%d,PWRKey=%d,USBin=0x%x,BootESD=%d,MenuKey=%d\n",
 				iESD_in,iUPG_Key,iPwr_Key,iUSB_in,iBootESD,iMenuKey);
-#endif //]
+#endif
 
 		break;
 	}
@@ -1860,7 +1860,7 @@ int ntx_parse_syspart_type(void)
 	return iRet;
 }
 
-#if defined(CONFIG_FASTBOOT) || defined(CONFIG_FSL_FASTBOOT) //[
+#if defined(CONFIG_FASTBOOT) || defined(CONFIG_FSL_FASTBOOT)
 
 //#define SECTOR_SIZE				512
 
@@ -1872,15 +1872,15 @@ int ntx_parse_syspart_type(void)
 
 #define BOOTLOADER_OFFSET	2
 
-#if defined(_MX6SL_) || defined(_MX7D_) || defined(_MX6ULL_)||defined(_MX6SLL_)//[
+#if defined(_MX6SL_) || defined(_MX7D_) || defined(_MX6ULL_)||defined(_MX6SLL_)
 	#define BOOTLOADER_SIZE	1022
 	#define HWCFG_OFFSET	1024
-#elif defined(_MX6Q_) //][
+#elif defined(_MX6Q_)
 	#define BOOTLOADER_SIZE	1522
 	#define HWCFG_OFFSET	1524
-#else //][
+#else
 	#error "unkown platform !!!"
-#endif //]_MX6SL_ || _MX7D_ || _MX6ULL_
+#endif
 
 #define HWCFG_SIZE		2
 #define WAVEFORM_OFFSET			14336//7MB
@@ -2201,15 +2201,15 @@ int ntx_is_fastboot_abort_inusbremove(void)
 	return 1;
 }
 
-#else //][! defined(CONFIG_FASTBOOT) || defined(CONFIG_FSL_FASTBOOT)
+#else
 
 void ntx_config_fastboot_layout(void){}
 int ntx_is_fastboot_abort_inusbremove(void) {return 0;}
 
-#endif //]CONFIG_FASTBOOT
+#endif
 
-#ifdef _MX7D_ //[
-static const NTX_GPIO gt_ntx_gpio_bat_low= {
+#ifdef _MX7D_
+static NTX_GPIO gt_ntx_gpio_bat_low= {
 	MX7D_PAD_GPIO1_IO00__GPIO1_IO0,  // pin pad/mux control .
 	1, // gpio group .
 	0, // gpio number .
@@ -2219,8 +2219,8 @@ static const NTX_GPIO gt_ntx_gpio_bat_low= {
 	1, // 1:input ; 0:output ; 2:btn .
 };
 
-#elif defined(_MX6ULL_)//][
-static const NTX_GPIO gt_ntx_gpio_bat_low= {
+#elif defined(_MX6ULL_)
+static NTX_GPIO gt_ntx_gpio_bat_low= {
 	MX6_PAD_SNVS_TAMPER3__GPIO5_IO03|MUX_PAD_CTRL(INPUT_PAD_CTRL),  // pin pad/mux control .
 	1, // gpio group .
 	0, // gpio number .
@@ -2231,9 +2231,9 @@ static const NTX_GPIO gt_ntx_gpio_bat_low= {
 };
 
 
-#elif defined(_MX6SL_) || defined(_MX6SLL_)//][
+#elif defined(_MX6SL_) || defined(_MX6SLL_)
 
-static const NTX_GPIO gt_ntx_gpio_bat_low= {
+static NTX_GPIO gt_ntx_gpio_bat_low= {
 #ifdef CONFIG_TARGET_MX6SLL_NTX
 	MX6_PAD_KEY_COL2__GPIO3_IO28,  // pin pad/mux control .
 #else
@@ -2246,7 +2246,7 @@ static const NTX_GPIO gt_ntx_gpio_bat_low= {
 	"Bat_low", // name .
 	1, // 1:input ; 0:output ; 2:btn .
 };
-#endif//]_MX7D_
+#endif
 
 #define IS_BATT_CRITIAL_LOW()	\
 		(0==ntx_gpio_get_value(&gt_ntx_gpio_bat_low))?1:0
@@ -2392,18 +2392,20 @@ void ntx_preboot(int iBootType,char *I_pszKernCmdLine,
 		char *O_pszKernCmdLine,unsigned long I_dwKernCmdLineSize)
 {
 	char *pcEnv_bootargs=I_pszKernCmdLine;
+#ifdef _MX50_
 	char *pcLPJ;
+#endif
 	//unsigned char bSysPartType,bRootFsType,bUIStyle,bCustomer;
 	unsigned long dwBootArgsLen;
 	char cCmdA[128];
 	static int giCallCnt = 0;
 
-#if 0	//[
+#if 0
 	if (is_boot_from_usb()) {
 		printf("%s() boot from usb. Skip mmc read.\n",__func__);
 		return ;
 	}
-#endif //]
+#endif
 
 
 	if(1==giCallCnt) {
@@ -2422,13 +2424,13 @@ void ntx_preboot(int iBootType,char *I_pszKernCmdLine,
 
 
 
-#if (PHYS_SDRAM_SIZE==SZ_256M) || (PHYS_SDRAM_1_SIZE==(256*1024*1024)) //[
+#if (PHYS_SDRAM_SIZE==SZ_256M) || (PHYS_SDRAM_1_SIZE==(256*1024*1024))
 	strcat(O_pszKernCmdLine," mem=242M");
-#elif (PHYS_SDRAM_SIZE==SZ_512M) || (PHYS_SDRAM_1_SIZE==(512*1024*1024)) //][
+#elif (PHYS_SDRAM_SIZE==SZ_512M) || (PHYS_SDRAM_1_SIZE==(512*1024*1024))
 	strcat(O_pszKernCmdLine," mem=500M");
-#else //][ 
+#else
 	#error "PHYS_SDRAM_1_SIZE || PHYS_SDRAM_SIZE value not supported ! please check !!"
-#endif //]
+#endif
 
 
 	strcat(O_pszKernCmdLine," hwcfg_p=0x9ffffe00 hwcfg_sz=110");
@@ -2475,7 +2477,7 @@ BOOTMODE_ENTRY:
 		}
 		break;
 	case NTX_BOOTMODE_FASTBOOT:
-#if defined(CONFIG_FASTBOOT) || defined(CONFIG_FSL_FASTBOOT) //[
+#if defined(CONFIG_FASTBOOT) || defined(CONFIG_FSL_FASTBOOT)
 		if(gptNtxHwCfg) {
 			if(9==gptNtxHwCfg->m_val.bCustomer) {
 				_led_R(1);
@@ -2489,11 +2491,11 @@ BOOTMODE_ENTRY:
 		run_command("fastboot q0",0);
 		if(12==gptNtxHwCfg->m_val.bKeyPad) {
 			// models without keys
-#if 0 //[
+#if 0
 			if(2==ntx_wait_powerkey(2,-1,0)) 
-#else //][
+#else
 			if(0==ntx_wait_powerkey(10,1,1)) // if user pressing and holding power key over 10 secs will return 0 or break and return non zero . 
-#endif//]
+#endif
 			{
 				// power key clicked .
 				printf("enter recovery ...\n");
@@ -2505,7 +2507,7 @@ BOOTMODE_ENTRY:
 			}
 		}
 		break;
-#endif//] CONFIG_FASTBOOT || CONFIG_FSL_FASTBOOT
+#endif
 
 	case NTX_BOOTMODE_SDOWNLOAD:
 		run_command("download_mode",0);
@@ -2549,7 +2551,7 @@ BOOTMODE_ENTRY:
 	}
 
 
-	{ //[ 
+	{ 
 
 		//if(NTX_BOOTMODE_ESD_UPG==giNtxBootMode) {
 		//	_load_esd_hwconfig();
@@ -2557,9 +2559,9 @@ BOOTMODE_ENTRY:
 
 
 		
-#ifndef CONFIG_MFG //[
+#ifndef CONFIG_MFG
 		if(2==gptNtxHwCfg->m_val.bUIStyle)
-#endif //]!CONFIG_MFG
+#endif
 		{
 			// Android UI .
 
@@ -2573,16 +2575,16 @@ BOOTMODE_ENTRY:
 			if(pcEnv_bootargs&&0==strstr(pcEnv_bootargs,"androidboot.hardware=")) {
 				char *pszPCB_name;
 
-#ifdef USE_HWCONFIG//[
+#ifdef USE_HWCONFIG
 				pszPCB_name=NtxHwCfg_GetCfgFldStrVal(gptNtxHwCfg,HWCFG_FLDIDX_PCB);
-#else//][!USE_HWCONFIG
+#else
 				if ( gptNtxHwCfg->m_val.bPCB<(sizeof(gszPCBA)/sizeof(gszPCBA[0])) ) {
 					pszPCB_name = gszPCBA[gptNtxHwCfg->m_val.bPCB];
 				}
 				else {
 					pszPCB_name = "unkown";
 				}
-#endif//]USE_HWCONFIG
+#endif
 				if(pszPCB_name) {
 					strcat(O_pszKernCmdLine," androidboot.hardware=");
 					strcat(O_pszKernCmdLine,pszPCB_name);
@@ -2706,7 +2708,7 @@ BOOTMODE_ENTRY:
 		}
 		
 		
-#ifdef _MX50_ //[
+#ifdef _MX50_
 		if(pcEnv_bootargs) {
 			if(2==gptNtxHwCfg->m_val.bCPUFreq) {
 				// 1G Hz .
@@ -2735,9 +2737,9 @@ BOOTMODE_ENTRY:
 				*/
 			}
 		}
-#endif //]_MX50_
+#endif
 
-#ifdef MAC_BOFFSET_IN_SNMAC_SECTOR//[
+#ifdef MAC_BOFFSET_IN_SNMAC_SECTOR
 		if(pcEnv_bootargs&&0==strstr(pcEnv_bootargs,"fec_mac=")) {
 			if( 'M'==(char)gcNTX_SN[MAC_BOFFSET_IN_SNMAC_SECTOR+0] && \
 					'A'==(char)gcNTX_SN[MAC_BOFFSET_IN_SNMAC_SECTOR+1] && \
@@ -2749,7 +2751,7 @@ BOOTMODE_ENTRY:
 				strcat(O_pszKernCmdLine,&gcNTX_SN[MAC_BOFFSET_IN_SNMAC_SECTOR+4]);
 			}
 		}
-#endif//]MAC_BOFFSET_IN_SNMAC_SECTOR
+#endif
 
 		if(9==gptNtxHwCfg->m_val.bCustomer) {
 			if(pcEnv_bootargs&&0==strstr(pcEnv_bootargs,"quiet")) {
@@ -2860,9 +2862,9 @@ static int read_recovery_BCB (unsigned char *pBuf)
 
 #ifdef MMC_CMD_SEPERATED_SDNUM
 	sprintf(cCmdA,"mmc read 0x%x 0x%x 0x1",(unsigned)pBuf, g_ntx_misc_offset);
-#else //][!MMC_CMD_SEPERATED_SDNUM	
+#else
 	sprintf(cCmdA,"mmc read %d 0x%x 0x%x 0x1", GET_ISD_NUM(), (unsigned)pBuf, g_ntx_misc_offset);
-#endif //]MMC_CMD_SEPERATED_SDNUM
+#endif
 	printf ("Writing recovery BCB to misc partition...\n%s\n",cCmdA);
 	run_command(cCmdA, 0);//
 	return 0;
@@ -2899,9 +2901,9 @@ int write_recovery_BCB (char *pBuf)
 
 #ifdef MMC_CMD_SEPERATED_SDNUM
 	sprintf(cCmdA,"mmc write 0x%x 0x%x 0x1",(unsigned)pBCB, g_ntx_misc_offset);
-#else //][!MMC_CMD_SEPERATED_SDNUM	
+#else	
 	sprintf(cCmdA,"mmc write %d 0x%x 0x%x 0x1", GET_ISD_NUM(), (unsigned)pBCB, g_ntx_misc_offset);
-#endif //]MMC_CMD_SEPERATED_SDNUM
+#endif
 	run_command(cCmdA, 0);//
 
 //	if (!pBuf)

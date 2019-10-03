@@ -556,7 +556,7 @@ int ntxup_wait_key_esdupg(void)
 		}
 		//printf("%d=ntx_gpio_key_is_home_down()\n",iRet);
 	}
-#ifdef _MX7D_ //[
+#ifdef _MX7D_
 #elif defined(_MX6SL_) //][
 #else //][!_MX6SL_
 	else
@@ -771,7 +771,7 @@ int ntxup_wait_touch_recovery(void)
 
 static const uint8_t FL100[] = {0x01, 0x8F, 0xFF, 0xFF, 0x01, 0x90, 0x01};
 
-#ifdef _MX7D_ //[
+#ifdef _MX7D_
 static NTX_GPIO gtNtxGpio_FL_EN = {
 	MX7D_PAD_ENET1_RGMII_RD1__GPIO7_IO1,
 	7, //  gpio group .
@@ -971,7 +971,7 @@ U_BOOT_CMD(ntxup, 6, 0, do_ntxup,
 
 
 //#define PMIC_TPS65185	1
-#ifdef PMIC_TPS65185 //[
+#ifdef PMIC_TPS65185
 
 #define TPS65185_RET_SUCCESS				(0)
 #define TPS65185_RET_I2CTRANS_ERR 	(-1)
@@ -1099,9 +1099,9 @@ static char *gszKeyStringA[TOTAL_KEY] = {
 	"[S09]","[S10]","[S11]","[S12]",
 	"[S13]","[S14]","[S15]","[S16]"
 };
+#endif
 
-
-#ifndef CONFIG_MXC_KPD //[
+#ifndef CONFIG_MXC_KPD
 
 inline int test_key(int value, struct kpp_key_info *ki)
 {
