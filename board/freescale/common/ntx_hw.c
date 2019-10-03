@@ -2113,7 +2113,7 @@ void ntx_hw_early_init(void)
 	//udc_init();
 	if(!gptNtxHwCfg) {
 		if (is_boot_from_usb()) {
-			gptNtxHwCfg = 0x83808000;
+			gptNtxHwCfg = (volatile NTX_HWCONFIG *) 0x83808000;
 			return;
 		}
 		_load_isd_hwconfig();
