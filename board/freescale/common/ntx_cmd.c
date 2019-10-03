@@ -897,7 +897,7 @@ void frontLightCtrl(void){
 	}
 }
 
-static int do_ntxup(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_ntxup(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	int iChk ;
@@ -1062,7 +1062,7 @@ static int tps65185_get_versions(TPS65185_VERSIONS *O_pt65185ver)
 	return iRet;
 }
 
-static int do_get_epdpmic_ver(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_get_epdpmic_ver(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	TPS65185_VERSIONS tTPS65185_ver;
@@ -1110,7 +1110,7 @@ inline int test_key(int value, struct kpp_key_info *ki)
 }
 #endif //] CONFIG_MXC_KPD
 
-static int do_mf_key(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_mf_key(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 //	struct kpp_key_info *key_info;
 //	int keys;
@@ -1184,7 +1184,7 @@ U_BOOT_CMD(mf_key, 2, 0, do_mf_key,
 //] gallen add 2011/03/31
 
 
-static int do_mf_rtc(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_mf_rtc(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	RTC_HR tRTC_HR;
@@ -1237,13 +1237,13 @@ U_BOOT_CMD(mf_rtc, 7, 0, do_mf_rtc,
 		" - rtc date/time set .\n"
 );
 
-static int do_mf_sd_wp(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_mf_sd_wp(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
+#if 0
 	unsigned char bEvent;
 	int iIsWriteProtected = 0;
 	
-#if 0
 	if(ntxup_get_CtrlEvent(&bEvent,0)>=0) {
 		if(gptNtxHwCfg&&1==gptNtxHwCfg->m_val.bExternalMem) {
 			// external memory is SD card .
@@ -1299,7 +1299,7 @@ U_BOOT_CMD(mf_sd_wp, 1, 0, do_mf_sd_wp,
 );
 
 
-static int do_mf_adc(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_mf_adc(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	unsigned short wADC;
@@ -1329,7 +1329,7 @@ U_BOOT_CMD(mf_adc, 1, 0, do_mf_adc,
 
 static int giNtxBootMode = NTX_BOOTMODE_NA ;
 
-static int do_load_ntxbins(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_load_ntxbins(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	char cAppendStr[128];
@@ -1353,7 +1353,7 @@ U_BOOT_CMD(load_ntxbins, 2, 0, do_load_ntxbins,
 #endif
 
 // gallen add 2011/03/31 [
-static int do_get_PCBA_id(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_get_PCBA_id(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	
@@ -1377,7 +1377,7 @@ U_BOOT_CMD(get_PCBA_id, 2, 0, do_get_PCBA_id,
 );
 //] gallen add 2011/03/31
 
-static int do_get_up_ver(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_get_up_ver(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	iRet = ntxup_init();
@@ -1415,7 +1415,7 @@ static int card_get_capacity_size(void)
 }
 
 
-static int do_nandinfo(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_nandinfo(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	int cardsize = card_get_capacity_size();
@@ -1444,7 +1444,7 @@ U_BOOT_CMD(nandinfo, 2, 0, do_nandinfo,
 		" - get get nand flash information .\n"
 );
 
-static int do_hallsensor(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_hallsensor(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	int iHallSensorState,iWaitState;
@@ -1481,7 +1481,7 @@ U_BOOT_CMD(hallsensor, 3, 0, do_hallsensor,
 		" - get the hallsensor state (nonblock mode) .\n"
 );
 
-static int do_wifi_3v3(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_wifi_3v3(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 
@@ -1507,7 +1507,7 @@ U_BOOT_CMD(wifi_3v3, 2, 0, do_wifi_3v3,
 		" - set wifi 3v3 output 1/0 .\n"
 );
 
-static int do_ledG(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_ledG(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 
@@ -1535,8 +1535,8 @@ U_BOOT_CMD(ledG, 2, 0, do_ledG,
 );
 
 
-#if defined(CONFIG_ANDROID_SUPPORT) && defined(CONFIG_CMD_EXT4) //[
-static int do_get_droid_ver(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+#if defined(CONFIG_ANDROID_SUPPORT) && defined(CONFIG_CMD_EXT4)
+static int do_get_droid_ver(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 
@@ -1738,7 +1738,7 @@ U_BOOT_CMD(get_droid_ver, 2, 0, do_get_droid_ver,
 #endif //]CONFIG_CMD_EXT4
 
 
-static int do_ricoh_reg(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_ricoh_reg(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	{
 		unsigned char reg, val;

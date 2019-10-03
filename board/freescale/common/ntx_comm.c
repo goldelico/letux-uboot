@@ -1159,7 +1159,7 @@ static int _load_ntxkernel(unsigned char **O_ppbKernelAddr,unsigned long *O_pdwK
 	return 0;
 #endif
 }
-static int do_load_ntxkernel(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_load_ntxkernel(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	iRet =  _load_ntxkernel((unsigned char **)&gpbKernelAddr,(unsigned long *)&gdwKernelSize)>=0?
@@ -1360,7 +1360,7 @@ loadrd_end:
 #endif
 }
 
-static int do_load_ntxrd(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_load_ntxrd(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	iRet = _load_ntxrd(&gpbRDaddr,&gdwRDsize)>=0?
@@ -1446,7 +1446,7 @@ static int _load_ntxdtb(unsigned char **O_ppbDTBAddr,unsigned long *O_pdwDTBSize
 #endif
 }
 
-static int do_load_ntxdtb(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_load_ntxdtb(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	iRet = _load_ntxdtb(&gpbDTBaddr,&gdwDTBsize)>=0?
@@ -1460,7 +1460,7 @@ U_BOOT_CMD(load_ntxdtb, 2, 0, do_load_ntxdtb,
 );
 
 
-static int do_load_ntxwf(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_load_ntxwf(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	iRet = 	NtxHiddenMem_load_ntxbin(&gtNtxHiddenMem_waveform,0)?
@@ -2810,7 +2810,7 @@ void ntx_prebooti(char *I_pszKernCmdLine)
 }
 
 
-static int do_ntx_prepare_load_kernel(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_ntx_prepare_load_kernel(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	//printf("%s(%d)\n",__FUNCTION__,__LINE__);
@@ -2823,11 +2823,10 @@ U_BOOT_CMD(ntx_prepare_load_kernel, 2, 0, do_ntx_prepare_load_kernel,
 	"ntx_prepare_load_kernel "
 		" - ntx_prepare_load_kernel.\n"
 );
-//]
 
 
 // gallen add 2011/03/02 [
-static int do_load_ntxbins(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
+static int do_load_ntxbins(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
 	return iRet;
