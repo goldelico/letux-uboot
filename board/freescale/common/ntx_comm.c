@@ -143,8 +143,10 @@ extern int ntxup_wait_touch_recovery(void);
 extern int ntxup_is_ext_card_inserted(void);
 extern int ntxup_wait_key_esdupg(void);
 
+#if 0
 // internal help functions ...
 static int _detect_bootmode_and_append_boot_args(char *O_cBufA,unsigned long I_ulBufSize);
+#endif
 
 int ntx_is_fastboot_abort_inusbremove(void);
 
@@ -619,6 +621,7 @@ static NtxHiddenMem gtNtxHiddenMem_waveform = {
 	.pszName = gszKParamName_waveform ,
 	.dwLoadSectNo = SD_OFFSET_SECS_WAVEFORM,
 };
+#if 0
 static NtxHiddenMem gtNtxHiddenMem_logo = {
 	.pszName = gszKParamName_logo ,
 	.dwLoadSectNo = SD_OFFSET_SECS_LOGO,
@@ -627,6 +630,7 @@ static NtxHiddenMem gtNtxHiddenMem_logo2 = {
 	.pszName = gszKParamName_logo2 ,
 	.dwLoadSectNo = SD_OFFSET_SECS_LOGO2,
 };
+#endif
 static NtxHiddenMem gtNtxHiddenMem_ntxfw = {
 	.pszName = gszKParamName_ntxfw ,
 	.dwLoadSectNo = SD_OFFSET_SECS_NTXFW,

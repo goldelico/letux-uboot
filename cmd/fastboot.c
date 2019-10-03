@@ -82,6 +82,7 @@ static int do_fastboot(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	int controller_index;
 	char *usb_controller;
 	int ret;
+	void fastboot_flash_dump_ptn(void);
 
 	if (argc < 2)
 		return CMD_RET_USAGE;

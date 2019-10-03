@@ -1091,7 +1091,7 @@ U_BOOT_CMD(get_epdpmic_ver, 2, 0, do_get_epdpmic_ver,
 
 
 
-
+#if 0
 // gallen add 2011/03/31 [
 #define TOTAL_KEY	16
 static char *gszKeyStringA[TOTAL_KEY] = {
@@ -1484,6 +1484,7 @@ U_BOOT_CMD(hallsensor, 3, 0, do_hallsensor,
 static int do_wifi_3v3(cmd_tbl_t * cmdtp, int flag, int argc, char *const argv[])
 {
 	int iRet = 0;
+	extern void wifi_3v3(int);
 
 	if(argc==2) {
 		if(0==strcmp(argv[1],"1")) {

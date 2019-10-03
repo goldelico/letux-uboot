@@ -1645,6 +1645,7 @@ static int _fastboot_parts_load_from_env(void)
 }
 #endif /*CONFIG_FASTBOOT_STORAGE_NAND*/
 
+#if 0	// disable
 static void _fastboot_load_partitions(void)
 {
 	pcount = 0;
@@ -1655,6 +1656,7 @@ static void _fastboot_load_partitions(void)
 	_fastboot_parts_load_from_ptable();
 #endif
 }
+#endif
 
 /*
  * Android style flash utilties */
@@ -1741,8 +1743,9 @@ void fastboot_setup(void)
 #endif
 
 	/*load partitions information for the fastboot dev*/
-	//_fastboot_load_partitions();
-
+#if 0	// disable
+	_fastboot_load_partitions();
+#endif
 	parameters_setup();
 }
 
