@@ -121,7 +121,7 @@ int ntxup_init(void)
 		// success .
 		printf("microp version=0x%02x%02x\n",gbMicroP_VersionA[0],gbMicroP_VersionA[1]);
 		if (0xe9==gbMicroP_VersionA[0] && 0x16==gbMicroP_VersionA[1]) {
-			char buffer[10];
+			unsigned char buffer[10];
 			isUpgMSP430 = 1;
 			buffer[0]=22;
 			buffer[1]=0xFF;
@@ -296,7 +296,7 @@ int ntxup_rtc_cmd(int iIsSet,
 	if (isUpgMSP430) {
 		struct rtc_time tm;
 		unsigned long time;
-		char buffer[10];
+		unsigned char buffer[10];
 		
 		if(iIsSet) {
 #if 1
@@ -683,15 +683,15 @@ int ntxup_wait_touch_recovery(void)
 
 		zforce_read (data);
 		if (7 == data[0]) {
-			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,cmd_Active_v2, sizeof(cmd_Active_v2));
+			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,(uchar *)cmd_Active_v2, sizeof(cmd_Active_v2));
 			zforce_read (data);
-			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,cmd_Resolution_v2,sizeof(cmd_Resolution_v2));
+			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,(uchar *)cmd_Resolution_v2,sizeof(cmd_Resolution_v2));
 			zforce_read (data);
-			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,cmd_Frequency_v2,sizeof(cmd_Frequency_v2));
+			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,(uchar *)cmd_Frequency_v2,sizeof(cmd_Frequency_v2));
 			zforce_read (data);
-			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,cmd_Dual_touch_v2,sizeof(cmd_Dual_touch_v2));
+			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,(uchar *)cmd_Dual_touch_v2,sizeof(cmd_Dual_touch_v2));
 			zforce_read (data);
-			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,cmd_TouchData_v2,sizeof(cmd_TouchData_v2));
+			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,(uchar *)cmd_TouchData_v2,sizeof(cmd_TouchData_v2));
 			zforce_read (data);
 			for (retry=0;retry<100;retry++) {
 				int dataCnt;

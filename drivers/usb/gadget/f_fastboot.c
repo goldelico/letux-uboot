@@ -1030,11 +1030,11 @@ static int ntx_header_update (unsigned int block_s, unsigned int bytes)
 	
 	//avoid  ERROR: v7_dcache_inval_range - stop address is not aligned
 	align_offset = 0x100 - ((unsigned long)head_block &0xff);
-	pbBuf = head_block+align_offset;
+	pbBuf = (unsigned char *) head_block+align_offset;
 
 	//printf("tmp block addr=%p\n",pbBuf);
 
-	sprintf(cCmdA,"mmc read 0x%x 0x%x 1",pbBuf,block_s-1);
+	sprintf(cCmdA,"mmc read 0x%x 0x%x 1",(unsigned int)pbBuf,block_s-1);
 	if(run_command(cCmdA,0)) {
 		printf("Reading Header Block '%d' FAILED!\n", block_s-1);
 		return 0;
@@ -1044,7 +1044,7 @@ static int ntx_header_update (unsigned int block_s, unsigned int bytes)
 	}
 
 	//prepare header info
-	ptr = pbBuf + 0x1F0;
+	ptr = (char *) pbBuf + 0x1F0;
 	memcpy(ptr, magic, 4);
 	ptr += 4;
 	memcpy(ptr, &swapPattern, 4);
@@ -1052,7 +1052,7 @@ static int ntx_header_update (unsigned int block_s, unsigned int bytes)
 	memcpy(ptr, &bytes, 4);
 
 	//write header block
-	sprintf(cCmdA,"mmc write 0x%x 0x%x 1",pbBuf,block_s-1);
+	sprintf(cCmdA,"mmc write 0x%x 0x%x 1",(unsigned int)pbBuf,block_s-1);
 	if(run_command(cCmdA,0)) {
 		printf("Write Header Block '%d' FAILED!\n", block_s-1);
 		return 0;

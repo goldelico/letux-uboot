@@ -2838,8 +2838,8 @@ U_BOOT_CMD(load_ntxbins, 2, 0, do_load_ntxbins,
 );
 //] gallen add 2011/03/02
 
-static unsigned char *boot_recovery="boot-recovery";
-static unsigned char *wipe_data="recovery\x0A--wipe_data\x0A--locale=en_US\x0A";
+static unsigned char *boot_recovery=(unsigned char *)"boot-recovery";
+static unsigned char *wipe_data=(unsigned char *)"recovery\x0A--wipe_data\x0A--locale=en_US\x0A";
 int g_ntx_misc_offset;
 extern void setup_recovery_env(void);
 
@@ -2886,13 +2886,13 @@ int write_recovery_BCB (char *pBuf)
 	}
 
 	if (pBuf) {
-		pBCB = pBuf;
+		pBCB = (unsigned char *) pBuf;
 		printf ("Writing boot count %d to misc partition (offset %d)...\n", pBuf[64], g_ntx_misc_offset);
 	}
 	else {
 		memset (cBCB, 0, 512);
-		strcpy (cBCB, boot_recovery);
-		strcpy (&cBCB[64], wipe_data);
+		strcpy ((char *)cBCB, (char *)boot_recovery);
+		strcpy ((char *)&cBCB[64], (char *)wipe_data);
 		pBCB = cBCB;
 		printf ("Writing recovery BCB to misc partition (offset %d)...\n", g_ntx_misc_offset);
 	}
@@ -2914,7 +2914,7 @@ int ntx_check_and_increase_boot_count (void)
 {
 	unsigned char cMiscA[512];
 	if (0 == read_recovery_BCB (cMiscA)) {	// enter recovery if recovery flag found.
-		if (!strcmp (cMiscA, boot_recovery)) {
+		if (!strcmp ((char *)cMiscA, (char *) boot_recovery)) {
 			printf ("Recovery BCB found, skip count!\n");
 			return 1;
 		}
