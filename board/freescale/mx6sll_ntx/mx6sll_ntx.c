@@ -243,7 +243,7 @@ static int _sdhc_setup(int iSDHC_idx,bd_t *bis)
 int board_mmc_init(bd_t *bis)
 {
 #if 1
-	int i;
+//	int i;
 	/*
 	 * According to the board_mmc_init() the following map is done:
 	 * (U-boot device node)    (Physical Port)

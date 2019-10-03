@@ -1514,7 +1514,6 @@ int msp430_read_reg(unsigned char bRegAddr,unsigned char *O_pbRegVal)
 int msp430_write_buf(unsigned char bRegAddr,unsigned char *I_pbBuf,int I_iBufSize)
 {
 	int iRet;
-	int iChk;
 	unsigned int uiCurrI2CBus;
 
 	uiCurrI2CBus = i2c_get_bus_num();
@@ -2221,7 +2220,6 @@ static void ntx_keys_setup(void)
 void ntx_hw_late_init(void) 
 {
 	//NTX_GPIO *pt_gpio;
-	int i;
 
 	printf("%s()\n",__FUNCTION__);
 	if(!gptNtxHwCfg) {

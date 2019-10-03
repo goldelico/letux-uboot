@@ -284,7 +284,7 @@ int ntx_gpio_init(NTX_GPIO *I_pt_gpio)
 int ntx_gpio_set_valueEx(NTX_GPIO *I_pt_gpio,int iOutVal,int iSetDir) 
 {
 	unsigned int reg,regDir;
-	int iRet;
+	int iRet = 0;
 	int iChk;
 	u32 dwGPIO_data_addr=0;
 	u32 dwGPIO_dir_addr=0;

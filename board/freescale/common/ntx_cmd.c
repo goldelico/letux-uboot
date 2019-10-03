@@ -644,7 +644,7 @@ int ntxup_wait_touch_recovery(void)
 	int iRet=0;
 	unsigned char data[128];
 	int retry;
-	unsigned int reg;
+//	unsigned int reg;
 	unsigned int current_i2c_bus;
 
 	int iRLight=0;
@@ -694,11 +694,12 @@ int ntxup_wait_touch_recovery(void)
 			i2c_write (gbZforceI2C_ChipAddr,0xEE,1,(uchar *)cmd_TouchData_v2,sizeof(cmd_TouchData_v2));
 			zforce_read (data);
 			for (retry=0;retry<100;retry++) {
-				int dataCnt;
+				// int dataCnt;
 
 				_led_R(iRLight);iRLight=!iRLight;
 
-				dataCnt=zforce_read (data);
+				/*dataCnt=*/ zforce_read (data);
+				// FIXME: shouldn't this check dataCnt?
 				if (0 <= iRet && 4 == data[0]) {
 					if (2 == data[1]) {
 						int x,y;
@@ -850,7 +851,7 @@ void frontLightCtrl(void){
 	}
 
 	if(NTXHWCFG_TST_FLAG(gptNtxHwCfg->m_val.bFrontLight_Flags,0)){
-		unsigned int reg;
+//		unsigned int reg;
 
 		printf("turning on FL\n");
 		if(NTXHWCFG_TST_FLAG(gptNtxHwCfg->m_val.bFrontLight_Flags,2)) {
@@ -1111,8 +1112,9 @@ inline int test_key(int value, struct kpp_key_info *ki)
 
 static int do_mf_key(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 {
-	struct kpp_key_info *key_info;
-	int keys, i;
+//	struct kpp_key_info *key_info;
+//	int keys;
+	int i;
 	int iKeyPressedCnt = 0;
 	int iCurrentHallSensorState;
 	
@@ -1541,25 +1543,27 @@ static int do_get_droid_ver(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 	char *filename = NULL;
 	//char *ep;
 	int dev, part = -1;
-	ulong part_length;
-	int filelen,chklen;
-	disk_partition_t info;
+	//ulong part_length;
+	int filelen;
+	unsigned long chklen;
+	//disk_partition_t info;
 	//block_dev_desc_t *dev_desc = NULL;
 	//char buf [12];
-	unsigned long count;
+	//unsigned long count;
 	//char *addr_str;
 	//
-	char *pcMatch,cStore,*pcMatchValue,*pc;
+	char *pcMatch,*pcMatchValue,*pc;
+	//char cStore;
 	int iLen;
 	
 	char *pcBuildPropBuf,*pcBuildPropBufEnd,*pcPropName=0;
 	char *cmdline,*cmdline_end;
 
-	int iDebug=0;//
+	int iDebug=0;
 
 
 	filename = "/build.prop" ;
-	count = 0;
+	//count = 0;
 	//dev = GET_ISD_NUM();
 	dev=0;
 
@@ -1699,7 +1703,7 @@ static int do_get_droid_ver(cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 					break;
 				}
 				if( 0x0a==*pc || 0x0d==*pc ) {
-					cStore = *pc;
+					//cStore = *pc;
 					*pc = 0;
 					break;
 				}
