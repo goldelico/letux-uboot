@@ -327,7 +327,7 @@ int ntx_gpio_set_valueEx(NTX_GPIO *I_pt_gpio,int iOutVal,int iSetDir)
 		dwGPIO_data_addr = GPIO5_BASE_ADDR + 0x0;
 		dwGPIO_dir_addr = GPIO5_BASE_ADDR + 0x4;
 		break;
-#ifndef _MX6ULL_ //[
+#ifndef _MX6ULL_
 	case 6:
 		dwGPIO_data_addr = GPIO6_BASE_ADDR + 0x0;
 		dwGPIO_dir_addr = GPIO6_BASE_ADDR + 0x4;
@@ -336,7 +336,7 @@ int ntx_gpio_set_valueEx(NTX_GPIO *I_pt_gpio,int iOutVal,int iSetDir)
 		dwGPIO_data_addr = GPIO7_BASE_ADDR + 0x0;
 		dwGPIO_dir_addr = GPIO7_BASE_ADDR + 0x4;
 		break;
-#endif //] _MX6ULL_
+#endif
 	default :
 		printf("%s():%s [ERROR] GPIO group number error (%hd)!!\n",
 			__FUNCTION__,I_pt_gpio->pszName,
@@ -440,7 +440,7 @@ int ntx_gpio_get_value(NTX_GPIO *I_pt_gpio)
 		dwGPIO_data_addr = GPIO5_BASE_ADDR + 0x0;
 		dwGPIO_dir_addr = GPIO5_BASE_ADDR + 0x4;
 		break;
-#ifndef _MX6ULL_ //[
+#ifndef _MX6ULL_
 	case 6:
 		dwGPIO_data_addr = GPIO6_BASE_ADDR + 0x0;
 		dwGPIO_dir_addr = GPIO6_BASE_ADDR + 0x4;
@@ -449,7 +449,7 @@ int ntx_gpio_get_value(NTX_GPIO *I_pt_gpio)
 		dwGPIO_data_addr = GPIO7_BASE_ADDR + 0x0;
 		dwGPIO_dir_addr = GPIO7_BASE_ADDR + 0x4;
 		break;
-#endif //] _MX6ULL_
+#endif
 	default :
 		printf("%s():%s [ERROR] GPIO group number error (%hd)!!\n",
 			__FUNCTION__,I_pt_gpio->pszName,
