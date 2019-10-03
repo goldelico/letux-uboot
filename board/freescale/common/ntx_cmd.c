@@ -783,16 +783,16 @@ static NTX_GPIO gtNtxGpio_FL_EN = {
 	0, // 1:input ; 0:output .
 } ;
 
-static const NTX_GPIO *gptNtxGpio_FL_R_EN ;
+static NTX_GPIO *gptNtxGpio_FL_R_EN ;
 static NTX_GPIO *gptNtxGpio_FL_EN=&gtNtxGpio_FL_EN ;
 
 #elif defined(_MX6ULL_) //][
-static const NTX_GPIO *gptNtxGpio_FL_R_EN ;
+static NTX_GPIO *gptNtxGpio_FL_R_EN ;
 static NTX_GPIO *gptNtxGpio_FL_EN ;
 
 #elif defined(_MX6SL_) || defined(_MX6SLL_) //][
 
-static const NTX_GPIO gtNtxGpio_FL_R_EN = {
+static NTX_GPIO gtNtxGpio_FL_R_EN = {
 	MX6_PAD_EPDC_SDCE2__GPIO1_IO29,
 	1, //  gpio group .
 	29, // gpio number .
@@ -815,7 +815,7 @@ static NTX_GPIO *gptNtxGpio_FL_EN=&gtNtxGpio_FL_EN ;
 
 #elif defined (_MX50_) //][
 
-static const NTX_GPIO gtNtxGpio_FL_R_EN = {
+static NTX_GPIO gtNtxGpio_FL_R_EN = {
 	MX50_PIN_EPDC_VCOM1, // pin name .
 	IOMUX_CONFIG_ALT1, // pin config .
 	0, // pad config .
@@ -876,7 +876,7 @@ void frontLightCtrl(void){
 
 	
 		if(gptNtxGpio_FL_R_EN) {
-			ntx_gpio_init(&gptNtxGpio_FL_R_EN);
+			ntx_gpio_init(gptNtxGpio_FL_R_EN);
 		}
 		if (50 != gptNtxHwCfg->m_val.bPCB)
 			ntx_gpio_init(gptNtxGpio_FL_EN);

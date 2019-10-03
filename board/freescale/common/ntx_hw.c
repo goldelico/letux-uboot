@@ -989,7 +989,7 @@ static NTX_GPIO *gpt_ntx_gpio_FP9928_RAIL_ON;
 // MISC detction gpios ...
 static NTX_GPIO *gpt_ntx_gpio_esdin; // External SD detction pin .
 static NTX_GPIO *gpt_ntx_gpio_ACIN; // 
-static const NTX_GPIO *gpt_ntx_gpio_USBID; // 
+static NTX_GPIO *gpt_ntx_gpio_USBID; // 
 
 // power switch gpios ...
 static NTX_GPIO *gpt_ntx_gpio_ISD_3V3_ON; // internal SD power .
@@ -1213,7 +1213,7 @@ void _set_TP_RST(int value)
 void _set_WIFI_3V3_ON(int value)
 {
 	if(gpt_ntx_gpio_WIFI_3V3_ON) {
-		ntx_gpio_set_value((struct NTX_GPIO *)gpt_ntx_gpio_WIFI_3V3_ON, value);
+		ntx_gpio_set_value((NTX_GPIO *)gpt_ntx_gpio_WIFI_3V3_ON, value);
 	}
 }
 
@@ -1231,14 +1231,14 @@ int __get_sd_number(void)
 #ifdef _MX6Q_ //[
 	int iBT_CFG_PORT0,iBT_CFG_PORT1;
 
-	iBT_CFG_PORT0=ntx_gpio_get_value(&gt_ntx_gpio_bootcfg_0);
-	iBT_CFG_PORT1=ntx_gpio_get_value(&gt_ntx_gpio_bootcfg_1);
+	iBT_CFG_PORT0=ntx_gpio_get_value((NTX_GPIO *)&gt_ntx_gpio_bootcfg_0);
+	iBT_CFG_PORT1=ntx_gpio_get_value((NTX_GPIO *)&gt_ntx_gpio_bootcfg_1);
 	iBT_PortNum=iBT_CFG_PORT1<<1|iBT_CFG_PORT0;
 #elif defined(_MX6SL_) || defined(_MX6SLL_) //][!_MX6Q_
 	int iBT_CFG23,iBT_CFG24;
 
-	iBT_CFG23=ntx_gpio_get_value(&gt_ntx_gpio_bootcfg_23);
-	iBT_CFG24=ntx_gpio_get_value(&gt_ntx_gpio_bootcfg_24);
+	iBT_CFG23=ntx_gpio_get_value((NTX_GPIO *)&gt_ntx_gpio_bootcfg_23);
+	iBT_CFG24=ntx_gpio_get_value((NTX_GPIO *)&gt_ntx_gpio_bootcfg_24);
 	printf("%s(),cfg23=%d,cfg24=%d \n",__FUNCTION__,iBT_CFG23,iBT_CFG24);
 	iBT_PortNum=iBT_CFG24<<1|iBT_CFG23;
 #elif defined(_MX6ULL_) //][!_MX6ULL_
@@ -1247,16 +1247,16 @@ int __get_sd_number(void)
 #else
 	int iBT_CFG2_3,iBT_CFG2_4;
 
-	iBT_CFG2_4=ntx_gpio_get_value(&gt_ntx_gpio_bootcfg2_4);
-	iBT_CFG2_3=ntx_gpio_get_value(&gt_ntx_gpio_bootcfg2_3);
+	iBT_CFG2_4=ntx_gpio_get_value((NTX_GPIO *)&gt_ntx_gpio_bootcfg2_4);
+	iBT_CFG2_3=ntx_gpio_get_value((NTX_GPIO *)&gt_ntx_gpio_bootcfg2_3);
 	printf("%s(),cfg2_3=%d,cfg2_4=%d \n",__FUNCTION__,iBT_CFG2_3,iBT_CFG2_4);
 	iBT_PortNum=iBT_CFG2_4<<1|iBT_CFG2_3;
 #endif
 #elif defined(_MX7D_) //][!_MX7D_
 	int iBT_CFG11,iBT_CFG10;
 
-	iBT_CFG11=ntx_gpio_get_value(&gt_ntx_gpio_bootcfg_11);
-	iBT_CFG10=ntx_gpio_get_value(&gt_ntx_gpio_bootcfg_10);
+	iBT_CFG11=ntx_gpio_get_value((NTX_GPIO *)&gt_ntx_gpio_bootcfg_11);
+	iBT_CFG10=ntx_gpio_get_value((NTX_GPIO *)&gt_ntx_gpio_bootcfg_10);
 	printf("%s(),cfg11=%d,cfg10=%d \n",__FUNCTION__,iBT_CFG11,iBT_CFG10);
 	iBT_PortNum=iBT_CFG11<<1|iBT_CFG10;
 #endif //] _MX6Q_
@@ -1888,10 +1888,10 @@ void EPDPMIC_power_on(int iIsPowerON)
 #ifdef _MX6Q_//[
 #else //][!_MX6Q_
 	if(iIsPowerON) {
-		ntx_gpio_set_value(&gt_ntx_gpio_EPDPMIC_VIN,1);
+		ntx_gpio_set_value((NTX_GPIO *)&gt_ntx_gpio_EPDPMIC_VIN,1);
 	}
 	else {
-		ntx_gpio_set_value(&gt_ntx_gpio_EPDPMIC_VIN,0);
+		ntx_gpio_set_value((NTX_GPIO *)&gt_ntx_gpio_EPDPMIC_VIN,0);
 	}
 #endif ///]_MX6Q_
 }
@@ -1900,10 +1900,10 @@ void EPDPMIC_vcom_onoff(int iIsON)
 #ifdef _MX6Q_//[
 #else //][!_MX6Q_
 	if(iIsON) {
-		ntx_gpio_set_value(&gt_ntx_gpio_EPDPMIC_VCOM,1);
+		ntx_gpio_set_value((NTX_GPIO *)&gt_ntx_gpio_EPDPMIC_VCOM,1);
 	}
 	else {
-		ntx_gpio_set_value(&gt_ntx_gpio_EPDPMIC_VCOM,0);
+		ntx_gpio_set_value((NTX_GPIO *)&gt_ntx_gpio_EPDPMIC_VCOM,0);
 	}
 #endif//] _MX6Q_
 }
@@ -1911,7 +1911,7 @@ void EPDPMIC_vcom_onoff(int iIsON)
 int EPDPMIC_isPowerGood(void)
 {
 	int iRet;
-	iRet = ntx_gpio_get_value(&gt_ntx_gpio_EPDPMIC_PWRGOOD)?1:0;
+	iRet = ntx_gpio_get_value((NTX_GPIO *)&gt_ntx_gpio_EPDPMIC_PWRGOOD)?1:0;
 	//printf("%s() = %d\n",__FUNCTION__,iRet);
 	return iRet;
 }
@@ -1989,10 +1989,10 @@ static void ntx_io_assign(void)
 	if(!gptNtxHwCfg) {
 		printf("warning : ntxhwcfg not exist !\n");
 	}
-	gptNtxGpioKey_Power = &gt_ntx_gpio_power_key;
+	gptNtxGpioKey_Power = (NTX_GPIO *)&gt_ntx_gpio_power_key;
 	#if defined(_MX6SLL_)
 	if (NTXHWCFG_TST_FLAG(gptNtxHwCfg->m_val.bPCB_Flags2,0)) 
-		gptNtxGpioKey_Power = &gt_ntx_gpio_power_key_2;
+		gptNtxGpioKey_Power = (NTX_GPIO *)&gt_ntx_gpio_power_key_2;
 	#endif
 
 	// assigns home key .
@@ -2001,7 +2001,7 @@ static void ntx_io_assign(void)
 		gptNtxGpioKey_Home = 0;
 	}
 	else {
-		gptNtxGpioKey_Home = &gt_ntx_gpio_home_key;
+		gptNtxGpioKey_Home = (NTX_GPIO *)&gt_ntx_gpio_home_key;
 	}
 
 	// assigns frontlight key .
@@ -2016,11 +2016,11 @@ static void ntx_io_assign(void)
 
 	if(0!=gptNtxHwCfg->m_val.bHallSensor) {
 
-		gptNtxGpioSW_HallSensor= &gt_ntx_gpio_hallsensor_key;
+		gptNtxGpioSW_HallSensor= (NTX_GPIO *)&gt_ntx_gpio_hallsensor_key;
 #if defined(_MX6SLL_) //[
 		if(NTXHWCFG_TST_FLAG(gptNtxHwCfg->m_val.bPCB_Flags2,0)) {
 			// EMMC@SD1(I/O@SD4).
-			gptNtxGpioSW_HallSensor= &gt_ntx_gpio_hallsensor_key2;
+			gptNtxGpioSW_HallSensor= (NTX_GPIO *)&gt_ntx_gpio_hallsensor_key2;
 		}
 #endif //](_MX6SLL_)
 	}
@@ -2033,42 +2033,42 @@ static void ntx_io_assign(void)
 	if(17==gptNtxHwCfg->m_val.bKeyPad) 
 	{
 		// keypad is 'RETURN+HOME+MENU'
-		gptNtxGpioKey_Menu = &gt_ntx_gpio_menu_key;
-		gptNtxGpioKey_Return = &gt_ntx_gpio_return_key ;
+		gptNtxGpioKey_Menu = (NTX_GPIO *)&gt_ntx_gpio_menu_key;
+		gptNtxGpioKey_Return = (NTX_GPIO *)&gt_ntx_gpio_return_key ;
 	}
 
 	if(22==gptNtxHwCfg->m_val.bKeyPad) 
 	{
 		// keypad is 'LEFT+RIGHT+HOME+MENU'
-		gptNtxGpioKey_Menu = &gt_ntx_gpio_menu_key_gp3_25;
-		gptNtxGpioKey_Left = &gt_ntx_gpio_left_key;
-		gptNtxGpioKey_Right = &gt_ntx_gpio_right_key;
+		gptNtxGpioKey_Menu = (NTX_GPIO *)&gt_ntx_gpio_menu_key_gp3_25;
+		gptNtxGpioKey_Left = (NTX_GPIO *)&gt_ntx_gpio_left_key;
+		gptNtxGpioKey_Right = (NTX_GPIO *)&gt_ntx_gpio_right_key;
 	}
 #endif
 
 
-	gpt_ntx_gpio_LED_G=&gt_ntx_gpio_LED_G;
-	gpt_ntx_gpio_LED_R=&gt_ntx_gpio_LED_R;
-	gpt_ntx_gpio_LED_B=&gt_ntx_gpio_LED_B;
+	gpt_ntx_gpio_LED_G=(NTX_GPIO *)&gt_ntx_gpio_LED_G;
+	gpt_ntx_gpio_LED_R=(NTX_GPIO *)&gt_ntx_gpio_LED_R;
+	gpt_ntx_gpio_LED_B=(NTX_GPIO *)&gt_ntx_gpio_LED_B;
 	#if defined(_MX6SLL_)
 	// assigns Green LED .
 	if (NTXHWCFG_TST_FLAG(gptNtxHwCfg->m_val.bPCB_Flags2,0)) {
-		gpt_ntx_gpio_LED_R=&gt_ntx_gpio_LED_R2;
-		gpt_ntx_gpio_LED_G=&gt_ntx_gpio_LED_G2;
-		gpt_ntx_gpio_LED_B=&gt_ntx_gpio_LED_B2;
+		gpt_ntx_gpio_LED_R=(NTX_GPIO *)&gt_ntx_gpio_LED_R2;
+		gpt_ntx_gpio_LED_G=(NTX_GPIO *)&gt_ntx_gpio_LED_G2;
+		gpt_ntx_gpio_LED_B=(NTX_GPIO *)&gt_ntx_gpio_LED_B2;
 	}
 	#endif
 
 	// assigns WIFI 3V3 .
-	gpt_ntx_gpio_WIFI_3V3_ON = &gt_ntx_gpio_WIFI_3V3_ON;
+	gpt_ntx_gpio_WIFI_3V3_ON = (NTX_GPIO *)&gt_ntx_gpio_WIFI_3V3_ON;
 
 
-	gpt_ntx_gpio_CT_RST = &gt_ntx_gpio_TPRST;
+	gpt_ntx_gpio_CT_RST = (NTX_GPIO *)&gt_ntx_gpio_TPRST;
 	#if defined(_MX6SLL_)//[
 	if (NTXHWCFG_TST_FLAG(gptNtxHwCfg->m_val.bPCB_Flags2,0)) {
-		gpt_ntx_gpio_CT_RST = &gt_ntx_gpio_TPRST2;
+		gpt_ntx_gpio_CT_RST = (NTX_GPIO *)&gt_ntx_gpio_TPRST2;
 	}
-	#endif //]
+	#endif
 
 	// assigns Touch RST .
 	if(4==gptNtxHwCfg->m_val.bTouchType) {
@@ -2081,8 +2081,8 @@ static void ntx_io_assign(void)
 	}
 
 
-	gpt_ntx_gpio_EP_3V3_ON = &gt_ntx_gpio_EPDPMIC_VIN ;
-	gpt_ntx_gpio_EP_VCOM_ON = &gt_ntx_gpio_EPDPMIC_VCOM ;
+	gpt_ntx_gpio_EP_3V3_ON = (NTX_GPIO *)&gt_ntx_gpio_EPDPMIC_VIN ;
+	gpt_ntx_gpio_EP_VCOM_ON = (NTX_GPIO *)&gt_ntx_gpio_EPDPMIC_VCOM ;
 
 	//gpt_ntx_gpio_FLPWR = ;
 	//gpt_ntx_gpio_FP9928_RAIL_ON	= ;
