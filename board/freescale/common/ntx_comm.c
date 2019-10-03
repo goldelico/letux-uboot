@@ -1964,7 +1964,7 @@ static struct fastboot_ptentry ntx_fb_binsA[NTX_FASTBOOT_MAX_BPTN]= {
 
 	// binary end tag .
 	{
-		.name=0,
+		.name={0},
 	}
 
 };
