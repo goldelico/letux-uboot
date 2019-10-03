@@ -2979,7 +2979,7 @@ int ntx_wait_powerkey(int iWaitSecs,int iWaitPwrKeyStatChgTimes,int iChkEnterPwr
 	unsigned long long u64_timeout_tick = ntx_get_timeout_ustick(iWaitSecs*1000*1000);
 	unsigned long dwLoopCnt =	0;
 	int iLedOnOff=0;
-	int iPwrkeyLastState,iPwrkeyCurState;
+	int iPwrkeyLastState=-1,iPwrkeyCurState;
 	unsigned long dwPwrkeyStatChgCnt =	0;
 #define PWRKEY_DEBOUNCE_TOTAL		80000
 	unsigned long dwPwrkeyDebounceCnt=0;
