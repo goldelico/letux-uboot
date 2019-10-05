@@ -807,9 +807,9 @@ u32 get_board_rev(void)
 int checkboard(void)
 {
 #if defined(CONFIG_LPDDR2) || defined(CONFIG_LPDDR2_512M)
-	puts("Board: MX6SLL LPDDR2 NTX\n");
+	puts("Board: MX6SL LPDDR2 NTX e60k02\n");
 #else
-	puts("Board: MX6SLL LPDDR3 NTX\n");
+	puts("Board: MX6SL LPDDR3 NTX e60k02\n");
 #endif
 
 	return 0;
