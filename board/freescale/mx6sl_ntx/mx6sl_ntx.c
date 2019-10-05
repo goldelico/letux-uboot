@@ -72,12 +72,12 @@ struct i2c_pads_info i2c_pad_info1 = {
 /* I2C2 for LCD and ADV */
 struct i2c_pads_info i2c_pad_info2 = {
 	.scl = {
-		.i2c_mode = MX6SL_PAD_I2C2_SCL__I2C2_SCL | PC,
+		.i2c_mode = MX6_PAD_I2C2_SCL__I2C2_SCL | PC,
 		.gpio_mode = MX6SL_PAD_I2C2_SCL__GPIO3_IO14 | PC,
 		.gp = IMX_GPIO_NR(3, 14),
 	},
 	.sda = {
-		.i2c_mode = MX6SL_PAD_I2C2_SDA__I2C2_SDA | PC,
+		.i2c_mode = MX6_PAD_I2C2_SDA__I2C2_SDA | PC,
 		.gpio_mode = MX6SL_PAD_I2C2_SDA__GPIO3_IO15 | PC,
 		.gp = IMX_GPIO_NR(3, 15),
 	},
@@ -87,13 +87,13 @@ struct i2c_pads_info i2c_pad_info2 = {
 struct i2c_pads_info i2c_pad_info3 = {
 	.scl = {
 		/* conflict with usb_otg2_pwr */
-		.i2c_mode = MX6SL_PAD_REF_CLK_24M__I2C3_SCL | PC,
+		.i2c_mode = MX6_PAD_REF_CLK_24M__I2C3_SCL | PC,
 		.gpio_mode = MX6SL_PAD_REF_CLK_24M__GPIO3_IO21 | PC,
 		.gp = IMX_GPIO_NR(3, 21),
 	},
 	.sda = {
 		/* conflict with usb_otg2_oc */
-		.i2c_mode = MX6SL_PAD_REF_CLK_32K__I2C3_SDA | PC,
+		.i2c_mode = MX6_PAD_REF_CLK_32K__I2C3_SDA | PC,
 		.gpio_mode = MX6_PAD_REF_CLK_32K__GPIO_3_22 | PC,
 		.gp = IMX_GPIO_NR(3, 22),
 	},
