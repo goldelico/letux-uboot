@@ -2569,8 +2569,10 @@ BOOTMODE_ENTRY:
 		{
 			// Android UI .
 
-			strcat(O_pszKernCmdLine," androidboot.serialno=");
-			strcat(O_pszKernCmdLine,(char *)(&gcNTX_SN[3]));
+			if(gpbKernelAddr) {
+				strcat(O_pszKernCmdLine," androidboot.serialno=");
+				strcat(O_pszKernCmdLine,(char *)(&gcNTX_SN[3]));
+			}
 			//printf("bootargs=\"%s\"\n",O_pszKernCmdLine);
 
 #if 0
@@ -2758,8 +2760,10 @@ BOOTMODE_ENTRY:
 #endif
 
 		if(9==gptNtxHwCfg->m_val.bCustomer) {
-			if(pcEnv_bootargs&&0==strstr(pcEnv_bootargs,"quiet")) {
-				strcat(O_pszKernCmdLine," quiet");
+			if(gpbKernelAddr) {
+				if(pcEnv_bootargs&&0==strstr(pcEnv_bootargs,"quiet")) {
+					strcat(O_pszKernCmdLine," quiet");
+				}
 			}
 		}
 
