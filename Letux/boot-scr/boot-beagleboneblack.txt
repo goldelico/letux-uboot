@@ -5,14 +5,15 @@
 setenv devicetree am335x-boneblack+letux
 setenv defaultdisplay   lcd
 
-setenv mmc 1		# mmc number as seen by u-boot where it looks for kernel
+setenv mmc none		# mmc number as seen by u-boot where it looks for kernel
 # we should have some mechanism so that u-boot and kernel use the same mmc numbering scheme or we have problems specifying the right rootfs
-setenv kernelmmc 0	# mmc number as seen by kernel
-setenv PARTITION 1	# partition where kernel is found (simulates the partition selection mechanism of the GTA04)
+setenv kernelmmc 1	# mmc number as seen by kernel
+setenv PARTITION none	# partition where kernel is found (simulates the partition selection mechanism of the GTA04)
 setenv PARTITIONTYPE FAT
 
 # set default
-setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rw rootwait earlyprintk fixrtc'
+#setenv console 'ttyO0,115200n8'
+#setenv mmcargs 'setenv bootargs console=${console} root=/dev/mmcblk${kernelmmc}p2 rootfstype=${mmcrootfstype}'
 
 DONE=0
 for m in 0 1 # scan uSD and eMMC
@@ -37,6 +38,8 @@ do
 done
 
 run mmcargs
+
+# best solution would be to use PARTITION UUID
 
 # allow to overwrite boot args (incl. kernelmmc)
 if fatload mmc ${mmc}:${PARTITION} 0x81300000 bootargs.scr
