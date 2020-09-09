@@ -235,8 +235,16 @@ static void rtc32k_enable(void)
 	writel(RTC_KICK0R_WE, &rtc->kick0r);
 	writel(RTC_KICK1R_WE, &rtc->kick1r);
 
+//#if defined(CONFIG_SPL_AM33XX_ENABLE_RTC32K_OSC_INTERNAL)
+#if defined(CONFIG_OSD3358)
+#warning internal RTC OSD3358
+	/* Enable the RTC 32K OSC "internal" by resetting bit 3 and setting 6. */
+	writel((0 << 3) | (1 << 6), &rtc->osc);
+#else
+#warning external RTC others
 	/* Enable the RTC 32K OSC by setting bits 3 and 6. */
 	writel((1 << 3) | (1 << 6), &rtc->osc);
+#endif
 }
 #endif
 
