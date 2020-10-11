@@ -490,6 +490,7 @@ static int jz_mmc_probe(struct udevice *dev)
 }
 
 static const struct udevice_id jz_mmc_ids[] = {
+	{ .compatible = "ingenic,jz4740-mmc" },
 	{ .compatible = "ingenic,jz4780-mmc" },
 	{ }
 };
