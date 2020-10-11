@@ -177,6 +177,14 @@ config PINCTRL_AT91PIO4
 	  This option is to enable the AT91 pinctrl driver for AT91 PIO4
 	  controller which is available on SAMA5D2 SoC.
 
+config PINCTRL_JZ4730
+	bool "Ingenic JZ4730 pinctrl driver"
+	depends on DM && SOC_JZ4730
+	default y
+	help
+	  This option is to enable the driver for pinctrl and GPIO
+	  controller which is available on Ingenic JZ4730 SoC.
+
 config PINCTRL_INTEL
 	bool "Standard Intel pin-control and pin-mux driver"
 	help
