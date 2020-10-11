@@ -326,6 +326,7 @@ static inline void _debug_uart_init(void)
 {
 	struct NS16550 *com_port = (struct NS16550 *)CONFIG_DEBUG_UART_BASE;
 	int baud_divisor;
+	int fcr = UART_FCR_DEFVAL;
 
 	/*
 	 * We copy the code from above because it is already horribly messy.
@@ -335,9 +336,13 @@ static inline void _debug_uart_init(void)
 	 */
 	baud_divisor = ns16550_calc_divisor(com_port, CONFIG_DEBUG_UART_CLOCK,
 					    CONFIG_BAUDRATE);
+
+	if (IS_ENABLED(CONFIG_ARCH_JZ47XX))
+		fcr |= UART_FCR_UME;
+
 	serial_dout(&com_port->ier, CONFIG_SYS_NS16550_IER);
 	serial_dout(&com_port->mcr, UART_MCRVAL);
-	serial_dout(&com_port->fcr, UART_FCR_DEFVAL);
+	serial_dout(&com_port->fcr, fcr);
 
 	serial_dout(&com_port->lcr, UART_LCR_BKSE | UART_LCRVAL);
 	serial_dout(&com_port->dll, baud_divisor & 0xff);
