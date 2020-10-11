@@ -342,6 +342,17 @@ config FSLDMAFEC
 	  This driver supports the network interface units in the
 	  ColdFire family.
 
+
+config JZ4730_ETH
+        bool "Ingenic JZ4730 Ethernet Support"
+	depends on DM_ETH && SOC_JZ4730
+	select PHYLIB
+	select MII
+	default y
+	help
+	  This driver supports the network interface units in the
+	  Ingenic JZ4730 SoC.
+
 config KS8851_MLL
 	bool "Microchip KS8851-MLL controller driver"
 	help
