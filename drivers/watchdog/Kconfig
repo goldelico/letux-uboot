@@ -118,6 +118,14 @@ config WDT_CORTINA
 	  This driver support all CPU ISAs supported by Cortina
 	  Access CAxxxx SoCs.
 
+config WDT_JZ4730
+	bool "Ingenic JZ4730 watchdog timer support"
+	depends on WDT && SOC_JZ4730
+	default y
+	help
+	  Select this to enable watchdog timer, which can be found on
+	  Ingenic JZ4730 chips.
+
 config WDT_MPC8xx
 	bool "MPC8xx watchdog timer support"
 	depends on WDT && MPC8xx
