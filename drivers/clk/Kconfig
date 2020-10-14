@@ -113,6 +113,14 @@ config CLK_HSDK
 	  Enable this to support the cgu clocks on Synopsys ARC HSDK and
 	  Synopsys ARC HSDK-4xD boards
 
+config CLK_JZ4730
+	bool "Enable clock driver for Ingenic JZ4730 cgu"
+	depends on CLK && SOC_JZ4730
+	default y
+	help
+	  This clock driver adds support for clock generators present on
+	  Ingenic JZ4730 SoC.
+
 config CLK_VERSAL
 	bool "Enable clock driver support for Versal"
 	depends on ARCH_VERSAL
