@@ -1245,6 +1245,7 @@ config TARGET_LS1088AQDS
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	select FSL_DDR_INTERACTIVE if !SD_BOOT
+	select CMD_MAC
 	help
 	  Support for NXP LS1088AQDS platform.
 	  The LS1088A Development System (QDS) is a high-performance
@@ -1263,6 +1264,7 @@ config TARGET_LS2080AQDS
 	imply SCSI_AHCI
 	select FSL_DDR_BIST
 	select FSL_DDR_INTERACTIVE if !SPL
+	select CMD_MAC
 	help
 	  Support for Freescale LS2080AQDS platform.
 	  The LS2080A Development System (QDS) is a high-performance
@@ -1279,6 +1281,7 @@ config TARGET_LS2080ARDB
 	select SUPPORT_SPL
 	select FSL_DDR_BIST
 	select FSL_DDR_INTERACTIVE if !SPL
+	select CMD_MAC
 	imply SCSI
 	imply SCSI_AHCI
 	help
@@ -1294,6 +1297,7 @@ config TARGET_LS2081ARDB
 	select ARMV8_MULTIENTRY
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
+	select CMD_MAC
 	help
 	  Support for Freescale LS2081ARDB platform.
 	  The LS2081A Reference design board (RDB) is a high-performance
@@ -1307,6 +1311,7 @@ config TARGET_LX2160ARDB
 	select ARMV8_MULTIENTRY
 	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
+	select CMD_MAC
 	help
 	  Support for NXP LX2160ARDB platform.
 	  The lx2160ardb (LX2160A Reference design board (RDB)
@@ -1320,6 +1325,7 @@ config TARGET_LX2160AQDS
 	select ARMV8_MULTIENTRY
 	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
+	select CMD_MAC
 	help
 	  Support for NXP LX2160AQDS platform.
 	  The lx2160aqds (LX2160A QorIQ Development System (QDS)
@@ -1373,6 +1379,7 @@ config TARGET_LS1012AQDS
 	select ARM64
 	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
+	select CMD_MAC
 	help
 	  Support for Freescale LS1012AQDS platform.
 	  The LS1012A Development System (QDS) is a high-performance
@@ -1438,6 +1445,7 @@ config TARGET_LS1028AQDS
 	select ARMV8_MULTIENTRY
 	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
+	select CMD_MAC
 	help
 	  Support for Freescale LS1028AQDS platform
 	  The LS1028A Development System (QDS) is a high-performance
@@ -1451,6 +1459,7 @@ config TARGET_LS1028ARDB
 	select ARMV8_MULTIENTRY
 	select ARCH_SUPPORT_TFABOOT
 	select BOARD_LATE_INIT
+	select CMD_MAC
 	help
 	  Support for Freescale LS1028ARDB platform
 	  The LS1028A Development System (RDB) is a high-performance
@@ -1466,6 +1475,7 @@ config TARGET_LS1088ARDB
 	select BOARD_LATE_INIT
 	select SUPPORT_SPL
 	select FSL_DDR_INTERACTIVE if !SD_BOOT
+	select CMD_MAC
 	help
 	  Support for NXP LS1088ARDB platform.
 	  The LS1088A Reference design board (RDB) is a high-performance
@@ -1487,6 +1497,7 @@ config TARGET_LS1021AQDS
 	select FSL_DDR_INTERACTIVE
 	select DM_SPI_FLASH if FSL_DSPI || FSL_QSPI
 	select SPI_FLASH_DATAFLASH if FSL_DSPI || FSL_QSPI
+	select CMD_MAC
 	imply SCSI
 
 config TARGET_LS1021ATWR
@@ -1501,6 +1512,7 @@ config TARGET_LS1021ATWR
 	select LS1_DEEP_SLEEP
 	select SUPPORT_SPL
 	select DM_SPI_FLASH if FSL_DSPI || FSL_QSPI
+	select CMD_MAC
 	imply SCSI
 
 config TARGET_LS1021ATSN
@@ -1514,6 +1526,7 @@ config TARGET_LS1021ATSN
 	select CPU_V7_HAS_VIRT
 	select LS1_DEEP_SLEEP
 	select SUPPORT_SPL
+	select CMD_MAC
 	imply SCSI
 
 config TARGET_LS1021AIOT
@@ -1526,6 +1539,7 @@ config TARGET_LS1021AIOT
 	select CPU_V7_HAS_VIRT
 	select SUPPORT_SPL
 	select DM_SPI_FLASH if FSL_DSPI || FSL_QSPI
+	select CMD_MAC
 	imply SCSI
 	help
 	  Support for Freescale LS1021AIOT platform.
@@ -1545,6 +1559,7 @@ config TARGET_LS1043AQDS
 	select FSL_DDR_INTERACTIVE if !SPL
 	select FSL_DSPI if !SPL_NO_DSPI
 	select DM_SPI_FLASH if FSL_DSPI
+	select CMD_MAC
 	imply SCSI
 	imply SCSI_AHCI
 	help
@@ -1561,6 +1576,7 @@ config TARGET_LS1043ARDB
 	select SUPPORT_SPL
 	select FSL_DSPI if !SPL_NO_DSPI
 	select DM_SPI_FLASH if FSL_DSPI
+	select CMD_MAC
 	help
 	  Support for Freescale LS1043ARDB platform.
 
@@ -1577,6 +1593,7 @@ config TARGET_LS1046AQDS
 	select FSL_DDR_BIST if !SPL
 	select FSL_DDR_INTERACTIVE  if !SPL
 	select FSL_DDR_INTERACTIVE if !SPL
+	select CMD_MAC
 	imply SCSI
 	help
 	  Support for Freescale LS1046AQDS platform.
@@ -1597,6 +1614,7 @@ config TARGET_LS1046ARDB
 	select SUPPORT_SPL
 	select FSL_DDR_BIST
 	select FSL_DDR_INTERACTIVE if !SPL
+	select CMD_MAC
 	imply SCSI
 	help
 	  Support for Freescale LS1046ARDB platform.
@@ -1613,6 +1631,7 @@ config TARGET_LS1046AFRWY
 	select BOARD_EARLY_INIT_F
 	select BOARD_LATE_INIT
 	select DM_SPI_FLASH if DM_SPI
+	select CMD_MAC
 	imply SCSI
 	help
 	  Support for Freescale LS1046AFRWY platform.

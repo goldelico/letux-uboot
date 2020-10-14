@@ -29,6 +29,7 @@ config TARGET_P3041DS
 	select PHYS_64BIT
 	select ARCH_P3041
 	select BOARD_LATE_INIT if CHAIN_OF_TRUST
+	select CMD_MAC
 	imply CMD_SATA
 	imply PANIC_HANG
 
@@ -37,6 +38,7 @@ config TARGET_P4080DS
 	select PHYS_64BIT
 	select ARCH_P4080
 	select BOARD_LATE_INIT if CHAIN_OF_TRUST
+	select CMD_MAC
 	imply CMD_SATA
 	imply PANIC_HANG
 
@@ -45,12 +47,14 @@ config TARGET_P5040DS
 	select PHYS_64BIT
 	select ARCH_P5040
 	select BOARD_LATE_INIT if CHAIN_OF_TRUST
+	select CMD_MAC
 	imply CMD_SATA
 	imply PANIC_HANG
 
 config TARGET_MPC8541CDS
 	bool "Support MPC8541CDS"
 	select ARCH_MPC8541
+	select CMD_MAC
 
 config TARGET_MPC8544DS
 	bool "Support MPC8544DS"
@@ -60,10 +64,12 @@ config TARGET_MPC8544DS
 config TARGET_MPC8548CDS
 	bool "Support MPC8548CDS"
 	select ARCH_MPC8548
+	select CMD_MAC
 
 config TARGET_MPC8555CDS
 	bool "Support MPC8555CDS"
 	select ARCH_MPC8555
+	select CMD_MAC
 
 config TARGET_MPC8568MDS
 	bool "Support MPC8568MDS"
@@ -72,12 +78,14 @@ config TARGET_MPC8568MDS
 config TARGET_MPC8569MDS
 	bool "Support MPC8569MDS"
 	select ARCH_MPC8569
+	select CMD_MAC
 
 config TARGET_MPC8572DS
 	bool "Support MPC8572DS"
 	select ARCH_MPC8572
 # Use DDR3 controller with DDR2 DIMMs on this board
 	select SYS_FSL_DDRC_GEN3
+	select CMD_MAC
 	imply SCSI
 	imply PANIC_HANG
 
@@ -97,6 +105,7 @@ config TARGET_P1010RDB_PB
 	select BOARD_LATE_INIT if CHAIN_OF_TRUST
 	select SUPPORT_SPL
 	select SUPPORT_TPL
+	select CMD_MAC
 	imply CMD_EEPROM
 	imply CMD_SATA
 	imply PANIC_HANG
@@ -133,6 +142,7 @@ config TARGET_P2041RDB
 	select ARCH_P2041
 	select BOARD_LATE_INIT if CHAIN_OF_TRUST
 	select PHYS_64BIT
+	select CMD_MAC
 	imply CMD_SATA
 	imply FSL_SATA
 
@@ -148,6 +158,7 @@ config TARGET_T1023RDB
 	select SUPPORT_SPL
 	select PHYS_64BIT
 	select FSL_DDR_INTERACTIVE
+	select CMD_MAC
 	imply CMD_EEPROM
 	imply PANIC_HANG
 
@@ -158,6 +169,7 @@ config TARGET_T1024RDB
 	select SUPPORT_SPL
 	select PHYS_64BIT
 	select FSL_DDR_INTERACTIVE
+	select CMD_MAC
 	imply CMD_EEPROM
 	imply PANIC_HANG
 
@@ -213,6 +225,7 @@ config TARGET_T2080QDS
 	select PHYS_64BIT
 	select FSL_DDR_FIRST_SLOT_QUAD_CAPABLE
 	select FSL_DDR_INTERACTIVE
+	select CMD_MAC
 	imply CMD_SATA
 
 config TARGET_T2080RDB
@@ -221,6 +234,7 @@ config TARGET_T2080RDB
 	select BOARD_LATE_INIT if CHAIN_OF_TRUST
 	select SUPPORT_SPL
 	select PHYS_64BIT
+	select CMD_MAC
 	imply CMD_SATA
 	imply PANIC_HANG
 
@@ -231,6 +245,7 @@ config TARGET_T2081QDS
 	select PHYS_64BIT
 	select FSL_DDR_FIRST_SLOT_QUAD_CAPABLE
 	select FSL_DDR_INTERACTIVE
+	select CMD_MAC
 
 config TARGET_T4160RDB
 	bool "Support T4160RDB"
@@ -280,12 +295,14 @@ config TARGET_CYRUS_P5020
 	bool "Support Varisys Cyrus P5020"
 	select ARCH_P5020
 	select PHYS_64BIT
+	select CMD_MAC
 	imply PANIC_HANG
 
 config TARGET_CYRUS_P5040
 	 bool "Support Varisys Cyrus P5040"
 	select ARCH_P5040
 	select PHYS_64BIT
+	select CMD_MAC
 	imply PANIC_HANG
 
 endchoice
