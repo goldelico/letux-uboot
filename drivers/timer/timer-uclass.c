@@ -61,9 +61,11 @@ static int timer_pre_probe(struct udevice *dev)
 	if (!err) {
 		ret = clk_get_rate(&timer_clk);
 		if (IS_ERR_VALUE(ret))
-			return ret;
-		uc_priv->clock_rate = ret;
-	} else {
+			err = ret;
+		else
+			uc_priv->clock_rate = ret;
+	}
+	if (err) {
 		uc_priv->clock_rate =
 			dev_read_u32_default(dev, "clock-frequency", 0);
 	}
