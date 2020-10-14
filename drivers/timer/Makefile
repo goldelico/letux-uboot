@@ -12,6 +12,7 @@ obj-$(CONFIG_ATCPIT100_TIMER) += atcpit100_timer.o
 obj-$(CONFIG_ATMEL_PIT_TIMER) += atmel_pit_timer.o
 obj-$(CONFIG_CADENCE_TTC_TIMER)	+= cadence-ttc.o
 obj-$(CONFIG_DESIGNWARE_APB_TIMER)	+= dw-apb-timer.o
+obj-$(CONFIG_JZ4730_TIMER) += jz4730_timer.o
 obj-$(CONFIG_MPC83XX_TIMER) += mpc83xx_timer.o
 obj-$(CONFIG_NOMADIK_MTU_TIMER)	+= nomadik-mtu-timer.o
 obj-$(CONFIG_OMAP_TIMER)	+= omap-timer.o

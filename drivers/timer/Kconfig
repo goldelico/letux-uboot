@@ -110,6 +110,14 @@ config DESIGNWARE_APB_TIMER
 	  Enables support for the Designware APB Timer driver. This timer is
 	  present on Altera SoCFPGA SoCs.
 
+config JZ4730_TIMER
+	bool "Ingenic JZ4730 timer support"
+	depends on TIMER
+	default y if SOC_JZ4730
+	help
+	  Select this to enable support for the timer found on
+	  devices based on the Ingenic JZ4730 SoC.
+
 config MPC83XX_TIMER
 	bool "MPC83xx timer support"
 	depends on TIMER
