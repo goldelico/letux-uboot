@@ -136,6 +136,8 @@ reset:
 #ifdef CONFIG_ARCH_BMIPS
 1:	mfc0	t0, CP0_DIAGNOSTIC, 3
 	and	t0, t0, (1 << 31)
+#elif CONFIG_ARCH_JZ47XX
+1:	and	t0, t0, zero
 #else
 1:	mfc0	t0, CP0_EBASE
 	and	t0, t0, MIPS_EBASE_CPUNUM
