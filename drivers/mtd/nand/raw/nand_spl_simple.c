@@ -9,14 +9,16 @@
 #include <asm/io.h>
 #include <linux/mtd/nand_ecc.h>
 
-static int nand_ecc_pos[] = CONFIG_SYS_NAND_ECCPOS;
 static struct mtd_info *mtd;
 static struct nand_chip nand_chip;
+
+#if IS_ENABLED(CONFIG_SPL_NAND_ECC)
+static int nand_ecc_pos[] = CONFIG_SYS_NAND_ECCPOS;
 
 #define ECCSTEPS	(CONFIG_SYS_NAND_PAGE_SIZE / \
 					CONFIG_SYS_NAND_ECCSIZE)
 #define ECCTOTAL	(ECCSTEPS * CONFIG_SYS_NAND_ECCBYTES)
-
+#endif
 
 #if (CONFIG_SYS_NAND_PAGE_SIZE <= 512)
 /*
@@ -166,7 +168,7 @@ static int nand_read_page(int block, int page, uchar *dst)
 
 	return 0;
 }
-#else
+#elif IS_ENABLED(CONFIG_SPL_NAND_ECC)
 static int nand_read_page(int block, int page, void *dst)
 {
 	struct nand_chip *this = mtd_to_nand(mtd);
@@ -203,6 +205,16 @@ static int nand_read_page(int block, int page, void *dst)
 		 */
 		this->ecc.correct(mtd, p, &ecc_code[i], &ecc_calc[i]);
 	}
+
+	return 0;
+}
+#else
+static int nand_read_page(int block, int page, void *dst)
+{
+	struct nand_chip *this = mtd_to_nand(mtd);
+
+	nand_command(block, page, 0, NAND_CMD_READ0);
+	this->read_buf(mtd, dst, CONFIG_SYS_NAND_PAGE_SIZE);
 
 	return 0;
 }
