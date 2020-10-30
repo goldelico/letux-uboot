@@ -1,0 +1,87 @@
+if SOC_JZ4730
+
+config SYS_DCACHE_SIZE
+	default 16384
+
+config SYS_DCACHE_LINE_SIZE
+	default 32
+
+config SYS_ICACHE_SIZE
+	default 16384
+
+config SYS_ICACHE_LINE_SIZE
+	default 32
+
+config SYS_MALLOC_F_LEN
+	default 0x1000
+
+config SPL_SIZE_LIMIT
+	default 4096
+
+config MIPS_CACHE_SETUP
+	default n
+
+config MIPS_CACHE_DISABLE
+	default n
+
+config JZ4730_SDRAM_BANK_SIZE
+	int
+	help
+	  Megabytes per bank.
+
+config JZ4730_SDRAM_ROW
+	int
+	help
+	  Row address.
+
+config JZ4730_SDRAM_COL
+	int
+	help
+	  Column address.
+
+config JZ4730_SDRAM_BANKS_PER_CHIP
+	int
+	help
+	  Banks per chip.
+
+config JZ4730_SDRAM_WIDTH
+	int
+	help
+	  Data bus width.
+
+config JZ4730_SDRAM_CAS
+	int
+	help
+	  CAS latency: 2 or 3.
+
+config JZ4730_SDRAM_TRAS
+	int
+	help
+	  RAS# Active Time.
+
+config JZ4730_SDRAM_RCD
+	int
+	help
+	  RAS# to CAS# Delay.
+
+config JZ4730_SDRAM_TPC
+	int
+	help
+	  RAS# Precharge Time.
+
+config JZ4730_SDRAM_TRW
+	int
+	help
+	  Write Latency Time.
+
+config JZ4730_SDRAM_TREF
+	int
+	help
+	  Refresh period: 8192 refresh cycles/64ms.
+
+config JZ4730_SDRAM_CKS
+	int
+	help
+	  CKO Divider.
+
+endif

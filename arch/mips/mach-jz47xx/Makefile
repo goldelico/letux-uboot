@@ -2,4 +2,6 @@
 
 extra-$(CONFIG_SPL_BUILD)	:= start.o
 
+obj-$(CONFIG_SOC_JZ4730)	+= jz4730/
+
 obj-$(CONFIG_SOC_JZ4780)	+= jz4780/

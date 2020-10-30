@@ -4,6 +4,41 @@ menu "Ingenic JZ47xx platforms"
 config SYS_SOC
 	default "jz47xx"
 
+config SPL_TEXT_BASE
+	default 0x80000000 if ARCH_JZ47XX
+
+config SYS_TEXT_BASE
+	default 0x80100000 if ARCH_JZ47XX
+
+config SOC_JZ4730
+	bool
+	select MIPS_INIT_STACK_IN_SRAM
+	select SUPPORTS_CPU_MIPS32_R1
+	select SUPPORTS_LITTLE_ENDIAN
+	select SYS_RELOC_GD_ENV_ADDR
+	select SPL_INIT_STACK_WITHOUT_MALLOC_F if SPL
+	select SPL_LIBCOMMON_SUPPORT if SPL
+	select SPL_LIBGENERIC_SUPPORT if SPL
+	select SPL_LOADER_SUPPORT if SPL
+	imply CLK
+	imply CMD_DM
+	imply DM_GPIO
+	imply DM_MMC
+	imply DM_MTD
+	imply DM_SERIAL
+	imply FIT
+	imply MMC
+	imply MTD
+	imply MTD_RAW_NAND
+	imply PINCTRL
+	imply SPL
+	imply SYS_NS16550
+	imply SYSRESET
+	imply SYSRESET_WATCHDOG
+	imply TIMER
+	help
+	  Support for Ingenic JZ4730 family SoCs.
+
 config SOC_JZ4780
 	bool
 	select SUPPORTS_LITTLE_ENDIAN
@@ -20,6 +55,10 @@ config TARGET_JZ4780_CI20
 	select SOC_JZ4780
 
 endchoice
+
+source "arch/mips/mach-jz47xx/jz4730/Kconfig"
+
+source "board/skytone/alpha400/Kconfig"
 
 source "board/imgtec/ci20/Kconfig"
 
