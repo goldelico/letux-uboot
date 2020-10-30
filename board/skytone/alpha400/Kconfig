@@ -1,0 +1,60 @@
+if TARGET_JZ4730_ALPHA400
+
+config SYS_BOARD
+	default "alpha400"
+
+config SYS_VENDOR
+	default "skytone"
+
+config SYS_CONFIG_NAME
+	default "alpha400"
+
+config DEFAULT_DEVICE_TREE
+	default "alpha400"
+
+config BUILD_TARGET
+	default "u-boot-with-spl.bin" if SPL
+
+config SYS_NAND_U_BOOT_OFFS
+	default 0x20000
+
+config NR_DRAM_BANKS
+	default 16
+
+config JZ4730_SDRAM_BANK_SIZE
+	default 8
+
+config JZ4730_SDRAM_ROW
+	default 13
+
+config JZ4730_SDRAM_COL
+	default 9
+
+config JZ4730_SDRAM_BANKS_PER_CHIP
+	default 4
+
+config JZ4730_SDRAM_WIDTH
+	default 32
+
+config JZ4730_SDRAM_CAS
+	default 2
+
+config JZ4730_SDRAM_TRAS
+	default 45
+
+config JZ4730_SDRAM_RCD
+	default 20
+
+config JZ4730_SDRAM_TPC
+	default 20
+
+config JZ4730_SDRAM_TRW
+	default 7
+
+config JZ4730_SDRAM_TREF
+	default 7812
+
+config JZ4730_SDRAM_CKS
+	default 64
+
+endif
