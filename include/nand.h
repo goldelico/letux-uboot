@@ -35,7 +35,7 @@ unsigned long nand_size(void);
 
 int nand_mtd_to_devnum(struct mtd_info *mtd);
 
-#ifdef CONFIG_SYS_NAND_SELF_INIT
+#if defined(CONFIG_SYS_NAND_SELF_INIT) && !CONFIG_IS_ENABLED(NAND_SIMPLE)
 void board_nand_init(void);
 int nand_register(int devnum, struct mtd_info *mtd);
 #else
