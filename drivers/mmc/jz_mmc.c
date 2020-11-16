@@ -9,6 +9,7 @@
 #include <common.h>
 #include <malloc.h>
 #include <mmc.h>
+#include <asm/gpio.h>
 #include <asm/io.h>
 #include <asm/unaligned.h>
 #include <errno.h>
@@ -130,6 +131,11 @@ struct jz_mmc_priv {
 #define JZ_MMC_BUS_WIDTH_4	0x2
 #define JZ_MMC_BUS_WIDTH_8	0x3
 #define JZ_MMC_SENT_INIT	BIT(2)
+
+#if CONFIG_IS_ENABLED(DM_GPIO)
+	struct gpio_desc gpio_wp;
+	struct gpio_desc gpio_cd;
+#endif
 };
 
 static int jz_mmc_clock_rate(void)
@@ -438,9 +444,33 @@ static int jz_mmc_dm_set_ios(struct udevice *dev)
 	return jz_mmc_set_ios(mmc, priv);
 };
 
+#if CONFIG_IS_ENABLED(DM_GPIO)
+static int jz_mmc_dm_get_cd(struct udevice *dev)
+{
+	struct jz_mmc_priv *priv = dev_get_priv(dev);
+
+	if (priv->gpio_cd.dev)
+		return dm_gpio_get_value(&priv->gpio_cd);
+	return -ENOSYS;
+}
+
+static int jz_mmc_dm_get_wp(struct udevice *dev)
+{
+	struct jz_mmc_priv *priv = dev_get_priv(dev);
+
+	if (priv->gpio_wp.dev)
+		dm_gpio_get_value(&priv->gpio_wp);
+	return -ENOSYS;
+}
+#endif
+
 static const struct dm_mmc_ops jz_msc_ops = {
 	.send_cmd	= jz_mmc_dm_send_cmd,
 	.set_ios	= jz_mmc_dm_set_ios,
+#if CONFIG_IS_ENABLED(DM_GPIO)
+	.get_cd		= jz_mmc_dm_get_cd,
+	.get_wp		= jz_mmc_dm_get_wp,
+#endif
 };
 
 static int jz_mmc_ofdata_to_platdata(struct udevice *dev)
@@ -483,6 +513,11 @@ static int jz_mmc_probe(struct udevice *dev)
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
 	struct jz_mmc_priv *priv = dev_get_priv(dev);
 	struct jz_mmc_plat *plat = dev_get_platdata(dev);
+
+#if CONFIG_IS_ENABLED(DM_GPIO)
+	gpio_request_by_name(dev, "wp-gpios", 0, &priv->gpio_wp, GPIOD_IS_IN);
+	gpio_request_by_name(dev, "cd-gpios", 0, &priv->gpio_cd, GPIOD_IS_IN);
+#endif
 
 	plat->mmc.priv = priv;
 	upriv->mmc = &plat->mmc;
