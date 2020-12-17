@@ -1,0 +1,57 @@
+# please convert this source into a boot.scr:
+# mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n 'Boot Script' -d boot-l400.txt boot.scr
+
+# assume we have the EXP43 connected
+setenv devicetree ingenic/alpha400
+
+setenv mmc none         # mmc number as seen by u-boot where it looks for kernel
+# we should have some mechanism so that u-boot and kernel use the same mmc numbering scheme or we have problems specifying the right rootfs
+setenv kernelmmc 1      # mmc number as seen by kernel
+setenv PARTITION none   # partition where kernel is found (simulates the partition selection mechanism of the GTA04)
+setenv PARTITIONTYPE FAT
+setenv kernel_addr_r 0x84000000
+
+# set default
+setenv console 'ttyS0,115200n8'
+
+DONE=0
+for m in 0 1 # scan uSD and eMMC
+do
+        mmc rescan # ${m}
+        for p in 1 2 3 4 # scan all partitions
+        do
+                if itest $DONE == 0
+                then  # try to load device tree and kernel binary
+                        echo try mmc ${m}:${p} for kernel + DT
+                        if fatload mmc ${m}:${p} ${kernel_addr_r} Image
+                        then
+                                echo found kernel /Image on mmc ${m}:${p}
+                #       setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
+                                setenv mmc ${m}
+                                setenv PARTITION ${p}
+                                fatload mmc ${m}:${p} ${fdt_addr_r} ${devicetree}.dtb
+                                DONE=1
+                        fi
+                fi
+        done
+done
+
+# load some default bootargs
+# run mmcargs
+
+echo bootargs 1: ${bootargs}
+
+# best solution would be to use PARTITION UUID
+
+# allow to overwrite boot args (incl. kernelmmc)
+if fatload mmc ${mmc}:${PARTITION} 0x81010000 bootargs.scr
+then
+	source 0x81010000
+fi
+
+echo bootargs 2: ${bootargs}
+setenv bootargs "mem=128M earlycon=jz4740_uart,mmio32,0x10030000,115200n8 console=tty0 ignore_loglevel clocksource=jiffies clk_ignore_unused ${bootargs}"
+echo bootargs 3: ${bootargs}
+
+setenv fdt_high 0x81200000
+bootm ${kernel_addr_r} - ${fdt_addr_r}
