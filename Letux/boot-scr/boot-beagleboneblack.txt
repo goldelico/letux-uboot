@@ -37,15 +37,25 @@ do
 	done
 done
 
-run mmcargs
-
-# best solution would be to use PARTITION UUID
+#run mmcargs
 
 # allow to overwrite boot args (incl. kernelmmc)
 if fatload mmc ${mmc}:${PARTITION} 0x81300000 bootargs.scr
 then
 	source 0x81300000
 fi
+
+# take next partition as rootfs
+if   itest ${PARTITION} == 1; then setenv ROOTPARTITION 2;
+elif itest ${PARTITION} == 2; then setenv ROOTPARTITION 3;
+elif itest ${PARTITION} == 3; then setenv ROOTPARTITION 4;
+elif itest ${PARTITION} == 4; then setenv ROOTPARTITION 5;
+fi
+
+part uuid mmc ${mmc}:${ROOTPARTITION} uuid
+setenv mmcroot PARTUUID=${uuid}
+
+setenv bootargs "console=${console} root=${mmcroot} rootfstype=${mmcrootfstype}"
 
 setenv fdt_high 0x84000000
 bootm 0x80300000 - 0x825f0000
