@@ -1,12 +1,11 @@
 # please convert this source into a boot.scr:
 # mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n 'Boot Script' -d boot-l400.txt boot.scr
 
-# assume we have the EXP43 connected
 setenv devicetree ingenic/alpha400
 
 setenv mmc none         # mmc number as seen by u-boot where it looks for kernel
 # we should have some mechanism so that u-boot and kernel use the same mmc numbering scheme or we have problems specifying the right rootfs
-setenv kernelmmc 1      # mmc number as seen by kernel
+setenv kernelmmc 0      # mmc number as seen by kernel
 setenv PARTITION none   # partition where kernel is found (simulates the partition selection mechanism of the GTA04)
 setenv PARTITIONTYPE FAT
 setenv kernel_addr_r 0x84000000
@@ -26,7 +25,7 @@ do
                         if fatload mmc ${m}:${p} ${kernel_addr_r} Image
                         then
                                 echo found kernel /Image on mmc ${m}:${p}
-                #       setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
+                                setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
                                 setenv mmc ${m}
                                 setenv PARTITION ${p}
                                 fatload mmc ${m}:${p} ${fdt_addr_r} ${devicetree}.dtb
@@ -50,8 +49,8 @@ then
 fi
 
 # echo bootargs 2: ${bootargs}
-setenv bootargs "mem=128M earlycon=jz4740_uart,mmio32,0x10030000,115200n8 console=tty0 ignore_loglevel ${bootargs}"
-# echo bootargs 3: ${bootargs}
+setenv bootargs "mem=128M earlycon=jz4740_uart,mmio32,0x10030000,115200n8 console=tty0 ethaddr=${ethaddr} ignore_loglevel ${bootargs}"
 
+echo bootargs: ${bootargs}
 setenv fdt_high 0x81200000
 bootm ${kernel_addr_r} - ${fdt_addr_r}
