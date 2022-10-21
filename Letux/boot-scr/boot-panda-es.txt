@@ -11,7 +11,7 @@ setenv PARTITION 1	# partition where kernel is found (simulates the partition se
 setenv PARTITIONTYPE FAT
 
 # set default
-setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rw rootwait earlyprintk fixrtc'
+setenv mmcargs 'setenv bootargs elevator=noop console=ttyO2,115200n8 root=/dev/mmcblk${kernelmmc}p2 rootfstype=ext4,ext3 rw rootwait earlyprintk fixrtc'
 
 # load device tree and kernel binary
 fatload mmc ${mmc}:${PARTITION} 0x825f0000 ${devicetree}.dtb
