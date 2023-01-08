@@ -1,6 +1,5 @@
-
 #
-# flash-kernel: bootscr.odroid-rk356x
+# boots.scr for LetuxOS on Odroid M1
 #
 
 # Bootscript using the new unified bootcmd handling
@@ -18,21 +17,26 @@
 #
 # The uboot must support the booti and generic filesystem load commands.
 
+echo "NOTE: this script is NOT executed byPetitBoot. It seems to extract some setenv definitions through /usr/bin/uboot-parser."
+exit
+
 setenv board odroid${variant}
 
-setenv bootargs " ${bootargs} root=UUID=795e9814-c53e-4f94-b71e-13c33c2196f6 quiet splash plymouth.ignore-serial-consoles"
+setenv bootargs " ${bootargs} root=/dev/mmcblk2p2 splash plymouth.ignore-serial-consoles"
 setenv overlay_resize 8192
 
-setenv bootlabel "Ubuntu 20.04.4 LTS"
+setenv bootlabel "LetuxOS"
 
 # Default serial console
-setenv console "ttyFIQ0"
+# setenv console "ttyFIQ0"
+setenv console "ttyAML0,115200n8"
 
 # Default TTY console
 setenv bootargs "${bootargs} earlycon=uart8250,mmio32,0xfe660000 console=tty1"
 
 # MISC
 #
+setenv bootargs "${bootargs} quiet"
 setenv bootargs "${bootargs} pci=nomsi"
 setenv bootargs "${bootargs} fsck.mode=force fsck.repair=yes"
 setenv bootargs "${bootargs} mtdparts=sfc_nor:0x20000@0xe0000(env),0x200000@0x100000(uboot),0x100000@0x300000(splash),0xc00000@0x400000(firmware)"
@@ -49,7 +53,10 @@ if test -n "${console}"; then
 fi
 
 if test -z "${fk_kvers}"; then
-   setenv fk_kvers "4.19.219-odroid-arm64"
+# needs an image file called "vmlinuz-letux" -> Image.gz
+# needs an image file called "initrd.img-letux" -> some initrd
+   setenv fk_kvers "letux"
+#   setenv fk_kvers "4.19.219-odroid-arm64"
 fi
 
 if test -z "${fdtfile}"; then
