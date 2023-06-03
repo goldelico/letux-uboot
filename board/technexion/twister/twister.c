@@ -4,7 +4,23 @@
  *
  * Copyright (C) 2009 TechNexion Ltd.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -16,8 +32,6 @@
 #include <asm/omap_gpio.h>
 #include <asm/arch/mmc_host_def.h>
 #include <i2c.h>
-#include <spl.h>
-#include <mmc.h>
 #include <asm/gpio.h>
 #ifdef CONFIG_USB_EHCI
 #include <usb.h>
@@ -53,10 +67,9 @@ static struct omap_usbhs_board_data usbhs_bdata = {
 	.port_mode[2] = OMAP_USBHS_PORT_MODE_UNUSED,
 };
 
-int ehci_hcd_init(int index, enum usb_init_type init,
-		struct ehci_hccr **hccr, struct ehci_hcor **hcor)
+int ehci_hcd_init(int index, struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
-	return omap_ehci_hcd_init(index, &usbhs_bdata, hccr, hcor);
+	return omap_ehci_hcd_init(&usbhs_bdata, hccr, hcor);
 }
 
 int ehci_hcd_stop(int index)
@@ -92,7 +105,7 @@ int misc_init_r(void)
 	struct tam3517_module_info info;
 	int ret;
 
-	omap_die_id_display();
+	dieid_num_r();
 
 	eth_addr = getenv("ethaddr");
 	if (eth_addr)
@@ -140,7 +153,7 @@ int board_mmc_init(bd_t *bis)
 
 #ifdef CONFIG_SPL_OS_BOOT
 /*
- * Do board specific preparation before SPL
+ * Do board specific preperation before SPL
  * Linux boot
  */
 void spl_board_prepare_for_linux(void)

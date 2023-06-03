@@ -2,7 +2,23 @@
  * (c) Copyright 2012 by National Instruments,
  *        Joe Hershberger <joe.hershberger@ni.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -11,7 +27,6 @@
 #include <environment.h>
 #include <errno.h>
 #include <malloc.h>
-#include <memalign.h>
 #include <search.h>
 #include <ubi_uboot.h>
 #undef crc32
@@ -38,11 +53,15 @@ static unsigned char env_flags;
 int saveenv(void)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(env_t, env_new, 1);
-	int ret;
+	ssize_t	len;
+	char *res;
 
-	ret = env_export(env_new);
-	if (ret)
-		return ret;
+	res = (char *)&env_new->data;
+	len = hexport_r(&env_htab, '\0', 0, &res, ENV_SIZE, 0, NULL);
+	if (len < 0) {
+		error("Cannot export environment: errno = %d\n", errno);
+		return 1;
+	}
 
 	if (ubi_part(CONFIG_ENV_UBI_PART, NULL)) {
 		printf("\n** Cannot find mtd partition \"%s\"\n",
@@ -50,6 +69,7 @@ int saveenv(void)
 		return 1;
 	}
 
+	env_new->crc = crc32(0, env_new->data, ENV_SIZE);
 	env_new->flags = ++env_flags; /* increase the serial */
 
 	if (gd->env_valid == 1) {
@@ -82,17 +102,23 @@ int saveenv(void)
 int saveenv(void)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(env_t, env_new, 1);
-	int ret;
+	ssize_t	len;
+	char *res;
 
-	ret = env_export(env_new);
-	if (ret)
-		return ret;
+	res = (char *)&env_new->data;
+	len = hexport_r(&env_htab, '\0', 0, &res, ENV_SIZE, 0, NULL);
+	if (len < 0) {
+		error("Cannot export environment: errno = %d\n", errno);
+		return 1;
+	}
 
 	if (ubi_part(CONFIG_ENV_UBI_PART, NULL)) {
 		printf("\n** Cannot find mtd partition \"%s\"\n",
 		       CONFIG_ENV_UBI_PART);
 		return 1;
 	}
+
+	env_new->crc = crc32(0, env_new->data, ENV_SIZE);
 
 	if (ubi_volume_write(CONFIG_ENV_UBI_VOLUME, (void *)env_new,
 			     CONFIG_ENV_SIZE)) {
@@ -114,17 +140,6 @@ void env_relocate_spec(void)
 	ALLOC_CACHE_ALIGN_BUFFER(char, env2_buf, CONFIG_ENV_SIZE);
 	int crc1_ok = 0, crc2_ok = 0;
 	env_t *ep, *tmp_env1, *tmp_env2;
-
-	/*
-	 * In case we have restarted u-boot there is a chance that buffer
-	 * contains old environment (from the previous boot).
-	 * If UBI volume is zero size, ubi_volume_read() doesn't modify the
-	 * buffer.
-	 * We need to clear buffer manually here, so the invalid CRC will
-	 * cause setting default environment as expected.
-	 */
-	memset(env1_buf, 0x0, CONFIG_ENV_SIZE);
-	memset(env2_buf, 0x0, CONFIG_ENV_SIZE);
 
 	tmp_env1 = (env_t *)env1_buf;
 	tmp_env2 = (env_t *)env2_buf;
@@ -185,16 +200,6 @@ void env_relocate_spec(void)
 {
 	ALLOC_CACHE_ALIGN_BUFFER(char, buf, CONFIG_ENV_SIZE);
 
-	/*
-	 * In case we have restarted u-boot there is a chance that buffer
-	 * contains old environment (from the previous boot).
-	 * If UBI volume is zero size, ubi_volume_read() doesn't modify the
-	 * buffer.
-	 * We need to clear buffer manually here, so the invalid CRC will
-	 * cause setting default environment as expected.
-	 */
-	memset(buf, 0x0, CONFIG_ENV_SIZE);
-
 	if (ubi_part(CONFIG_ENV_UBI_PART, NULL)) {
 		printf("\n** Cannot find mtd partition \"%s\"\n",
 		       CONFIG_ENV_UBI_PART);
@@ -202,7 +207,8 @@ void env_relocate_spec(void)
 		return;
 	}
 
-	if (ubi_volume_read(CONFIG_ENV_UBI_VOLUME, buf, CONFIG_ENV_SIZE)) {
+	if (ubi_volume_read(CONFIG_ENV_UBI_VOLUME, (void *)&buf,
+			    CONFIG_ENV_SIZE)) {
 		printf("\n** Unable to read env from %s:%s **\n",
 		       CONFIG_ENV_UBI_PART, CONFIG_ENV_UBI_VOLUME);
 		set_default_env(NULL);

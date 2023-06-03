@@ -2,16 +2,30 @@
  * (C) Copyright 2000
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
-#include <command.h>
-#include <commproc.h>
 #include <malloc.h>
+#include <commproc.h>
 #include <net.h>
-
-#include <phy.h>
+#include <command.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -49,9 +63,10 @@ DECLARE_GLOBAL_DATA_PTR;
 static int mii_discover_phy(struct eth_device *dev);
 #endif
 
-int fec8xx_miiphy_read(struct mii_dev *bus, int addr, int devad, int reg);
-int fec8xx_miiphy_write(struct mii_dev *bus, int addr, int devad, int reg,
-			u16 value);
+int fec8xx_miiphy_read(const char *devname, unsigned char addr,
+		unsigned char  reg, unsigned short *value);
+int fec8xx_miiphy_write(const char *devname, unsigned char  addr,
+		unsigned char  reg, unsigned short value);
 
 static struct ether_fcc_info_s
 {
@@ -138,7 +153,7 @@ int fec_initialize(bd_t *bis)
 	struct ether_fcc_info_s *efis;
 	int             i;
 
-	for (i = 0; i < ARRAY_SIZE(ether_fcc_info); i++) {
+	for (i = 0; i < sizeof(ether_fcc_info) / sizeof(ether_fcc_info[0]); i++) {
 
 		dev = malloc(sizeof(*dev));
 		if (dev == NULL)
@@ -149,7 +164,7 @@ int fec_initialize(bd_t *bis)
 		/* for FEC1 make sure that the name of the interface is the same
 		   as the old one for compatibility reasons */
 		if (i == 0) {
-			strcpy(dev->name, "FEC");
+			sprintf (dev->name, "FEC");
 		} else {
 			sprintf (dev->name, "FEC%d",
 				ether_fcc_info[i].ether_index + 1);
@@ -171,17 +186,8 @@ int fec_initialize(bd_t *bis)
 		eth_register(dev);
 
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
-		int retval;
-		struct mii_dev *mdiodev = mdio_alloc();
-		if (!mdiodev)
-			return -ENOMEM;
-		strncpy(mdiodev->name, dev->name, MDIO_NAME_LEN);
-		mdiodev->read = fec8xx_miiphy_read;
-		mdiodev->write = fec8xx_miiphy_write;
-
-		retval = mdio_register(mdiodev);
-		if (retval < 0)
-			return retval;
+		miiphy_register(dev->name,
+			fec8xx_miiphy_read, fec8xx_miiphy_write);
 #endif
 	}
 	return 1;
@@ -215,7 +221,11 @@ static int fec_send(struct eth_device *dev, void *packet, int length)
 
 	j = 0;
 	while ((rtx->txbd[txIdx].cbd_sc & BD_ENET_TX_READY) && (j<TOUT_LOOP)) {
+#if defined(CONFIG_ICU862)
+		udelay(10);
+#else
 		udelay(1);
+#endif
 		j++;
 	}
 	if (j>=TOUT_LOOP) {
@@ -257,21 +267,21 @@ static int fec_recv (struct eth_device *dev)
 				rtx->rxbd[rxIdx].cbd_sc);
 #endif
 		} else {
-			uchar *rx = net_rx_packets[rxIdx];
+			uchar *rx = NetRxPackets[rxIdx];
 
 			length -= 4;
 
 #if defined(CONFIG_CMD_CDP)
-			if ((rx[0] & 1) != 0 &&
-			    memcmp((uchar *)rx, net_bcast_ethaddr, 6) != 0 &&
-			    !is_cdp_packet((uchar *)rx))
+			if ((rx[0] & 1) != 0
+			    && memcmp ((uchar *) rx, NetBcastAddr, 6) != 0
+			    && !is_cdp_packet((uchar *)rx))
 				rx = NULL;
 #endif
 			/*
 			 * Pass the packet up to the protocol layers.
 			 */
 			if (rx != NULL)
-				net_process_received_packet(rx, length);
+				NetReceive (rx, length);
 		}
 
 		/* Give the buffer back to the FEC. */
@@ -383,6 +393,26 @@ static void fec_pin_init(int fecidx)
 	 */
 	immr->im_cpm.cp_fec1.fec_mii_speed = ((bd->bi_intfreq + 4999999) / 5000000) << 1;
 
+#if defined(CONFIG_NETTA) || defined(CONFIG_NETPHONE) || defined(CONFIG_NETTA2)
+	{
+		volatile fec_t *fecp;
+
+		/*
+		 * only two FECs please
+		 */
+		if ((unsigned int)fecidx >= 2)
+			hang();
+
+		if (fecidx == 0)
+			fecp = &immr->im_cpm.cp_fec1;
+		else
+			fecp = &immr->im_cpm.cp_fec2;
+
+		/* our PHYs are the limit at 2.5 MHz */
+		fecp->fec_mii_speed <<= 1;
+	}
+#endif
+
 #if defined(CONFIG_MPC885_FAMILY) && defined(WANT_MII)
 	/* use MDC for MII */
 	immr->im_ioport.iop_pdpar |=  0x0080;
@@ -430,7 +460,7 @@ static void fec_pin_init(int fecidx)
 
 #endif /* !CONFIG_RMII */
 
-#else
+#elif !defined(CONFIG_ICU862)
 		/*
 		 * Configure all of port D for MII.
 		 */
@@ -443,7 +473,41 @@ static void fec_pin_init(int fecidx)
 			immr->im_ioport.iop_pddir = 0x1c58;	/* Pre rev. D */
 		else
 			immr->im_ioport.iop_pddir = 0x1fff;	/* Rev. D and later */
+#else
+		/*
+		 * Configure port A for MII.
+		 */
+
+#if defined(CONFIG_ICU862) && defined(CONFIG_SYS_DISCOVER_PHY)
+
+		/*
+		 * On the ICU862 board the MII-MDC pin is routed to PD8 pin
+		 * * of CPU, so for this board we need to configure Utopia and
+		 * * enable PD8 to MII-MDC function
+		 */
+		immr->im_ioport.iop_pdpar |= 0x4080;
 #endif
+
+		/*
+		 * Has Utopia been configured?
+		 */
+		if (immr->im_ioport.iop_pdpar & (0x8000 >> 1)) {
+			/*
+			 * YES - Use MUXED mode for UTOPIA bus.
+			 * This frees Port A for use by MII (see 862UM table 41-6).
+			 */
+			immr->im_ioport.utmode &= ~0x80;
+		} else {
+			/*
+			 * NO - set SPLIT mode for UTOPIA bus.
+			 *
+			 * This doesn't really effect UTOPIA (which isn't
+			 * enabled anyway) but just tells the 862
+			 * to use port A for MII (see 862UM table 41-6).
+			 */
+			immr->im_ioport.utmode |= 0x80;
+		}
+#endif				/* !defined(CONFIG_ICU862) */
 
 #endif	/* CONFIG_ETHER_ON_FEC1 */
 	} else if (fecidx == 1) {
@@ -513,6 +577,32 @@ static int fec_init (struct eth_device *dev, bd_t * bd)
 	volatile fec_t *fecp =
 		(volatile fec_t *) (CONFIG_SYS_IMMR + efis->fecp_offset);
 	int i;
+
+	if (efis->ether_index == 0) {
+#if defined(CONFIG_FADS)	/* FADS family uses FPGA (BCSR) to control PHYs */
+#if defined(CONFIG_MPC885ADS)
+		*(vu_char *) BCSR5 &= ~(BCSR5_MII1_EN | BCSR5_MII1_RST);
+#else
+		/* configure FADS for fast (FEC) ethernet, half-duplex */
+		/* The LXT970 needs about 50ms to recover from reset, so
+		 * wait for it by discovering the PHY before leaving eth_init().
+		 */
+		{
+			volatile uint *bcsr4 = (volatile uint *) BCSR4;
+
+			*bcsr4 = (*bcsr4 & ~(BCSR4_FETH_EN | BCSR4_FETHCFG1))
+				| (BCSR4_FETHCFG0 | BCSR4_FETHFDE |
+				   BCSR4_FETHRST);
+
+			/* reset the LXT970 PHY */
+			*bcsr4 &= ~BCSR4_FETHRST;
+			udelay (10);
+			*bcsr4 |= BCSR4_FETHRST;
+			udelay (10);
+		}
+#endif /* CONFIG_MPC885ADS */
+#endif /* CONFIG_FADS */
+	}
 
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
 	/* the MII interface is connected to FEC1
@@ -586,7 +676,7 @@ static int fec_init (struct eth_device *dev, bd_t * bd)
 	for (i = 0; i < PKTBUFSRX; i++) {
 		rtx->rxbd[i].cbd_sc = BD_ENET_RX_EMPTY;
 		rtx->rxbd[i].cbd_datlen = 0;	/* Reset */
-		rtx->rxbd[i].cbd_bufaddr = (uint) net_rx_packets[i];
+		rtx->rxbd[i].cbd_bufaddr = (uint) NetRxPackets[i];
 	}
 	rtx->rxbd[PKTBUFSRX - 1].cbd_sc |= BD_ENET_RX_WRAP;
 
@@ -889,7 +979,7 @@ void mii_init (void)
 
 	/* Setup the pin configuration of the FEC(s)
 	*/
-	for (i = 0; i < ARRAY_SIZE(ether_fcc_info); i++)
+	for (i = 0; i < sizeof(ether_fcc_info) / sizeof(ether_fcc_info[0]); i++)
 		fec_pin_init(ether_fcc_info[i].ether_index);
 }
 
@@ -904,9 +994,9 @@ void mii_init (void)
  *	  Otherwise they hang in mii_send() !!! Sorry!
  *****************************************************************************/
 
-int fec8xx_miiphy_read(struct mii_dev *bus, int addr, int devad, int reg)
+int fec8xx_miiphy_read(const char *devname, unsigned char addr,
+		unsigned char  reg, unsigned short *value)
 {
-	unsigned short value = 0;
 	short rdreg;    /* register working value */
 
 #ifdef MII_DEBUG
@@ -914,15 +1004,15 @@ int fec8xx_miiphy_read(struct mii_dev *bus, int addr, int devad, int reg)
 #endif
 	rdreg = mii_send(mk_mii_read(addr, reg));
 
-	value = rdreg;
+	*value = rdreg;
 #ifdef MII_DEBUG
-	printf ("0x%04x\n", value);
+	printf ("0x%04x\n", *value);
 #endif
-	return value;
+	return 0;
 }
 
-int fec8xx_miiphy_write(struct mii_dev *bus, int addr, int devad, int reg,
-			u16 value)
+int fec8xx_miiphy_write(const char *devname, unsigned char  addr,
+		unsigned char  reg, unsigned short value)
 {
 #ifdef MII_DEBUG
 	printf ("miiphy_write(0x%x) @ 0x%x = ", reg, addr);

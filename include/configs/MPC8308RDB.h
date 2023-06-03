@@ -3,7 +3,23 @@
  * Copyright (C) 2010 Ilya Yanok, Emcraft Systems, yanok@emcraft.com
  *
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __CONFIG_H
@@ -13,6 +29,7 @@
  * High Level Configuration Options
  */
 #define CONFIG_E300		1 /* E300 family */
+#define CONFIG_MPC83xx		1 /* MPC83xx family */
 #define CONFIG_MPC830x		1 /* MPC830x family */
 #define CONFIG_MPC8308		1 /* MPC8308 CPU specific */
 #define CONFIG_MPC8308RDB	1 /* MPC8308RDB board specific */
@@ -20,6 +37,10 @@
 #define	CONFIG_SYS_TEXT_BASE	0xFE000000
 
 #define CONFIG_MISC_INIT_R
+
+/* new uImage format support */
+#define CONFIG_FIT			1
+#define CONFIG_FIT_VERBOSE		1
 
 #define CONFIG_MMC     1
 
@@ -29,7 +50,9 @@
 #define CONFIG_SYS_FSL_ERRATUM_ESDHC111
 #define CONFIG_SYS_FSL_ESDHC_USE_PIO
 
+#define CONFIG_CMD_MMC
 #define CONFIG_GENERIC_MMC
+#define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
 #endif
 
@@ -201,7 +224,7 @@
  */
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE /* start of monitor */
 
-#define CONFIG_SYS_MONITOR_LEN	(512 * 1024) /* Reserve 512 kB for Mon */
+#define CONFIG_SYS_MONITOR_LEN	(384 * 1024) /* Reserve 384 kB for Mon */
 #define CONFIG_SYS_MALLOC_LEN	(512 * 1024) /* Reserved for malloc */
 
 /*
@@ -307,6 +330,7 @@
  * Serial Port
  */
 #define CONFIG_CONS_INDEX	1
+#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
@@ -317,16 +341,23 @@
 #define CONFIG_SYS_NS16550_COM1	(CONFIG_SYS_IMMR + 0x4500)
 #define CONFIG_SYS_NS16550_COM2	(CONFIG_SYS_IMMR + 0x4600)
 
+/* Use the HUSH parser */
+#define CONFIG_SYS_HUSH_PARSER
+
+/* Pass open firmware flat tree */
+#define CONFIG_OF_LIBFDT	1
+#define CONFIG_OF_BOARD_SETUP	1
+#define CONFIG_OF_STDOUT_VIA_ALIAS	1
+
 /* I2C */
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_FSL
-#define CONFIG_SYS_FSL_I2C_SPEED	400000
-#define CONFIG_SYS_FSL_I2C_SLAVE	0x7F
-#define CONFIG_SYS_FSL_I2C_OFFSET	0x3000
-#define CONFIG_SYS_FSL_I2C2_SPEED	400000
-#define CONFIG_SYS_FSL_I2C2_SLAVE	0x7F
-#define CONFIG_SYS_FSL_I2C2_OFFSET	0x3100
-#define CONFIG_SYS_I2C_NOPROBES		{ {0, 0x51} }
+#define CONFIG_HARD_I2C		/* I2C with hardware support */
+#define CONFIG_FSL_I2C
+#define CONFIG_I2C_MULTI_BUS
+#define CONFIG_SYS_I2C_SPEED	400000 /* I2C speed and slave address */
+#define CONFIG_SYS_I2C_SLAVE	0x7F
+#define CONFIG_SYS_I2C_NOPROBES	{ {0, 0x51} } /* Don't probe these addrs */
+#define CONFIG_SYS_I2C_OFFSET	0x3000
+#define CONFIG_SYS_I2C2_OFFSET	0x3100
 
 /*
  * SPI on header J8
@@ -335,7 +366,11 @@
  * due to a pinmux conflict between GPIO9 (SPI chip select )and the TSEC2 pins.
  */
 #ifdef CONFIG_MPC8XXX_SPI
+#define CONFIG_CMD_SPI
 #define CONFIG_USE_SPIFLASH
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_SPANSION
+#define CONFIG_CMD_SF
 #endif
 
 /*
@@ -366,8 +401,11 @@
 /* enable PCIE clock */
 #define CONFIG_SYS_SCCR_PCIEXP1CM	1
 
+#define CONFIG_PCI
 #define CONFIG_PCI_INDIRECT_BRIDGE
 #define CONFIG_PCIE
+
+#define CONFIG_PCI_PNP		/* do pci plug-and-play */
 
 #define CONFIG_SYS_PCI_SUBSYS_VENDORID 0x1957	/* Freescale */
 #define CONFIG_83XX_GENERIC_PCIE_REGISTER_HOSES 1
@@ -422,8 +460,15 @@
 /*
  * Command line configuration.
  */
+#include <config_cmd_default.h>
+
 #define CONFIG_CMD_DATE
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_I2C
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NET
 #define CONFIG_CMD_PCI
+#define CONFIG_CMD_PING
 
 #define CONFIG_CMDLINE_EDITING	1	/* add command line history */
 
@@ -432,6 +477,7 @@
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
 #define CONFIG_SYS_LOAD_ADDR		0x2000000 /* default load address */
+#define CONFIG_SYS_PROMPT		"=> "	/* Monitor Command Prompt */
 
 #define CONFIG_SYS_CBSIZE	1024 /* Console I/O Buffer Size */
 
@@ -440,6 +486,7 @@
 #define CONFIG_SYS_MAXARGS	16	/* max number of command args */
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
+#define CONFIG_SYS_HZ		1000	/* decrementer freq: 1ms ticks */
 
 /*
  * For booting Linux, the board info and command line data
@@ -447,7 +494,6 @@
  * the maximum mapped by the Linux kernel during initialization.
  */
 #define CONFIG_SYS_BOOTMAPSZ	(256 << 20) /* Initial Memory map for Linux */
-#define CONFIG_SYS_BOOTM_LEN	(64 << 20)	/* Increase max gunzip size */
 
 /*
  * Core HID Setup
@@ -510,6 +556,7 @@
 
 #define CONFIG_LOADADDR	800000	/* default location for tftp and bootm */
 
+#define CONFIG_BOOTDELAY	5	/* -1 disables auto-boot */
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 	"netdev=eth0\0"							\

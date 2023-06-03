@@ -8,7 +8,19 @@
  * Copyright (C) 2010
  * Texas Instruments Incorporated - http://www.ti.com/
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
 #include <common.h>
@@ -21,8 +33,7 @@
 #include <asm/arch/mmc_host_def.h>
 #include <asm/arch/musb.h>
 #include <asm/mach-types.h>
-#include <linux/errno.h>
-#include <asm/gpio.h>
+#include <asm/errno.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <linux/usb/musb.h>
@@ -31,9 +42,6 @@
 #include "am3517evm.h"
 
 DECLARE_GLOBAL_DATA_PTR;
-
-#define AM3517_IP_SW_RESET	0x48002598
-#define CPGMACSS_SW_RST		(1 << 1)
 
 /*
  * Routine: board_init
@@ -65,12 +73,12 @@ static struct omap_musb_board_data musb_board_data = {
 };
 
 static struct musb_hdrc_platform_data musb_plat = {
-#if defined(CONFIG_USB_MUSB_HOST)
+#if defined(CONFIG_MUSB_HOST)
 	.mode           = MUSB_HOST,
-#elif defined(CONFIG_USB_MUSB_GADGET)
+#elif defined(CONFIG_MUSB_GADGET)
 	.mode		= MUSB_PERIPHERAL,
 #else
-#error "Please define either CONFIG_USB_MUSB_HOST or CONFIG_USB_MUSB_GADGET"
+#error "Please define either CONFIG_MUSB_HOST or CONFIG_MUSB_GADGET"
 #endif
 	.config         = &musb_config,
 	.power          = 250,
@@ -102,41 +110,13 @@ static void am3517_evm_musb_init(void)
  */
 int misc_init_r(void)
 {
-	volatile unsigned int ctr;
-	u32 reset;
-
-#ifdef CONFIG_SYS_I2C_OMAP34XX
-	i2c_init(CONFIG_SYS_OMAP24_I2C_SPEED, CONFIG_SYS_OMAP24_I2C_SLAVE);
+#ifdef CONFIG_DRIVER_OMAP34XX_I2C
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 #endif
 
-	omap_die_id_display();
+	dieid_num_r();
 
 	am3517_evm_musb_init();
-
-	/* activate PHY reset */
-	gpio_direction_output(30, 0);
-	gpio_set_value(30, 0);
-
-	ctr  = 0;
-	do {
-		udelay(1000);
-		ctr++;
-	} while (ctr < 300);
-
-	/* deactivate PHY reset */
-	gpio_set_value(30, 1);
-
-	/* allow the PHY to stabilize and settle down */
-	ctr = 0;
-	do {
-		udelay(1000);
-		ctr++;
-	} while (ctr < 300);
-
-	/* ensure that the module is out of reset */
-	reset = readl(AM3517_IP_SW_RESET);
-	reset &= (~CPGMACSS_SW_RST);
-	writel(reset,AM3517_IP_SW_RESET);
 
 	return 0;
 }
@@ -159,7 +139,7 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
-#if defined(CONFIG_USB_ETHER) && defined(CONFIG_USB_MUSB_GADGET)
+#if defined(CONFIG_USB_ETHER) && defined(CONFIG_MUSB_GADGET)
 int board_eth_init(bd_t *bis)
 {
 	int rv, n = 0;
@@ -175,3 +155,4 @@ int board_eth_init(bd_t *bis)
 	return n;
 }
 #endif
+

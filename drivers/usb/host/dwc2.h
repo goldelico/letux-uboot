@@ -1,7 +1,6 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * Copyright (C) 2014 Marek Vasut <marex@denx.de>
- *
- * SPDX-License-Identifier:     GPL-2.0+
  */
 
 #ifndef __DWC2_H__
@@ -770,12 +769,20 @@ struct dwc2_core_regs {
 #define CONFIG_DWC2_HOST_PERIO_TX_FIFO_SIZE	0x200	/* Periodic TX FIFO */
 #define CONFIG_DWC2_MAX_TRANSFER_SIZE		65535
 #define CONFIG_DWC2_MAX_PACKET_COUNT		511
+#define CONFIG_DWC2_OTG_CORE_RESET_WAITTIME	200
 
-#define DWC2_PHY_TYPE_FS		0
-#define DWC2_PHY_TYPE_UTMI		1
-#define DWC2_PHY_TYPE_ULPI		2
+#define CONFIG_USB_DWC2_BUFFER_SIZE		4
+#define CONFIG_USB_DWC2_REG_ADDR		OTG_BASE
+#define CONFIG_DWC2_UTMI_WIDTH			16
+
+#define DWC2_PHY_TYPE_FS		2
+#define DWC2_PHY_TYPE_UTMI		0	/*?????WHY Different.*/
+#define DWC2_PHY_TYPE_ULPI		1
+
 #define CONFIG_DWC2_PHY_TYPE		DWC2_PHY_TYPE_UTMI	/* PHY type */
+#ifndef CONFIG_DWC2_UTMI_WIDTH
 #define CONFIG_DWC2_UTMI_WIDTH		8	/* UTMI bus width (8/16) */
+#endif
 
 #undef CONFIG_DWC2_PHY_ULPI_DDR			/* ULPI PHY uses DDR mode */
 #define CONFIG_DWC2_PHY_ULPI_EXT_VBUS		/* ULPI PHY controls VBUS */

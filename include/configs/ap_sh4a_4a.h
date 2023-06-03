@@ -3,13 +3,28 @@
  *
  * Copyright (C) 2012 Nobuhiro Iwamatsu <nobuhiro.iwamatsu.yj@renesas.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
  */
 
 #ifndef __AP_SH4A_4A_H
 #define __AP_SH4A_4A_H
 
 #undef DEBUG
+#define CONFIG_SH		1
+#define CONFIG_SH4		1
+#define CONFIG_SH4A		1
 #define CONFIG_CPU_SH7734	1
 #define CONFIG_AP_SH4A_4A	1
 #define CONFIG_400MHZ_MODE	1
@@ -18,12 +33,21 @@
 #define CONFIG_BOARD_LATE_INIT
 #define CONFIG_SYS_TEXT_BASE 0x8BFC0000
 
+#define CONFIG_CMD_FLASH
+#define CONFIG_CMD_MEMORY
+#define CONFIG_CMD_NET
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NFS
 #define CONFIG_CMD_SDRAM
 #define CONFIG_CMD_ENV
+#define CONFIG_CMD_SAVEENV
 
 #define CONFIG_BAUDRATE		115200
+#define CONFIG_BOOTDELAY	3
 #define CONFIG_BOOTARGS		"console=ttySC4,115200"
 
+#define CONFIG_VERSION_VARIABLE
 #undef  CONFIG_SHOW_BOOT_PROGRESS
 
 /* Ether */
@@ -38,6 +62,7 @@
 #define CONFIG_BITBANGMII_MULTI
 
 /* I2C */
+#define CONFIG_CMD_I2C
 #define CONFIG_SH_SH7734_I2C	1
 #define CONFIG_HARD_I2C			1
 #define CONFIG_I2C_MULTI_BUS	1
@@ -54,6 +79,7 @@
 /* undef to save memory	*/
 #define CONFIG_SYS_LONGHELP
 /* Monitor Command Prompt */
+#define CONFIG_SYS_PROMPT		"=> "
 /* Buffer size for input from the Console */
 #define CONFIG_SYS_CBSIZE		256
 /* Buffer size for Console output */
@@ -71,6 +97,9 @@
 #define CONFIG_CONS_SCIF4	1
 
 /* Suppress display of console information at boot */
+#undef  CONFIG_SYS_CONSOLE_INFO_QUIET
+#undef  CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
+#undef  CONFIG_SYS_CONSOLE_ENV_OVERWRITE
 
 /* SDRAM */
 #define CONFIG_SYS_SDRAM_BASE	(0x88000000)
@@ -121,6 +150,8 @@
 #define CONFIG_SYS_MONITOR_LEN	(256 * 1024)
 /* Size of DRAM reserved for malloc() use */
 #define CONFIG_SYS_MALLOC_LEN	(256 * 1024)
+/* size in bytes reserved for initial data */
+#define CONFIG_SYS_GBL_DATA_SIZE	(256)
 #define CONFIG_SYS_BOOTMAPSZ	(8 * 1024 * 1024)
 
 /* ENV setting */
@@ -139,8 +170,7 @@
 #else
 #define CONFIG_SYS_CLK_FREQ 44444444
 #endif
-#define CONFIG_SH_TMU_CLK_FREQ CONFIG_SYS_CLK_FREQ
-#define CONFIG_SH_SCIF_CLK_FREQ CONFIG_SYS_CLK_FREQ
 #define CONFIG_SYS_TMU_CLK_DIV      4
+#define CONFIG_SYS_HZ       1000
 
 #endif	/* __AP_SH4A_4A_H */

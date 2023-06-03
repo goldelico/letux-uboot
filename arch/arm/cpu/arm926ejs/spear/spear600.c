@@ -3,7 +3,23 @@
  * Viresh Kumar, ST Microelectronics, viresh.kumar@st.com
  * Vipin Kumar, ST Microelectronics, vipin.kumar@st.com
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -11,21 +27,6 @@
 #include <asm/io.h>
 #include <asm/arch/spr_misc.h>
 #include <asm/arch/spr_defs.h>
-
-void spear_late_init(void)
-{
-	struct misc_regs *misc_p = (struct misc_regs *)CONFIG_SPEAR_MISCBASE;
-
-	writel(0x80000007, &misc_p->arb_icm_ml1);
-	writel(0x80000007, &misc_p->arb_icm_ml2);
-	writel(0x80000007, &misc_p->arb_icm_ml3);
-	writel(0x80000007, &misc_p->arb_icm_ml4);
-	writel(0x80000007, &misc_p->arb_icm_ml5);
-	writel(0x80000007, &misc_p->arb_icm_ml6);
-	writel(0x80000007, &misc_p->arb_icm_ml7);
-	writel(0x80000007, &misc_p->arb_icm_ml8);
-	writel(0x80000007, &misc_p->arb_icm_ml9);
-}
 
 static void sel_1v8(void)
 {
@@ -116,6 +117,14 @@ void plat_ddr_init(void)
 		else
 			sel_2v5();
 	}
+}
+
+/*
+ * soc_init:
+ */
+void soc_init(void)
+{
+	/* Nothing to be done for SPEAr600 */
 }
 
 /*

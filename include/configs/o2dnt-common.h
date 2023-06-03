@@ -7,7 +7,23 @@
  * (C) Copyright 2012
  * DENX Software Engineering, Anatolij Gustschin <agust@denx.de>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __O2D_CONFIG_H
@@ -16,6 +32,7 @@
 /*
  * High Level Configuration Options
  */
+#define CONFIG_MPC5xxx		1	/* This is an MPC5xxx CPU */
 #define CONFIG_MPC5200
 
 #define CONFIG_SYS_MPC5XXX_CLKIN	33000000 /* running at 33.000000MHz */
@@ -49,6 +66,8 @@
  * 0x40000000 - 0x4fffffff - PCI Memory
  * 0x50000000 - 0x50ffffff - PCI IO Space
  */
+#undef CONFIG_PCI
+#define CONFIG_PCI_PNP		1
 
 #define CONFIG_PCI_MEM_BUS	0x40000000
 #define CONFIG_PCI_MEM_PHYS	CONFIG_PCI_MEM_BUS
@@ -72,7 +91,14 @@
 /*
  * Supported commands
  */
+#include <config_cmd_default.h>
+
 #define CONFIG_CMD_EEPROM
+#define CONFIG_CMD_FAT
+#define CONFIG_CMD_I2C
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_DHCP
 #ifdef CONFIG_PCI
 #define CONFIG_CMD_PCI
 #endif
@@ -87,13 +113,29 @@
 #error "CONFIG_SYS_TEXT_BASE value is invalid"
 #endif
 
+/*
+ * Autobooting
+ * Be selective on what keys can delay or stop the autoboot process
+ * To stop use: "++++++++++"
+ */
+#define CONFIG_AUTOBOOT_KEYED
+#define CONFIG_AUTOBOOT_PROMPT	"Autobooting in %d seconds, " \
+				"press password to stop\n", bootdelay
+#define CONFIG_AUTOBOOT_STOP_STR	"++++++++++"
+#undef CONFIG_AUTOBOOT_DELAY_STR
+#define DEBUG_BOOTKEYS		0
+
+#define CONFIG_BOOTDELAY	5	/* autoboot after 5 seconds */
 
 #define CONFIG_PREBOOT	"run master"
 
 #undef	CONFIG_BOOTARGS
 
-#if !defined(CONSOLE_DEV)
-#define CONSOLE_DEV	"ttyPSC1"
+#define xstr(s) str(s)
+#define str(s)  #s
+
+#if !defined(CONFIG_CONSOLE_DEV)
+#define CONFIG_CONSOLE_DEV	"ttyPSC1"
 #endif
 
 /*
@@ -128,12 +170,12 @@
 	"addmem=setenv bootargs ${bootargs} ${memlimit}\0"		\
 	"addmisc=sete bootargs ${bootargs} ${miscargs}\0"		\
 	"addtty=sete bootargs ${bootargs} console="			\
-		CONSOLE_DEV ",${baudrate}\0"			\
+		CONFIG_CONSOLE_DEV ",${baudrate}\0"			\
 	"bootfile="CONFIG_BOARD_NAME"/uImage_"CONFIG_BOARD_NAME"_act\0"	\
 	"kernel_addr_r=600000\0"					\
 	"initrd_high=0x03e00000\0"					\
 	"memlimit=mem="CONFIG_BOARD_MEM_LIMIT"M\0"			\
-	"memtest=mtest 0x00100000 "__stringify(CONFIG_SYS_MEMTEST_END)" 0 1\0" \
+	"memtest=mtest 0x00100000 "xstr(CONFIG_SYS_MEMTEST_END)" 0 1\0"	\
 	"netdev=eth0\0"							\
 	"nfsargs=setenv bootargs root=/dev/nfs rw "			\
 		"nfsroot=${serverip}:${rootpath}\0"			\
@@ -157,7 +199,7 @@
 	"unlock=yes\0"							\
 	"post=echo !!! "CONFIG_BOARD_NAME" POWER ON SELF TEST !!!;"	\
 		"setenv bootdelay 1;"					\
-		"crc32 "__stringify(CONFIG_SYS_TEXT_BASE)" "		\
+		"crc32 "xstr(CONFIG_SYS_TEXT_BASE)" "			\
 			BOARD_POST_CRC32_END";"				\
 		"setenv bootcmd "CONFIG_BOARD_BOOTCMD";saveenv;reset\0"
 
@@ -244,14 +286,16 @@
 #define CONFIG_SYS_INIT_RAM_ADDR	MPC5XXX_SRAM
 #ifdef CONFIG_POST
 /* preserve space for the post_word at end of on-chip SRAM */
-#define CONFIG_SYS_INIT_RAM_SIZE	MPC5XXX_SRAM_POST_SIZE
+#define CONFIG_SYS_INIT_RAM_END		MPC5XXX_SRAM_POST_SIZE
 #else
 /* End of used area in DPRAM */
-#define CONFIG_SYS_INIT_RAM_SIZE	MPC5XXX_SRAM_SIZE
+#define CONFIG_SYS_INIT_RAM_END		MPC5XXX_SRAM_SIZE
 #endif
 
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - \
-					 GENERATED_GBL_DATA_SIZE)
+/* size in bytes reserved for initial data */
+#define CONFIG_SYS_GBL_DATA_SIZE	128
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - \
+					 CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
@@ -283,7 +327,9 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP			/* undef to save memory	    */
+#define CONFIG_SYS_PROMPT		"=> "	/* Monitor Command Prompt   */
 #define CONFIG_CMDLINE_EDITING
+#define CONFIG_SYS_HUSH_PARSER
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size  */
@@ -302,6 +348,7 @@
 #define CONFIG_SYS_LOAD_ADDR		0x100000
 
 /* decrementer freq: 1 ms ticks */
+#define CONFIG_SYS_HZ			1000
 
 /*
  * Various low-level settings
@@ -322,6 +369,9 @@
 /*
  * DT support
  */
+#define CONFIG_OF_LIBFDT	1
+#define CONFIG_OF_BOARD_SETUP	1
+
 #define OF_CPU			"PowerPC,5200@0"
 #define OF_SOC			"soc5200@f0000000"
 #define OF_TBCLK		(bd->bi_busfreq / 4)

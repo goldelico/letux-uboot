@@ -3,7 +3,19 @@
  *
  * Copyright (C) 2006-2008 David Brownell
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #ifndef	__LINUX_USB_COMPOSITE_H
@@ -26,15 +38,6 @@
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <usb/lin_gadget_compat.h>
-
-/*
- * USB function drivers should return USB_GADGET_DELAYED_STATUS if they
- * wish to delay the data/status stages of the control transfer till they
- * are ready. The control transfer will then be kept from completing till
- * all the function drivers that requested for USB_GADGET_DELAYED_STAUS
- * invoke usb_composite_setup_continue().
- */
-#define	USB_GADGET_DELAYED_STATUS	0x7fff /* Impossibly large value */
 
 struct usb_configuration;
 

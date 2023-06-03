@@ -12,9 +12,8 @@
 #include <command.h>
 #include <config.h>
 #include <asm/byteorder.h>
-#include <asm/clock.h>
 #include <asm/io.h>
-#include <linux/errno.h>
+#include <asm/errno.h>
 #include <asm/portmux.h>
 #include <asm/mach-common/bits/pata.h>
 #include <ata.h>
@@ -965,7 +964,7 @@ int scan_sata(int dev)
 		/* Probe device and set xfer mode */
 		bfin_ata_identify(ap, dev%PATA_DEV_NUM_PER_PORT);
 		bfin_ata_set_Feature_cmd(ap, dev%PATA_DEV_NUM_PER_PORT);
-		part_init(&sata_dev_desc[dev]);
+		init_part(&sata_dev_desc[dev]);
 		return 0;
 	}
 
@@ -1007,11 +1006,6 @@ int init_sata(int dev)
 
 	res = 0;
 	return res;
-}
-
-int reset_sata(int dev)
-{
-	return 0;
 }
 
 /* Read up to 255 sectors

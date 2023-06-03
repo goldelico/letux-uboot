@@ -2,7 +2,23 @@
  * (C) Copyright 2011
  * Holger Brunck, Keymile GmbH Hannover, holger.brunck@keymile.com
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -13,33 +29,31 @@
 
 static void i2c_write_start_seq(void)
 {
-	struct fsl_i2c_base *base;
-	base = (struct fsl_i2c_base *)(CONFIG_SYS_IMMR +
-			CONFIG_SYS_I2C_OFFSET);
+	struct fsl_i2c *dev;
+	dev = (struct fsl_i2c *) (CONFIG_SYS_IMMR + CONFIG_SYS_I2C_OFFSET);
 	udelay(DELAY_ABORT_SEQ);
-	out_8(&base->cr, (I2C_CR_MEN | I2C_CR_MSTA));
+	out_8(&dev->cr, (I2C_CR_MEN | I2C_CR_MSTA));
 	udelay(DELAY_ABORT_SEQ);
-	out_8(&base->cr, (I2C_CR_MEN));
+	out_8(&dev->cr, (I2C_CR_MEN));
 }
 
 int i2c_make_abort(void)
 {
-	struct fsl_i2c_base *base;
-	base = (struct fsl_i2c_base *)(CONFIG_SYS_IMMR +
-			CONFIG_SYS_I2C_OFFSET);
+	struct fsl_i2c *dev;
+	dev = (struct fsl_i2c *) (CONFIG_SYS_IMMR + CONFIG_SYS_I2C_OFFSET);
 	uchar   last;
 	int     nbr_read = 0;
 	int     i = 0;
 	int	    ret = 0;
 
 	/* wait after each operation to finsh with a delay */
-	out_8(&base->cr, (I2C_CR_MSTA));
+	out_8(&dev->cr, (I2C_CR_MSTA));
 	udelay(DELAY_ABORT_SEQ);
-	out_8(&base->cr, (I2C_CR_MEN | I2C_CR_MSTA));
+	out_8(&dev->cr, (I2C_CR_MEN | I2C_CR_MSTA));
 	udelay(DELAY_ABORT_SEQ);
-	in_8(&base->dr);
+	in_8(&dev->dr);
 	udelay(DELAY_ABORT_SEQ);
-	last = in_8(&base->dr);
+	last = in_8(&dev->dr);
 	nbr_read++;
 
 	/*
@@ -49,7 +63,7 @@ int i2c_make_abort(void)
 	while (((last & 0x01) != 0x01) &&
 		(nbr_read < CONFIG_SYS_IVM_EEPROM_MAX_LEN)) {
 		udelay(DELAY_ABORT_SEQ);
-		last = in_8(&base->dr);
+		last = in_8(&dev->dr);
 		nbr_read++;
 	}
 	if ((last & 0x01) != 0x01)
@@ -58,10 +72,10 @@ int i2c_make_abort(void)
 		printf("[INFO] i2c abort after %d bytes (0x%02x)\n",
 			nbr_read, last);
 	udelay(DELAY_ABORT_SEQ);
-	out_8(&base->cr, (I2C_CR_MEN));
+	out_8(&dev->cr, (I2C_CR_MEN));
 	udelay(DELAY_ABORT_SEQ);
 	/* clear status reg */
-	out_8(&base->sr, 0);
+	out_8(&dev->sr, 0);
 
 	for (i = 0; i < 5; i++)
 		i2c_write_start_seq();

@@ -18,7 +18,7 @@ struct sandbox_state;
  * consumer code should focus on the macros below and
  * the callback function.
  */
-struct sandbox_cmdline_option {
+struct sb_cmdline_option {
 	/* The long flag name: "help" for "--help" */
 	const char *flag;
 	/* The (optional) short flag name: "h" for "-h" */
@@ -35,19 +35,18 @@ struct sandbox_cmdline_option {
  * Internal macro to expand the lower macros into the necessary
  * magic junk that makes this all work.
  */
-#define _SANDBOX_CMDLINE_OPT(f, s, ha, h) \
-	static struct sandbox_cmdline_option sandbox_cmdline_option_##f = { \
+#define _SB_CMDLINE_OPT(f, s, ha, h) \
+	static struct sb_cmdline_option sb_cmdline_option_##f = { \
 		.flag = #f, \
 		.flag_short = s, \
 		.help = h, \
 		.has_arg = ha, \
-		.callback = sandbox_cmdline_cb_##f, \
+		.callback = sb_cmdline_cb_##f, \
 	}; \
 	/* Ppointer to the struct in a special section for the linker script */ \
 	static __attribute__((section(".u_boot_sandbox_getopt"), used)) \
-		struct sandbox_cmdline_option \
-			*sandbox_cmdline_option_##f##_ptr = \
-			&sandbox_cmdline_option_##f
+		struct sb_cmdline_option *sb_cmdline_option_##f##_ptr = \
+		&sb_cmdline_option_##f
 
 /**
  * Macros for end code to declare new command line flags.
@@ -57,16 +56,16 @@ struct sandbox_cmdline_option {
  * @param h   The help string displayed when showing --help
  *
  * This invocation:
- *   SANDBOX_CMDLINE_OPT(foo, 0, "The foo arg");
+ *   SB_CMDLINE_OPT(foo, 0, "The foo arg");
  * Will create a new flag named "--foo" (no short option) that takes
  * no argument.  If the user specifies "--foo", then the callback func
- * sandbox_cmdline_cb_foo() will automatically be called.
+ * sb_cmdline_cb_foo() will automatically be called.
  */
-#define SANDBOX_CMDLINE_OPT(f, ha, h) _SANDBOX_CMDLINE_OPT(f, 0, ha, h)
+#define SB_CMDLINE_OPT(f, ha, h) _SB_CMDLINE_OPT(f, 0, ha, h)
 /*
  * Same as above, but @s is used to specify a short flag e.g.
- *   SANDBOX_CMDLINE_OPT(foo, 'f', 0, "The foo arg");
+ *   SB_CMDLINE_OPT(foo, 'f', 0, "The foo arg");
  */
-#define SANDBOX_CMDLINE_OPT_SHORT(f, s, ha, h) _SANDBOX_CMDLINE_OPT(f, s, ha, h)
+#define SB_CMDLINE_OPT_SHORT(f, s, ha, h) _SB_CMDLINE_OPT(f, s, ha, h)
 
 #endif

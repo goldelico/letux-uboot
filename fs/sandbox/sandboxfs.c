@@ -1,26 +1,35 @@
 /*
  * Copyright (c) 2012, Google Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <fs.h>
 #include <os.h>
 
-int sandbox_fs_set_blk_dev(struct blk_desc *rbdd, disk_partition_t *info)
+int sandbox_fs_set_blk_dev(block_dev_desc_t *rbdd, disk_partition_t *info)
 {
-	/*
-	 * Only accept a NULL struct blk_desc for the sandbox, which is when
-	 * hostfs interface is used
-	 */
-	return rbdd != NULL;
+	return 0;
 }
 
-int sandbox_fs_read_at(const char *filename, loff_t pos, void *buffer,
-		       loff_t maxsize, loff_t *actread)
+long sandbox_fs_read_at(const char *filename, unsigned long pos,
+			     void *buffer, unsigned long maxsize)
 {
-	loff_t size;
+	ssize_t size;
 	int fd, ret;
 
 	fd = os_open(filename, OS_O_RDONLY);
@@ -31,31 +40,16 @@ int sandbox_fs_read_at(const char *filename, loff_t pos, void *buffer,
 		os_close(fd);
 		return ret;
 	}
-	if (!maxsize) {
-		ret = os_get_filesize(filename, &size);
-		if (ret) {
-			os_close(fd);
-			return ret;
-		}
-
-		maxsize = size;
-	}
-
+	if (!maxsize)
+		maxsize = os_get_filesize(filename);
 	size = os_read(fd, buffer, maxsize);
 	os_close(fd);
 
-	if (size < 0) {
-		ret = -1;
-	} else {
-		ret = 0;
-		*actread = size;
-	}
-
-	return ret;
+	return size;
 }
 
-int sandbox_fs_write_at(const char *filename, loff_t pos, void *buffer,
-			loff_t towrite, loff_t *actwrite)
+long sandbox_fs_write_at(const char *filename, unsigned long pos,
+			 void *buffer, unsigned long towrite)
 {
 	ssize_t size;
 	int fd, ret;
@@ -71,14 +65,7 @@ int sandbox_fs_write_at(const char *filename, loff_t pos, void *buffer,
 	size = os_write(fd, buffer, towrite);
 	os_close(fd);
 
-	if (size == -1) {
-		ret = -1;
-	} else {
-		ret = 0;
-		*actwrite = size;
-	}
-
-	return ret;
+	return size;
 }
 
 int sandbox_fs_ls(const char *dirname)
@@ -94,49 +81,36 @@ int sandbox_fs_ls(const char *dirname)
 		printf("%s %10lu %s\n", os_dirent_get_typename(node->type),
 		       node->size, node->name);
 	}
-	os_dirent_free(head);
 
 	return 0;
-}
-
-int sandbox_fs_exists(const char *filename)
-{
-	loff_t size;
-	int ret;
-
-	ret = os_get_filesize(filename, &size);
-	return ret == 0;
-}
-
-int sandbox_fs_size(const char *filename, loff_t *size)
-{
-	return os_get_filesize(filename, size);
 }
 
 void sandbox_fs_close(void)
 {
 }
 
-int fs_read_sandbox(const char *filename, void *buf, loff_t offset, loff_t len,
-		    loff_t *actread)
+int fs_read_sandbox(const char *filename, void *buf, int offset, int len)
 {
-	int ret;
+	int len_read;
 
-	ret = sandbox_fs_read_at(filename, offset, buf, len, actread);
-	if (ret)
+	len_read = sandbox_fs_read_at(filename, offset, buf, len);
+	if (len_read == -1) {
 		printf("** Unable to read file %s **\n", filename);
+		return -1;
+	}
 
-	return ret;
+	return len_read;
 }
 
-int fs_write_sandbox(const char *filename, void *buf, loff_t offset,
-		     loff_t len, loff_t *actwrite)
+int fs_write_sandbox(const char *filename, void *buf, int offset, int len)
 {
-	int ret;
+	int len_written;
 
-	ret = sandbox_fs_write_at(filename, offset, buf, len, actwrite);
-	if (ret)
+	len_written = sandbox_fs_write_at(filename, offset, buf, len);
+	if (len_written == -1) {
 		printf("** Unable to write file %s **\n", filename);
+		return -1;
+	}
 
-	return ret;
+	return len_written;
 }

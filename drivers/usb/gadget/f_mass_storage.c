@@ -6,8 +6,37 @@
  *                    Author: Michal Nazarewicz <m.nazarewicz@samsung.com>
  * All rights reserved.
  *
- * SPDX-License-Identifier: GPL-2.0+	BSD-3-Clause
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions, and the following disclaimer,
+ *    without modification.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The names of the above-listed copyright holders may not be used
+ *    to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * ALTERNATIVELY, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") as published by the Free Software
+ * Foundation, either version 2 of that License or (at your option) any
+ * later version.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 
 /*
  * The Mass Storage Function acts as a USB Mass Storage device,
@@ -152,6 +181,7 @@
  * <http://www.usb.org/developers/devclass_docs/usbmass-ufi10.pdf>.
  */
 
+
 /*
  *				Driver Design
  *
@@ -243,8 +273,6 @@
 #include <config.h>
 #include <malloc.h>
 #include <common.h>
-#include <console.h>
-#include <g_dnl.h>
 
 #include <linux/err.h>
 #include <linux/usb/ch9.h>
@@ -256,7 +284,6 @@
 #include <linux/usb/gadget.h>
 #include <linux/usb/composite.h>
 #include <usb/lin_gadget_compat.h>
-#include <g_dnl.h>
 
 /*------------------------------------------------------------------------*/
 
@@ -264,6 +291,7 @@
 #define FSG_DRIVER_VERSION	"2012/06/5"
 
 static const char fsg_string_interface[] = "Mass Storage";
+
 
 #define FSG_NO_INTR_EP 1
 #define FSG_NO_DEVICE_STRINGS    1
@@ -344,7 +372,7 @@ struct fsg_common {
 	unsigned int		bad_lun_okay:1;
 	unsigned int		running:1;
 
-	int volatile		thread_wakeup_needed;
+	int			thread_wakeup_needed;
 	struct completion	thread_notifier;
 	struct task_struct	*thread_task;
 
@@ -444,9 +472,8 @@ static void set_bulk_out_req_length(struct fsg_common *common,
 
 /*-------------------------------------------------------------------------*/
 
-static struct ums *ums;
-static int ums_count;
-static struct fsg_common *the_fsg_common;
+struct ums_board_info			*ums_info;
+struct fsg_common *the_fsg_common;
 
 static int fsg_set_halt(struct fsg_dev *fsg, struct usb_ep *ep)
 {
@@ -673,25 +700,13 @@ static int sleep_thread(struct fsg_common *common)
 		if (common->thread_wakeup_needed)
 			break;
 
-		if (++i == 20000) {
+		if (++i == 50000) {
 			busy_indicator();
 			i = 0;
 			k++;
 		}
 
-		if (k == 10) {
-			/* Handle CTRL+C */
-			if (ctrlc())
-				return -EPIPE;
-
-			/* Check cable connection */
-			if (!g_dnl_board_usb_cable_connected())
-				return -EIO;
-
-			k = 0;
-		}
-
-		usb_gadget_handle_interrupts(0);
+		usb_gadget_handle_interrupts();
 	}
 	common->thread_wakeup_needed = 0;
 	return rc;
@@ -773,14 +788,14 @@ static int do_read(struct fsg_common *common)
 		}
 
 		/* Perform the read */
-		rc = ums[common->lun].read_sector(&ums[common->lun],
-				      file_offset / SECTOR_SIZE,
-				      amount / SECTOR_SIZE,
-				      (char __user *)bh->buf);
-		if (!rc)
+		nread = 0;
+		rc = ums_info->read_sector(&(ums_info->ums_dev),
+					   file_offset / SECTOR_SIZE,
+					   amount / SECTOR_SIZE,
+					   (char __user *)bh->buf);
+		if (rc)
 			return -EIO;
-
-		nread = rc * SECTOR_SIZE;
+		nread = amount;
 
 		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
 				(unsigned long long) file_offset,
@@ -947,13 +962,13 @@ static int do_write(struct fsg_common *common)
 			amount = bh->outreq->actual;
 
 			/* Perform the write */
-			rc = ums[common->lun].write_sector(&ums[common->lun],
+			rc = ums_info->write_sector(&(ums_info->ums_dev),
 					       file_offset / SECTOR_SIZE,
 					       amount / SECTOR_SIZE,
 					       (char __user *)bh->buf);
-			if (!rc)
+			if (rc)
 				return -EIO;
-			nwritten = rc * SECTOR_SIZE;
+			nwritten = amount;
 
 			VLDBG(curlun, "file write %u @ %llu -> %d\n", amount,
 					(unsigned long long) file_offset,
@@ -975,8 +990,6 @@ static int do_write(struct fsg_common *common)
 
 			/* If an error occurred, report it and its position */
 			if (nwritten < amount) {
-				printf("nwritten:%zd amount:%u\n", nwritten,
-				       amount);
 				curlun->sense_data = SS_WRITE_ERROR;
 				curlun->info_valid = 1;
 				break;
@@ -1063,13 +1076,14 @@ static int do_verify(struct fsg_common *common)
 		}
 
 		/* Perform the read */
-		rc = ums[common->lun].read_sector(&ums[common->lun],
-				      file_offset / SECTOR_SIZE,
-				      amount / SECTOR_SIZE,
-				      (char __user *)bh->buf);
-		if (!rc)
+		nread = 0;
+		rc = ums_info->read_sector(&(ums_info->ums_dev),
+					   file_offset / SECTOR_SIZE,
+					   amount / SECTOR_SIZE,
+					   (char __user *)bh->buf);
+		if (rc)
 			return -EIO;
-		nread = rc * SECTOR_SIZE;
+		nread = amount;
 
 		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
 				(unsigned long long) file_offset,
@@ -1112,13 +1126,12 @@ static int do_inquiry(struct fsg_common *common, struct fsg_buffhd *bh)
 
 	memset(buf, 0, 8);
 	buf[0] = TYPE_DISK;
-	buf[1] = curlun->removable ? 0x80 : 0;
 	buf[2] = 2;		/* ANSI SCSI level 2 */
 	buf[3] = 2;		/* SCSI-2 INQUIRY data format */
 	buf[4] = 31;		/* Additional length */
 				/* No special options */
 	sprintf((char *) (buf + 8), "%-8s%-16s%04x", (char*) vendor_id ,
-			ums[common->lun].name, (u16) 0xffff);
+			ums_info->name, (u16) 0xffff);
 
 	return 36;
 }
@@ -2404,7 +2417,6 @@ static void handle_exception(struct fsg_common *common)
 
 int fsg_main_thread(void *common_)
 {
-	int ret;
 	struct fsg_common	*common = the_fsg_common;
 	/* The main loop */
 	do {
@@ -2414,16 +2426,12 @@ int fsg_main_thread(void *common_)
 		}
 
 		if (!common->running) {
-			ret = sleep_thread(common);
-			if (ret)
-				return ret;
-
+			sleep_thread(common);
 			continue;
 		}
 
-		ret = get_next_command(common);
-		if (ret)
-			return ret;
+		if (get_next_command(common))
+			continue;
 
 		if (!exception_in_progress(common))
 			common->state = FSG_STATE_DATA_PHASE;
@@ -2457,7 +2465,7 @@ static struct fsg_common *fsg_common_init(struct fsg_common *common,
 	int nluns, i, rc;
 
 	/* Find out how many LUNs there should be */
-	nluns = ums_count;
+	nluns = 1;
 	if (nluns < 1 || nluns > FSG_MAX_LUNS) {
 		printf("invalid number of LUNs: %u\n", nluns);
 		return ERR_PTR(-EINVAL);
@@ -2465,12 +2473,12 @@ static struct fsg_common *fsg_common_init(struct fsg_common *common,
 
 	/* Allocate? */
 	if (!common) {
-		common = calloc(sizeof(*common), 1);
+		common = calloc(sizeof *common, 1);
 		if (!common)
 			return ERR_PTR(-ENOMEM);
 		common->free_storage_on_release = 1;
 	} else {
-		memset(common, 0, sizeof(*common));
+		memset(common, 0, sizeof common);
 		common->free_storage_on_release = 0;
 	}
 
@@ -2502,7 +2510,7 @@ static struct fsg_common *fsg_common_init(struct fsg_common *common,
 	for (i = 0; i < nluns; i++) {
 		common->luns[i].removable = 1;
 
-		rc = fsg_lun_open(&common->luns[i], ums[i].num_sectors, "");
+		rc = fsg_lun_open(&common->luns[i], "");
 		if (rc)
 			goto error_luns;
 	}
@@ -2519,7 +2527,7 @@ static struct fsg_common *fsg_common_init(struct fsg_common *common,
 buffhds_first_it:
 		bh->inreq_busy = 0;
 		bh->outreq_busy = 0;
-		bh->buf = memalign(CONFIG_SYS_CACHELINE_SIZE, FSG_BUFLEN);
+		bh->buf = kmalloc(FSG_BUFLEN, GFP_KERNEL);
 		if (unlikely(!bh->buf)) {
 			rc = -ENOMEM;
 			goto error_release;
@@ -2626,7 +2634,7 @@ usb_copy_descriptors(struct usb_descriptor_header **src)
 		bytes += (*tmp)->bLength;
 	bytes += (n_desc + 1) * sizeof(*tmp);
 
-	mem = memalign(CONFIG_SYS_CACHELINE_SIZE, bytes);
+	mem = kmalloc(bytes, GFP_KERNEL);
 	if (!mem)
 		return NULL;
 
@@ -2648,6 +2656,8 @@ usb_copy_descriptors(struct usb_descriptor_header **src)
 
 	return ret;
 }
+
+
 
 static void fsg_unbind(struct usb_configuration *c, struct usb_function *f)
 {
@@ -2776,12 +2786,9 @@ int fsg_add(struct usb_configuration *c)
 	return fsg_bind_config(c->cdev, c, fsg_common);
 }
 
-int fsg_init(struct ums *ums_devs, int count)
+int fsg_init(struct ums_board_info *ums)
 {
-	ums = ums_devs;
-	ums_count = count;
+	ums_info = ums;
 
 	return 0;
 }
-
-DECLARE_GADGET_BIND_CALLBACK(usb_dnl_ums, fsg_add);

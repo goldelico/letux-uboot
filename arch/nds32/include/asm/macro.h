@@ -5,7 +5,23 @@
  * Copyright (C) 2011 Andes Technology Corporation
  * Macpaul Lin, Andes Technology Corporation <macpaul@andestech.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __ASM_NDS_MACRO_H
@@ -23,20 +39,20 @@
  */
 
 .macro	write32, addr, data
-	li	$r4, \addr
-	li	$r5, \data
+	li	$r4, addr
+	li	$r5, data
 	swi	$r5, [$r4]
 .endm
 
 .macro	write16, addr, data
-	li	$r4, \addr
-	li	$r5, \data
+	li	$r4, addr
+	li	$r5, data
 	shi	$r5, [$r4]
 .endm
 
 .macro	write8, addr, data
-	li	$r4, \addr
-	li	$r5, \data
+	li	$r4, addr
+	li	$r5, data
 	sbi	$r5, [$r4]
 .endm
 
@@ -46,17 +62,17 @@
  * Note: Instruction 'ori' supports immediate value up to 15 bits.
  */
 .macro	setbf32, addr, data
-	li	$r4, \addr
+	li	$r4, addr
 	lwi	$r5, [$r4]
-	li	$r6, \data
+	li	$r6, data
 	or	$r5, $r5, $r6
 	swi	$r5, [$r4]
 .endm
 
 .macro	setbf15, addr, data
-	li	$r4, \addr
+	li	$r4, addr
 	lwi	$r5, [$r4]
-	ori	$r5, $r5, \data
+	ori	$r5, $r5, data
 	swi	$r5, [$r4]
 .endm
 
@@ -69,7 +85,7 @@
  */
 
 .macro	wait_timer, time
-	li	$r4, \time
+	li	$r4, time
 1:
 	nop
 	addi	$r4, $r4, -1

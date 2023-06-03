@@ -6,7 +6,23 @@
  * (C) Copyright 2010
  * Marvell Semiconductor <www.marvell.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301 USA
  */
 
 #ifndef __MVGPIO_H__
@@ -14,8 +30,9 @@
 
 #include <common.h>
 
+#ifdef CONFIG_SHEEVA_88SV331xV5
 /*
- * GPIO Register map for Marvell SOCs
+ * GPIO Register map for SHEEVA 88SV331xV5
  */
 struct gpio_reg {
 	u32 gplr;	/* Pin Level Register - 0x0000 */
@@ -50,5 +67,8 @@ struct gpio_reg {
 	u32 pad12[2];
 	u32 apmask;	/* Bitwise Mask of Edge Detect Register - 0x009C */
 };
+#else
+#error "CPU core subversion not defined"
+#endif
 
 #endif /* __MVGPIO_H__ */

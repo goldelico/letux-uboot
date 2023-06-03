@@ -86,3 +86,4 @@ void enable_board_pin_mux(void)
 	/* Ethernet pinmux. */
 	configure_module_pin_mux(rmii1_pin_mux);
 }
+

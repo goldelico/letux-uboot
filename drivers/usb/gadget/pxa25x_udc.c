@@ -8,7 +8,19 @@
  * Copyright (C) 2003 Joshua Wise
  * Copyright (C) 2012 Lukasz Dalek <luk0104@gmail.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * MODULE_AUTHOR("Frank Becker, Robert Schwebel, David Brownell");
  */
@@ -1950,10 +1962,10 @@ int usb_gadget_register_driver(struct usb_gadget_driver *driver)
 	dev->watchdog.period = 5000 * CONFIG_SYS_HZ / 1000000; /* 5 ms */
 	dev->watchdog.function = udc_watchdog;
 
-	dev->mach = &mach_info;
-
 	udc_disable(dev);
 	udc_reinit(dev);
+
+	dev->mach = &mach_info;
 
 	dev->gadget.name = "pxa2xx_udc";
 	retval = driver->bind(&dev->gadget);
@@ -2041,7 +2053,7 @@ extern void udc_disconnect(void)
 /*-------------------------------------------------------------------------*/
 
 extern int
-usb_gadget_handle_interrupts(int index)
+usb_gadget_handle_interrupts(void)
 {
 	return pxa25x_udc_irq();
 }

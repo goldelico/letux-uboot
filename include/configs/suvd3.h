@@ -11,7 +11,10 @@
  * (C) Copyright 2010
  * Heiko Schocher, DENX Software Engineering, hs@denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
  */
 
 #ifndef __CONFIG_H
@@ -29,48 +32,13 @@
 #define CONFIG_KM_BOARD_NAME   "suvd3"
 /* include common defines/options for all 8321 Keymile boards */
 #include "km/km8321-common.h"
-
 #elif defined(CONFIG_KMVECT1)   /* VECT1 board specific */
 #define CONFIG_HOSTNAME		kmvect1
 #define CONFIG_KM_BOARD_NAME   "kmvect1"
-/* at end of uboot partition, before env */
-#define CONFIG_SYS_QE_FW_ADDR   0xF00B0000
 /* include common defines/options for all 8309 Keymile boards */
 #include "km/km8309-common.h"
-
-#elif defined(CONFIG_KMTEGR1)   /* TEGR1 board specific */
-#define CONFIG_HOSTNAME   kmtegr1
-#define CONFIG_KM_BOARD_NAME   "kmtegr1"
-#define CONFIG_KM_UBI_PARTITION_NAME_BOOT	"ubi0"
-#define CONFIG_KM_UBI_PARTITION_NAME_APP	"ubi1"
-#define MTDIDS_DEFAULT			"nor0=boot,nand0=app"
-#define MTDPARTS_DEFAULT		"mtdparts="			\
-	"boot:"								\
-		"768k(u-boot),"						\
-		"256k(qe-fw),"						\
-		"128k(env),"						\
-		"128k(envred),"						\
-		"-(" CONFIG_KM_UBI_PARTITION_NAME_BOOT ");"		\
-	"app:"								\
-		"-(" CONFIG_KM_UBI_PARTITION_NAME_APP ");"
-
-#define CONFIG_ENV_ADDR		0xF0100000
-#define CONFIG_ENV_OFFSET	0x100000
-
-#define CONFIG_CMD_NAND
-#define CONFIG_NAND_ECC_BCH
-#define CONFIG_BCH
-#define CONFIG_NAND_KMETER1
-#define CONFIG_SYS_MAX_NAND_DEVICE		1
-#define NAND_MAX_CHIPS				1
-
-/* include common defines/options for all 8309 Keymile boards */
-#include "km/km8309-common.h"
-/* must be after the include because KMBEC_FPGA is otherwise undefined */
-#define CONFIG_SYS_NAND_BASE CONFIG_SYS_KMBEC_FPGA_BASE /* PRIO_BASE_ADDRESS */
-
 #else
-#error Supported boards are: SUVD3, KMVECT1, KMTEGR1
+#error Supported boards are: SUVD3, KMVECT1
 #endif
 
 #define CONFIG_SYS_APP1_BASE		0xA0000000
@@ -91,7 +59,6 @@
  *
  */
 
-#if defined(CONFIG_SUVD3) || defined(CONFIG_KMVECT1)
 /*
  * APP1 on the local bus CS2
  */
@@ -118,26 +85,14 @@
 			 0x0000c000 | \
 			 MxMR_WLFx_2X)
 
-#elif defined(CONFIG_KMTEGR1)
-#define CONFIG_SYS_BR3_PRELIM (CONFIG_SYS_APP2_BASE | \
-				 BR_PS_16 | \
-				 BR_MS_GPCM | \
-				 BR_V)
-
-#define CONFIG_SYS_OR3_PRELIM (MEG_TO_AM(CONFIG_SYS_APP2_SIZE) | \
-				 OR_GPCM_SCY_5 | \
-				 OR_GPCM_TRLX_CLEAR | \
-				 OR_GPCM_EHTR_CLEAR)
-
-#endif /* CONFIG_KMTEGR1 */
-
 #define CONFIG_SYS_LBLAWBAR3_PRELIM	CONFIG_SYS_APP2_BASE
 #define CONFIG_SYS_LBLAWAR3_PRELIM	(LBLAWAR_EN | LBLAWAR_256MB)
 
 /*
  * MMU Setup
  */
-#if defined(CONFIG_SUVD3) || defined(CONFIG_KMVECT1)
+
+
 /* APP1:  icache cacheable, but dcache-inhibit and guarded */
 #define CONFIG_SYS_IBAT5L	(CONFIG_SYS_APP1_BASE | BATL_PP_RW | \
 				 BATL_MEMCOHERENCE)
@@ -146,13 +101,6 @@
 #define CONFIG_SYS_DBAT5L	(CONFIG_SYS_APP1_BASE | BATL_PP_RW | \
 				 BATL_CACHEINHIBIT | BATL_GUARDEDSTORAGE)
 #define CONFIG_SYS_DBAT5U	CONFIG_SYS_IBAT5U
-
-#elif defined(CONFIG_KMTEGR1)
-#define CONFIG_SYS_IBAT5L (0)
-#define CONFIG_SYS_IBAT5U (0)
-#define CONFIG_SYS_DBAT5L CONFIG_SYS_IBAT5L
-#define CONFIG_SYS_DBAT5U CONFIG_SYS_IBAT5U
-#endif /* CONFIG_KMTEGR1 */
 
 #define CONFIG_SYS_IBAT6L	(CONFIG_SYS_APP2_BASE | BATL_PP_RW | \
 				 BATL_MEMCOHERENCE)
@@ -186,9 +134,7 @@
 #define CONFIG_SYS_UEC1_PHY_ADDR	CONFIG_SYS_FIXED_PHY_ADDR
 #define CONFIG_SYS_UEC1_INTERFACE_TYPE	PHY_INTERFACE_MODE_MII
 #define CONFIG_SYS_UEC1_INTERFACE_SPEED	100
-#endif /* CONFIG_KMVECT1 */
 
-#if defined(CONFIG_KMVECT1) || defined(CONFIG_KMTEGR1)
 /* ethernet port connected to piggy (UEC2) */
 #define CONFIG_HAS_ETH1
 #define CONFIG_UEC_ETH2
@@ -199,6 +145,6 @@
 #define CONFIG_SYS_UEC2_PHY_ADDR	0
 #define CONFIG_SYS_UEC2_INTERFACE_TYPE	PHY_INTERFACE_MODE_RMII
 #define CONFIG_SYS_UEC2_INTERFACE_SPEED	100
-#endif /* CONFIG_KMVECT1 || CONFIG_KMTEGR1 */
+#endif /* CONFIG_KMVECT1 */
 
 #endif /* __CONFIG_H */

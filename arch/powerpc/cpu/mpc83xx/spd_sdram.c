@@ -8,7 +8,23 @@
  * (C) Copyright 2003 Motorola Inc.
  * Xianghua Xiao (X.Xiao@motorola.com)
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -599,7 +615,7 @@ long int spd_sdram()
 
 	/*
 	 * Empirically set ~MCAS-to-preamble override for DDR 2.
-	 * Your mileage will vary.
+	 * Your milage will vary.
 	 */
 	cpo = 0;
 	if (spd.mem_type == SPD_MEMTYPE_DDR2) {
@@ -843,7 +859,7 @@ long int spd_sdram()
 
 #if defined(CONFIG_DDR_ECC) && !defined(CONFIG_ECC_INIT_VIA_DDRCONTROLLER)
 /*
- * Use timebase counter, get_timer() is not available
+ * Use timebase counter, get_timer() is not availabe
  * at this point of initialization yet.
  */
 static __inline__ unsigned long get_tbms (void)

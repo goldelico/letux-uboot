@@ -2,7 +2,23 @@
  * Copyright 2009-2011 Freescale Semiconductor, Inc.
  * Author: Timur Tabi <timur@freescale.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 /*
@@ -55,14 +71,14 @@
 #include <fsl_mdio.h>
 #include <malloc.h>
 #include <fdt_support.h>
-#include <fsl_dtsec.h>
+#include <asm/fsl_dtsec.h>
 
 #include "../common/ngpixis.h"
 #include "../common/fman.h"
 
 #ifdef CONFIG_FMAN_ENET
 
-#define BRDCFG1_EMI1_SEL_MASK	0x78
+#define BRDCFG1_EMI1_SEL_MASK	0x70
 #define BRDCFG1_EMI1_SEL_SLOT1	0x10
 #define BRDCFG1_EMI1_SEL_SLOT2	0x20
 #define BRDCFG1_EMI1_SEL_SLOT5	0x30
@@ -75,8 +91,6 @@
 #define BRDCFG1_EMI2_SEL_SLOT2	0x02
 
 #define BRDCFG2_REG_GPIO_SEL	0x20
-
-#define PHY_BASE_ADDR		0x00
 
 /*
  * BRDCFG1 mask and value for each MAC
@@ -170,7 +184,7 @@ static int hydra_mdio_init(char *realbusname, char *fakebusname)
 	bus->read = hydra_mdio_read;
 	bus->write = hydra_mdio_write;
 	bus->reset = hydra_mdio_reset;
-	strcpy(bus->name, fakebusname);
+	sprintf(bus->name, fakebusname);
 
 	hmdio->realbus = miiphy_get_dev_by_name(realbusname);
 
@@ -202,8 +216,6 @@ static void fdt_set_mdio_mux(void *fdt, const char *alias, u32 mux)
 	if (!path)
 		path = alias;
 
-	do_fixup_by_path(fdt, path, "reg",
-			 &mux, sizeof(mux), 1);
 	do_fixup_by_path(fdt, path, "fsl,hydra-mdio-muxval",
 			 &mux, sizeof(mux), 1);
 }
@@ -252,12 +264,11 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 		return;
 	}
 
-	if (mux == (BRDCFG1_EMI1_SEL_RGMII | BRDCFG1_EMI1_EN)) {
+	if (mux == BRDCFG1_EMI1_SEL_RGMII) {
 		/* RGMII */
 		/* The RGMII PHY is identified by the MAC connected to it */
 		sprintf(phy, "phy_rgmii_%u", port == FM1_DTSEC4 ? 0 : 1);
 		fdt_set_phy_handle(fdt, compat, addr, phy);
-		return;
 	}
 
 	/* If it's not RGMII or XGMII, it must be SGMII */
@@ -370,7 +381,6 @@ int board_eth_init(bd_t *bis)
 	struct tgec_mdio_info tgec_mdio_info;
 	unsigned int i, slot;
 	int lane;
-	struct mii_dev *bus;
 
 	printf("Initializing Fman\n");
 
@@ -475,9 +485,6 @@ int board_eth_init(bd_t *bis)
 			break;
 		}
 	}
-
-	bus = miiphy_get_dev_by_name("HYDRA_SGMII_MDIO");
-	set_sgmii_phy(bus, FM1_DTSEC1, CONFIG_SYS_NUM_FM1_DTSEC, PHY_BASE_ADDR);
 
 	/*
 	 * For 10G, we only support one XAUI card per Fman.  If present, then we

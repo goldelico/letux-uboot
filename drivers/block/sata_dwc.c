@@ -12,7 +12,12 @@
  *          Copyright 2006 Applied Micro Circuits Corporation
  *          COPYRIGHT (C) 2005  SYNOPSYS, INC.  ALL RIGHTS RESERVED
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute
+ * it and/or modify it under the terms of the GNU
+ * General Public License as published by the
+ * Free Software Foundation;  either version 2 of the  License,
+ * or (at your option) any later version.
+ *
  */
 /*
  * SATA support based on the chip canyonlands.
@@ -26,7 +31,7 @@
 #include <command.h>
 #include <pci.h>
 #include <asm/processor.h>
-#include <linux/errno.h>
+#include <asm/errno.h>
 #include <asm/io.h>
 #include <malloc.h>
 #include <ata.h>
@@ -423,11 +428,6 @@ int init_sata(int dev)
 	return rc;
 }
 
-int reset_sata(int dev)
-{
-	return 0;
-}
-
 static u8 ata_check_altstatus(struct ata_port *ap)
 {
 	u8 val = 0;
@@ -626,7 +626,7 @@ int scan_sata(int dev)
 			if (id[162] & 1)
 				printf("supports DRM functions and may "
 					"not be fully accessable.\n");
-			strcpy(revbuf, "CFA");
+			sprintf(revbuf, "%s", "CFA");
 		} else {
 			if (ata_id_has_tpm(id))
 				printf("supports DRM functions and may "
@@ -653,7 +653,7 @@ int scan_sata(int dev)
 				ncq_desc[0] = '\0';
 
 			if (ata_dev->horkage & ATA_HORKAGE_NONCQ)
-				strcpy(ncq_desc, "NCQ (not used)");
+				sprintf(ncq_desc, "%s", "NCQ (not used)");
 
 			if (ap.flags & ATA_FLAG_NCQ)
 				ata_dev->flags |= ATA_DFLAG_NCQ;

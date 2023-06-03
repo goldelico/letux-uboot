@@ -6,11 +6,26 @@
  * (C) Copyright 2000-2006
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include "mkimage.h"
-#include <bootm.h>
 #include <image.h>
 #include <version.h>
 
@@ -38,7 +53,7 @@ static int fit_set_hash_value(void *fit, int noffset, uint8_t *value,
 		printf("Can't set hash '%s' property for '%s' node(%s)\n",
 		       FIT_VALUE_PROP, fit_get_name(fit, noffset, NULL),
 		       fdt_strerror(ret));
-		return ret == -FDT_ERR_NOSPACE ? -ENOSPC : -EIO;
+		return -1;
 	}
 
 	return 0;
@@ -64,27 +79,25 @@ static int fit_image_process_hash(void *fit, const char *image_name,
 	const char *node_name;
 	int value_len;
 	char *algo;
-	int ret;
 
 	node_name = fit_get_name(fit, noffset, NULL);
 
 	if (fit_image_hash_get_algo(fit, noffset, &algo)) {
 		printf("Can't get hash algo property for '%s' hash node in '%s' image node\n",
 		       node_name, image_name);
-		return -ENOENT;
+		return -1;
 	}
 
 	if (calculate_hash(data, size, algo, value, &value_len)) {
 		printf("Unsupported hash algorithm (%s) for '%s' hash node in '%s' image node\n",
 		       algo, node_name, image_name);
-		return -EPROTONOSUPPORT;
+		return -1;
 	}
 
-	ret = fit_set_hash_value(fit, noffset, value, value_len);
-	if (ret) {
+	if (fit_set_hash_value(fit, noffset, value, value_len)) {
 		printf("Can't set hash value for '%s' hash node in '%s' image node\n",
 		       node_name, image_name);
-		return ret;
+		return -1;
 	}
 
 	return 0;
@@ -227,9 +240,7 @@ static int fit_image_process_sig(const char *keydir, void *keydest,
 	ret = fit_image_write_sig(fit, noffset, value, value_len, comment,
 			NULL, 0);
 	if (ret) {
-		if (ret == -FDT_ERR_NOSPACE)
-			return -ENOSPC;
-		printf("Can't write signature for '%s' signature node in '%s' conf node: %s\n",
+		printf("Can't write signature for '%s' signature node in '%s' image node: %s\n",
 		       node_name, image_name, fdt_strerror(ret));
 		return -1;
 	}
@@ -238,18 +249,12 @@ static int fit_image_process_sig(const char *keydir, void *keydest,
 	/* Get keyname again, as FDT has changed and invalidated our pointer */
 	info.keyname = fdt_getprop(fit, noffset, "key-name-hint", NULL);
 
-	if (keydest)
-		ret = info.algo->add_verify_data(&info, keydest);
-	else
+	/* Write the public key into the supplied FDT file */
+	if (keydest && info.algo->add_verify_data(&info, keydest)) {
+		printf("Failed to add verification data for '%s' signature node in '%s' image node\n",
+		       node_name, image_name);
 		return -1;
-
-	/*
-	 * Write the public key into the supplied FDT file; this might fail
-	 * several times, since we try signing with successively increasing
-	 * size values
-	 */
-	if (keydest && ret)
-		return ret;
+	}
 
 	return 0;
 }
@@ -330,7 +335,7 @@ int fit_image_add_verification_data(const char *keydir, void *keydest,
 				comment, require_keys);
 		}
 		if (ret)
-			return ret;
+			return -1;
 	}
 
 	return 0;
@@ -414,7 +419,7 @@ static int fit_config_get_hash_list(void *fit, int conf_noffset,
 		goto err_mem;
 
 	/* Get a list of images that we intend to sign */
-	prop = fit_config_get_image_list(fit, sig_offset, &len,
+	prop = fit_config_get_image_list(fit, conf_noffset, &len,
 					&allow_missing);
 	if (!prop)
 		return 0;
@@ -600,13 +605,10 @@ static int fit_config_process_sig(const char *keydir, void *keydest,
 		return -1;
 	}
 
-	ret = fit_image_write_sig(fit, noffset, value, value_len, comment,
-				region_prop, region_proplen);
-	if (ret) {
-		if (ret == -FDT_ERR_NOSPACE)
-			return -ENOSPC;
-		printf("Can't write signature for '%s' signature node in '%s' conf node: %s\n",
-		       node_name, conf_name, fdt_strerror(ret));
+	if (fit_image_write_sig(fit, noffset, value, value_len, comment,
+				region_prop, region_proplen)) {
+		printf("Can't write signature for '%s' signature node in '%s' conf node\n",
+		       node_name, conf_name);
 		return -1;
 	}
 	free(value);
@@ -616,15 +618,10 @@ static int fit_config_process_sig(const char *keydir, void *keydest,
 	info.keyname = fdt_getprop(fit, noffset, "key-name-hint", NULL);
 
 	/* Write the public key into the supplied FDT file */
-	if (keydest) {
-		ret = info.algo->add_verify_data(&info, keydest);
-		if (ret == -ENOSPC)
-			return -ENOSPC;
-		if (ret) {
-			printf("Failed to add verification data for '%s' signature node in '%s' image node\n",
-			       node_name, conf_name);
-		}
-		return ret;
+	if (keydest && info.algo->add_verify_data(&info, keydest)) {
+		printf("Failed to add verification data for '%s' signature node in '%s' image node\n",
+		       node_name, conf_name);
+		return -1;
 	}
 
 	return 0;
@@ -697,7 +694,7 @@ int fit_add_verification_data(const char *keydir, void *keydest, void *fit,
 	confs_noffset = fdt_path_offset(fit, FIT_CONFS_PATH);
 	if (confs_noffset < 0) {
 		printf("Can't find images parent node '%s' (%s)\n",
-		       FIT_CONFS_PATH, fdt_strerror(confs_noffset));
+		       FIT_IMAGES_PATH, fdt_strerror(confs_noffset));
 		return -ENOENT;
 	}
 
@@ -714,23 +711,3 @@ int fit_add_verification_data(const char *keydir, void *keydest, void *fit,
 
 	return 0;
 }
-
-#ifdef CONFIG_FIT_SIGNATURE
-int fit_check_sign(const void *fit, const void *key)
-{
-	int cfg_noffset;
-	int ret;
-
-	cfg_noffset = fit_conf_get_node(fit, NULL);
-	if (!cfg_noffset)
-		return -1;
-
-	printf("Verifying Hash Integrity ... ");
-	ret = fit_config_verify(fit, cfg_noffset);
-	if (ret)
-		return ret;
-	ret = bootm_host_load_images(fit, cfg_noffset);
-
-	return ret;
-}
-#endif

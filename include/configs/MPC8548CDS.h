@@ -1,7 +1,23 @@
 /*
  * Copyright 2004, 2007, 2010-2011 Freescale Semiconductor.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 /*
@@ -13,9 +29,14 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#ifdef CONFIG_36BIT
+#define CONFIG_PHYS_64BIT
+#endif
+
 /* High Level Configuration Options */
 #define CONFIG_BOOKE		1	/* BOOKE */
 #define CONFIG_E500		1	/* BOOKE e500 family */
+#define CONFIG_MPC85xx		1	/* MPC8540/60/55/41/48 */
 #define CONFIG_MPC8548		1	/* MPC8548 specific */
 #define CONFIG_MPC8548CDS	1	/* MPC8548CDS board specific */
 
@@ -26,8 +47,9 @@
 #define CONFIG_SYS_SRIO
 #define CONFIG_SRIO1			/* SRIO port 1 */
 
+#define CONFIG_PCI		/* enable any pci type devices */
 #define CONFIG_PCI1		/* PCI controller 1 */
-#define CONFIG_PCIE1		/* PCIE controller 1 (slot 1) */
+#define CONFIG_PCIE1		/* PCIE controler 1 (slot 1) */
 #undef CONFIG_PCI2
 #define CONFIG_FSL_PCI_INIT	1	/* Use common FSL init code */
 #define CONFIG_PCI_INDIRECT_BRIDGE 1	/* indirect PCI bridge support */
@@ -69,7 +91,7 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_SYS_CCSRBAR_PHYS_LOW	CONFIG_SYS_CCSRBAR
 
 /* DDR Setup */
-#define CONFIG_SYS_FSL_DDR2
+#define CONFIG_FSL_DDR2
 #undef CONFIG_FSL_DDR_INTERACTIVE
 #define CONFIG_SPD_EEPROM		/* Use SPD EEPROM for DDR setup*/
 #define CONFIG_DDR_SPD
@@ -124,6 +146,7 @@ extern unsigned long get_clock_freq(void);
  * 0xfff80_0000	0xfffff_ffff	FLASH (boot bank)	8M	non-cacheable
  *
  */
+
 
 /*
  * Local Bus Definitions
@@ -313,6 +336,7 @@ extern unsigned long get_clock_freq(void);
 
 /* Serial Port */
 #define CONFIG_CONS_INDEX	2
+#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
@@ -323,15 +347,24 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_SYS_NS16550_COM1	(CONFIG_SYS_CCSRBAR+0x4500)
 #define CONFIG_SYS_NS16550_COM2	(CONFIG_SYS_CCSRBAR+0x4600)
 
+/* Use the HUSH parser */
+#define CONFIG_SYS_HUSH_PARSER
+
+/* pass open firmware flat tree */
+#define CONFIG_OF_LIBFDT		1
+#define CONFIG_OF_BOARD_SETUP		1
+#define CONFIG_OF_STDOUT_VIA_ALIAS	1
+
 /*
  * I2C
  */
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_FSL
-#define CONFIG_SYS_FSL_I2C_SPEED	400000
-#define CONFIG_SYS_FSL_I2C_SLAVE	0x7F
-#define CONFIG_SYS_FSL_I2C_OFFSET	0x3000
-#define CONFIG_SYS_I2C_NOPROBES		{ {0, 0x69} }
+#define CONFIG_FSL_I2C		/* Use FSL common I2C driver */
+#define CONFIG_HARD_I2C		/* I2C with hardware support*/
+#undef	CONFIG_SOFT_I2C		/* I2C bit-banged */
+#define CONFIG_SYS_I2C_SPEED		400000	/* I2C speed and slave address */
+#define CONFIG_SYS_I2C_SLAVE		0x7F
+#define CONFIG_SYS_I2C_NOPROBES	{0x69}	/* Don't probe these addrs */
+#define CONFIG_SYS_I2C_OFFSET		0x3000
 
 /* EEPROM */
 #define CONFIG_ID_EEPROM
@@ -403,12 +436,17 @@ extern unsigned long get_clock_freq(void);
 #endif
 
 #if defined(CONFIG_PCI)
+
+#define CONFIG_PCI_PNP			/* do pci plug-and-play */
+
 #undef CONFIG_EEPRO100
 #undef CONFIG_TULIP
+#define CONFIG_E1000			/* Define e1000 pci Ethernet card */
 
 #define CONFIG_PCI_SCAN_SHOW		/* show pci devices on startup */
 
 #endif	/* CONFIG_PCI */
+
 
 #if defined(CONFIG_TSEC_ENET)
 
@@ -467,15 +505,24 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_HOSTNAME
 
+
 /*
  * Command line configuration.
  */
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_I2C
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_ELF
 #define CONFIG_CMD_IRQ
+#define CONFIG_CMD_SETEXPR
 #define CONFIG_CMD_REGINFO
 
 #if defined(CONFIG_PCI)
     #define CONFIG_CMD_PCI
 #endif
+
 
 #undef CONFIG_WATCHDOG			/* watchdog disabled */
 
@@ -486,6 +533,7 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_CMDLINE_EDITING			/* Command-line editing */
 #define CONFIG_AUTO_COMPLETE			/* add autocompletion support */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
+#define CONFIG_SYS_PROMPT	"=> "		/* Monitor Command Prompt */
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O Buffer Size */
 #else
@@ -494,6 +542,7 @@ extern unsigned long get_clock_freq(void);
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16) /* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS	16		/* max number of command args */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
+#define CONFIG_SYS_HZ		1000		/* decrementer freq: 1ms ticks */
 
 /*
  * For booting Linux, the board info and command line data
@@ -505,16 +554,23 @@ extern unsigned long get_clock_freq(void);
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */
+#define CONFIG_KGDB_SER_INDEX	2	/* which serial port to use */
 #endif
 
 /*
  * Environment Configuration
  */
+
+/* The mac addresses for all ethernet interface */
 #if defined(CONFIG_TSEC_ENET)
 #define CONFIG_HAS_ETH0
+#define CONFIG_ETHADDR	 00:E0:0C:00:00:FD
 #define CONFIG_HAS_ETH1
+#define CONFIG_ETH1ADDR	 00:E0:0C:00:01:FD
 #define CONFIG_HAS_ETH2
+#define CONFIG_ETH2ADDR	 00:E0:0C:00:02:FD
 #define CONFIG_HAS_ETH3
+#define CONFIG_ETH3ADDR	 00:E0:0C:00:03:FD
 #endif
 
 #define CONFIG_IPADDR	 192.168.1.253
@@ -530,6 +586,7 @@ extern unsigned long get_clock_freq(void);
 
 #define CONFIG_LOADADDR	1000000	/*default location for tftp and bootm*/
 
+#define CONFIG_BOOTDELAY 10	/* -1 disables auto-boot */
 #undef	CONFIG_BOOTARGS		/* the boot command will set bootargs*/
 
 #define CONFIG_BAUDRATE	115200
@@ -552,7 +609,7 @@ extern unsigned long get_clock_freq(void);
 	"consoledev=ttyS1\0"			\
 	"ramdiskaddr=2000000\0"			\
 	"ramdiskfile=ramdisk.uboot\0"		\
-	"fdtaddr=1e00000\0"			\
+	"fdtaddr=c00000\0"			\
 	"fdtfile=mpc8548cds.dtb\0"
 
 #define CONFIG_NFSBOOTCOMMAND						\
@@ -563,6 +620,7 @@ extern unsigned long get_clock_freq(void);
    "tftp $loadaddr $bootfile;"						\
    "tftp $fdtaddr $fdtfile;"						\
    "bootm $loadaddr - $fdtaddr"
+
 
 #define CONFIG_RAMBOOTCOMMAND \
    "setenv bootargs root=/dev/ram rw "					\

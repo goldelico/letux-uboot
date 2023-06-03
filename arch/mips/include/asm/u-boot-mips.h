@@ -1,8 +1,28 @@
 /*
- * SPDX-License-Identifier:	GPL-2.0+
+ * This file is released under the terms of GPL v2 and any later version.
+ * See the file COPYING in the root directory of the source tree for details.
+ *
+ * Copyright (C) 2003 Wolfgang Denk, DENX Software Engineering, wd@denx.de
  */
 
-#ifndef _U_BOOT_MIPS_H_
-#define _U_BOOT_MIPS_H_
+static inline unsigned long bss_start(void)
+{
+	extern char __bss_start[];
+	return (unsigned long) &__bss_start;
+}
 
-#endif /* _U_BOOT_MIPS_H_ */
+static inline unsigned long bss_end(void)
+{
+	extern ulong __bss_end;
+	return (unsigned long) &__bss_end;
+}
+
+static inline unsigned long image_copy_end(void)
+{
+	extern char __image_copy_end[];
+	return (unsigned long) &__image_copy_end;
+}
+
+extern int incaip_set_cpuclk(void);
+
+int cleanup_before_linux (void);

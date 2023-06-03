@@ -2,12 +2,28 @@
  * (C) Copyright 2012
  * Valentin Lontgchamp, Keymile AG, valentin.longchamp@keymile.com
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301 USA
  */
 
 #include <common.h>
 #include <i2c.h>
-#include <linux/errno.h>
+#include <asm/errno.h>
 
 /* GPIO Pin from kirkwood connected to PROGRAM_B pin of the xilinx FPGA */
 #define KM_XLX_PROGRAM_B_PIN    39
@@ -189,31 +205,6 @@ int wait_for_fpga_config(void)
 	return 0;
 }
 
-#if defined(KM_PCIE_RESET_MPP7)
-
-#define KM_PEX_RST_GPIO_PIN	7
-int fpga_reset(void)
-{
-	if (!check_boco2()) {
-		/* we do not have BOCO2, this is not really used */
-		return 0;
-	}
-
-	printf("PCIe reset through GPIO7: ");
-	/* apply PCIe reset via GPIO */
-	kw_gpio_set_valid(KM_PEX_RST_GPIO_PIN, 1);
-	kw_gpio_direction_output(KM_PEX_RST_GPIO_PIN, 1);
-	kw_gpio_set_value(KM_PEX_RST_GPIO_PIN, 0);
-	udelay(1000*10);
-	kw_gpio_set_value(KM_PEX_RST_GPIO_PIN, 1);
-
-	printf(" done\n");
-
-	return 0;
-}
-
-#else
-
 #define PRST1		0x4
 #define PCIE_RST	0x10
 #define TRAFFIC_RST	0x04
@@ -244,7 +235,6 @@ int fpga_reset(void)
 
 	return 0;
 }
-#endif
 
 /* the FPGA was configured, we configure the BOCO2 so that the EEPROM
  * is available from the Bobcat SPI bus */

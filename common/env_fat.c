@@ -4,7 +4,23 @@
  * Author:
  *  Maximilian Schwerin <mvs@tigris.de>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -13,7 +29,6 @@
 #include <environment.h>
 #include <linux/stddef.h>
 #include <malloc.h>
-#include <memalign.h>
 #include <search.h>
 #include <errno.h>
 #include <fat.h>
@@ -38,31 +53,50 @@ int env_init(void)
 int saveenv(void)
 {
 	env_t	env_new;
-	struct blk_desc *dev_desc = NULL;
-	disk_partition_t info;
-	int dev, part;
+	ssize_t	len;
+	char	*res;
+	block_dev_desc_t *dev_desc = NULL;
+	int dev = FAT_ENV_DEVICE;
+	int part = FAT_ENV_PART;
 	int err;
-	loff_t size;
 
-	err = env_export(&env_new);
-	if (err)
-		return err;
-
-	part = blk_get_device_part_str(FAT_ENV_INTERFACE,
-					FAT_ENV_DEVICE_AND_PART,
-					&dev_desc, &info, 1);
-	if (part < 0)
-		return 1;
-
-	dev = dev_desc->devnum;
-	if (fat_set_blk_dev(dev_desc, &info) != 0) {
-		printf("\n** Unable to use %s %d:%d for saveenv **\n",
-		       FAT_ENV_INTERFACE, dev, part);
+	res = (char *)&env_new.data;
+	len = hexport_r(&env_htab, '\0', 0, &res, ENV_SIZE, 0, NULL);
+	if (len < 0) {
+		error("Cannot export environment: errno = %d\n", errno);
 		return 1;
 	}
 
-	err = file_fat_write(FAT_ENV_FILE, (void *)&env_new, 0, sizeof(env_t),
-			     &size);
+#ifdef CONFIG_MMC
+	if (strcmp(FAT_ENV_INTERFACE, "mmc") == 0) {
+		struct mmc *mmc = find_mmc_device(dev);
+
+		if (!mmc) {
+			printf("no mmc device at slot %x\n", dev);
+			return 1;
+		}
+
+		mmc->has_init = 0;
+		mmc_init(mmc);
+	}
+#endif /* CONFIG_MMC */
+
+	dev_desc = get_dev(FAT_ENV_INTERFACE, dev);
+	if (dev_desc == NULL) {
+		printf("Failed to find %s%d\n",
+			FAT_ENV_INTERFACE, dev);
+		return 1;
+	}
+
+	err = fat_register_device(dev_desc, part);
+	if (err) {
+		printf("Failed to register %s%d:%d\n",
+			FAT_ENV_INTERFACE, dev, part);
+		return 1;
+	}
+
+	env_new.crc = crc32(0, env_new.data, ENV_SIZE);
+	err = file_fat_write(FAT_ENV_FILE, (void *)&env_new, sizeof(env_t));
 	if (err == -1) {
 		printf("\n** Unable to write \"%s\" from %s%d:%d **\n",
 			FAT_ENV_FILE, FAT_ENV_INTERFACE, dev, part);
@@ -76,35 +110,50 @@ int saveenv(void)
 
 void env_relocate_spec(void)
 {
-	ALLOC_CACHE_ALIGN_BUFFER(char, buf, CONFIG_ENV_SIZE);
-	struct blk_desc *dev_desc = NULL;
-	disk_partition_t info;
-	int dev, part;
+	char buf[CONFIG_ENV_SIZE];
+	block_dev_desc_t *dev_desc = NULL;
+	int dev = FAT_ENV_DEVICE;
+	int part = FAT_ENV_PART;
 	int err;
 
-	part = blk_get_device_part_str(FAT_ENV_INTERFACE,
-					FAT_ENV_DEVICE_AND_PART,
-					&dev_desc, &info, 1);
-	if (part < 0)
-		goto err_env_relocate;
+#ifdef CONFIG_MMC
+	if (strcmp(FAT_ENV_INTERFACE, "mmc") == 0) {
+		struct mmc *mmc = find_mmc_device(dev);
 
-	dev = dev_desc->devnum;
-	if (fat_set_blk_dev(dev_desc, &info) != 0) {
-		printf("\n** Unable to use %s %d:%d for loading the env **\n",
-		       FAT_ENV_INTERFACE, dev, part);
-		goto err_env_relocate;
+		if (!mmc) {
+			printf("no mmc device at slot %x\n", dev);
+			set_default_env(NULL);
+			return;
+		}
+
+		mmc->has_init = 0;
+		mmc_init(mmc);
+	}
+#endif /* CONFIG_MMC */
+
+	dev_desc = get_dev(FAT_ENV_INTERFACE, dev);
+	if (dev_desc == NULL) {
+		printf("Failed to find %s%d\n",
+			FAT_ENV_INTERFACE, dev);
+		set_default_env(NULL);
+		return;
 	}
 
-	err = file_fat_read(FAT_ENV_FILE, buf, CONFIG_ENV_SIZE);
+	err = fat_register_device(dev_desc, part);
+	if (err) {
+		printf("Failed to register %s%d:%d\n",
+			FAT_ENV_INTERFACE, dev, part);
+		set_default_env(NULL);
+		return;
+	}
+
+	err = file_fat_read(FAT_ENV_FILE, (uchar *)&buf, CONFIG_ENV_SIZE);
 	if (err == -1) {
 		printf("\n** Unable to read \"%s\" from %s%d:%d **\n",
 			FAT_ENV_FILE, FAT_ENV_INTERFACE, dev, part);
-		goto err_env_relocate;
+		set_default_env(NULL);
+		return;
 	}
 
 	env_import(buf, 1);
-	return;
-
-err_env_relocate:
-	set_default_env(NULL);
 }

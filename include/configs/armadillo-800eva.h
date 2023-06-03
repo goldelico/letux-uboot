@@ -3,30 +3,62 @@
  *
  * Copyright (C) 2012 Renesas Solutions Corp.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __ARMADILLO_800EVA_H
 #define __ARMADILLO_800EVA_H
 
 #undef DEBUG
+#define CONFIG_ARMV7
 #define CONFIG_R8A7740
-#define CONFIG_ARCH_RMOBILE_BOARD_STRING "Armadillo-800EVA Board\n"
+#define CONFIG_RMOBILE
+#define CONFIG_RMOBILE_BOARD_STRING "Armadillo-800EVA Board\n"
 #define CONFIG_SH_GPIO_PFC
 
 #include <asm/arch/rmobile.h>
 
+#define CONFIG_CMD_MEMORY
 #define CONFIG_CMD_DFL
 #define CONFIG_CMD_SDRAM
+#define CONFIG_CMD_RUN
+#define CONFIG_CMD_LOADS
+#define CONFIG_CMD_NET
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_NFS
+#define CONFIG_CMD_BOOTZ
 
+#define CONFIG_OF_LIBFDT
 #define BOARD_LATE_INIT
 
 #define CONFIG_BAUDRATE		115200
+#define CONFIG_BOOTDELAY	3
 #define CONFIG_BOOTARGS		""
 
+#define CONFIG_VERSION_VARIABLE
 #undef	CONFIG_SHOW_BOOT_PROGRESS
 
 #define CONFIG_ARCH_CPU_INIT
+#define CONFIG_DISPLAY_CPUINFO
+#define CONFIG_DISPLAY_BOARDINFO
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_USE_ARCH_MEMSET
 #define CONFIG_USE_ARCH_MEMCPY
@@ -44,6 +76,7 @@
 #define ARMADILLO_800EVA_SDRAM_SIZE	(512 * 1024 * 1024)
 
 #define CONFIG_SYS_LONGHELP
+#define CONFIG_SYS_PROMPT		"=> "
 #define CONFIG_SYS_CBSIZE		256
 #define CONFIG_SYS_PBSIZE		256
 #define CONFIG_SYS_MAXARGS		16
@@ -58,6 +91,9 @@
 #define SCIF2_BASE		0xe6c60000
 #define SCIF4_BASE		0xe6c80000
 #define	CONFIG_SCIF_A
+#undef	CONFIG_SYS_CONSOLE_INFO_QUIET
+#undef	CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
+#undef	CONFIG_SYS_CONSOLE_ENV_OVERWRITE
 
 #define CONFIG_SYS_MEMTEST_START	(ARMADILLO_800EVA_SDRAM_BASE)
 #define CONFIG_SYS_MEMTEST_END		(CONFIG_SYS_MEMTEST_START + \
@@ -75,6 +111,7 @@
 #define CONFIG_SYS_MONITOR_BASE		0x00000000
 #define CONFIG_SYS_MONITOR_LEN		(256 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(1 * 1024 * 1024)
+#define CONFIG_SYS_GBL_DATA_SIZE	(256)
 #define CONFIG_SYS_BOOTMAPSZ		(8 * 1024 * 1024)
 #define CONFIG_SYS_TEXT_BASE	0xE80C0000
 
@@ -103,6 +140,7 @@
 #define CONFIG_ENV_SIZE_REDUND	(CONFIG_ENV_SECT_SIZE)
 
 /* SH Ether */
+#define	CONFIG_NET_MULTI
 #define CONFIG_SH_ETHER
 #define CONFIG_SH_ETHER_USE_PORT	0
 #define CONFIG_SH_ETHER_PHY_ADDR	0x0
@@ -116,8 +154,7 @@
 
 /* Board Clock */
 #define CONFIG_SYS_CLK_FREQ	50000000
-#define CONFIG_SH_TMU_CLK_FREQ CONFIG_SYS_CLK_FREQ
-#define CONFIG_SH_SCIF_CLK_FREQ CONFIG_SYS_CLK_FREQ
 #define CONFIG_SYS_TMU_CLK_DIV	4
+#define CONFIG_SYS_HZ		1000
 
 #endif	/* __ARMADILLO_800EVA_H */

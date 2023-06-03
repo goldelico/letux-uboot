@@ -7,7 +7,20 @@
  *
  * Configuration for the flea3 board.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __CONFIG_H
@@ -16,9 +29,13 @@
 #include <asm/arch/imx-regs.h>
 
  /* High Level Configuration Options */
+#define CONFIG_ARM1136	/* This is an arm1136 CPU core */
 #define CONFIG_MX35
 
 #define CONFIG_SYS_DCACHE_OFF
+#define CONFIG_SYS_CACHELINE_SIZE	32
+
+#define CONFIG_DISPLAY_CPUINFO
 
 /* Only in case the value is not present in mach-types.h */
 #ifndef MACH_TYPE_FLEA3
@@ -46,13 +63,11 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_MXC
-#define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
-#define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
-#define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
-#define CONFIG_SYS_SPD_BUS_NUM		2 /* I2C3 */
-#define CONFIG_SYS_MXC_I2C3_SLAVE	0xfe
+#define CONFIG_HARD_I2C
+#define CONFIG_I2C_MXC
+#define CONFIG_SYS_I2C_BASE		I2C3_BASE_ADDR
+#define CONFIG_SYS_I2C_SPEED		100000
+#define CONFIG_SYS_I2C_SLAVE		0xfe
 #define CONFIG_MXC_SPI
 #define CONFIG_MXC_GPIO
 
@@ -70,16 +85,28 @@
 /*
  * Command definition
  */
+
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_DHCP
 #define CONFIG_BOOTP_SUBNETMASK
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_DNS
 
 #define CONFIG_CMD_NAND
+#define CONFIG_CMD_CACHE
 
+#define CONFIG_CMD_I2C
+#define CONFIG_CMD_SPI
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NET
 #define CONFIG_NET_RETRY_COUNT	100
 
+#define CONFIG_BOOTDELAY	3
 
 #define CONFIG_LOADADDR		0x80800000	/* loadaddr env var */
+
 
 /*
  * Ethernet on SOC (FEC)
@@ -98,7 +125,9 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP	/* undef to save memory */
+#define CONFIG_SYS_PROMPT	"flea3 U-Boot > "
 #define CONFIG_CMDLINE_EDITING
+#define CONFIG_SYS_HUSH_PARSER	/* Use the HUSH parser */
 
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
@@ -110,7 +139,11 @@
 #define CONFIG_SYS_MEMTEST_START	0	/* memtest works on */
 #define CONFIG_SYS_MEMTEST_END		0x10000
 
+#undef	CONFIG_SYS_CLKS_IN_HZ	/* everything, incl board info, in Hz */
+
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
+
+#define CONFIG_SYS_HZ				1000
 
 /*
  * Physical Memory Map

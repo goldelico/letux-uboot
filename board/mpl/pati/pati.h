@@ -1,7 +1,23 @@
 /*
  * (C) Copyright 2003
  * Denis Peter, d.peter@mpl.ch
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 /************************************************************************
  * MACROS and register definitions for PATI Registers
@@ -201,8 +217,9 @@
 #define PCI_VENDOR_ID_MPL	0x18E6
 #define PCI_DEVICE_ID_PATI	0x00DA
 
-#if defined(CONFIG_TARGET_MIP405) || defined(CONFIG_TARGET_MIP405T)
+#if defined(CONFIG_MIP405)
 #define PATI_FIRMWARE_START_OFFSET	0x00300000
+#define PATI_ISO_STRING  "MEV-10084-001"
 #endif
 
 #define PATI_ENDIAN_MODE	0x3E

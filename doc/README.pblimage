@@ -14,17 +14,20 @@ Building PBL Boot Image and boot steps
 1. Building PBL Boot Image.
    The default Image is u-boot.pbl.
 
-   For eSPI boot(available on P2041/P3041/P4080/P5020/P5040/T4240):
+   For eSPI boot(available on P3041/P4080/P5020):
 	To build the eSPI boot image:
-	make <board_name>_SPIFLASH
+	make <board_name>_SPIFLASH_config
+	make u-boot.pbl
 
-   For SD boot(available on P2041/P3041/P4080/P5020/P5040/T4240):
+   For SD boot(available on P3041/P4080/P5020):
 	To build the SD boot image:
-	make <board_name>_SDCARD
+	make <board_name>_SDCARD_config
+	make u-boot.pbl
 
-   For Nand boot(available on P2041/P3041/P5020/P5040):
+   For Nand boot(available on P3041/P5020):
 	To build the NAND boot image:
-	make <board_name>_NAND
+	make <board_name>_NAND_config
+	make u-boot.pbl
 
 
 2. pblimage support available with mkimage utility will generate Freescale PBL

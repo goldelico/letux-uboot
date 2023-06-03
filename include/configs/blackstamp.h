@@ -1,5 +1,5 @@
 /*
- * U-Boot - Configuration file for BlackStamp board
+ * U-boot - Configuration file for BlackStamp board
  * Configuration by Ben Matthews for UR LLE using bf533-stamp.h
  * as a template
  * See http://blackfin.uclinux.org/gf/project/blackstamp/
@@ -40,6 +40,7 @@
 #define SHARED_RESOURCES	1
 
 /* Is I2C bit-banged? */
+#undef CONFIG_SOFT_I2
 
 /*
  * Clock Settings
@@ -76,6 +77,9 @@
 #define CONFIG_HOSTNAME		blackstamp
 #define CONFIG_ROOTPATH		"/checkout/uClinux-dist/romfs"
 #define CONFIG_SYS_AUTOLOAD		"no"
+
+/* To remove hardcoding and enable MAC storage in EEPROM  */
+/* #define CONFIG_ETHADDR		02:80:ad:20:31:b8 */
 #endif
 
 #define CONFIG_ENV_IS_IN_SPI_FLASH
@@ -102,10 +106,27 @@
 #define CONFIG_AUTO_COMPLETE	1
 #define CONFIG_ENV_OVERWRITE	1
 
+#include <config_cmd_default.h>
+
+#ifdef CONFIG_SMC91111
+# define CONFIG_CMD_DHCP
+# define CONFIG_CMD_PING
+#else
+# undef CONFIG_CMD_NET
+#endif
+
+#ifdef CONFIG_SOFT_I2C
+# define CONFIG_CMD_I2C
+#endif
+
 #define CONFIG_CMD_BOOTLDR
+#define CONFIG_CMD_CACHE
 #define CONFIG_CMD_CPLBINFO
 #define CONFIG_CMD_DATE
+#define CONFIG_CMD_SF
+#define CONFIG_CMD_ELF
 
+#define CONFIG_BOOTDELAY     5
 #define CONFIG_BOOTCOMMAND   "run ramboot"
 #define CONFIG_BOOTARGS \
 	"root=/dev/mtdblock0 rw " \
@@ -175,7 +196,6 @@
 #define CONFIG_BAUDRATE		57600
 #define CONFIG_LOADS_ECHO	1
 #define CONFIG_UART_CONSOLE	0
-#define CONFIG_BFIN_SERIAL
 
 /*
  * I2C settings
@@ -184,11 +204,11 @@
  * Note these pins are arbitrarily chosen because we aren't using
  * them yet. You can (and probably should) change these values!
  */
-#ifdef CONFIG_SYS_I2C_SOFT
+#ifdef CONFIG_SOFT_I2C
 #define CONFIG_SOFT_I2C_GPIO_SCL GPIO_PF9
 #define CONFIG_SOFT_I2C_GPIO_SDA GPIO_PF8
-#define CONFIG_SYS_I2C_SOFT_SPEED	50000
-#define CONFIG_SYS_I2C_SOFT_SLAVE	0xFE
+#define CONFIG_SYS_I2C_SPEED		50000
+#define CONFIG_SYS_I2C_SLAVE		0xFE
 #endif
 
 /*
@@ -203,6 +223,8 @@
 /* For the M25P64 SCK Should be Kept < 15Mhz */
 #define CONFIG_ENV_SPI_MAX_HZ	15000000
 #define CONFIG_SF_DEFAULT_SPEED	15000000
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_STMICRO
 
 /*
  * FLASH organization and environment definitions
@@ -219,6 +241,8 @@
  * hardware don't support Parallel Flash at all.
  */
 #define CONFIG_SYS_NO_FLASH
+#undef CONFIG_CMD_IMLS
 #undef CONFIG_CMD_JFFS2
+#undef CONFIG_CMD_FLASH
 
 #endif

@@ -9,7 +9,23 @@
  *	Richard Woodruff <r-woodruff2@ti.com>
  *	Syed Mohammed Khasim <x0khasim@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef _OMAP4_H_
@@ -18,8 +34,6 @@
 #if !(defined(__KERNEL_STRICT_NAMES) || defined(__ASSEMBLY__))
 #include <asm/types.h>
 #endif /* !(__KERNEL_STRICT_NAMES || __ASSEMBLY__) */
-
-#include <linux/sizes.h>
 
 /*
  * L4 Peripherals - L4 Wakeup and L4 Core now
@@ -43,7 +57,6 @@
 #define OMAP4_CONTROL_ID_CODE_ES2_3	0x6B95C02F
 #define OMAP4460_CONTROL_ID_CODE_ES1_0	0x0B94E02F
 #define OMAP4460_CONTROL_ID_CODE_ES1_1	0x2B94E02F
-#define OMAP4470_CONTROL_ID_CODE_ES1_0	0x0B97502F
 
 /* UART */
 #define UART1_BASE		(OMAP44XX_L4_PER_BASE + 0x6a000)
@@ -57,6 +70,9 @@
 
 /* Watchdog Timer2 - MPU watchdog */
 #define WDT2_BASE		(OMAP44XX_L4_WKUP_BASE + 0x14000)
+
+/* GPMC */
+#define OMAP44XX_GPMC_BASE	0x50000000
 
 /*
  * Hardware Register Details
@@ -111,8 +127,7 @@ struct s32ktimer {
  */
 #define NON_SECURE_SRAM_START	0x40304000
 #define NON_SECURE_SRAM_END	0x4030E000	/* Not inclusive */
-#define NON_SECURE_SRAM_IMG_END	0x4030C000
-#define SRAM_SCRATCH_SPACE_ADDR	(NON_SECURE_SRAM_IMG_END - SZ_1K)
+#define SRAM_SCRATCH_SPACE_ADDR	NON_SECURE_SRAM_START
 /* base address for indirect vectors (internal boot mode) */
 #define SRAM_ROM_VECT_BASE	0x4030D000
 
@@ -122,24 +137,5 @@ struct s32ktimer {
 
 /* ABB tranxdone mask */
 #define OMAP_ABB_MPU_TXDONE_MASK	(0x1 << 7)
-
-#define OMAP44XX_SAR_RAM_BASE		0x4a326000
-#define OMAP_REBOOT_REASON_OFFSET	0xA0C
-#define OMAP_REBOOT_REASON_SIZE		0x0F
-
-/* Boot parameters */
-#ifndef __ASSEMBLY__
-struct omap_boot_parameters {
-	unsigned int boot_message;
-	unsigned int boot_device_descriptor;
-	unsigned char boot_device;
-	unsigned char reset_reason;
-	unsigned char ch_flags;
-};
-
-int omap_reboot_mode(char *mode, unsigned int length);
-int omap_reboot_mode_clear(void);
-int omap_reboot_mode_store(char *mode);
-#endif
 
 #endif

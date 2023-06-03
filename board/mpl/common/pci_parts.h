@@ -2,7 +2,24 @@
  * (C) Copyright 2001
  * Denis Peter, MPL AG Switzerland, d.peter@mpl.ch
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ *
  */
 #ifndef _PCI_PARTS_H_
 #define _PCI_PARTS_H_
@@ -91,7 +108,7 @@ static struct pci_pip405_config_entry piix4_isa_bridge_f0[] = {
 static struct pci_pip405_config_entry piix4_ide_cntrl_f1[] = {
 	{PCI_CFG_PIIX4_BMIBA,	0x0001000,	4}, /* set BMI to a valid address */
 	{PCI_COMMAND,		0x0001,		2}, /* enable IO access	*/
-#if !defined(CONFIG_TARGET_MIP405T)
+#if !defined(CONFIG_MIP405T)
 	{PCI_CFG_PIIX4_IDETIM,	0x80008000,	4}, /* enable Both IDE channels	*/
 #else
 	{PCI_CFG_PIIX4_IDETIM,	0x00008000,	4}, /* enable IDE channel0	*/
@@ -101,7 +118,7 @@ static struct pci_pip405_config_entry piix4_ide_cntrl_f1[] = {
 
 /* PIIX4 USB Controller Function 2 */
 static struct pci_pip405_config_entry piix4_usb_cntrl_f2[] = {
-#if !defined(CONFIG_TARGET_MIP405T)
+#if !defined(CONFIG_MIP405T)
 	{PCI_INTERRUPT_LINE,	31,		1}, /* Int vector = 31		*/
 	{PCI_BASE_ADDRESS_4,	0x0000E001,	4}, /* Set IO Address to 0xe000 to 0xe01F */
 	{PCI_LATENCY_TIMER,	0x80,		1}, /* Latency Timer 0x80	*/

@@ -2,7 +2,23 @@
  * (C) Copyright 2012
  * Joe Hershberger, National Instruments, joe.hershberger@ni.com
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <linux/string.h>
@@ -15,7 +31,6 @@
 #include <env_attr.h>
 #include <env_flags.h>
 #define getenv fw_getenv
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #else
 #include <common.h>
 #include <environment.h>
@@ -153,7 +168,7 @@ enum env_flags_varaccess env_flags_parse_varaccess_from_binflags(int binflags)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(env_flags_varaccess_mask); i++)
+	for (i = 0; i < sizeof(env_flags_varaccess_mask); i++)
 		if (env_flags_varaccess_mask[i] ==
 		    (binflags & ENV_FLAGS_VARACCESS_BIN_MASK))
 			return (enum env_flags_varaccess)i;
@@ -187,31 +202,6 @@ static void skip_num(int hex, const char *value, const char **end,
 	if (end != NULL)
 		*end = value;
 }
-
-#ifdef CONFIG_CMD_NET
-int eth_validate_ethaddr_str(const char *addr)
-{
-	const char *end;
-	const char *cur;
-	int i;
-
-	cur = addr;
-	for (i = 0; i < 6; i++) {
-		skip_num(1, cur, &end, 2);
-		if (cur == end)
-			return -1;
-		if (cur + 2 == end && is_hex_prefix(cur))
-			return -1;
-		if (i != 5 && *end != ':')
-			return -1;
-		if (i == 5 && *end != '\0')
-			return -1;
-		cur = end + 1;
-	}
-
-	return 0;
-}
-#endif
 
 /*
  * Based on the declared type enum, validate that the value string complies
@@ -265,8 +255,19 @@ static int _env_flags_validate_type(const char *value,
 		}
 		break;
 	case env_flags_vartype_macaddr:
-		if (eth_validate_ethaddr_str(value))
-			return -1;
+		cur = value;
+		for (i = 0; i < 6; i++) {
+			skip_num(1, cur, &end, 2);
+			if (cur == end)
+				return -1;
+			if (cur + 2 == end && is_hex_prefix(cur))
+				return -1;
+			if (i != 5 && *end != ':')
+				return -1;
+			if (i == 5 && *end != '\0')
+				return -1;
+			cur = end + 1;
+		}
 		break;
 #endif
 	case env_flags_vartype_end:
@@ -374,21 +375,21 @@ int env_flags_validate_varaccess(const char *name, int check_mask)
 /*
  * Validate the parameters to "env set" directly
  */
-int env_flags_validate_env_set_params(char *name, char * const val[], int count)
+int env_flags_validate_env_set_params(int argc, char * const argv[])
 {
-	if ((count >= 1) && val[0] != NULL) {
-		enum env_flags_vartype type = env_flags_get_type(name);
+	if ((argc >= 3) && argv[2] != NULL) {
+		enum env_flags_vartype type = env_flags_get_type(argv[1]);
 
 		/*
 		 * we don't currently check types that need more than
 		 * one argument
 		 */
-		if (type != env_flags_vartype_string && count > 1) {
-			printf("## Error: too many parameters for setting \"%s\"\n",
-			       name);
+		if (type != env_flags_vartype_string && argc > 3) {
+			printf("## Error: too many parameters for setting "
+				"\"%s\"\n", argv[1]);
 			return -1;
 		}
-		return env_flags_validate_type(name, val[0]);
+		return env_flags_validate_type(argv[1], argv[2]);
 	}
 	/* ok */
 	return 0;
@@ -410,9 +411,6 @@ static int env_parse_flags_to_bin(const char *flags)
 	return binflags;
 }
 
-static int first_call = 1;
-static const char *flags_list;
-
 /*
  * Look for possible flags for a newly added variable
  * This is called specifically when the variable did not exist in the hash
@@ -421,13 +419,10 @@ static const char *flags_list;
 void env_flags_init(ENTRY *var_entry)
 {
 	const char *var_name = var_entry->key;
+	const char *flags_list = getenv(ENV_FLAGS_VAR);
 	char flags[ENV_FLAGS_ATTR_MAX_LEN + 1] = "";
 	int ret = 1;
 
-	if (first_call) {
-		flags_list = getenv(ENV_FLAGS_VAR);
-		first_call = 0;
-	}
 	/* look in the ".flags" and static for a reference to this variable */
 	ret = env_flags_lookup(flags_list, var_name, flags);
 
@@ -450,13 +445,12 @@ static int clear_flags(ENTRY *entry)
 /*
  * Call for each element in the list that defines flags for a variable
  */
-static int set_flags(const char *name, const char *value, void *priv)
+static int set_flags(const char *name, const char *value)
 {
 	ENTRY e, *ep;
 
 	e.key	= name;
 	e.data	= NULL;
-	e.callback = NULL;
 	hsearch_r(e, FIND, &ep, &env_htab, 0);
 
 	/* does the env variable actually exist? */
@@ -479,9 +473,9 @@ static int on_flags(const char *name, const char *value, enum env_op op,
 	hwalk_r(&env_htab, clear_flags);
 
 	/* configure any static flags */
-	env_attr_walk(ENV_FLAGS_LIST_STATIC, set_flags, NULL);
+	env_attr_walk(ENV_FLAGS_LIST_STATIC, set_flags);
 	/* configure any dynamic flags */
-	env_attr_walk(value, set_flags, NULL);
+	env_attr_walk(value, set_flags);
 
 	return 0;
 }

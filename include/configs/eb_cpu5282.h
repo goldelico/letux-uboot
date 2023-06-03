@@ -3,7 +3,23 @@
  *
  * (C) Copyright 2005-2009 BuS Elektronik GmbH & Co.KG <esw@bus-elektonik.de>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef _CONFIG_EB_CPU5282_H_
@@ -14,6 +30,9 @@
 /*----------------------------------------------------------------------*
  * High Level Configuration Options (easy to change)                    *
  *----------------------------------------------------------------------*/
+
+#define	CONFIG_MCF52x2			/* define processor family */
+#define CONFIG_M5282			/* define processor type */
 
 #define CONFIG_MISC_INIT_R
 
@@ -64,11 +83,20 @@
  * Command line configuration.
  */
 #define CONFIG_CMDLINE_EDITING
+#include <config_cmd_default.h>
+
+#undef CONFIG_CMD_LOADB
 #define CONFIG_CMD_DATE
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_I2C
 #define CONFIG_CMD_LED
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NET
 
 #define CONFIG_MCFTMR
 
+#define CONFIG_BOOTDELAY	5
+#define CONFIG_SYS_PROMPT	"\nEB+CPU5282> "
 #define	CONFIG_SYS_LONGHELP	1
 
 #define	CONFIG_SYS_CBSIZE	1024	/* Console I/O Buffer Size	*/
@@ -86,6 +114,7 @@
 /*----------------------------------------------------------------------*
  * Clock and PLL Configuration						*
  *----------------------------------------------------------------------*/
+#define CONFIG_SYS_HZ			1000
 #define	CONFIG_SYS_CLK			80000000      /* 8MHz * 8 */
 
 /* PLL Configuration: Ext Clock * 8 (see table 9-4 of MCF user manual) */
@@ -140,7 +169,7 @@
 #define	CONFIG_SYS_SDRAM_SIZE		CONFIG_SYS_SDRAM_SIZE0
 
 #define CONFIG_SYS_MONITOR_LEN		0x20000
-#define CONFIG_SYS_MALLOC_LEN		(4 * 1024 * 1024)
+#define CONFIG_SYS_MALLOC_LEN		(256 << 10)
 #define CONFIG_SYS_BOOTPARAMS_LEN	64*1024
 
 /*
@@ -233,14 +262,14 @@
  * I2C
  */
 
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_FSL
+#define CONFIG_HARD_I2C
+#define CONFIG_FSL_I2C
 
-#define CONFIG_SYS_FSL_I2C_OFFSET	0x00000300
+#define CONFIG_SYS_I2C_OFFSET		0x00000300
 #define CONFIG_SYS_IMMR			CONFIG_SYS_MBAR
 
-#define CONFIG_SYS_FSL_I2C_SPEED	100000
-#define CONFIG_SYS_FSL_I2C_SLAVE	0
+#define CONFIG_SYS_I2C_SPEED		100000
+#define CONFIG_SYS_I2C_SLAVE		0
 
 #ifdef CONFIG_CMD_DATE
 #define CONFIG_RTC_DS1338
@@ -250,6 +279,8 @@
 /*-----------------------------------------------------------------------
  * VIDEO configuration
  */
+
+#define CONFIG_VIDEO
 
 #ifdef CONFIG_VIDEO
 #define CONFIG_VIDEO_VCXK			1

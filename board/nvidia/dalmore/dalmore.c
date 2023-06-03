@@ -1,11 +1,20 @@
 /*
  * Copyright (c) 2010-2013, NVIDIA CORPORATION.  All rights reserved.
  *
- * SPDX-License-Identifier:	GPL-2.0
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the GNU General Public License,
+ * version 2, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <common.h>
-#include <dm.h>
 #include <asm/arch/pinmux.h>
 #include <asm/arch/gp_padctrl.h>
 #include "pinmux-config-dalmore.h"
@@ -20,18 +29,17 @@
  */
 void pinmux_init(void)
 {
-	pinmux_config_pingrp_table(tegra114_pinmux_set_nontristate,
+	pinmux_config_table(tegra114_pinmux_set_nontristate,
 		ARRAY_SIZE(tegra114_pinmux_set_nontristate));
 
-	pinmux_config_pingrp_table(tegra114_pinmux_common,
+	pinmux_config_table(tegra114_pinmux_common,
 		ARRAY_SIZE(tegra114_pinmux_common));
 
-	pinmux_config_pingrp_table(unused_pins_lowpower,
+	pinmux_config_table(unused_pins_lowpower,
 		ARRAY_SIZE(unused_pins_lowpower));
 
 	/* Initialize any non-default pad configs (APB_MISC_GP regs) */
-	pinmux_config_drvgrp_table(dalmore_padctrl,
-		ARRAY_SIZE(dalmore_padctrl));
+	padgrp_config_table(dalmore_padctrl, ARRAY_SIZE(dalmore_padctrl));
 }
 
 #if defined(CONFIG_TEGRA_MMC)
@@ -41,21 +49,18 @@ void pinmux_init(void)
  */
 void board_sdmmc_voltage_init(void)
 {
-	struct udevice *dev;
 	uchar reg, data_buffer[1];
 	int ret;
 
-	ret = i2c_get_chip_for_busnum(0, PMU_I2C_ADDRESS, 1, &dev);
-	if (ret) {
-		debug("%s: Cannot find PMIC I2C chip\n", __func__);
-		return;
-	}
+	ret = i2c_set_bus_num(0);/* PMU is on bus 0 */
+	if (ret)
+		printf("%s: i2c_set_bus_num returned %d\n", __func__, ret);
 
 	/* TPS65913: LDO9_VOLTAGE = 3.3V */
 	data_buffer[0] = 0x31;
 	reg = 0x61;
 
-	ret = dm_i2c_write(dev, reg, data_buffer, 1);
+	ret = i2c_write(PMU_I2C_ADDRESS, reg, 1, data_buffer, 1);
 	if (ret)
 		printf("%s: PMU i2c_write %02X<-%02X returned %d\n",
 			__func__, reg, data_buffer[0], ret);
@@ -64,7 +69,7 @@ void board_sdmmc_voltage_init(void)
 	data_buffer[0] = 0x01;
 	reg = 0x60;
 
-	ret = dm_i2c_write(dev, reg, data_buffer, 1);
+	ret = i2c_write(PMU_I2C_ADDRESS, reg, 1, data_buffer, 1);
 	if (ret)
 		printf("%s: PMU i2c_write %02X<-%02X returned %d\n",
 			__func__, reg, data_buffer[0], ret);
@@ -73,12 +78,7 @@ void board_sdmmc_voltage_init(void)
 	data_buffer[0] = 0x03;
 	reg = 0x14;
 
-	ret = i2c_get_chip_for_busnum(0, BAT_I2C_ADDRESS, 1, &dev);
-	if (ret) {
-		debug("%s: Cannot find charger I2C chip\n", __func__);
-		return;
-	}
-	ret = dm_i2c_write(dev, reg, data_buffer, 1);
+	ret = i2c_write(BAT_I2C_ADDRESS, reg, 1, data_buffer, 1);
 	if (ret)
 		printf("%s: BAT i2c_write %02X<-%02X returned %d\n",
 			__func__, reg, data_buffer[0], ret);

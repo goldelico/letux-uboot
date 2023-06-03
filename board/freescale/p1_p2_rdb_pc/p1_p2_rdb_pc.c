@@ -1,7 +1,23 @@
 /*
- * Copyright 2010-2011, 2013 Freescale Semiconductor, Inc.
+ * Copyright 2010-2011 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -14,7 +30,7 @@
 #include <asm/cache.h>
 #include <asm/immap_85xx.h>
 #include <asm/fsl_pci.h>
-#include <fsl_ddr_sdram.h>
+#include <asm/fsl_ddr_sdram.h>
 #include <asm/io.h>
 #include <asm/fsl_law.h>
 #include <asm/fsl_lbc.h>
@@ -232,7 +248,7 @@ int checkboard(void)
 		in_8(&cpld_data->pcba_rev) & 0x0F);
 
 	/* Initialize i2c early for rom_loc and flash bank information */
-	i2c_set_bus_num(CONFIG_SYS_SPD_BUS_NUM);
+	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 
 	if (i2c_read(CONFIG_SYS_I2C_PCA9557_ADDR, 0, 1, &in, 1) < 0 ||
 	    i2c_read(CONFIG_SYS_I2C_PCA9557_ADDR, 1, 1, &out, 1) < 0 ||
@@ -288,7 +304,7 @@ void pci_init_board(void)
 int board_early_init_r(void)
 {
 	const unsigned int flashbase = CONFIG_SYS_FLASH_BASE;
-	int flash_esel = find_tlb_idx((void *)flashbase, 1);
+	const u8 flash_esel = find_tlb_idx((void *)flashbase, 1);
 
 	/*
 	 * Remap Boot flash region to caching-inhibited
@@ -299,14 +315,8 @@ int board_early_init_r(void)
 	flush_dcache();
 	invalidate_icache();
 
-	if (flash_esel == -1) {
-		/* very unlikely unless something is messed up */
-		puts("Error: Could not find TLB for FLASH BASE\n");
-		flash_esel = 2;	/* give our best effort to continue */
-	} else {
-		/* invalidate existing TLB entry for flash */
-		disable_tlb(flash_esel);
-	}
+	/* invalidate existing TLB entry for flash */
+	disable_tlb(flash_esel);
 
 	set_tlb(1, flashbase, CONFIG_SYS_FLASH_BASE_PHYS, /* tlb, epn, rpn */
 		MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,/* perms, wimge */
@@ -360,7 +370,7 @@ int board_eth_init(bd_t *bis)
 		puts("No address specified for VSC7385 microcode.\n");
 #endif
 
-	mdio_info.regs = TSEC_GET_MDIO_REGS_BASE(1);
+	mdio_info.regs = (struct tsec_mii_mng *)CONFIG_SYS_MDIO_BASE_ADDR;
 	mdio_info.name = DEFAULT_MII_NAME;
 
 	fsl_pq_mdio_init(bis, &mdio_info);
@@ -424,17 +434,12 @@ static void fdt_board_fixup_qe_pins(void *blob)
 #endif
 
 #ifdef CONFIG_OF_BOARD_SETUP
-int ft_board_setup(void *blob, bd_t *bd)
+void ft_board_setup(void *blob, bd_t *bd)
 {
 	phys_addr_t base;
 	phys_size_t size;
-#if defined(CONFIG_P1020RDB_PD) || defined(CONFIG_P1020RDB_PC)
 	const char *soc_usb_compat = "fsl-usb2-dr";
-	int usb_err, usb1_off, usb2_off;
-#endif
-#if defined(CONFIG_SDCARD) || defined(CONFIG_SPIFLASH)
-	int err;
-#endif
+	int err, usb1_off, usb2_off;
 
 	ft_cpu_setup(blob, bd);
 
@@ -454,7 +459,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 #endif
 
 #if defined(CONFIG_HAS_FSL_DR_USB)
-	fsl_fdt_fixup_dr_usb(blob, bd);
+	fdt_fixup_dr_usb(blob, bd);
 #endif
 
 #if defined(CONFIG_SDCARD) || defined(CONFIG_SPIFLASH)
@@ -464,43 +469,42 @@ int ft_board_setup(void *blob, bd_t *bd)
 		int off = fdt_node_offset_by_compatible(blob, -1,
 				soc_elbc_compat);
 		if (off < 0) {
-			printf("WARNING: could not find compatible node %s\n",
-			       soc_elbc_compat);
-			return off;
+			printf("WARNING: could not find compatible node %s: %s.\n",
+			       soc_elbc_compat,
+			       fdt_strerror(off));
+				return;
 		}
 		err = fdt_del_node(blob, off);
 		if (err < 0) {
-			printf("WARNING: could not remove %s\n",
-			       soc_elbc_compat);
-			return err;
+			printf("WARNING: could not remove %s: %s.\n",
+			       soc_elbc_compat, fdt_strerror(err));
 		}
-		return 0;
+		return;
 	}
 #endif
 
-#if defined(CONFIG_P1020RDB_PD) || defined(CONFIG_P1020RDB_PC)
 /* Delete USB2 node as it is muxed with eLBC */
 	usb1_off = fdt_node_offset_by_compatible(blob, -1,
 		soc_usb_compat);
 	if (usb1_off < 0) {
-		printf("WARNING: could not find compatible node %s\n",
-		       soc_usb_compat);
-		return usb1_off;
+		printf("WARNING: could not find compatible node %s: %s.\n",
+		       soc_usb_compat,
+		       fdt_strerror(usb1_off));
+		return;
 	}
 	usb2_off = fdt_node_offset_by_compatible(blob, usb1_off,
 			soc_usb_compat);
 	if (usb2_off < 0) {
-		printf("WARNING: could not find compatible node %s\n",
-		       soc_usb_compat);
-		return usb2_off;
+		printf("WARNING: could not find compatible node %s: %s.\n",
+		       soc_usb_compat,
+		       fdt_strerror(usb2_off));
+		return;
 	}
-	usb_err = fdt_del_node(blob, usb2_off);
-	if (usb_err < 0) {
-		printf("WARNING: could not remove %s\n", soc_usb_compat);
-		return usb_err;
+	err = fdt_del_node(blob, usb2_off);
+	if (err < 0) {
+		printf("WARNING: could not remove %s: %s.\n",
+		       soc_usb_compat, fdt_strerror(err));
 	}
-#endif
 
-	return 0;
 }
 #endif

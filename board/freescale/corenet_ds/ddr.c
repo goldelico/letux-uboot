@@ -1,15 +1,17 @@
 /*
  * Copyright 2009-2011 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * Version 2 as published by the Free Software Foundation.
  */
 
 #include <common.h>
 #include <i2c.h>
 #include <hwconfig.h>
 #include <asm/mmu.h>
-#include <fsl_ddr_sdram.h>
-#include <fsl_ddr_dimm_params.h>
+#include <asm/fsl_ddr_sdram.h>
+#include <asm/fsl_ddr_dimm_params.h>
 #include <asm/fsl_law.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -54,14 +56,14 @@ phys_size_t fixed_sdram(void)
 
 	ddr_size = (phys_size_t) CONFIG_SYS_SDRAM_SIZE * 1024 * 1024;
 	ddr_cfg_regs.ddr_cdr1 = DDR_CDR1_DHC_EN;
-	fsl_ddr_set_memctl_regs(&ddr_cfg_regs, 0, 0);
+	fsl_ddr_set_memctl_regs(&ddr_cfg_regs, 0);
 
 #if (CONFIG_NUM_DDR_CONTROLLERS == 2)
 	memcpy(&ddr_cfg_regs,
 		fixed_ddr_parm_1[i].ddr_settings,
 		sizeof(ddr_cfg_regs));
 	ddr_cfg_regs.ddr_cdr1 = DDR_CDR1_DHC_EN;
-	fsl_ddr_set_memctl_regs(&ddr_cfg_regs, 1, 0);
+	fsl_ddr_set_memctl_regs(&ddr_cfg_regs, 1);
 #endif
 
 	/*
@@ -112,7 +114,7 @@ struct board_specific_parameters {
 	u32 wrlvl_start;
 	u32 cpo;
 	u32 write_data_delay;
-	u32 force_2t;
+	u32 force_2T;
 };
 
 /*
@@ -215,7 +217,7 @@ void fsl_ddr_board_options(memctl_options_t *popts,
 					pbsp->write_data_delay;
 				popts->clk_adjust = pbsp->clk_adjust;
 				popts->wrlvl_start = pbsp->wrlvl_start;
-				popts->twot_en = pbsp->force_2t;
+				popts->twoT_en = pbsp->force_2T;
 				goto found;
 			}
 			pbsp_highest = pbsp;
@@ -232,7 +234,7 @@ void fsl_ddr_board_options(memctl_options_t *popts,
 		popts->write_data_delay = pbsp_highest->write_data_delay;
 		popts->clk_adjust = pbsp_highest->clk_adjust;
 		popts->wrlvl_start = pbsp_highest->wrlvl_start;
-		popts->twot_en = pbsp_highest->force_2t;
+		popts->twoT_en = pbsp_highest->force_2T;
 	} else {
 		panic("DIMM is not supported by this board");
 	}

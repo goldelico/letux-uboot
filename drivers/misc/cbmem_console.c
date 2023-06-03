@@ -1,11 +1,22 @@
 /*
  * Copyright (C) 2011 The ChromiumOS Authors.  All rights reserved.
  *
- * SPDX-License-Identifier:	GPL-2.0
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA, 02110-1301 USA
  */
 
 #include <common.h>
-#include <console.h>
+
 #ifndef CONFIG_SYS_COREBOOT
 #error This driver requires coreboot
 #endif
@@ -20,7 +31,7 @@ struct cbmem_console {
 
 static struct cbmem_console *cbmem_console_p;
 
-void cbmemc_putc(struct stdio_dev *dev, char data)
+void cbmemc_putc(char data)
 {
 	int cursor;
 
@@ -29,12 +40,12 @@ void cbmemc_putc(struct stdio_dev *dev, char data)
 		cbmem_console_p->buffer_body[cursor] = data;
 }
 
-void cbmemc_puts(struct stdio_dev *dev, const char *str)
+void cbmemc_puts(const char *str)
 {
 	char c;
 
 	while ((c = *str++) != 0)
-		cbmemc_putc(dev, c);
+		cbmemc_putc(c);
 }
 
 int cbmemc_init(void)

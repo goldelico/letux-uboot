@@ -9,16 +9,37 @@
  *	Aneesh V	<aneesh@ti.com>
  *	Steve Sakoman	<steve@sakoman.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #include <common.h>
 #include <spl.h>
 #include <asm/arch/sys_proto.h>
-#include <linux/sizes.h>
+#include <asm/sizes.h>
 #include <asm/emif.h>
 #include <asm/omap_common.h>
 #include <linux/compiler.h>
+#include <asm/cache.h>
 #include <asm/system.h>
+
+#define ARMV7_DCACHE_WRITEBACK  0xe
+#define	ARMV7_DOMAIN_CLIENT	1
+#define ARMV7_DOMAIN_MASK	(0x3 << 0)
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -35,13 +56,19 @@ static void set_mux_conf_regs(void)
 {
 	switch (omap_hw_init_context()) {
 	case OMAP_INIT_CONTEXT_SPL:
-		set_muxconf_regs();
+		set_muxconf_regs_essential();
 		break;
 	case OMAP_INIT_CONTEXT_UBOOT_AFTER_SPL:
+#ifdef CONFIG_SYS_ENABLE_PADS_ALL
+		set_muxconf_regs_non_essential();
+#endif
 		break;
 	case OMAP_INIT_CONTEXT_UBOOT_FROM_NOR:
 	case OMAP_INIT_CONTEXT_UBOOT_AFTER_CH:
-		set_muxconf_regs();
+		set_muxconf_regs_essential();
+#ifdef CONFIG_SYS_ENABLE_PADS_ALL
+		set_muxconf_regs_non_essential();
+#endif
 		break;
 	}
 }
@@ -65,30 +92,12 @@ static void omap_rev_string(void)
 	u32 major_rev = (omap_rev & 0x00000F00) >> 8;
 	u32 minor_rev = (omap_rev & 0x000000F0) >> 4;
 
-	const char *sec_s;
-
-	switch (get_device_type()) {
-	case TST_DEVICE:
-		sec_s = "TST";
-		break;
-	case EMU_DEVICE:
-		sec_s = "EMU";
-		break;
-	case HS_DEVICE:
-		sec_s = "HS";
-		break;
-	case GP_DEVICE:
-		sec_s = "GP";
-		break;
-	default:
-		sec_s = "?";
-	}
-
 	if (soc_variant)
 		printf("OMAP");
 	else
 		printf("DRA");
-	printf("%x-%s ES%x.%x\n", omap_variant, sec_s, major_rev, minor_rev);
+	printf("%x ES%x.%x\n", omap_variant, major_rev,
+	       minor_rev);
 }
 
 #ifdef CONFIG_SPL_BUILD
@@ -102,87 +111,64 @@ void __weak srcomp_enable(void)
 {
 }
 
-/**
- * do_board_detect() - Detect board description
- *
- * Function to detect board description. This is expected to be
- * overridden in the SoC family board file where desired.
+#ifdef CONFIG_ARCH_CPU_INIT
+/*
+ * SOC specific cpu init
  */
-void __weak do_board_detect(void)
+int arch_cpu_init(void)
 {
+	save_omap_boot_params();
+	return 0;
 }
+#endif /* CONFIG_ARCH_CPU_INIT */
 
-/**
- * vcores_init() - Assign omap_vcores based on board
- *
- * Function to pick the vcores based on board. This is expected to be
- * overridden in the SoC family board file where desired.
- */
-void __weak vcores_init(void)
-{
-}
-
-void s_init(void)
-{
-}
-
-/**
- * early_system_init - Does Early system initialization.
- *
- * Does early system init of watchdog, muxing,  andclocks
+/*
+ * Routine: s_init
+ * Description: Does early system init of watchdog, muxing,  andclocks
  * Watchdog disable is done always. For the rest what gets done
- * depends on the boot mode in which this function is executed when
- *   1. SPL running from SRAM
- *   2. U-Boot running from FLASH
- *   3. U-Boot loaded to SDRAM by SPL
- *   4. U-Boot loaded to SDRAM by ROM code using the
+ * depends on the boot mode in which this function is executed
+ *   1. s_init of SPL running from SRAM
+ *   2. s_init of U-Boot running from FLASH
+ *   3. s_init of U-Boot loaded to SDRAM by SPL
+ *   4. s_init of U-Boot loaded to SDRAM by ROM code using the
  *	Configuration Header feature
  * Please have a look at the respective functions to see what gets
  * done in each of these cases
  * This function is called with SRAM stack.
  */
-void early_system_init(void)
+void s_init(void)
 {
+	/*
+	 * Save the boot parameters passed from romcode.
+	 * We cannot delay the saving further than this,
+	 * to prevent overwrites.
+	 */
+#ifdef CONFIG_SPL_BUILD
+	save_omap_boot_params();
+#endif
 	init_omap_revision();
 	hw_data_init();
 
 #ifdef CONFIG_SPL_BUILD
-	if (warm_reset())
+	if (warm_reset() && (omap_revision() <= OMAP5430_ES1_0))
 		force_emif_self_refresh();
 #endif
 	watchdog_init();
 	set_mux_conf_regs();
 #ifdef CONFIG_SPL_BUILD
 	srcomp_enable();
+	setup_clocks_for_console();
+
+	gd = &gdata;
+
+	preloader_console_init();
 	do_io_settings();
 #endif
-	setup_early_clocks();
-#ifdef CONFIG_SPL_BUILD
-	/* a hack to get the console early */
-	asm volatile("ldr r0,=preloader_console_init; blx r0"
-		::: "r0", "r1", "r2", "r3", "lr", "memory");
-#endif
-	do_board_detect();
-	vcores_init();
 	prcm_init();
-}
-
 #ifdef CONFIG_SPL_BUILD
-void board_init_f(ulong dummy)
-{
-	early_system_init();
-#ifdef CONFIG_BOARD_EARLY_INIT_F
-	board_early_init_f();
-#endif
 	/* For regular u-boot sdram_init() is called from dram_init() */
 	sdram_init();
-}
 #endif
-
-int arch_cpu_init_dm(void)
-{
-	early_system_init();
-	return 0;
 }
 
 /*
@@ -221,7 +207,7 @@ u32 omap_sdram_size(void)
 {
 	u32 section, i, valid;
 	u64 sdram_start = 0, sdram_end = 0, addr,
-	    size, total_size = 0, trap_size = 0, trap_start = 0;
+	    size, total_size = 0, trap_size = 0;
 
 	for (i = 0; i < 4; i++) {
 		section	= __raw_readl(DMM_BASE + i*4);
@@ -230,8 +216,8 @@ u32 omap_sdram_size(void)
 		addr = section & EMIF_SYS_ADDR_MASK;
 
 		/* See if the address is valid */
-		if ((addr >= TI_ARMV7_DRAM_ADDR_SPACE_START) &&
-		    (addr < TI_ARMV7_DRAM_ADDR_SPACE_END)) {
+		if ((addr >= DRAM_ADDR_SPACE_START) &&
+		    (addr < DRAM_ADDR_SPACE_END)) {
 			size = ((section & EMIF_SYS_SIZE_MASK) >>
 				   EMIF_SYS_SIZE_SHIFT);
 			size = 1 << size;
@@ -244,15 +230,12 @@ u32 omap_sdram_size(void)
 					sdram_end = addr + size;
 			} else {
 				trap_size = size;
-				trap_start = addr;
 			}
-		}
-	}
 
-	if ((trap_start >= sdram_start) && (trap_start < sdram_end))
-		total_size = (sdram_end - sdram_start) - (trap_size);
-	else
-		total_size = sdram_end - sdram_start;
+		}
+
+	}
+	total_size = (sdram_end - sdram_start) - (trap_size);
 
 	return total_size;
 }
@@ -287,29 +270,49 @@ u32 get_device_type(void)
 				      (DEVICE_TYPE_MASK)) >> DEVICE_TYPE_SHIFT;
 }
 
-#if defined(CONFIG_DISPLAY_CPUINFO)
 /*
  * Print CPU information
  */
 int print_cpuinfo(void)
 {
-#ifdef CONFIG_ARMV7_LPAE
-	if (is_hyp())
-		puts("LPAE build running in hypervisor mode!\n");
-	else
-		puts("LPAE build, not running in hypervisor mode\n");
-#endif
-
-	u32 rev = cortex_rev();
 	puts("CPU  : ");
-	if ((rev & 0xFF0FFF00) == 0x410FC000) {
-		printf("ARM Cortex-A%u r%up%u\n", rev >> 4 & 15,
-				rev >> 20 & 15, rev & 15 );
-	}
-
-	puts("SoC  : ");
 	omap_rev_string();
 
 	return 0;
+}
+#ifndef CONFIG_SYS_DCACHE_OFF
+void enable_caches(void)
+{
+	/* Enable D-cache. I-cache is already enabled in start.S */
+	dcache_enable();
+}
+
+void dram_bank_mmu_setup(int bank)
+{
+	bd_t *bd = gd->bd;
+	int	i;
+
+	u32 start = bd->bi_dram[bank].start >> 20;
+	u32 size = bd->bi_dram[bank].size >> 20;
+	u32 end = start + size;
+
+	debug("%s: bank: %d\n", __func__, bank);
+	for (i = start; i < end; i++)
+		set_section_dcache(i, ARMV7_DCACHE_WRITEBACK);
+
+}
+
+void arm_init_domains(void)
+{
+	u32 reg;
+
+	reg = get_dacr();
+	/*
+	* Set DOMAIN to client access so that all permissions
+	* set in pagetables are validated by the mmu.
+	*/
+	reg &= ~ARMV7_DOMAIN_MASK;
+	reg |= ARMV7_DOMAIN_CLIENT;
+	set_dacr(reg);
 }
 #endif

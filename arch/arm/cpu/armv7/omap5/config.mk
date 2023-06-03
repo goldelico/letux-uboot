@@ -1,22 +1,28 @@
 #
 # Copyright 2011 Linaro Limited
+# See file CREDITS for list of people who contributed to this
+# project.
 #
 # Aneesh V <annesh@ti.com>
 #
-# SPDX-License-Identifier:	GPL-2.0+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307 USA
 #
 
-include  $(srctree)/$(CPUDIR)/omap-common/config_secure.mk
-
 ifdef CONFIG_SPL_BUILD
-ifeq ($(CONFIG_TI_SECURE_DEVICE),y)
-ALL-y	+= u-boot-spl_HS_MLO u-boot-spl_HS_X-LOADER
+ALL-y	+= $(OBJTREE)/MLO
 else
-ALL-y	+= MLO
-endif
-else
-ifeq ($(CONFIG_TI_SECURE_DEVICE),y)
-ALL-$(CONFIG_SPL_LOAD_FIT) += u-boot_HS.img
-endif
-ALL-y	+= u-boot.img
+ALL-y	+= $(obj)u-boot.img
 endif

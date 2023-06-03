@@ -7,7 +7,10 @@
  * ULI 526x Ethernet port driver.
  * Based on the Linux driver: drivers/net/tulip/uli526x.c
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This is free software; you can redistribute it and/or modify
+ * it under the terms of  the GNU General  Public License as published by
+ * the Free Software Foundation;  either version 2 of the  License, or
+ * (at your option) any later version.
  */
 
 #include <common.h>
@@ -548,7 +551,7 @@ static int uli526x_rx_packet(struct eth_device *dev)
 
 	rdes0 = le32_to_cpu(rxptr->rdes0);
 #ifdef RX_DEBUG
-	printf("%s(): rxptr->rdes0=%x\n", __FUNCTION__, rxptr->rdes0);
+	printf("%s(): rxptr->rdes0=%x:%x\n", __FUNCTION__, rxptr->rdes0);
 #endif
 	if (!(rdes0 & 0x80000000)) {	/* packet owner check */
 		if ((rdes0 & 0x300) != 0x300) {
@@ -587,8 +590,7 @@ static int uli526x_rx_packet(struct eth_device *dev)
 					__FUNCTION__, i, rxptr->rx_buf_ptr[i]);
 #endif
 
-				net_process_received_packet(
-					(uchar *)rxptr->rx_buf_ptr, rxlen);
+				NetReceive((uchar *)rxptr->rx_buf_ptr, rxlen);
 				uli526x_reuse_buf(rxptr);
 
 			} else {
@@ -710,7 +712,7 @@ static void allocate_rx_buffer(struct uli526x_board_info *db)
 	u32 addr;
 
 	for (index = 0; index < RX_DESC_CNT; index++) {
-		addr = (u32)net_rx_packets[index];
+		addr = (u32)NetRxPackets[index];
 		addr += (16 - (addr & 15));
 		rxptr->rx_buf_ptr = (char *) addr;
 		rxptr->rdes2 = cpu_to_le32(addr);

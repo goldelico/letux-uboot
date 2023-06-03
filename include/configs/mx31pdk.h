@@ -8,7 +8,23 @@
  *
  * Configuration settings for the Freescale i.MX31 PDK board.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __CONFIG_H
@@ -17,7 +33,11 @@
 #include <asm/arch/imx-regs.h>
 
 /* High Level Configuration Options */
-#define CONFIG_MX31			/* This is a mx31 */
+#define CONFIG_ARM1136			/* This is an arm1136 CPU core */
+#define CONFIG_MX31			/* in a mx31 */
+
+#define CONFIG_DISPLAY_CPUINFO
+#define CONFIG_DISPLAY_BOARDINFO
 
 #define CONFIG_CMDLINE_TAG			/* enable passing of ATAGs */
 #define CONFIG_SETUP_MEMORY_TAGS
@@ -25,9 +45,12 @@
 
 #define CONFIG_MACH_TYPE	MACH_TYPE_MX31_3DS
 
+#define CONFIG_SPL
 #define CONFIG_SPL_TARGET	"u-boot-with-spl.bin"
 #define CONFIG_SPL_LDSCRIPT	"arch/$(ARCH)/cpu/u-boot-spl.lds"
 #define CONFIG_SPL_MAX_SIZE	2048
+#define CONFIG_SPL_NAND_SUPPORT
+#define CONFIG_SPL_LIBGENERIC_SUPPORT
 
 #define CONFIG_SPL_TEXT_BASE	0x87dc0000
 #define CONFIG_SYS_TEXT_BASE	0x87e00000
@@ -73,11 +96,26 @@
 /***********************************************************
  * Command definition
  ***********************************************************/
+
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_SPI
 #define CONFIG_CMD_DATE
 #define CONFIG_CMD_NAND
+#define CONFIG_CMD_BOOTZ
+
+/*
+ * Disabled due to compilation errors in cmd_bootm.c (IMLS seems to require
+ * that CFG_NO_FLASH is undefined).
+ */
+#undef CONFIG_CMD_IMLS
 
 #define CONFIG_BOARD_LATE_INIT
 
+#define CONFIG_BOOTDELAY	1
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 	"bootargs_base=setenv bootargs console=ttymxc0,115200\0"	\
@@ -98,7 +136,11 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP	/* undef to save memory */
+#define CONFIG_SYS_PROMPT	"MX31PDK U-Boot > "
 #define CONFIG_SYS_CBSIZE	256	/* Console I/O Buffer Size */
+/* Print Buffer Size */
+#define CONFIG_SYS_PBSIZE	(CONFIG_SYS_CBSIZE + \
+				sizeof(CONFIG_SYS_PROMPT)+16)
 /* max number of command args */
 #define CONFIG_SYS_MAXARGS	16
 /* Boot Argument Buffer Size */
@@ -110,6 +152,8 @@
 
 /* default load address */
 #define CONFIG_SYS_LOAD_ADDR		0x81000000
+
+#define CONFIG_SYS_HZ			1000
 
 #define CONFIG_CMDLINE_EDITING
 
@@ -152,7 +196,7 @@
 
 /* NAND configuration for the NAND_SPL */
 
-/* Start copying real U-Boot from the second page */
+/* Start copying real U-boot from the second page */
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	CONFIG_SPL_PAD_TO
 #define CONFIG_SYS_NAND_U_BOOT_SIZE	0x3f800
 /* Load U-Boot to this address */
@@ -164,6 +208,7 @@
 #define CONFIG_SYS_NAND_PAGE_COUNT	64
 #define CONFIG_SYS_NAND_SIZE		(256 * 1024 * 1024)
 #define CONFIG_SYS_NAND_BAD_BLOCK_POS	0
+
 
 /* Configuration of lowlevel_init.S (clocks and SDRAM) */
 #define CCM_CCMR_SETUP		0x074B0BF5

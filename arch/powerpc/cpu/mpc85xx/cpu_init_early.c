@@ -1,7 +1,20 @@
 /*
  * Copyright 2009-2012 Freescale Semiconductor, Inc
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -15,7 +28,7 @@ DECLARE_GLOBAL_DATA_PTR;
 #ifdef CONFIG_A003399_NOR_WORKAROUND
 void setup_ifc(void)
 {
-	struct fsl_ifc ifc_regs = {(void *)CONFIG_SYS_IFC_ADDR, (void *)NULL};
+	struct fsl_ifc *ifc_regs = (void *)CONFIG_SYS_IFC_ADDR;
 	u32 _mas0, _mas1, _mas2, _mas3, _mas7;
 	phys_addr_t flash_phys = CONFIG_SYS_FLASH_BASE_PHYS;
 
@@ -70,18 +83,19 @@ void setup_ifc(void)
 #endif
 
 	/* Change flash's physical address */
-	ifc_out32(&(ifc_regs.gregs->cspr_cs[0].cspr), CONFIG_SYS_CSPR0);
-	ifc_out32(&(ifc_regs.gregs->csor_cs[0].csor), CONFIG_SYS_CSOR0);
-	ifc_out32(&(ifc_regs.gregs->amask_cs[0].amask), CONFIG_SYS_AMASK0);
+	out_be32(&(ifc_regs->cspr_cs[0].cspr), CONFIG_SYS_CSPR0);
+	out_be32(&(ifc_regs->csor_cs[0].csor), CONFIG_SYS_CSOR0);
+	out_be32(&(ifc_regs->amask_cs[0].amask), CONFIG_SYS_AMASK0);
 
 	return ;
 }
 #endif
 
 /* We run cpu_init_early_f in AS = 1 */
-void cpu_init_early_f(void *fdt)
+void cpu_init_early_f(void)
 {
 	u32 mas0, mas1, mas2, mas3, mas7;
+	int i;
 #ifdef CONFIG_SYS_FSL_ERRATUM_P1010_A003549
 	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
 #endif
@@ -89,21 +103,17 @@ void cpu_init_early_f(void *fdt)
 	ccsr_l2cache_t *l2cache = (void *)CONFIG_SYS_MPC85xx_L2_ADDR;
 	u32  *dst, *src;
 	void (*setup_ifc_sram)(void);
-	int i;
 #endif
 
 	/* Pointer is writable since we allocated a register for it */
 	gd = (gd_t *) (CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_GBL_DATA_OFFSET);
 
-	/* gd area was zeroed during startup */
-
-#ifdef CONFIG_QEMU_E500
 	/*
-	 * CONFIG_SYS_CCSRBAR_PHYS below may use gd->fdt_blob on ePAPR systems,
-	 * so we need to populate it before it accesses it.
+	 * Clear initial global data
+	 *   we don't use memset so we can share this code with NAND_SPL
 	 */
-	gd->fdt_blob = fdt;
-#endif
+	for (i = 0; i < sizeof(gd_t); i++)
+		((char *)gd)[i] = 0;
 
 	mas0 = MAS0_TLBSEL(1) | MAS0_ESEL(13);
 	mas1 = MAS1_VALID | MAS1_TID(0) | MAS1_TS | MAS1_TSIZE(BOOKE_PAGESZ_1M);
@@ -156,12 +166,9 @@ void cpu_init_early_f(void *fdt)
 	setup_ifc_sram = (void *)SRAM_BASE_ADDR;
 	dst = (u32 *) SRAM_BASE_ADDR;
 	src = (u32 *) setup_ifc;
-	for (i = 0; i < 1024; i++) {
-		/* cppcheck-suppress nullPointer */
+	for (i = 0; i < 1024; i++)
 		*dst++ = *src++;
-	}
 
-	/* cppcheck-suppress nullPointer */
 	setup_ifc_sram();
 
 	/* CLEANUP */

@@ -10,7 +10,20 @@
  * This file is part of the GNU C Library.
  * Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1993.
  *
- * SPDX-License-Identifier:	LGPL-2.1+
+ * The GNU C Library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * The GNU C Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with the GNU C Library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307 USA.
  */
 
 #include <errno.h>
@@ -477,11 +490,11 @@ int hdelete_r(const char *key, struct hsearch_data *htab, int flag)
 	return 1;
 }
 
-#if !(defined(CONFIG_SPL_BUILD) && !defined(CONFIG_SPL_SAVEENV))
 /*
  * hexport()
  */
 
+#ifndef CONFIG_SPL_BUILD
 /*
  * Export the data stored in the hash table in linearized form.
  *
@@ -499,7 +512,7 @@ int hdelete_r(const char *key, struct hsearch_data *htab, int flag)
  *
  * If the separator character is different from NUL, then any
  * separator characters and backslash characters in the values will
- * be escaped by a preceding backslash in output. This is needed for
+ * be escaped by a preceeding backslash in output. This is needed for
  * example to enable multi-line values, especially when the output
  * shall later be parsed (for example, for re-import).
  *
@@ -564,7 +577,7 @@ static int match_entry(ENTRY *ep, int flag,
 	int arg;
 	void *priv = NULL;
 
-	for (arg = 0; arg < argc; ++arg) {
+	for (arg = 1; arg < argc; ++arg) {
 #ifdef CONFIG_REGEX
 		struct slre slre;
 
@@ -602,8 +615,8 @@ ssize_t hexport_r(struct hsearch_data *htab, const char sep, int flag,
 		return (-1);
 	}
 
-	debug("EXPORT  table = %p, htab.size = %d, htab.filled = %d, size = %lu\n",
-	      htab, htab->size, htab->filled, (ulong)size);
+	debug("EXPORT  table = %p, htab.size = %d, htab.filled = %d, "
+		"size = %zu\n", htab, htab->size, htab->filled, size);
 	/*
 	 * Pass 1:
 	 * search used entries,
@@ -657,8 +670,8 @@ ssize_t hexport_r(struct hsearch_data *htab, const char sep, int flag,
 	/* Check if the user supplied buffer size is sufficient */
 	if (size) {
 		if (size < totlen + 1) {	/* provided buffer too small */
-			printf("Env export buffer too small: %lu, but need %lu\n",
-			       (ulong)size, (ulong)totlen + 1);
+			printf("Env export buffer too small: %zu, "
+				"but need %zu\n", size, totlen + 1);
 			__set_errno(ENOMEM);
 			return (-1);
 		}
@@ -776,7 +789,7 @@ static int drop_var_from_set(const char *name, int nvars, char * vars[])
 
 int himport_r(struct hsearch_data *htab,
 		const char *env, size_t size, const char sep, int flag,
-		int crlf_is_lf, int nvars, char * const vars[])
+		int nvars, char * const vars[])
 {
 	char *data, *sp, *dp, *name, *value;
 	char *localvars[nvars];
@@ -789,13 +802,12 @@ int himport_r(struct hsearch_data *htab,
 	}
 
 	/* we allocate new space to make sure we can write to the array */
-	if ((data = malloc(size + 1)) == NULL) {
-		debug("himport_r: can't malloc %lu bytes\n", (ulong)size + 1);
+	if ((data = malloc(size)) == NULL) {
+		debug("himport_r: can't malloc %zu bytes\n", size);
 		__set_errno(ENOMEM);
 		return 0;
 	}
 	memcpy(data, env, size);
-	data[size] = '\0';
 	dp = data;
 
 	/* make a local copy of the list of variables */
@@ -818,11 +830,11 @@ int himport_r(struct hsearch_data *htab,
 	 * size of 8 per entry (= safety factor of ~5) should provide enough
 	 * safety margin for any existing environment definitions and still
 	 * allow for more than enough dynamic additions. Note that the
-	 * "size" argument is supposed to give the maximum environment size
+	 * "size" argument is supposed to give the maximum enviroment size
 	 * (CONFIG_ENV_SIZE).  This heuristics will result in
 	 * unreasonably large numbers (and thus memory footprint) for
 	 * big flash environments (>8,000 entries for 64 KB
-	 * environment size), so we clip it to a reasonable value.
+	 * envrionment size), so we clip it to a reasonable value.
 	 * On the other hand we need to add some more entries for free
 	 * space when importing very small buffers. Both boundaries can
 	 * be overwritten in the board config file if needed.
@@ -842,23 +854,6 @@ int himport_r(struct hsearch_data *htab,
 		}
 	}
 
-	if (!size) {
-		free(data);
-		return 1;		/* everything OK */
-	}
-	if(crlf_is_lf) {
-		/* Remove Carriage Returns in front of Line Feeds */
-		unsigned ignored_crs = 0;
-		for(;dp < data + size && *dp; ++dp) {
-			if(*dp == '\r' &&
-			   dp < data + size - 1 && *(dp+1) == '\n')
-				++ignored_crs;
-			else
-				*(dp-ignored_crs) = *dp;
-		}
-		size -= ignored_crs;
-		dp = data;
-	}
 	/* Parse environment; allow for '\0' and 'sep' as separators */
 	do {
 		ENTRY e, *rv;
@@ -909,7 +904,6 @@ int himport_r(struct hsearch_data *htab,
 		if (*name == 0) {
 			debug("INSERT: unable to use an empty key\n");
 			__set_errno(EINVAL);
-			free(data);
 			return 0;
 		}
 

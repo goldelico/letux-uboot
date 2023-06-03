@@ -3,7 +3,23 @@
  * Copyright (C) 2004-2007, 2012 Freescale Semiconductor, Inc.
  * TsiChung Liew (Tsi-Chung.Liew@freescale.com)
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -115,7 +131,7 @@ void setup_5441x_clocks(void)
 	gd->cpu_clk = vco / temp;	/* cpu clock */
 	gd->arch.flb_clk = vco / temp;	/* FlexBus clock */
 	gd->arch.flb_clk >>= 1;
-	if (in_be16(&ccm->misccr2) & 2)		/* fsys/4 */
+	if (in_be16(ccm->misccr2) & 2)		/* fsys/4 */
 		gd->arch.flb_clk >>= 1;
 
 	temp = ((pdr & PLL_DR_OUTDIV2_BITS) >> 5) + 1;
@@ -257,7 +273,7 @@ void setup_5445x_clocks(void)
 #endif
 	}
 
-#ifdef CONFIG_SYS_I2C_FSL
+#ifdef CONFIG_FSL_I2C
 	gd->arch.i2c1_clk = gd->bus_clk;
 #endif
 }
@@ -273,7 +289,7 @@ int get_clocks(void)
 	setup_5445x_clocks();
 #endif
 
-#ifdef CONFIG_SYS_FSL_I2C
+#ifdef CONFIG_FSL_I2C
 	gd->arch.i2c1_clk = gd->bus_clk;
 #endif
 

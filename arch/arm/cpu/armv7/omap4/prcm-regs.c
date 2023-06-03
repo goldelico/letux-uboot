@@ -7,7 +7,23 @@
  *
  * Sricharan R <r.sricharan@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <asm/omap_common.h>
@@ -129,7 +145,6 @@ struct prcm_regs const omap4_prcm = {
 	.cm_div_m2_dpll_unipro = 0x4a0081d0,
 	.cm_ssc_deltamstep_dpll_unipro = 0x4a0081e8,
 	.cm_ssc_modfreqdiv_dpll_unipro = 0x4a0081ec,
-	.cm_coreaon_usb_phy1_core_clkctrl = 0x4a008640,
 
 	/* cm2.core */
 	.cm_l3_1_clkstctrl = 0x4a008700,
@@ -280,11 +295,7 @@ struct prcm_regs const omap4_prcm = {
 };
 
 struct omap_sys_ctrl_regs const omap4_ctrl = {
-	.control_status				= 0x4A0022C4,
-	.control_std_fuse_die_id_0		= 0x4A002200,
-	.control_std_fuse_die_id_1		= 0x4A002208,
-	.control_std_fuse_die_id_2		= 0x4A00220C,
-	.control_std_fuse_die_id_3		= 0x4A002210,
+	.control_id_code			= 0x4A002204,
 	.control_std_fuse_opp_bgap		= 0x4a002260,
 	.control_status				= 0x4a0022c4,
 	.control_ldosram_iva_voltage_ctrl	= 0x4A002320,

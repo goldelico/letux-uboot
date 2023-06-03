@@ -1,7 +1,23 @@
 /*
  * Copyright 2011 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -50,8 +66,8 @@ struct liodn_id_table liodn_tbl[] = {
 	SET_PCI_LIODN(CONFIG_SYS_FSL_PCIE_COMPAT, 2, 194),
 	SET_PCI_LIODN(CONFIG_SYS_FSL_PCIE_COMPAT, 3, 195),
 
-	SET_DMA_LIODN(1, "fsl,eloplus-dma", 197),
-	SET_DMA_LIODN(2, "fsl,eloplus-dma", 198),
+	SET_DMA_LIODN(1, 197),
+	SET_DMA_LIODN(2, 198),
 
 	SET_GUTS_LIODN("fsl,rapidio-delta", 199, rio1liodnr, 0),
 	SET_GUTS_LIODN(NULL, 200, rio2liodnr, 0),
@@ -61,7 +77,7 @@ struct liodn_id_table liodn_tbl[] = {
 int liodn_tbl_sz = ARRAY_SIZE(liodn_tbl);
 
 #ifdef CONFIG_SYS_DPAA_FMAN
-struct fman_liodn_id_table fman1_liodn_tbl[] = {
+struct liodn_id_table fman1_liodn_tbl[] = {
 	SET_FMAN_RX_1G_LIODN(1, 0, 10),
 	SET_FMAN_RX_1G_LIODN(1, 1, 11),
 	SET_FMAN_RX_1G_LIODN(1, 2, 12),

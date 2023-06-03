@@ -5,15 +5,28 @@
  * They are kept in a separate file so we can include system headers.
  *
  * Copyright (c) 2011 The Chromium OS Authors.
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __OS_H__
 #define __OS_H__
 
-#include <linux/types.h>
-
-struct rtc_time;
 struct sandbox_state;
 
 /**
@@ -65,7 +78,7 @@ off_t os_lseek(int fd, off_t offset, int whence);
  * Access to the OS open() system call
  *
  * \param pathname	Pathname of file to open
- * \param flags		Flags, like OS_O_RDONLY, OS_O_RDWR
+ * \param flags		Flags, like O_RDONLY, O_RDWR
  * \return file descriptor, or -1 on error
  */
 int os_open(const char *pathname, int flags);
@@ -85,14 +98,6 @@ int os_open(const char *pathname, int flags);
 int os_close(int fd);
 
 /**
- * Access to the OS unlink() system call
- *
- * \param pathname Path of file to delete
- * \return 0 for success, other for error
- */
-int os_unlink(const char *pathname);
-
-/**
  * Access to the OS exit() system call
  *
  * This exits with the supplied return code, which should be 0 to indicate
@@ -104,20 +109,8 @@ void os_exit(int exit_code) __attribute__((noreturn));
 
 /**
  * Put tty into raw mode to mimic serial console better
- *
- * @param fd		File descriptor of stdin (normally 0)
- * @param allow_sigs	Allow Ctrl-C, Ctrl-Z to generate signals rather than
- *			be handled by U-Boot
  */
-void os_tty_raw(int fd, bool allow_sigs);
-
-/**
- * Restore the tty to its original mode
- *
- * Call this to restore the original terminal mode, after it has been changed
- * by os_tty_raw(). This is an internal function.
- */
-void os_fd_restore(void);
+void os_tty_raw(int fd);
 
 /**
  * Acquires some memory from the underlying os.
@@ -126,35 +119,6 @@ void os_fd_restore(void);
  * \return Pointer to length bytes or NULL on error
  */
 void *os_malloc(size_t length);
-
-/**
- * Free memory previous allocated with os_malloc()/os_realloc()
- *
- * This returns the memory to the OS.
- *
- * \param ptr		Pointer to memory block to free
- */
-void os_free(void *ptr);
-
-/**
- * Reallocate previously-allocated memory to increase/decrease space
- *
- * This works in a similar way to the C library realloc() function. If
- * length is 0, then ptr is freed. Otherwise the space used by ptr is
- * expanded or reduced depending on whether length is larger or smaller
- * than before.
- *
- * If ptr is NULL, then this is similar to calling os_malloc().
- *
- * This function may need to move the memory block to make room for any
- * extra space, in which case the new pointer is returned.
- *
- * \param ptr		Pointer to memory block to reallocate
- * \param length	New length for memory block
- * \return pointer to new memory block, or NULL on failure or if length
- *	is 0.
- */
-void *os_realloc(void *ptr, size_t length);
 
 /**
  * Access to the usleep function of the os
@@ -168,7 +132,7 @@ void os_usleep(unsigned long usec);
  *
  * \return A monotonic increasing time scaled in nano seconds
  */
-uint64_t os_get_nsec(void);
+u64 os_get_nsec(void);
 
 /**
  * Parse arguments and update sandbox state.
@@ -215,18 +179,9 @@ struct os_dirent_node {
 int os_dirent_ls(const char *dirname, struct os_dirent_node **headp);
 
 /**
- * Free directory list
- *
- * This frees a linked list containing a directory listing.
- *
- * @param node		Pointer to head of linked list
- */
-void os_dirent_free(struct os_dirent_node *node);
-
-/**
  * Get the name of a directory entry type
  *
- * @param type		Type to check
+ * @param type		Type to cehck
  * @return string containing the name of that type, or "???" if none/invalid
  */
 const char *os_dirent_get_typename(enum os_dirent_t type);
@@ -235,99 +190,8 @@ const char *os_dirent_get_typename(enum os_dirent_t type);
  * Get the size of a file
  *
  * @param fname		Filename to check
- * @param size		size of file is returned if no error
- * @return 0 on success or -1 if an error ocurred
+ * @return size of file, or -1 if an error ocurred
  */
-int os_get_filesize(const char *fname, loff_t *size);
-
-/**
- * Write a character to the controlling OS terminal
- *
- * This bypasses the U-Boot console support and writes directly to the OS
- * stdout file descriptor.
- *
- * @param ch	Character to write
- */
-void os_putc(int ch);
-
-/**
- * Write a string to the controlling OS terminal
- *
- * This bypasses the U-Boot console support and writes directly to the OS
- * stdout file descriptor.
- *
- * @param str	String to write (note that \n is not appended)
- */
-void os_puts(const char *str);
-
-/**
- * Write the sandbox RAM buffer to a existing file
- *
- * @param fname		Filename to write memory to (simple binary format)
- * @return 0 if OK, -ve on error
- */
-int os_write_ram_buf(const char *fname);
-
-/**
- * Read the sandbox RAM buffer from an existing file
- *
- * @param fname		Filename containing memory (simple binary format)
- * @return 0 if OK, -ve on error
- */
-int os_read_ram_buf(const char *fname);
-
-/**
- * Jump to a new executable image
- *
- * This uses exec() to run a new executable image, after putting it in a
- * temporary file. The same arguments and environment are passed to this
- * new image, with the addition of:
- *
- *	-j <filename>	Specifies the filename the image was written to. The
- *			calling image may want to delete this at some point.
- *	-m <filename>	Specifies the file containing the sandbox memory
- *			(ram_buf) from this image, so that the new image can
- *			have access to this. It also means that the original
- *			memory filename passed to U-Boot will be left intact.
- *
- * @param dest		Buffer containing executable image
- * @param size		Size of buffer
- */
-int os_jump_to_image(const void *dest, int size);
-
-/**
- * os_find_u_boot() - Determine the path to U-Boot proper
- *
- * This function is intended to be called from within sandbox SPL. It uses
- * a few heuristics to find U-Boot proper. Normally it is either in the same
- * directory, or the directory above (since u-boot-spl is normally in an
- * spl/ subdirectory when built).
- *
- * @fname:	Place to put full path to U-Boot
- * @maxlen:	Maximum size of @fname
- * @return 0 if OK, -NOSPC if the filename is too large, -ENOENT if not found
- */
-int os_find_u_boot(char *fname, int maxlen);
-
-/**
- * os_spl_to_uboot() - Run U-Boot proper
- *
- * When called from SPL, this runs U-Boot proper. The filename is obtained by
- * calling os_find_u_boot().
- *
- * @fname:	Full pathname to U-Boot executable
- * @return 0 if OK, -ve on error
- */
-int os_spl_to_uboot(const char *fname);
-
-/**
- * Read the current system time
- *
- * This reads the current Local Time and places it into the provided
- * structure.
- *
- * @param rt		Place to put system time
- */
-void os_localtime(struct rtc_time *rt);
+ssize_t os_get_filesize(const char *fname);
 
 #endif

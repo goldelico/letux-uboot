@@ -2,7 +2,19 @@
  * Micrel KS8851_MLL 16bit Network driver
  * Copyright (c) 2011 Roberto Cerati <roberto.cerati@bticino.it>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
 #include <asm/io.h>
@@ -321,8 +333,8 @@ static void ks_rcv(struct eth_device *dev, uchar **pv_data)
 			/* read data block including CRC 4 bytes */
 			ks_read_qmu(dev, (u16 *)(*pv_data), frame_hdr->len);
 
-			/* net_rx_packets buffer size is ok (*pv_data) */
-			net_process_received_packet(*pv_data, frame_hdr->len);
+			/* NetRxPackets buffer size is ok (*pv_data pointer) */
+			NetReceive(*pv_data, frame_hdr->len);
 			pv_data++;
 		} else {
 			ks_wrreg16(dev, KS_RXQCR, (ks->rc_rxqcr | RXQCR_RRXEF));
@@ -573,7 +585,7 @@ static int ks8851_mll_recv(struct eth_device *dev)
 	ks_wrreg16(dev, KS_ISR, status);
 
 	if ((status & IRQ_RXI))
-		ks_rcv(dev, (uchar **)net_rx_packets);
+		ks_rcv(dev, (uchar **)NetRxPackets);
 
 	if ((status & IRQ_LDI)) {
 		u16 pmecr = ks_rdreg16(dev, KS_PMECR);

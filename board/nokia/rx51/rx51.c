@@ -19,7 +19,23 @@
  *	Richard Woodruff <r-woodruff2@ti.com>
  *	Syed Mohammed Khasim <khasim@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -341,17 +357,6 @@ static void omap3_emu_romcode_call(u32 service_id, u32 *parameters)
 	do_omap3_emu_romcode_call(service_id, OMAP3_PUBLIC_SRAM_SCRATCH_AREA);
 }
 
-void omap3_set_aux_cr_secure(u32 acr)
-{
-	struct emu_hal_params_rx51 emu_romcode_params = { 0, };
-
-	emu_romcode_params.num_params = 2;
-	emu_romcode_params.param1 = acr;
-
-	omap3_emu_romcode_call(OMAP3_EMU_HAL_API_WRITE_ACR,
-			       (u32 *)&emu_romcode_params);
-}
-
 /*
  * Routine: omap3_update_aux_cr_secure_rx51
  * Description: Modify the contents Auxiliary Control Register.
@@ -361,13 +366,19 @@ void omap3_set_aux_cr_secure(u32 acr)
  */
 static void omap3_update_aux_cr_secure_rx51(u32 set_bits, u32 clear_bits)
 {
+	struct emu_hal_params_rx51 emu_romcode_params = { 0, };
 	u32 acr;
 
 	/* Read ACR */
 	asm volatile ("mrc p15, 0, %0, c1, c0, 1" : "=r" (acr));
 	acr &= ~clear_bits;
 	acr |= set_bits;
-	omap3_set_aux_cr_secure(acr);
+
+	emu_romcode_params.num_params = 2;
+	emu_romcode_params.param1 = acr;
+
+	omap3_emu_romcode_call(OMAP3_EMU_HAL_API_WRITE_ACR,
+				(u32 *)&emu_romcode_params);
 }
 
 /*
@@ -421,18 +432,14 @@ int misc_init_r(void)
 	/* reuse atags from previous bootloader */
 	reuse_atags();
 
-	omap_die_id_display();
+	dieid_num_r();
 	print_cpuinfo();
 
 	/*
 	 * Cortex-A8(r1p0..r1p2) errata 430973 workaround
 	 * Set IBE bit in Auxiliary Control Register
-	 *
-	 * Call this routine only on real secure device
-	 * Qemu does not implement secure PPA and crash
 	 */
-	if (get_device_type() == HS_DEVICE)
-		omap3_update_aux_cr_secure_rx51(1 << 6, 0);
+	omap3_update_aux_cr_secure_rx51(1 << 6, 0);
 
 	return 0;
 }
@@ -594,7 +601,7 @@ static void rx51_kp_fill(u8 k, u8 mods)
  * Routine: rx51_kp_tstc
  * Description: Test if key was pressed (from buffer).
  */
-int rx51_kp_tstc(struct stdio_dev *sdev)
+int rx51_kp_tstc(void)
 {
 	u8 c, r, dk, i;
 	u8 intr;
@@ -650,10 +657,10 @@ int rx51_kp_tstc(struct stdio_dev *sdev)
  * Routine: rx51_kp_getc
  * Description: Get last pressed key (from buffer).
  */
-int rx51_kp_getc(struct stdio_dev *sdev)
+int rx51_kp_getc(void)
 {
 	keybuf_head %= KEYBUF_SIZE;
-	while (!rx51_kp_tstc(sdev))
+	while (!rx51_kp_tstc())
 		WATCHDOG_RESET();
 	return keybuf[keybuf_head++];
 }
@@ -667,10 +674,4 @@ int board_mmc_init(bd_t *bis)
 	omap_mmc_init(0, 0, 0, -1, -1);
 	omap_mmc_init(1, 0, 0, -1, -1);
 	return 0;
-}
-
-void board_mmc_power_init(void)
-{
-	twl4030_power_mmc_init(0);
-	twl4030_power_mmc_init(1);
 }

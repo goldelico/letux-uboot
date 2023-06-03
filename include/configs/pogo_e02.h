@@ -7,7 +7,21 @@
  * Marvell Semiconductor <www.marvell.com>
  * Written-by: Prafulla Wadaskar <prafulla@marvell.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _CONFIG_POGO_E02_H
@@ -18,11 +32,13 @@
  */
 #define MACH_TYPE_POGO_E02		3542
 #define CONFIG_MACH_TYPE		MACH_TYPE_POGO_E02
+#define CONFIG_IDENT_STRING		"\nPogo E02"
 
 /*
  * High Level Configuration Options (easy to change)
  */
 #define CONFIG_FEROCEON_88FR131		/* CPU Core subversion */
+#define CONFIG_KIRKWOOD			/* SOC Family Name */
 #define CONFIG_KW88F6281		/* SOC Name */
 #define CONFIG_SKIP_LOWLEVEL_INIT	/* disable board lowlevel_init */
 
@@ -31,14 +47,23 @@
  */
 #define CONFIG_SYS_NO_FLASH		/* Declare no flash (NOR/SPI) */
 #define CONFIG_SYS_MVFS
+#include <config_cmd_default.h>
+#define CONFIG_CMD_DHCP
 #define CONFIG_CMD_ENV
+#define CONFIG_CMD_MII
 #define CONFIG_CMD_NAND
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_USB
 
 /*
  * mv-common.h should be defined after CMD configs since it used them
  * to enable certain macros
  */
 #include "mv-common.h"
+
+/* Remove or override few declarations from mv-common.h */
+#undef CONFIG_SYS_PROMPT	/* previously defined in mv-common.h */
+#define CONFIG_SYS_PROMPT	"PogoE02> "
 
 /*
  *  Environment variables configurations
@@ -80,7 +105,10 @@
 /*
  * File system
  */
+#define CONFIG_CMD_EXT2
+#define CONFIG_CMD_FAT
 #define CONFIG_CMD_JFFS2
+#define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
 #define CONFIG_RBTREE
 #define CONFIG_MTD_DEVICE               /* needed for mtdparts commands */

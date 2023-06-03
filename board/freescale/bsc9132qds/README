@@ -23,14 +23,14 @@ Overview
       ECC), up to 1333 MHz data rate
     - Dedicated security engine featuring trusted boot
     - Two DMA controllers
-	 - OCNDMA with four bidirectional channels
-	 - SysDMA with sixteen bidirectional channels
+         - OCNDMA with four bidirectional channels
+         - SysDMA with sixteen bidirectional channels
     - Interfaces
-	- Four-lane SerDes PHY
+        - Four-lane SerDes PHY
 	    - PCI Express controller complies with the PEX Specification-Rev 2.0
-	- Two Common Public Radio Interface (CPRI) controller lanes
+        - Two Common Public Radio Interface (CPRI) controller lanes
 	    - High-speed USB 2.0 host and device controller with ULPI interface
-	- Enhanced secure digital (SD/MMC) host controller (eSDHC)
+        - Enhanced secure digital (SD/MMC) host controller (eSDHC)
 	    - Antenna interface controller (AIC), supporting four industry
 		standard JESD207/four custom ADI RF interfaces
        - ADI lanes support both full duplex FDD support & half duplex TDD
@@ -87,9 +87,9 @@ Default Boot Method
 --------------------
 NOR boot
 
-Building U-Boot
+Building U-boot
 --------------
-To build the U-Boot for BSC9132QDS:
+To build the u-boot for BSC9132QDS:
 1. NOR Flash
 	make BSC9132QDS_NOR_DDRCLK100 : For 100MHZ DDR CLK
 	make BSC9132QDS_NOR_DDRCLK133 : For 133MHZ DDR CLK
@@ -122,7 +122,7 @@ Memory map
 
 Flashing Images
 ---------------
-To place a new U-Boot image in the NAND flash and then boot
+To place a new u-boot image in the NAND flash and then boot
 with that new image temporarily, use this:
 	tftp 1000000 u-boot-nand.bin
 	nand erase 0 100000

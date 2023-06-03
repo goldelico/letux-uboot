@@ -4,7 +4,23 @@
  * Copyright (C) 2004-2007, 2012 Freescale Semiconductor, Inc.
  * TsiChung Liew (Tsi-Chung.Liew@freescale.com)
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __ASM_M68K_IO_H__
@@ -32,10 +48,10 @@
 #define writew(b,addr)		((*(volatile u16 *) (addr)) = (b))
 #define writel(b,addr)		((*(volatile u32 *) (addr)) = (b))
 #else
-#define readw(addr)		in_be16((volatile u16 *)(addr))
-#define readl(addr)		in_be32((volatile u32 *)(addr))
-#define writew(b,addr)		out_be16((volatile u16 *)(addr),(b))
-#define writel(b,addr)		out_be32((volatile u32 *)(addr),(b))
+#define readw(addr)		in_le16((volatile u16 *)(addr))
+#define readl(addr)		in_le32((volatile u32 *)(addr))
+#define writew(b,addr)		out_le16((volatile u16 *)(addr),(b))
+#define writel(b,addr)		out_le32((volatile u32 *)(addr),(b))
 #endif
 
 /*
@@ -67,28 +83,28 @@
 
 #define mb() __asm__ __volatile__ ("" : : : "memory")
 
-static inline void _insb(volatile u8 * port, void *buf, int ns)
+extern inline void _insb(volatile u8 * port, void *buf, int ns)
 {
 	u8 *data = (u8 *) buf;
 	while (ns--)
 		*data++ = *port;
 }
 
-static inline void _outsb(volatile u8 * port, const void *buf, int ns)
+extern inline void _outsb(volatile u8 * port, const void *buf, int ns)
 {
 	u8 *data = (u8 *) buf;
 	while (ns--)
 		*port = *data++;
 }
 
-static inline void _insw(volatile u16 * port, void *buf, int ns)
+extern inline void _insw(volatile u16 * port, void *buf, int ns)
 {
 	u16 *data = (u16 *) buf;
 	while (ns--)
 		*data++ = __sw16(*port);
 }
 
-static inline void _outsw(volatile u16 * port, const void *buf, int ns)
+extern inline void _outsw(volatile u16 * port, const void *buf, int ns)
 {
 	u16 *data = (u16 *) buf;
 	while (ns--) {
@@ -97,14 +113,14 @@ static inline void _outsw(volatile u16 * port, const void *buf, int ns)
 	}
 }
 
-static inline void _insl(volatile u32 * port, void *buf, int nl)
+extern inline void _insl(volatile u32 * port, void *buf, int nl)
 {
 	u32 *data = (u32 *) buf;
 	while (nl--)
 		*data++ = __sw32(*port);
 }
 
-static inline void _outsl(volatile u32 * port, const void *buf, int nl)
+extern inline void _outsl(volatile u32 * port, const void *buf, int nl)
 {
 	u32 *data = (u32 *) buf;
 	while (nl--) {
@@ -113,14 +129,14 @@ static inline void _outsl(volatile u32 * port, const void *buf, int nl)
 	}
 }
 
-static inline void _insw_ns(volatile u16 * port, void *buf, int ns)
+extern inline void _insw_ns(volatile u16 * port, void *buf, int ns)
 {
 	u16 *data = (u16 *) buf;
 	while (ns--)
 		*data++ = *port;
 }
 
-static inline void _outsw_ns(volatile u16 * port, const void *buf, int ns)
+extern inline void _outsw_ns(volatile u16 * port, const void *buf, int ns)
 {
 	u16 *data = (u16 *) buf;
 	while (ns--) {
@@ -128,14 +144,14 @@ static inline void _outsw_ns(volatile u16 * port, const void *buf, int ns)
 	}
 }
 
-static inline void _insl_ns(volatile u32 * port, void *buf, int nl)
+extern inline void _insl_ns(volatile u32 * port, void *buf, int nl)
 {
 	u32 *data = (u32 *) buf;
 	while (nl--)
 		*data++ = *port;
 }
 
-static inline void _outsl_ns(volatile u32 * port, const void *buf, int nl)
+extern inline void _outsl_ns(volatile u32 * port, const void *buf, int nl)
 {
 	u32 *data = (u32 *) buf;
 	while (nl--) {
@@ -159,52 +175,52 @@ static inline void _outsl_ns(volatile u32 * port, const void *buf, int nl)
 /*
  * 8, 16 and 32 bit, big and little endian I/O operations, with barrier.
  */
-static inline int in_8(volatile u8 * addr)
+extern inline int in_8(volatile u8 * addr)
 {
 	return (int)*addr;
 }
 
-static inline void out_8(volatile u8 * addr, int val)
+extern inline void out_8(volatile u8 * addr, int val)
 {
 	*addr = (u8) val;
 }
 
-static inline int in_le16(volatile u16 * addr)
+extern inline int in_le16(volatile u16 * addr)
 {
 	return __sw16(*addr);
 }
 
-static inline int in_be16(volatile u16 * addr)
+extern inline int in_be16(volatile u16 * addr)
 {
 	return (*addr & 0xFFFF);
 }
 
-static inline void out_le16(volatile u16 * addr, int val)
+extern inline void out_le16(volatile u16 * addr, int val)
 {
 	*addr = __sw16(val);
 }
 
-static inline void out_be16(volatile u16 * addr, int val)
+extern inline void out_be16(volatile u16 * addr, int val)
 {
 	*addr = (u16) val;
 }
 
-static inline unsigned in_le32(volatile u32 * addr)
+extern inline unsigned in_le32(volatile u32 * addr)
 {
 	return __sw32(*addr);
 }
 
-static inline unsigned in_be32(volatile u32 * addr)
+extern inline unsigned in_be32(volatile u32 * addr)
 {
 	return (*addr);
 }
 
-static inline void out_le32(volatile unsigned *addr, int val)
+extern inline void out_le32(volatile unsigned *addr, int val)
 {
 	*addr = __sw32(val);
 }
 
-static inline void out_be32(volatile unsigned *addr, int val)
+extern inline void out_be32(volatile unsigned *addr, int val)
 {
 	*addr = val;
 }

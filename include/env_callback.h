@@ -2,7 +2,23 @@
  * (C) Copyright 2012
  * Joe Hershberger, National Instruments, joe.hershberger@ni.com
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __ENV_CALLBACK_H__
@@ -31,43 +47,14 @@
 #define SPLASHIMAGE_CALLBACK
 #endif
 
-#ifdef CONFIG_REGEX
-#define ENV_DOT_ESCAPE "\\"
-#define ETHADDR_WILDCARD "\\d?"
-#else
-#define ENV_DOT_ESCAPE
-#define ETHADDR_WILDCARD
-#endif
-
-#ifdef CONFIG_CMD_DNS
-#define DNS_CALLBACK "dnsip:dnsip,"
-#else
-#define DNS_CALLBACK
-#endif
-
-#ifdef CONFIG_NET
-#define NET_CALLBACKS \
-	"bootfile:bootfile," \
-	"ipaddr:ipaddr," \
-	"gatewayip:gatewayip," \
-	"netmask:netmask," \
-	"serverip:serverip," \
-	"nvlan:nvlan," \
-	"vlan:vlan," \
-	DNS_CALLBACK \
-	"eth" ETHADDR_WILDCARD "addr:ethaddr,"
-#else
-#define NET_CALLBACKS
-#endif
-
 /*
  * This list of callback bindings is static, but may be overridden by defining
  * a new association in the ".callbacks" environment variable.
  */
-#define ENV_CALLBACK_LIST_STATIC ENV_DOT_ESCAPE ENV_CALLBACK_VAR ":callbacks," \
-	ENV_DOT_ESCAPE ENV_FLAGS_VAR ":flags," \
+#define ENV_CALLBACK_LIST_STATIC ENV_CALLBACK_VAR ":callbacks," \
+	ENV_FLAGS_VAR ":flags," \
 	"baudrate:baudrate," \
-	NET_CALLBACKS \
+	"bootfile:bootfile," \
 	"loadaddr:loadaddr," \
 	SILENT_CALLBACK \
 	SPLASHIMAGE_CALLBACK \
@@ -89,7 +76,7 @@ void env_callback_init(ENTRY *var_entry);
  */
 #ifdef CONFIG_SPL_BUILD
 #define U_BOOT_ENV_CALLBACK(name, callback) \
-	static inline __maybe_unused void _u_boot_env_noop_##name(void) \
+	static inline void _u_boot_env_noop_##name(void) \
 	{ \
 		(void)callback; \
 	}

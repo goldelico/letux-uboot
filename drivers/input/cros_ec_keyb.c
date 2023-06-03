@@ -2,17 +2,29 @@
  * Chromium OS Matrix Keyboard
  *
  * Copyright (c) 2012 The Chromium OS Authors.
+ * See file CREDITS for list of people who contributed to this
+ * project.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <cros_ec.h>
-#include <dm.h>
-#include <errno.h>
 #include <fdtdec.h>
 #include <input.h>
-#include <keyboard.h>
 #include <key_matrix.h>
 #include <stdio_dev.h>
 
@@ -20,58 +32,46 @@ DECLARE_GLOBAL_DATA_PTR;
 
 enum {
 	KBC_MAX_KEYS		= 8,	/* Maximum keys held down at once */
-	KBC_REPEAT_RATE_MS	= 30,
-	KBC_REPEAT_DELAY_MS	= 240,
 };
 
-struct cros_ec_keyb_priv {
-	struct input_config *input;	/* The input layer */
+static struct keyb {
+	struct cros_ec_dev *dev;		/* The CROS_EC device */
+	struct input_config input;	/* The input layer */
 	struct key_matrix matrix;	/* The key matrix layer */
 	int key_rows;			/* Number of keyboard rows */
 	int key_cols;			/* Number of keyboard columns */
+	unsigned int repeat_delay_ms;	/* Time before autorepeat starts */
+	unsigned int repeat_rate_ms;	/* Autorepeat rate in ms */
 	int ghost_filter;		/* 1 to enable ghost filter, else 0 */
-};
+	int inited;			/* 1 if keyboard is ready */
+} config;
 
 
 /**
  * Check the keyboard controller and return a list of key matrix positions
  * for which a key is pressed
  *
- * @param dev		Keyboard device
+ * @param config	Keyboard config
  * @param keys		List of keys that we have detected
  * @param max_count	Maximum number of keys to return
- * @param samep		Set to true if this scan repeats the last, else false
- * @return number of pressed keys, 0 for none, -EIO on error
+ * @return number of pressed keys, 0 for none
  */
-static int check_for_keys(struct udevice *dev, struct key_matrix_key *keys,
-			  int max_count, bool *samep)
+static int check_for_keys(struct keyb *config,
+			   struct key_matrix_key *keys, int max_count)
 {
-	struct cros_ec_keyb_priv *priv = dev_get_priv(dev);
 	struct key_matrix_key *key;
-	static struct mbkp_keyscan last_scan;
-	static bool last_scan_valid;
 	struct mbkp_keyscan scan;
 	unsigned int row, col, bit, data;
 	int num_keys;
 
-	if (cros_ec_scan_keyboard(dev->parent, &scan)) {
+	if (cros_ec_scan_keyboard(config->dev, &scan)) {
 		debug("%s: keyboard scan failed\n", __func__);
-		return -EIO;
+		return -1;
 	}
-	*samep = last_scan_valid && !memcmp(&last_scan, &scan, sizeof(scan));
 
-	/*
-	 * This is a bit odd. The EC has no way to tell us that it has run
-	 * out of key scans. It just returns the same scan over and over
-	 * again. So the only way to detect that we have run out is to detect
-	 * that this scan is the same as the last.
-	 */
-	last_scan_valid = true;
-	memcpy(&last_scan, &scan, sizeof(last_scan));
-
-	for (col = num_keys = bit = 0; col < priv->matrix.num_cols;
+	for (col = num_keys = bit = 0; col < config->matrix.num_cols;
 			col++) {
-		for (row = 0; row < priv->matrix.num_rows; row++) {
+		for (row = 0; row < config->matrix.num_rows; row++) {
 			unsigned int mask = 1 << (bit & 7);
 
 			data = scan.data[bit / 8];
@@ -89,6 +89,28 @@ static int check_for_keys(struct udevice *dev, struct key_matrix_key *keys,
 }
 
 /**
+ * Test if keys are available to be read
+ *
+ * @return 0 if no keys available, 1 if keys are available
+ */
+static int kbd_tstc(void)
+{
+	/* Just get input to do this for us */
+	return config.inited ? input_tstc(&config.input) : 0;
+}
+
+/**
+ * Read a key
+ *
+ * @return ASCII key code, or 0 if no key, or -1 if error
+ */
+static int kbd_getc(void)
+{
+	/* Just get input to do this for us */
+	return config.inited ? input_getc(&config.input) : 0;
+}
+
+/**
  * Check the keyboard, and send any keys that are pressed.
  *
  * This is called by input_tstc() and input_getc() when they need more
@@ -99,15 +121,12 @@ static int check_for_keys(struct udevice *dev, struct key_matrix_key *keys,
  */
 int cros_ec_kbc_check(struct input_config *input)
 {
-	struct udevice *dev = input->dev;
-	struct cros_ec_keyb_priv *priv = dev_get_priv(dev);
 	static struct key_matrix_key last_keys[KBC_MAX_KEYS];
 	static int last_num_keys;
 	struct key_matrix_key keys[KBC_MAX_KEYS];
 	int keycodes[KBC_MAX_KEYS];
 	int num_keys, num_keycodes;
 	int irq_pending, sent;
-	bool same = false;
 
 	/*
 	 * Loop until the EC has no more keyscan records, or we have
@@ -119,12 +138,9 @@ int cros_ec_kbc_check(struct input_config *input)
 	 * may return 0 before all keys have been read from the EC.
 	 */
 	do {
-		irq_pending = cros_ec_interrupt_pending(dev->parent);
+		irq_pending = cros_ec_interrupt_pending(config.dev);
 		if (irq_pending) {
-			num_keys = check_for_keys(dev, keys, KBC_MAX_KEYS,
-						  &same);
-			if (num_keys < 0)
-				return 0;
+			num_keys = check_for_keys(&config, keys, KBC_MAX_KEYS);
 			last_num_keys = num_keys;
 			memcpy(last_keys, keys, sizeof(keys));
 		} else {
@@ -138,16 +154,9 @@ int cros_ec_kbc_check(struct input_config *input)
 
 		if (num_keys < 0)
 			return -1;
-		num_keycodes = key_matrix_decode(&priv->matrix, keys,
+		num_keycodes = key_matrix_decode(&config.matrix, keys,
 				num_keys, keycodes, KBC_MAX_KEYS);
 		sent = input_send_keycodes(input, keycodes, num_keycodes);
-
-		/*
-		 * For those ECs without an interrupt, stop scanning when we
-		 * see that the scan is the same as last time.
-		 */
-		if ((irq_pending < 0) && same)
-			break;
 	} while (irq_pending && !sent);
 
 	return 1;
@@ -162,14 +171,14 @@ int cros_ec_kbc_check(struct input_config *input)
  * @return 0 if ok, -1 on error
  */
 static int cros_ec_keyb_decode_fdt(const void *blob, int node,
-				struct cros_ec_keyb_priv *config)
+				struct keyb *config)
 {
 	/*
 	 * Get keyboard rows and columns - at present we are limited to
 	 * 8 columns by the protocol (one byte per row scan)
 	 */
-	config->key_rows = fdtdec_get_int(blob, node, "keypad,num-rows", 0);
-	config->key_cols = fdtdec_get_int(blob, node, "keypad,num-columns", 0);
+	config->key_rows = fdtdec_get_int(blob, node, "google,key-rows", 0);
+	config->key_cols = fdtdec_get_int(blob, node, "google,key-columns", 0);
 	if (!config->key_rows || !config->key_cols ||
 			config->key_rows * config->key_cols / 8
 				> CROS_EC_KEYSCAN_COLS) {
@@ -177,61 +186,76 @@ static int cros_ec_keyb_decode_fdt(const void *blob, int node,
 		      config->key_rows, config->key_cols);
 		return -1;
 	}
+	config->repeat_delay_ms = fdtdec_get_int(blob, node,
+						 "google,repeat-delay-ms", 0);
+	config->repeat_rate_ms = fdtdec_get_int(blob, node,
+						"google,repeat-rate-ms", 0);
 	config->ghost_filter = fdtdec_get_bool(blob, node,
-					       "google,needs-ghost-filter");
+					       "google,ghost-filter");
 	return 0;
 }
 
-static int cros_ec_kbd_probe(struct udevice *dev)
+/**
+ * Set up the keyboard. This is called by the stdio device handler.
+ *
+ * We want to do this init when the keyboard is actually used rather than
+ * at start-up, since keyboard input may not currently be selected.
+ *
+ * @return 0 if ok, -1 on error
+ */
+static int cros_ec_init_keyboard(void)
 {
-	struct cros_ec_keyb_priv *priv = dev_get_priv(dev);
-	struct keyboard_priv *uc_priv = dev_get_uclass_priv(dev);
-	struct stdio_dev *sdev = &uc_priv->sdev;
-	struct input_config *input = &uc_priv->input;
 	const void *blob = gd->fdt_blob;
-	int node = dev->of_offset;
-	int ret;
+	int node;
 
-	if (cros_ec_keyb_decode_fdt(blob, node, priv))
+	config.dev = board_get_cros_ec_dev();
+	if (!config.dev) {
+		debug("%s: no cros_ec device: cannot init keyboard\n",
+		      __func__);
 		return -1;
-	input_set_delays(input, KBC_REPEAT_DELAY_MS, KBC_REPEAT_RATE_MS);
-	ret = key_matrix_init(&priv->matrix, priv->key_rows, priv->key_cols,
-			      priv->ghost_filter);
-	if (ret) {
+	}
+	node = fdtdec_next_compatible(blob, 0, COMPAT_GOOGLE_CROS_EC_KEYB);
+	if (node < 0) {
+		debug("%s: Node not found\n", __func__);
+		return -1;
+	}
+	if (cros_ec_keyb_decode_fdt(blob, node, &config))
+		return -1;
+	input_set_delays(&config.input, config.repeat_delay_ms,
+			 config.repeat_rate_ms);
+	if (key_matrix_init(&config.matrix, config.key_rows,
+			config.key_cols, config.ghost_filter)) {
 		debug("%s: cannot init key matrix\n", __func__);
-		return ret;
+		return -1;
 	}
-	ret = key_matrix_decode_fdt(&priv->matrix, gd->fdt_blob, node);
-	if (ret) {
+	if (key_matrix_decode_fdt(&config.matrix, gd->fdt_blob, node)) {
 		debug("%s: Could not decode key matrix from fdt\n", __func__);
-		return ret;
+		return -1;
 	}
-	debug("%s: Matrix keyboard %dx%d ready\n", __func__, priv->key_rows,
-	      priv->key_cols);
+	config.inited = 1;
+	debug("%s: Matrix keyboard %dx%d ready\n", __func__, config.key_rows,
+	      config.key_cols);
 
-	priv->input = input;
-	input->dev = dev;
-	input_add_tables(input, false);
-	input->read_keys = cros_ec_kbc_check;
-	strcpy(sdev->name, "cros-ec-keyb");
-
-	/* Register the device. cros_ec_init_keyboard() will be called soon */
-	return input_stdio_register(sdev);
+	return 0;
 }
 
-static const struct keyboard_ops cros_ec_kbd_ops = {
-};
+int drv_keyboard_init(void)
+{
+	struct stdio_dev dev;
 
-static const struct udevice_id cros_ec_kbd_ids[] = {
-	{ .compatible = "google,cros-ec-keyb" },
-	{ }
-};
+	if (input_init(&config.input, 0)) {
+		debug("%s: Cannot set up input\n", __func__);
+		return -1;
+	}
+	config.input.read_keys = cros_ec_kbc_check;
 
-U_BOOT_DRIVER(cros_ec_kbd) = {
-	.name	= "cros_ec_kbd",
-	.id	= UCLASS_KEYBOARD,
-	.of_match = cros_ec_kbd_ids,
-	.probe = cros_ec_kbd_probe,
-	.ops	= &cros_ec_kbd_ops,
-	.priv_auto_alloc_size = sizeof(struct cros_ec_keyb_priv),
-};
+	memset(&dev, '\0', sizeof(dev));
+	strcpy(dev.name, "cros-ec-keyb");
+	dev.flags = DEV_FLAGS_INPUT | DEV_FLAGS_SYSTEM;
+	dev.getc = kbd_getc;
+	dev.tstc = kbd_tstc;
+	dev.start = cros_ec_init_keyboard;
+
+	/* Register the device. cros_ec_init_keyboard() will be called soon */
+	return input_stdio_register(&dev);
+}

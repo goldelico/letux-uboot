@@ -391,6 +391,14 @@ void video_stop(void)
 #endif
 }
 
+void video_putc(const char c)
+{
+}
+
+void video_puts(const char *s)
+{
+}
+
 int drv_video_init(void)
 {
 	int error, devices = 1;
@@ -438,6 +446,10 @@ int drv_video_init(void)
 	memset(&videodev, 0, sizeof(videodev));
 
 	strcpy(videodev.name, "video");
+	videodev.ext = DEV_EXT_VIDEO;	/* Video extensions */
+	videodev.flags = DEV_FLAGS_SYSTEM;	/* No Output */
+	videodev.putc = video_putc;	/* 'putc' function */
+	videodev.puts = video_puts;	/* 'puts' function */
 
 	error = stdio_register(&videodev);
 

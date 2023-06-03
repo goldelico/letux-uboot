@@ -1,5 +1,5 @@
 /*
- * U-Boot - main board file
+ * U-boot - main board file
  *
  * Copyright (c) Switchfin Org. <dpn@switchfin.org>
  *

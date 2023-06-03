@@ -2,7 +2,23 @@
  * (C) Copyright 2012-2013
  * Texas Instruments, <www.ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #include <config.h>
 #include <palmas.h>
@@ -27,7 +43,7 @@ int palmas_mmc1_poweron_ldo(void)
 {
 	u8 val = 0;
 
-#if defined(CONFIG_DRA7XX) || defined(CONFIG_AM57XX)
+#if defined(CONFIG_DRA7XX)
 	/*
 	 * Currently valid for the dra7xx_evm board:
 	 * Set TPS659038 LDO1 to 3.0 V
@@ -45,20 +61,6 @@ int palmas_mmc1_poweron_ldo(void)
 	}
 	return 0;
 #else
-#if defined(CONFIG_TARGET_PYRA_LC15) || defined(CONFIG_TARGET_LC15) || defined(CONFIG_TARGET_LC15_EVM) || defined(CONFIG_TARGET_GTA15)
-	/* use LDO2 for SDIO4 slot */
-	val = LDO_VOLT_3V0;
-	if (palmas_i2c_write_u8(TWL603X_CHIP_P1, LDO2_VOLTAGE, val)) {
-		printf("tps65903x: could not set LDO2 voltage.\n");
-//		return 1;
-	}
-	/* TURN ON LDO2 */
-	val = RSC_MODE_SLEEP | RSC_MODE_ACTIVE;
-	if (palmas_i2c_write_u8(TWL603X_CHIP_P1, LDO2_CTRL, val)) {
-		printf("tps65903x: could not turn on LDO2.\n");
-//		return 1;
-	}
-#endif
 	/*
 	 * We assume that this is a OMAP543X + TWL603X board:
 	 * Set TWL6035/37 LDO9 to 3.0 V
@@ -141,21 +143,6 @@ int twl603x_audio_power(u8 on)
 }
 #endif
 
-#ifdef CONFIG_PALMAS_USB_SS_PWR
-/**
- * @brief palmas_enable_ss_ldo - Configure EVM board specific configurations
- * for the USB Super speed SMPS10 regulator.
- *
- * @return 0
- */
-int palmas_enable_ss_ldo(void)
-{
-	/* Enable smps10 regulator  */
-	return palmas_i2c_write_u8(TWL603X_CHIP_P1, SMPS10_CTRL,
-				SMPS10_MODE_ACTIVE_D);
-}
-#endif
-
 /*
  * Enable/disable back-up battery (or super cap) charging on TWL6035/37.
  * Please use defined BB_xxx values.
@@ -171,12 +158,4 @@ int twl603x_enable_bb_charge(u8 bb_fields)
 		printf("twl603x: could not set BB_VRTC_CTRL to 0x%02x: err = %d\n",
 		       val, err);
 	return err;
-}
-
-/*
- * power off TWL6035/37.
- */
-int twl603x_poweroff(bool restart)
-{
-	return palmas_i2c_write_u8(TWL603X_CHIP_P1, 0xa0, restart?0x03:0x00);
 }

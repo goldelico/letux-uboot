@@ -3,7 +3,10 @@
  *
  * (C) Copyright 2009 Wolfgang Denk <wd@denx.de>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is Free Software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
  */
 
 #include <common.h>
@@ -20,19 +23,8 @@ int raise (int signum)
 /* Dummy function to avoid linker complaints */
 void __aeabi_unwind_cpp_pr0(void)
 {
-}
+};
 
 void __aeabi_unwind_cpp_pr1(void)
 {
-}
-
-/* Copy memory like memcpy, but no return value required.  */
-void __aeabi_memcpy(void *dest, const void *src, size_t n)
-{
-	(void) memcpy(dest, src, n);
-}
-
-void __aeabi_memset(void *dest, size_t n, int c)
-{
-	(void) memset(dest, c, n);
-}
+};

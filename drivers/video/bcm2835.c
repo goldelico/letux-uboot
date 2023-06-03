@@ -1,13 +1,22 @@
 /*
  * (C) Copyright 2012 Stephen Warren
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  */
 
 #include <common.h>
 #include <lcd.h>
-#include <memalign.h>
-#include <phys2bus.h>
 #include <asm/arch/mbox.h>
 #include <asm/global_data.h>
 
@@ -15,8 +24,6 @@ DECLARE_GLOBAL_DATA_PTR;
 
 /* Global variables that lcd.c expects to exist */
 vidinfo_t panel_info;
-
-static u32 bcm2835_pitch;
 
 struct msg_query {
 	struct bcm2835_mbox_hdr hdr;
@@ -34,17 +41,15 @@ struct msg_setup {
 	struct bcm2835_mbox_tag_virtual_offset virtual_offset;
 	struct bcm2835_mbox_tag_overscan overscan;
 	struct bcm2835_mbox_tag_allocate_buffer allocate_buffer;
-	struct bcm2835_mbox_tag_pitch pitch;
 	u32 end_tag;
 };
 
 void lcd_ctrl_init(void *lcdbase)
 {
-	ALLOC_CACHE_ALIGN_BUFFER(struct msg_query, msg_query, 1);
-	ALLOC_CACHE_ALIGN_BUFFER(struct msg_setup, msg_setup, 1);
+	ALLOC_ALIGN_BUFFER(struct msg_query, msg_query, 1, 16);
+	ALLOC_ALIGN_BUFFER(struct msg_setup, msg_setup, 1, 16);
 	int ret;
 	u32 w, h;
-	u32 fb_start, fb_end;
 
 	debug("bcm2835: Query resolution...\n");
 
@@ -86,7 +91,6 @@ void lcd_ctrl_init(void *lcdbase)
 	msg_setup->overscan.body.req.right = 0;
 	BCM2835_MBOX_INIT_TAG(&msg_setup->allocate_buffer, ALLOCATE_BUFFER);
 	msg_setup->allocate_buffer.body.req.alignment = 0x100;
-	BCM2835_MBOX_INIT_TAG_NO_REQ(&msg_setup->pitch, GET_PITCH);
 
 	ret = bcm2835_mbox_call_prop(BCM2835_MBOX_PROP_CHAN, &msg_setup->hdr);
 	if (ret) {
@@ -97,7 +101,6 @@ void lcd_ctrl_init(void *lcdbase)
 
 	w = msg_setup->physical_w_h.body.resp.width;
 	h = msg_setup->physical_w_h.body.resp.height;
-	bcm2835_pitch = msg_setup->pitch.body.resp.pitch;
 
 	debug("bcm2835: Final resolution is %d x %d\n", w, h);
 
@@ -105,24 +108,9 @@ void lcd_ctrl_init(void *lcdbase)
 	panel_info.vl_row = h;
 	panel_info.vl_bpix = LCD_COLOR16;
 
-	gd->fb_base = bus_to_phys(
-		msg_setup->allocate_buffer.body.resp.fb_address);
-
-	/* Enable dcache for the frame buffer */
-	fb_start = gd->fb_base & ~(MMU_SECTION_SIZE - 1);
-	fb_end = gd->fb_base + msg_setup->allocate_buffer.body.resp.fb_size;
-	fb_end = ALIGN(fb_end, 1 << MMU_SECTION_SHIFT);
-	mmu_set_region_dcache_behaviour(fb_start, fb_end - fb_start,
-		DCACHE_WRITEBACK);
-	lcd_set_flush_dcache(1);
+	gd->fb_base = msg_setup->allocate_buffer.body.resp.fb_address;
 }
 
 void lcd_enable(void)
 {
-}
-
-int lcd_get_size(int *line_length)
-{
-	*line_length = bcm2835_pitch;
-	return *line_length * panel_info.vl_row;
 }

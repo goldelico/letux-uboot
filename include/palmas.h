@@ -2,7 +2,23 @@
  * (C) Copyright 2012-2013
  * Texas Instruments, <www.ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #ifndef PALMAS_H
 #define PALMAS_H
@@ -24,10 +40,6 @@
 #define LDO1_CTRL		0x50
 #define LDO1_VOLTAGE		0x51
 
-/* LDO2 control/voltage */
-#define LDO2_CTRL		0x52
-#define LDO2_VOLTAGE		0x53
-
 /* LDO9 control/voltage */
 #define LDO9_CTRL		0x60
 #define LDO9_VOLTAGE		0x61
@@ -35,7 +47,6 @@
 /* LDOUSB control/voltage */
 #define LDOUSB_CTRL		0x64
 #define LDOUSB_VOLTAGE		0x65
-#define LDO_CTRL		0x6a
 
 /* Control of 32 kHz audio clock */
 #define CLK32KGAUDIO_CTRL	0xd5
@@ -66,10 +77,6 @@
 /* SMPS9_CTRL */
 #define SMPS9_CTRL		0x38
 #define SMPS9_VOLTAGE		0x3b
-
-/* SMPS10_CTRL */
-#define SMPS10_CTRL		0x3c
-#define SMPS10_MODE_ACTIVE_D	0x0d
 
 /* Bit field definitions for SMPSx_CTRL */
 #define SMPS_MODE_ACT_AUTO	1
@@ -123,7 +130,5 @@ int palmas_mmc1_poweron_ldo(void);
 int twl603x_mmc1_set_ldo9(u8 vsel);
 int twl603x_audio_power(u8 on);
 int twl603x_enable_bb_charge(u8 bb_fields);
-int palmas_enable_ss_ldo(void);
-int twl603x_poweroff(bool restart);
 
 #endif /* PALMAS_H */

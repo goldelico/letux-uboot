@@ -5,24 +5,18 @@
 #
 # Normal rules
 #
-.*
-*.o
-*.o.*
-*.a
-*.s
-*.su
-*.mod.c
-*.i
-*.lst
-*.order
-*.elf
-*.swp
-*.bin
-*.patch
-*.cfgtmp
 
-# host programs on Cygwin
+*.rej
+*.orig
+*.a
+*.o
+*.su
 *.exe
+*~
+*.swp
+*.patch
+*.bin
+*.cfgtmp
 
 # Build tree
 /build-*
@@ -30,31 +24,54 @@
 #
 # Top-level generic files
 #
-/MLO*
+
+/MLO
 /SPL
 /System.map
-/u-boot*
-/boards.cfg
-
-#
-# git files that we don't want to ignore even it they are dot-files
-#
-!.gitignore
-!.mailmap
+/u-boot
+/u-boot.hex
+/u-boot.imx
+/u-boot-with-spl.imx
+/u-boot-with-nand-spl.imx
+/u-boot.map
+/u-boot.srec
+/u-boot.ldr
+/u-boot.ldr.hex
+/u-boot.ldr.srec
+/u-boot.img
+/u-boot.kwb
+/u-boot.sha1
+/u-boot.dis
+/u-boot.lds
+/u-boot.ubl
+/u-boot.ais
+/u-boot.dtb
+/u-boot.sb
+/u-boot.bd
+/u-boot.geany
 
 #
 # Generated files
 #
-/LOG
-/spl/
-/tpl/
-/defconfig
 
-#
-# Generated include files
-#
-/include/config/
+/include/charge_logo.h
+/tools/logos/ingenic.rle
+/include/rle_boot_logo.h
+/tools/charge_logo/charg*
+/include/rle_charge_logo.h
+/common/rle_logo.c
+/tools/logos/ingenic.jpg.rle
+common/spl/spl_gpt_tab_data.h
+tools/ingenic-tools/mmc_params
+tools/ingenic-tools/spl_pad_to_block
+
+*.depend*
+/LOG
+/errlog
+/reloc_off
+
 /include/generated/
+asm-offsets.s
 
 # stgit generated dirs
 patches-*
@@ -81,6 +98,5 @@ GRTAGS
 GSYMS
 GTAGS
 
-*.orig
-*~
-\#*#
+# spl ais files
+/spl/*.ais

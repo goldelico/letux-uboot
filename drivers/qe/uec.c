@@ -3,20 +3,33 @@
  *
  * Dave Liu <daveliu@freescale.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
-#include <common.h>
-#include <net.h>
-#include <malloc.h>
-#include <linux/errno.h>
-#include <asm/io.h>
-#include <linux/immap_qe.h>
+#include "common.h"
+#include "net.h"
+#include "malloc.h"
+#include "asm/errno.h"
+#include "asm/io.h"
+#include "asm/immap_qe.h"
+#include "qe.h"
 #include "uccf.h"
 #include "uec.h"
 #include "uec_phy.h"
 #include "miiphy.h"
-#include <fsl_qe.h>
 #include <phy.h>
 
 /* Default UTBIPAR SMI address */
@@ -623,20 +636,20 @@ static int uec_miiphy_find_dev_by_name(const char *devname)
  * Returns:
  *  0 on success
  */
-static int uec_miiphy_read(struct mii_dev *bus, int addr, int devad, int reg)
+static int uec_miiphy_read(const char *devname, unsigned char addr,
+			    unsigned char reg, unsigned short *value)
 {
-	unsigned short value = 0;
 	int devindex = 0;
 
-	if (bus->name == NULL) {
+	if (devname == NULL || value == NULL) {
 		debug("%s: NULL pointer given\n", __FUNCTION__);
 	} else {
-		devindex = uec_miiphy_find_dev_by_name(bus->name);
+		devindex = uec_miiphy_find_dev_by_name(devname);
 		if (devindex >= 0) {
-			value = uec_read_phy_reg(devlist[devindex], addr, reg);
+			*value = uec_read_phy_reg(devlist[devindex], addr, reg);
 		}
 	}
-	return value;
+	return 0;
 }
 
 /*
@@ -645,15 +658,15 @@ static int uec_miiphy_read(struct mii_dev *bus, int addr, int devad, int reg)
  * Returns:
  *  0 on success
  */
-static int uec_miiphy_write(struct mii_dev *bus, int addr, int devad, int reg,
-			    u16 value)
+static int uec_miiphy_write(const char *devname, unsigned char addr,
+			     unsigned char reg, unsigned short value)
 {
 	int devindex = 0;
 
-	if (bus->name == NULL) {
+	if (devname == NULL) {
 		debug("%s: NULL pointer given\n", __FUNCTION__);
 	} else {
-		devindex = uec_miiphy_find_dev_by_name(bus->name);
+		devindex = uec_miiphy_find_dev_by_name(devname);
 		if (devindex >= 0) {
 			uec_write_phy_reg(devlist[devindex], addr, reg, value);
 		}
@@ -1333,7 +1346,7 @@ static int uec_recv(struct eth_device* dev)
 		if (!(status & RxBD_ERROR)) {
 			data = BD_DATA(bd);
 			len = BD_LENGTH(bd);
-			net_process_received_packet(data, len);
+			NetReceive(data, len);
 		} else {
 			printf("%s: Rx error\n", dev->name);
 		}
@@ -1399,17 +1412,7 @@ int uec_initialize(bd_t *bis, uec_info_t *uec_info)
 	}
 
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
-	int retval;
-	struct mii_dev *mdiodev = mdio_alloc();
-	if (!mdiodev)
-		return -ENOMEM;
-	strncpy(mdiodev->name, dev->name, MDIO_NAME_LEN);
-	mdiodev->read = uec_miiphy_read;
-	mdiodev->write = uec_miiphy_write;
-
-	retval = mdio_register(mdiodev);
-	if (retval < 0)
-		return retval;
+	miiphy_register(dev->name, uec_miiphy_read, uec_miiphy_write);
 #endif
 
 	return 1;

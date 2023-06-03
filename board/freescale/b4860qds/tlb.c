@@ -1,7 +1,23 @@
 /*
  * Copyright 2011-2012 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -62,14 +78,13 @@ struct fsl_e_tlb_entry tlb_table[] = {
 		      MAS3_SX|MAS3_SR, MAS2_W|MAS2_G,
 		      0, 2, BOOKE_PAGESZ_256M, 1),
 
-#ifndef CONFIG_SPL_BUILD
 	/* *I*G* - PCI */
 	SET_TLB_ENTRY(1, CONFIG_SYS_PCIE1_MEM_VIRT, CONFIG_SYS_PCIE1_MEM_PHYS,
 		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 		      0, 3, BOOKE_PAGESZ_256M, 1),
 
 	SET_TLB_ENTRY(1, CONFIG_SYS_PCIE1_MEM_VIRT + 0x10000000,
-		      CONFIG_SYS_PCIE1_MEM_PHYS + 0x10000000,
+                      CONFIG_SYS_PCIE1_MEM_PHYS + 0x10000000,
 		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 		      0, 4, BOOKE_PAGESZ_256M, 1),
 
@@ -97,7 +112,6 @@ struct fsl_e_tlb_entry tlb_table[] = {
 		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 		      0, 9, BOOKE_PAGESZ_16M, 1),
 #endif
-#endif
 #ifdef CONFIG_SYS_DCSRBAR_PHYS
 	SET_TLB_ENTRY(1, CONFIG_SYS_DCSRBAR, CONFIG_SYS_DCSRBAR_PHYS,
 		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
@@ -120,7 +134,6 @@ struct fsl_e_tlb_entry tlb_table[] = {
 	 * entry 14 and 15 has been used hard coded, they will be disabled
 	 * in cpu_init_f, so we use entry 16 for SRIO2.
 	 */
-#ifndef CONFIG_SPL_BUILD
 #ifdef CONFIG_SYS_SRIO1_MEM_PHYS
 	/* *I*G* - SRIO1 */
 	SET_TLB_ENTRY(1, CONFIG_SYS_SRIO1_MEM_VIRT, CONFIG_SYS_SRIO1_MEM_PHYS,
@@ -142,13 +155,6 @@ struct fsl_e_tlb_entry tlb_table[] = {
 		      CONFIG_SYS_SRIO_PCIE_BOOT_UCODE_ENV_ADDR_PHYS,
 		      MAS3_SX|MAS3_SW|MAS3_SR, MAS2_G,
 		      0, 17, BOOKE_PAGESZ_1M, 1),
-#endif
-#endif
-
-#if defined(CONFIG_RAMBOOT_PBL) && !defined(CONFIG_SPL_BUILD)
-	SET_TLB_ENTRY(1, CONFIG_SYS_DDR_SDRAM_BASE, CONFIG_SYS_DDR_SDRAM_BASE,
-		      MAS3_SX|MAS3_SW|MAS3_SR, 0,
-		      0, 17, BOOKE_PAGESZ_2G, 1)
 #endif
 };
 

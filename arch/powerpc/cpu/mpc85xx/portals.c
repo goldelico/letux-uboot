@@ -1,7 +1,23 @@
 /*
  * Copyright 2008-2011 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -14,46 +30,9 @@
 #include <asm/fsl_portals.h>
 #include <asm/fsl_liodn.h>
 
-#define MAX_BPORTALS (CONFIG_SYS_BMAN_CINH_SIZE / CONFIG_SYS_BMAN_SP_CINH_SIZE)
-#define MAX_QPORTALS (CONFIG_SYS_QMAN_CINH_SIZE / CONFIG_SYS_QMAN_SP_CINH_SIZE)
-static void inhibit_portals(void __iomem *addr, int max_portals,
-			int arch_max_portals, int portal_cinh_size)
-{
-	uint32_t val;
-	int i;
-
-	/* arch_max_portals is the maximum based on memory size. This includes
-	 * the reserved memory in the SoC.  max_portals the number of physical
-	 * portals in the SoC */
-	if (max_portals > arch_max_portals) {
-		printf("ERROR: portal config error\n");
-		max_portals = arch_max_portals;
-	}
-
-	for (i = 0; i < max_portals; i++) {
-		out_be32(addr, -1);
-		val = in_be32(addr);
-		if (!val) {
-			printf("ERROR: Stopped after %d portals\n", i);
-			goto done;
-		}
-		addr += portal_cinh_size;
-	}
-#ifdef DEBUG
-	printf("Cleared %d portals\n", i);
-#endif
-done:
-
-	return;
-}
-
 void setup_portals(void)
 {
 	ccsr_qman_t *qman = (void *)CONFIG_SYS_FSL_QMAN_ADDR;
-	void __iomem *bpaddr = (void *)CONFIG_SYS_BMAN_CINH_BASE +
-				CONFIG_SYS_BMAN_SWP_ISDR_REG;
-	void __iomem *qpaddr = (void *)CONFIG_SYS_QMAN_CINH_BASE +
-				CONFIG_SYS_QMAN_SWP_ISDR_REG;
 #ifdef CONFIG_FSL_CORENET
 	int i;
 
@@ -75,12 +54,6 @@ void setup_portals(void)
 	out_be32(&qman->qcsp_bare, (u32)(CONFIG_SYS_QMAN_MEM_PHYS >> 32));
 #endif
 	out_be32(&qman->qcsp_bar, (u32)CONFIG_SYS_QMAN_MEM_PHYS);
-
-	/* Change default state of BMan ISDR portals to all 1s */
-	inhibit_portals(bpaddr, CONFIG_SYS_BMAN_NUM_PORTALS, MAX_BPORTALS,
-			CONFIG_SYS_BMAN_SP_CINH_SIZE);
-	inhibit_portals(qpaddr, CONFIG_SYS_QMAN_NUM_PORTALS, MAX_QPORTALS,
-			CONFIG_SYS_QMAN_SP_CINH_SIZE);
 }
 
 /* Update portal containter to match LAW setup of portal in phy map */
@@ -249,13 +222,8 @@ void fdt_fixup_qportals(void *blob)
 #ifdef CONFIG_FSL_CORENET
 		u32 liodns[2];
 #endif
-		const int *ci = fdt_getprop(blob, off, "cell-index", &err);
-		int i;
-
-		if (!ci)
-			goto err;
-
-		i = *ci;
+		const int *ci = fdt_getprop(blob, off, "cell-index", NULL);
+		int i = *ci;
 #ifdef CONFIG_SYS_DPAA_FMAN
 		int j;
 #endif

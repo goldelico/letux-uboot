@@ -2,7 +2,23 @@
  * (C) Copyright 2010
  * Dirk Eibach,  Guntermann & Drunck GmbH, eibach@gdsys.de
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -25,19 +41,17 @@
 #define LATCH2_MC2_PRESENT_N 0x0080
 
 enum {
-	UNITTYPE_MAIN = 1<<0,
-	UNITTYPE_SERVER = 1<<1,
-	UNITTYPE_DISPLAYPORT = 1<<2,
+	UNITTYPE_VIDEO_USER = 0,
+	UNITTYPE_MAIN_USER = 1,
+	UNITTYPE_VIDEO_SERVER = 2,
+	UNITTYPE_MAIN_SERVER = 3,
 };
 
 enum {
 	HWVER_101 = 0,
 	HWVER_110 = 1,
-	HWVER_130 = 2,
-	HWVER_140 = 3,
-	HWVER_150 = 4,
-	HWVER_160 = 5,
-	HWVER_170 = 6,
+	HWVER_120 = 2,
+	HWVER_130 = 3,
 };
 
 enum {
@@ -56,8 +70,6 @@ enum {
 	RAM_DDR2_32 = 1,
 	RAM_DDR2_64 = 2,
 };
-
-struct ihs_fpga *fpga_ptr[] = CONFIG_SYS_FPGA_PTR;
 
 int misc_init_r(void)
 {
@@ -83,9 +95,10 @@ static unsigned int get_mc2_present(void)
 
 static void print_fpga_info(unsigned dev)
 {
-	u16 versions;
-	u16 fpga_version;
-	u16 fpga_features;
+	struct ihs_fpga *fpga = (struct ihs_fpga *) CONFIG_SYS_FPGA_BASE(dev);
+	u16 versions = in_le16(&fpga->versions);
+	u16 fpga_version = in_le16(&fpga->fpga_version);
+	u16 fpga_features = in_le16(&fpga->fpga_features);
 	unsigned unit_type;
 	unsigned hardware_version;
 	unsigned feature_rs232;
@@ -99,20 +112,13 @@ static void print_fpga_info(unsigned dev)
 
 	printf("FPGA%d: ", dev);
 
-	FPGA_GET_REG(dev, versions, &versions);
-	FPGA_GET_REG(dev, fpga_version, &fpga_version);
-	FPGA_GET_REG(dev, fpga_features, &fpga_features);
-
 	hardware_version = versions & 0x000f;
 
 	if (fpga_state
 	    && !((hardware_version == HWVER_101)
 		 && (fpga_state == FPGA_STATE_DONE_FAILED))) {
 		puts("not available\n");
-		if (fpga_state & FPGA_STATE_DONE_FAILED)
-			puts("       Waiting for FPGA-DONE timed out.\n");
-		if (fpga_state & FPGA_STATE_REFLECTION_FAILED)
-			puts("       FPGA reflection test failed.\n");
+		print_fpga_state(dev);
 		return;
 	}
 
@@ -126,20 +132,27 @@ static void print_fpga_info(unsigned dev)
 	feature_carriers = (fpga_features >> 2) & 0x0003;
 	feature_video_channels = fpga_features & 0x0003;
 
-	if (unit_type & UNITTYPE_MAIN)
-		printf("Mainchannel ");
-	else
-		printf("Videochannel ");
+	switch (unit_type) {
+	case UNITTYPE_VIDEO_USER:
+		printf("Videochannel Userside");
+		break;
 
-	if (unit_type & UNITTYPE_SERVER)
-		printf("Serverside ");
-	else
-		printf("Userside ");
+	case UNITTYPE_MAIN_USER:
+		printf("Mainchannel Userside");
+		break;
 
-	if (unit_type & UNITTYPE_DISPLAYPORT)
-		printf("DisplayPort");
-	else
-		printf("DVI-DL");
+	case UNITTYPE_VIDEO_SERVER:
+		printf("Videochannel Serverside");
+		break;
+
+	case UNITTYPE_MAIN_SERVER:
+		printf("Mainchannel Serverside");
+		break;
+
+	default:
+		printf("UnitType %d(not supported)", unit_type);
+		break;
+	}
 
 	switch (hardware_version) {
 	case HWVER_101:
@@ -147,27 +160,15 @@ static void print_fpga_info(unsigned dev)
 		break;
 
 	case HWVER_110:
-		printf(" HW-Ver 1.10-1.20\n");
+		printf(" HW-Ver 1.10-1.12\n");
+		break;
+
+	case HWVER_120:
+		printf(" HW-Ver 1.20\n");
 		break;
 
 	case HWVER_130:
 		printf(" HW-Ver 1.30\n");
-		break;
-
-	case HWVER_140:
-		printf(" HW-Ver 1.40-1.43\n");
-		break;
-
-	case HWVER_150:
-		printf(" HW-Ver 1.50\n");
-		break;
-
-	case HWVER_160:
-		printf(" HW-Ver 1.60-1.61\n");
-		break;
-
-	case HWVER_170:
-		printf(" HW-Ver 1.70\n");
 		break;
 
 	default:
@@ -262,15 +263,14 @@ int checkboard(void)
 
 int last_stage_init(void)
 {
-	u16 versions;
-
-	FPGA_GET_REG(0, versions, &versions);
+	struct ihs_fpga *fpga = (struct ihs_fpga *) CONFIG_SYS_FPGA_BASE(0);
+	u16 versions = in_le16(&fpga->versions);
 
 	print_fpga_info(0);
 	if (get_mc2_present())
 		print_fpga_info(1);
 
-	if (((versions >> 4) & 0x000f) & UNITTYPE_SERVER)
+	if (((versions >> 4) & 0x000f) != UNITTYPE_MAIN_USER)
 		return 0;
 
 	if (!get_fpga_state(0) || (get_hwver() == HWVER_101))

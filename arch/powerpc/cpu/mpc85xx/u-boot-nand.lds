@@ -1,14 +1,24 @@
 /*
  * Copyright 2009-2012 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
-
-#include "config.h"
-
-#ifndef CONFIG_SYS_MONITOR_LEN
-#define CONFIG_SYS_MONITOR_LEN	0x80000
-#endif
 
 OUTPUT_ARCH(powerpc)
 /* Do we need any of these for elf?
@@ -44,6 +54,7 @@ SECTIONS
     _GOT2_TABLE_ = .;
     KEEP(*(.got2))
     KEEP(*(.got))
+    PROVIDE(_GLOBAL_OFFSET_TABLE_ = . + 4);
     _FIXUP_TABLE_ = .;
     KEEP(*(.fixup))
   }
@@ -81,7 +92,7 @@ SECTIONS
     KEEP(arch/powerpc/cpu/mpc85xx/start.o (.bootpg))
   } :text = 0xffff
 
-  . = ADDR(.text) + CONFIG_SYS_MONITOR_LEN;
+  . = ADDR(.text) + 0x80000;
 
   __bss_start = .;
   .bss (NOLOAD)       :

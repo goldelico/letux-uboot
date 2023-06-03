@@ -4,7 +4,19 @@
  *
  * Copyright © 2011 Ivan Djelic <ivan.djelic@parrot.com>
  *
-  * SPDX-License-Identifier:	GPL-2.0+
+ * This file is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 or (at your option) any
+ * later version.
+ *
+ * This file is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this file; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
  */
 
 #include <common.h>
@@ -41,7 +53,7 @@ struct nand_bch_control {
 int nand_bch_calculate_ecc(struct mtd_info *mtd, const unsigned char *buf,
 			   unsigned char *code)
 {
-	const struct nand_chip *chip = mtd_to_nand(mtd);
+	const struct nand_chip *chip = mtd->priv;
 	struct nand_bch_control *nbc = chip->ecc.priv;
 	unsigned int i;
 
@@ -67,7 +79,7 @@ int nand_bch_calculate_ecc(struct mtd_info *mtd, const unsigned char *buf,
 int nand_bch_correct_data(struct mtd_info *mtd, unsigned char *buf,
 			  unsigned char *read_ecc, unsigned char *calc_ecc)
 {
-	const struct nand_chip *chip = mtd_to_nand(mtd);
+	const struct nand_chip *chip = mtd->priv;
 	struct nand_bch_control *nbc = chip->ecc.priv;
 	unsigned int *errloc = nbc->errloc;
 	int i, count;
@@ -86,7 +98,7 @@ int nand_bch_correct_data(struct mtd_info *mtd, unsigned char *buf,
 		}
 	} else if (count < 0) {
 		printk(KERN_ERR "ecc unrecoverable error\n");
-		count = -EBADMSG;
+		count = -1;
 	}
 	return count;
 }
@@ -94,6 +106,9 @@ int nand_bch_correct_data(struct mtd_info *mtd, unsigned char *buf,
 /**
  * nand_bch_init - [NAND Interface] Initialize NAND BCH error correction
  * @mtd:	MTD block structure
+ * @eccsize:	ecc block size in bytes
+ * @eccbytes:	ecc length in bytes
+ * @ecclayout:	output default layout
  *
  * Returns:
  *  a pointer to a new NAND BCH control structure, or NULL upon failure
@@ -107,21 +122,14 @@ int nand_bch_correct_data(struct mtd_info *mtd, unsigned char *buf,
  * @eccsize = 512  (thus, m=13 is the smallest integer such that 2^m-1 > 512*8)
  * @eccbytes = 7   (7 bytes are required to store m*t = 13*4 = 52 bits)
  */
-struct nand_bch_control *nand_bch_init(struct mtd_info *mtd)
+struct nand_bch_control *
+nand_bch_init(struct mtd_info *mtd, unsigned int eccsize, unsigned int eccbytes,
+	      struct nand_ecclayout **ecclayout)
 {
-	struct nand_chip *nand = mtd_to_nand(mtd);
 	unsigned int m, t, eccsteps, i;
-	struct nand_ecclayout *layout = nand->ecc.layout;
+	struct nand_ecclayout *layout;
 	struct nand_bch_control *nbc = NULL;
 	unsigned char *erased_page;
-	unsigned int eccsize = nand->ecc.size;
-	unsigned int eccbytes = nand->ecc.bytes;
-	unsigned int eccstrength = nand->ecc.strength;
-
-	if (!eccbytes && eccstrength) {
-		eccbytes = DIV_ROUND_UP(eccstrength * fls(8 * eccsize), 8);
-		nand->ecc.bytes = eccbytes;
-	}
 
 	if (!eccsize || !eccbytes) {
 		printk(KERN_WARNING "ecc parameters not supplied\n");
@@ -149,7 +157,7 @@ struct nand_bch_control *nand_bch_init(struct mtd_info *mtd)
 	eccsteps = mtd->writesize/eccsize;
 
 	/* if no ecc placement scheme was provided, build one */
-	if (!layout) {
+	if (!*ecclayout) {
 
 		/* handle large page devices only */
 		if (mtd->oobsize < 64) {
@@ -175,7 +183,7 @@ struct nand_bch_control *nand_bch_init(struct mtd_info *mtd)
 		layout->oobfree[0].offset = 2;
 		layout->oobfree[0].length = mtd->oobsize-2-layout->eccbytes;
 
-		nand->ecc.layout = layout;
+		*ecclayout = layout;
 	}
 
 	/* sanity checks */
@@ -183,7 +191,7 @@ struct nand_bch_control *nand_bch_init(struct mtd_info *mtd)
 		printk(KERN_WARNING "eccsize %u is too large\n", eccsize);
 		goto fail;
 	}
-	if (layout->eccbytes != (eccsteps*eccbytes)) {
+	if ((*ecclayout)->eccbytes != (eccsteps*eccbytes)) {
 		printk(KERN_WARNING "invalid ecc layout\n");
 		goto fail;
 	}
@@ -206,9 +214,6 @@ struct nand_bch_control *nand_bch_init(struct mtd_info *mtd)
 
 	for (i = 0; i < eccbytes; i++)
 		nbc->eccmask[i] ^= 0xff;
-
-	if (!eccstrength)
-		nand->ecc.strength = (eccbytes * 8) / fls(8 * eccsize);
 
 	return nbc;
 fail:

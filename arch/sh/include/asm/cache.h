@@ -1,7 +1,7 @@
 #ifndef __ASM_SH_CACHE_H
 #define __ASM_SH_CACHE_H
 
-#if defined(CONFIG_CPU_SH4)
+#if defined(CONFIG_SH4) || defined(CONFIG_SH4A)
 
 int cache_control(unsigned int cmd);
 
@@ -9,6 +9,9 @@ int cache_control(unsigned int cmd);
 
 struct __large_struct { unsigned long buf[100]; };
 #define __m(x) (*(struct __large_struct *)(x))
+
+void dcache_wback_range(u32 start, u32 end);
+void dcache_invalid_range(u32 start, u32 end);
 
 #else
 
@@ -18,7 +21,7 @@ struct __large_struct { unsigned long buf[100]; };
  */
 #define ARCH_DMA_MINALIGN	32
 
-#endif /* CONFIG_CPU_SH4 */
+#endif /* CONFIG_SH4 || CONFIG_SH4A */
 
 /*
  * Use the L1 data cache line size value for the minimum DMA buffer alignment

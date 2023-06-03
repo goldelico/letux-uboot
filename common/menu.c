@@ -1,11 +1,21 @@
 /*
  * Copyright 2010-2011 Calxeda, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include <common.h>
-#include <cli.h>
 #include <malloc.h>
 #include <errno.h>
 #include <linux/list.h>
@@ -105,9 +115,12 @@ static inline void *menu_item_destroy(struct menu *m,
 	return NULL;
 }
 
-__weak void menu_display_statusline(struct menu *m)
+void __menu_display_statusline(struct menu *m)
 {
+	return;
 }
+void menu_display_statusline(struct menu *m)
+	__attribute__ ((weak, alias("__menu_display_statusline")));
 
 /*
  * Display a menu so the user can make a choice of an item. First display its
@@ -194,17 +207,13 @@ static inline int menu_interactive_choice(struct menu *m, void **choice)
 		menu_display(m);
 
 		if (!m->item_choice) {
-			readret = cli_readline_into_buffer("Enter choice: ",
-							   cbuf,
-							   m->timeout / 10);
+			readret = readline_into_buffer("Enter choice: ", cbuf,
+					m->timeout / 10);
 
 			if (readret >= 0) {
 				choice_item = menu_item_by_key(m, cbuf);
 				if (!choice_item)
 					printf("%s not found\n", cbuf);
-			} else if (readret == -1)  {
-				printf("<INTERRUPT>\n");
-				return -EINTR;
 			} else {
 				return menu_default_choice(m, choice);
 			}
@@ -350,7 +359,7 @@ int menu_item_add(struct menu *m, char *item_key, void *item_data)
  * make it obvious what the key for each entry is.
  *
  * item_choice - If not NULL, will be called when asking the user to choose an
- * item. Returns a key string corresponding to the chosen item or NULL if
+ * item. Returns a key string corresponding to the choosen item or NULL if
  * no item has been selected.
  *
  * item_choice_data - Will be passed as the argument to the item_choice function

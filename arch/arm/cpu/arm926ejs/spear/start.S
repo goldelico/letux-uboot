@@ -11,11 +11,50 @@
  *  Copyright (c) 2003	Richard Woodruff <r-woodruff2@ti.com>
  *  Copyright (c) 2003	Kshitij <kshitij@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 
 #include <config.h>
+
+.globl _start
+_start:
+	b	reset
+	ldr	pc, _undefined_instruction
+	ldr	pc, _software_interrupt
+	ldr	pc, _prefetch_abort
+	ldr	pc, _data_abort
+	ldr	pc, _not_used
+	ldr	pc, _irq
+	ldr	pc, _fiq
+
+_undefined_instruction:
+_software_interrupt:
+_prefetch_abort:
+_data_abort:
+_not_used:
+_irq:
+_fiq:
+	.word infinite_loop
+
+infinite_loop:
+	b	infinite_loop
 
 /*
  *************************************************************************
@@ -30,7 +69,9 @@
  *************************************************************************
  */
 
-	.globl	reset
+/*
+ * the actual reset code
+ */
 
 reset:
 /*
@@ -45,6 +86,7 @@ reset:
  * BSS area lies in the DDR location which is not yet initialized
  * bss is assumed to be uninitialized.
  */
+	bl	spl_boot
 	ldmia	sp!, {r0-r12,pc}
 
 /*
@@ -76,5 +118,5 @@ cpu_init_crit:
 	 * Go setup Memory and board specific bits prior to relocation.
 	 */
 	stmdb	sp!, {lr}
-	bl	_main	/* _main will call board_init_f */
+	bl	lowlevel_init	/* go setup pll,mux,memory */
 	ldmia	sp!, {pc}

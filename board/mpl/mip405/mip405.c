@@ -2,7 +2,24 @@
  * (C) Copyright 2001
  * Denis Peter, MPL AG Switzerland, d.peter@mpl.ch
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ *
  *
  * TODO: clean-up
  */
@@ -92,7 +109,7 @@ typedef struct {
 	unsigned char sz;		/* log binary => Size = (4MByte<<sz) 5 = 128, 4 = 64, 3 = 32, 2 = 16, 1=8 */
 	unsigned char ecc;		/* if true, ecc is enabled */
 } sdram_t;
-#if defined(CONFIG_TARGET_MIP405T)
+#if defined(CONFIG_MIP405T)
 const sdram_t sdram_table[] = {
 	{ 0x0F,	/* MIP405T Rev A, 64MByte -1 Board */
 		3,	/* Case Latenty = 3 */
@@ -168,7 +185,7 @@ const sdram_t sdram_table[] = {
 	  0xff,
 	  0xff }
 };
-#endif /*CONFIG_TARGET_MIP405T */
+#endif /*CONFIG_MIP405T */
 void SDRAM_err (const char *s)
 {
 #ifndef SDRAM_DEBUG
@@ -262,7 +279,7 @@ int init_sdram (void)
 #endif
 	/* check board */
 	bc = in8 (PLD_PART_REG);
-#if defined(CONFIG_TARGET_MIP405T)
+#if defined(CONFIG_MIP405T)
 	if((bc & 0x80)==0)
 		SDRAM_err ("U-Boot configured for a MIP405T not for a MIP405!!!\n");
 #else
@@ -543,7 +560,7 @@ void ide_set_reset (int idereset)
 
 void get_pcbrev_var(unsigned char *pcbrev, unsigned char *var)
 {
-#if !defined(CONFIG_TARGET_MIP405T)
+#if !defined(CONFIG_MIP405T)
 	unsigned char bc,rc,tmp;
 	int i;
 
@@ -575,7 +592,7 @@ void get_pcbrev_var(unsigned char *pcbrev, unsigned char *var)
  * Check Board Identity:
  */
 /* serial String: "MIP405_1000" OR "MIP405T_1000" */
-#if !defined(CONFIG_TARGET_MIP405T)
+#if !defined(CONFIG_MIP405T)
 #define BOARD_NAME	"MIP405"
 #else
 #define BOARD_NAME	"MIP405T"
@@ -777,7 +794,7 @@ void print_mip405_info (void)
 			(cfg >> 1) & 0x1, (cfg >> 2) & 0x1, (cfg >> 3) & 0x1);
 	printf ("User LED %s\n", (com_mode & 0x4) ? "on" : "off");
 	printf ("UART Clocks %d\n", (com_mode >> 4) & 0x3);
-#if !defined(CONFIG_TARGET_MIP405T)
+#if !defined(CONFIG_MIP405T)
 	printf ("User Config Switch %d %d %d %d %d %d %d %d\n",
 			(ext) & 0x1, (ext >> 1) & 0x1, (ext >> 2) & 0x1,
 			(ext >> 3) & 0x1, (ext >> 4) & 0x1, (ext >> 5) & 0x1,
@@ -793,7 +810,7 @@ void print_mip405_info (void)
 	printf ("IDE Reset %s\n", (ext & 0x01) ? "asserted" : "not asserted");
 	printf ("IRQs:\n");
 	printf ("  PIIX INTR: %s\n", (irq_reg & 0x80) ? "inactive" : "active");
-#if !defined(CONFIG_TARGET_MIP405T)
+#if !defined(CONFIG_MIP405T)
 	printf ("  UART0 IRQ: %s\n", (irq_reg & 0x40) ? "inactive" : "active");
 	printf ("  UART1 IRQ: %s\n", (irq_reg & 0x20) ? "inactive" : "active");
 #endif

@@ -2,7 +2,10 @@
  * Copyright 2010-2011 Freescale Semiconductor, Inc.
  * Author: Roy Zang <tie-fei.zang@freescale.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
  */
 
 #include <config.h>
@@ -24,12 +27,7 @@ static const u8 serdes1_cfg_tbl[][SRDS1_MAX_LANES] = {
 
 int is_serdes_configured(enum srds_prtcl device)
 {
-	int ret;
-
-	if (!(serdes1_prtcl_map & (1 << NONE)))
-		fsl_serdes_init();
-
-	ret = (1 << device) & serdes1_prtcl_map;
+	int ret = (1 << device) & serdes1_prtcl_map;
 	return ret;
 }
 
@@ -40,9 +38,6 @@ void fsl_serdes_init(void)
 	u32 srds_cfg = (pordevsr & MPC85xx_PORDEVSR_IO_SEL) >>
 				MPC85xx_PORDEVSR_IO_SEL_SHIFT;
 	int lane;
-
-	if (serdes1_prtcl_map & (1 << NONE))
-		return;
 
 	debug("PORDEVSR[IO_SEL_SRDS] = %x\n", srds_cfg);
 
@@ -55,6 +50,4 @@ void fsl_serdes_init(void)
 		serdes1_prtcl_map |= (1 << lane_prtcl);
 	}
 
-	/* Set the first bit to indicate serdes has been initialized */
-	serdes1_prtcl_map |= (1 << NONE);
 }

@@ -5,21 +5,35 @@
  * Michal  SIMEK <monstr@monstr.eu>
  * Yasushi SHOJI <yashi@atmark-techno.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <command.h>
-#include <fdtdec.h>
 #include <malloc.h>
 #include <asm/microblaze_intc.h>
 #include <asm/asm.h>
 
-DECLARE_GLOBAL_DATA_PTR;
+#undef DEBUG_INT
 
 void enable_interrupts(void)
 {
-	debug("Enable interrupts for the whole CPU\n");
 	MSRSET(0x2);
 }
 
@@ -52,11 +66,12 @@ static void enable_one_interrupt(int irq)
 	offset <<= irq;
 	mask = intc->ier;
 	intc->ier = (mask | offset);
-
-	debug("Enable one interrupt irq %x - mask %x,ier %x\n", offset, mask,
-	      intc->ier);
-	debug("INTC isr %x, ier %x, iar %x, mer %x\n", intc->isr, intc->ier,
-	      intc->iar, intc->mer);
+#ifdef DEBUG_INT
+	printf("Enable one interrupt irq %x - mask %x,ier %x\n", offset, mask,
+		intc->ier);
+	printf("INTC isr %x, ier %x, iar %x, mer %x\n", intc->isr, intc->ier,
+		intc->iar, intc->mer);
+#endif
 }
 
 static void disable_one_interrupt(int irq)
@@ -67,11 +82,12 @@ static void disable_one_interrupt(int irq)
 	offset <<= irq;
 	mask = intc->ier;
 	intc->ier = (mask & ~offset);
-
-	debug("Disable one interrupt irq %x - mask %x,ier %x\n", irq, mask,
-	      intc->ier);
-	debug("INTC isr %x, ier %x, iar %x, mer %x\n", intc->isr, intc->ier,
-	      intc->iar, intc->mer);
+#ifdef DEBUG_INT
+	printf("Disable one interrupt irq %x - mask %x,ier %x\n", irq, mask,
+		intc->ier);
+	printf("INTC isr %x, ier %x, iar %x, mer %x\n", intc->isr, intc->ier,
+		intc->iar, intc->mer);
+#endif
 }
 
 int install_interrupt_handler(int irq, interrupt_handler_t *hdlr, void *arg)
@@ -88,12 +104,12 @@ int install_interrupt_handler(int irq, interrupt_handler_t *hdlr, void *arg)
 		act->handler = hdlr;
 		act->arg = arg;
 		act->count = 0;
-		enable_one_interrupt(irq);
+		enable_one_interrupt (irq);
 		return 0;
 	}
 
 	/* Disable */
-	act->handler = (interrupt_handler_t *)def_hdlr;
+	act->handler = (interrupt_handler_t *) def_hdlr;
 	act->arg = (void *)irq;
 	disable_one_interrupt(irq);
 	return 1;
@@ -107,34 +123,20 @@ static void intc_init(void)
 	intc->iar = 0xFFFFFFFF;
 	/* XIntc_Start - hw_interrupt enable and all interrupt enable */
 	intc->mer = 0x3;
-
-	debug("INTC isr %x, ier %x, iar %x, mer %x\n", intc->isr, intc->ier,
-	      intc->iar, intc->mer);
+#ifdef DEBUG_INT
+	printf("INTC isr %x, ier %x, iar %x, mer %x\n", intc->isr, intc->ier,
+		intc->iar, intc->mer);
+#endif
 }
 
-int interrupt_init(void)
+int interrupts_init(void)
 {
 	int i;
-	const void *blob = gd->fdt_blob;
-	int node = 0;
 
-	debug("INTC: Initialization\n");
-
-	node = fdt_node_offset_by_compatible(blob, node,
-				"xlnx,xps-intc-1.00.a");
-	if (node != -1) {
-		fdt_addr_t base = fdtdec_get_addr(blob, node, "reg");
-		if (base == FDT_ADDR_T_NONE)
-			return -1;
-
-		debug("INTC: Base addr %lx\n", base);
-		intc = (microblaze_intc_t *)base;
-		irq_no = fdtdec_get_int(blob, node, "xlnx,num-intr-inputs", 0);
-		debug("INTC: IRQ NO %x\n", irq_no);
-	} else {
-		return node;
-	}
-
+#if defined(CONFIG_SYS_INTC_0_ADDR) && defined(CONFIG_SYS_INTC_0_NUM)
+	intc = (microblaze_intc_t *) (CONFIG_SYS_INTC_0_ADDR);
+	irq_no = CONFIG_SYS_INTC_0_NUM;
+#endif
 	if (irq_no) {
 		vecs = calloc(1, sizeof(struct irq_action) * irq_no);
 		if (vecs == NULL) {
@@ -144,7 +146,7 @@ int interrupt_init(void)
 
 		/* initialize irq list */
 		for (i = 0; i < irq_no; i++) {
-			vecs[i].handler = (interrupt_handler_t *)def_hdlr;
+			vecs[i].handler = (interrupt_handler_t *) def_hdlr;
 			vecs[i].arg = (void *)i;
 			vecs[i].count = 0;
 		}
@@ -161,29 +163,31 @@ void interrupt_handler(void)
 {
 	int irqs = intc->ivr;	/* find active interrupt */
 	int mask = 1;
+#ifdef DEBUG_INT
 	int value;
+	printf ("INTC isr %x, ier %x, iar %x, mer %x\n", intc->isr, intc->ier,
+		intc->iar, intc->mer);
+	R14(value);
+	printf ("Interrupt handler on %x line, r14 %x\n", irqs, value);
+#endif
 	struct irq_action *act = vecs + irqs;
 
-	debug("INTC isr %x, ier %x, iar %x, mer %x\n", intc->isr, intc->ier,
-	      intc->iar, intc->mer);
-#ifdef DEBUG
-	R14(value);
+#ifdef DEBUG_INT
+	printf
+	    ("Jumping to interrupt handler rutine addr %x,count %x,arg %x\n",
+	     act->handler, act->count, act->arg);
 #endif
-	debug("Interrupt handler on %x line, r14 %x\n", irqs, value);
-
-	debug("Jumping to interrupt handler rutine addr %x,count %x,arg %x\n",
-	      (u32)act->handler, act->count, (u32)act->arg);
-	act->handler(act->arg);
+	act->handler (act->arg);
 	act->count++;
 
 	intc->iar = mask << irqs;
 
-	debug("Dump INTC reg, isr %x, ier %x, iar %x, mer %x\n", intc->isr,
-	      intc->ier, intc->iar, intc->mer);
-#ifdef DEBUG
+#ifdef DEBUG_INT
+	printf ("Dump INTC reg, isr %x, ier %x, iar %x, mer %x\n", intc->isr,
+		intc->ier, intc->iar, intc->mer);
 	R14(value);
+	printf ("Interrupt handler on %x line, r14 %x\n", irqs, value);
 #endif
-	debug("Interrupt handler on %x line, r14 %x\n", irqs, value);
 }
 
 #if defined(CONFIG_CMD_IRQ)
@@ -198,10 +202,10 @@ int do_irqinfo(cmd_tbl_t *cmdtp, int flag, int argc, const char *argv[])
 		      "-----------------------------\n");
 
 		for (i = 0; i < irq_no; i++) {
-			if (act->handler != (interrupt_handler_t *)def_hdlr) {
+			if (act->handler != (interrupt_handler_t *) def_hdlr) {
 				printf("%02d  %08x  %08x  %d\n", i,
-				       (int)act->handler, (int)act->arg,
-				       act->count);
+					(int)act->handler, (int)act->arg,
+								act->count);
 			}
 			act++;
 		}

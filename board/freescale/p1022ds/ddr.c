@@ -3,13 +3,16 @@
  * Authors: Srikanth Srinivasan <srikanth.srinivasan@freescale.com>
  *          Timur Tabi <timur@freescale.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
  */
 
 #include <common.h>
 
-#include <fsl_ddr_sdram.h>
-#include <fsl_ddr_dimm_params.h>
+#include <asm/fsl_ddr_sdram.h>
+#include <asm/fsl_ddr_dimm_params.h>
 
 struct board_specific_parameters {
 	u32 n_ranks;
@@ -17,7 +20,7 @@ struct board_specific_parameters {
 	u32 clk_adjust;		/* Range: 0-8 */
 	u32 cpo;		/* Range: 2-31 */
 	u32 write_data_delay;	/* Range: 0-6 */
-	u32 force_2t;
+	u32 force_2T;
 };
 
 /*
@@ -72,7 +75,7 @@ void fsl_ddr_board_options(memctl_options_t *popts, dimm_params_t *pdimm,
 				popts->cpo_override = pbsp->cpo;
 				popts->write_data_delay =
 					pbsp->write_data_delay;
-				popts->twot_en = pbsp->force_2t;
+				popts->twoT_en = pbsp->force_2T;
 				goto found;
 			}
 			pbsp_highest = pbsp;
@@ -88,7 +91,7 @@ void fsl_ddr_board_options(memctl_options_t *popts, dimm_params_t *pdimm,
 		popts->clk_adjust = pbsp->clk_adjust;
 		popts->cpo_override = pbsp->cpo;
 		popts->write_data_delay = pbsp->write_data_delay;
-		popts->twot_en = pbsp->force_2t;
+		popts->twoT_en = pbsp->force_2T;
 	} else {
 		panic("DIMM is not supported by this board");
 	}

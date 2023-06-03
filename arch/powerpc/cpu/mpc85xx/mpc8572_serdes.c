@@ -1,7 +1,23 @@
 /*
  * Copyright 2010 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <config.h>
@@ -28,9 +44,6 @@ static u8 serdes1_cfg_tbl[][SRDS1_MAX_LANES] = {
 
 int is_serdes_configured(enum srds_prtcl prtcl)
 {
-	if (!(serdes1_prtcl_map & (1 << NONE)))
-		fsl_serdes_init();
-
 	return (1 << prtcl) & serdes1_prtcl_map;
 }
 
@@ -41,9 +54,6 @@ void fsl_serdes_init(void)
 	u32 srds_cfg = (pordevsr & MPC85xx_PORDEVSR_IO_SEL) >>
 				MPC85xx_PORDEVSR_IO_SEL_SHIFT;
 	int lane;
-
-	if (serdes1_prtcl_map & (1 << NONE))
-		return;
 
 	debug("PORDEVSR[IO_SEL_SRDS] = %x\n", srds_cfg);
 
@@ -68,7 +78,4 @@ void fsl_serdes_init(void)
 
 	if (!(pordevsr & MPC85xx_PORDEVSR_SGMII4_DIS))
 		serdes1_prtcl_map |= (1 << SGMII_TSEC4);
-
-	/* Set the first bit to indicate serdes has been initialized */
-	serdes1_prtcl_map |= (1 << NONE);
 }

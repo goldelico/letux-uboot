@@ -7,7 +7,20 @@
  * Based on code from LTIB:
  * Copyright 2008-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
  */
 
 #ifndef __REGS_APBH_H__
@@ -96,7 +109,7 @@ struct mxs_apbh_regs {
 	mxs_reg_32(hw_apbh_version)
 };
 
-#elif (defined(CONFIG_MX28) || defined(CONFIG_MX6) || defined(CONFIG_MX7))
+#elif (defined(CONFIG_MX28) || defined(CONFIG_MX6))
 struct mxs_apbh_regs {
 	mxs_reg_32(hw_apbh_ctrl0)
 	mxs_reg_32(hw_apbh_ctrl1)
@@ -275,7 +288,7 @@ struct mxs_apbh_regs {
 #define	APBH_CTRL0_CLKGATE_CHANNEL_NAND7		0x0800
 #define	APBH_CTRL0_CLKGATE_CHANNEL_HSADC		0x1000
 #define	APBH_CTRL0_CLKGATE_CHANNEL_LCDIF		0x2000
-#elif (defined(CONFIG_MX6) || defined(CONFIG_MX7))
+#elif defined(CONFIG_MX6)
 #define	APBH_CTRL0_CLKGATE_CHANNEL_OFFSET		0
 #define	APBH_CTRL0_CLKGATE_CHANNEL_NAND0		0x0001
 #define	APBH_CTRL0_CLKGATE_CHANNEL_NAND1		0x0002
@@ -391,7 +404,7 @@ struct mxs_apbh_regs {
 #define	APBH_CHANNEL_CTRL_FREEZE_CHANNEL_LCDIF		0x2000
 #endif
 
-#if (defined(CONFIG_MX6) || defined(CONFIG_MX7))
+#if defined(CONFIG_MX6)
 #define	APBH_CHANNEL_CTRL_RESET_CHANNEL_OFFSET		16
 #endif
 

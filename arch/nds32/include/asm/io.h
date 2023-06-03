@@ -7,7 +7,9 @@
  * Shawn Lin, Andes Technology Corporation <nobuhiro@andestech.com>
  * Macpaul Lin, Andes Technology Corporation <macpaul@andestech.com>
  *
- * SPDX-License-Identifier:	GPL-2.0
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
  *
  * Modifications:
  *  16-Sep-1996	RMK	Inlined the inx/outx functions & optimised for both
@@ -182,43 +184,6 @@ static inline unsigned int readl(unsigned int *addr)
 #define in_8(a)				__raw_readb(a)
 
 /*
- * Clear and set bits in one shot. These macros can be used to clear and
- * set multiple bits in a register using a single call. These macros can
- * also be used to set a multiple-bit bit pattern using a mask, by
- * specifying the mask in the 'clear' parameter and the new bit pattern
- * in the 'set' parameter.
- */
-
-#define clrbits(type, addr, clear) \
-	out_##type((addr), in_##type(addr) & ~(clear))
-
-#define setbits(type, addr, set) \
-	out_##type((addr), in_##type(addr) | (set))
-
-#define clrsetbits(type, addr, clear, set) \
-	out_##type((addr), (in_##type(addr) & ~(clear)) | (set))
-
-#define clrbits_be32(addr, clear) clrbits(be32, addr, clear)
-#define setbits_be32(addr, set) setbits(be32, addr, set)
-#define clrsetbits_be32(addr, clear, set) clrsetbits(be32, addr, clear, set)
-
-#define clrbits_le32(addr, clear) clrbits(le32, addr, clear)
-#define setbits_le32(addr, set) setbits(le32, addr, set)
-#define clrsetbits_le32(addr, clear, set) clrsetbits(le32, addr, clear, set)
-
-#define clrbits_be16(addr, clear) clrbits(be16, addr, clear)
-#define setbits_be16(addr, set) setbits(be16, addr, set)
-#define clrsetbits_be16(addr, clear, set) clrsetbits(be16, addr, clear, set)
-
-#define clrbits_le16(addr, clear) clrbits(le16, addr, clear)
-#define setbits_le16(addr, set) setbits(le16, addr, set)
-#define clrsetbits_le16(addr, clear, set) clrsetbits(le16, addr, clear, set)
-
-#define clrbits_8(addr, clear) clrbits(8, addr, clear)
-#define setbits_8(addr, set) setbits(8, addr, set)
-#define clrsetbits_8(addr, clear, set) clrsetbits(8, addr, clear, set)
-
-/*
  * Now, pick up the machine-defined IO definitions
  * #include <asm/arch/io.h>
  */
@@ -342,6 +307,40 @@ static inline void writesl(unsigned int *addr, const void * data, int longlen)
 #define insb_p(port, to, len)		insb(port, to, len)
 #define insw_p(port, to, len)		insw(port, to, len)
 #define insl_p(port, to, len)		insl(port, to, len)
+
+/*
+ * ioremap and friends.
+ *
+ * ioremap takes a PCI memory address, as specified in
+ * linux/Documentation/IO-mapping.txt.  If you want a
+ * physical address, use __ioremap instead.
+ */
+extern void *__ioremap(unsigned long offset, size_t size, unsigned long flags);
+extern void __iounmap(void *addr);
+
+/*
+ * Generic ioremap support.
+ *
+ * Define:
+ *  iomem_valid_addr(off,size)
+ *  iomem_to_phys(off)
+ */
+#ifdef iomem_valid_addr
+#define __arch_ioremap(off, sz, nocache)				\
+({									\
+	unsigned long _off = (off), _size = (sz);			\
+	void *_ret = (void *)0;						\
+	if (iomem_valid_addr(_off, _size))				\
+		_ret = __ioremap(iomem_to_phys(_off), _size, 0);	\
+	_ret;								\
+})
+
+#define __arch_iounmap __iounmap
+#endif
+
+#define ioremap(off, sz)		__arch_ioremap((off), (sz), 0)
+#define ioremap_nocache(off, sz)	__arch_ioremap((off), (sz), 1)
+#define iounmap(_addr)			__arch_iounmap(_addr)
 
 /*
  * DMA-consistent mapping functions.  These allocate/free a region of

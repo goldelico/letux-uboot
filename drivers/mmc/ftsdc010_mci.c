@@ -4,7 +4,8 @@
  * (C) Copyright 2010 Faraday Technology
  * Dante Su <dantesu@faraday-tech.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This file is released under the terms of GPL v2 and any later version.
+ * See the file COPYING in the root directory of the source tree for details.
  */
 
 #include <common.h>
@@ -13,7 +14,7 @@
 #include <mmc.h>
 
 #include <asm/io.h>
-#include <linux/errno.h>
+#include <asm/errno.h>
 #include <asm/byteorder.h>
 #include <faraday/ftsdc010.h>
 
@@ -27,14 +28,13 @@ struct ftsdc010_chip {
 	uint32_t sclk;    /* FTSDC010 source clock in Hz */
 	uint32_t fifo;    /* fifo depth in bytes */
 	uint32_t acmd;
-	struct mmc_config cfg;	/* mmc configuration */
 };
 
 static inline int ftsdc010_send_cmd(struct mmc *mmc, struct mmc_cmd *mmc_cmd)
 {
 	struct ftsdc010_chip *chip = mmc->priv;
 	struct ftsdc010_mmc __iomem *regs = chip->regs;
-	int ret = -ETIMEDOUT;
+	int ret = TIMEOUT;
 	uint32_t ts, st;
 	uint32_t cmd   = FTSDC010_CMD_IDX(mmc_cmd->cmdidx);
 	uint32_t arg   = mmc_cmd->cmdarg;
@@ -124,9 +124,17 @@ static void ftsdc010_clkset(struct mmc *mmc, uint32_t rate)
 	}
 }
 
+static inline int ftsdc010_is_ro(struct mmc *mmc)
+{
+	struct ftsdc010_chip *chip = mmc->priv;
+	const uint8_t *csd = (const uint8_t *)mmc->csd;
+
+	return chip->wprot || (csd[1] & 0x30);
+}
+
 static int ftsdc010_wait(struct ftsdc010_mmc __iomem *regs, uint32_t mask)
 {
-	int ret = -ETIMEDOUT;
+	int ret = TIMEOUT;
 	uint32_t st, ts;
 
 	for (ts = get_timer(0); get_timer(ts) < CFG_CMD_TIMEOUT; ) {
@@ -151,7 +159,7 @@ static int ftsdc010_wait(struct ftsdc010_mmc __iomem *regs, uint32_t mask)
 static int ftsdc010_request(struct mmc *mmc, struct mmc_cmd *cmd,
 	struct mmc_data *data)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = UNUSABLE_ERR;
 	uint32_t len = 0;
 	struct ftsdc010_chip *chip = mmc->priv;
 	struct ftsdc010_mmc __iomem *regs = chip->regs;
@@ -167,11 +175,7 @@ static int ftsdc010_request(struct mmc *mmc, struct mmc_cmd *cmd,
 		len = data->blocksize * data->blocks;
 
 		/* 1. data disable + fifo reset */
-		dcr = 0;
-#ifdef CONFIG_FTSDC010_SDIO
-		dcr |= FTSDC010_DCR_FIFO_RST;
-#endif
-		writel(dcr, &regs->dcr);
+		writel(FTSDC010_DCR_FIFO_RST, &regs->dcr);
 
 		/* 2. clear status register */
 		writel(FTSDC010_STATUS_DATA_MASK | FTSDC010_STATUS_FIFO_URUN
@@ -279,7 +283,7 @@ static int ftsdc010_init(struct mmc *mmc)
 	uint32_t ts;
 
 	if (readl(&regs->status) & FTSDC010_STATUS_CARD_DETECT)
-		return -ENOMEDIUM;
+		return NO_CARD_ERR;
 
 	if (readl(&regs->status) & FTSDC010_STATUS_WRITE_PROT) {
 		printf("ftsdc010: write protected\n");
@@ -297,7 +301,7 @@ static int ftsdc010_init(struct mmc *mmc)
 	}
 	if (readl(&regs->cmd) & FTSDC010_CMD_SDC_RST) {
 		printf("ftsdc010: reset failed\n");
-		return -EOPNOTSUPP;
+		return UNUSABLE_ERR;
 	}
 
 	/* 2. enter low speed mode (400k card detection) */
@@ -308,12 +312,6 @@ static int ftsdc010_init(struct mmc *mmc)
 
 	return 0;
 }
-
-static const struct mmc_ops ftsdc010_ops = {
-	.send_cmd	= ftsdc010_request,
-	.set_ios	= ftsdc010_set_ios,
-	.init		= ftsdc010_init,
-};
 
 int ftsdc010_mmc_init(int devid)
 {
@@ -330,44 +328,50 @@ int ftsdc010_mmc_init(int devid)
 	regs = (void __iomem *)(CONFIG_FTSDC010_BASE + (devid << 20));
 #endif
 
-	chip = malloc(sizeof(struct ftsdc010_chip));
-	if (!chip)
+	mmc = malloc(sizeof(struct mmc));
+	if (!mmc)
 		return -ENOMEM;
+	memset(mmc, 0, sizeof(struct mmc));
+
+	chip = malloc(sizeof(struct ftsdc010_chip));
+	if (!chip) {
+		free(mmc);
+		return -ENOMEM;
+	}
 	memset(chip, 0, sizeof(struct ftsdc010_chip));
 
 	chip->regs = regs;
+	mmc->priv  = chip;
+
+	sprintf(mmc->name, "ftsdc010");
+	mmc->send_cmd  = ftsdc010_request;
+	mmc->set_ios   = ftsdc010_set_ios;
+	mmc->init      = ftsdc010_init;
+
+	mmc->host_caps = MMC_MODE_HS | MMC_MODE_HS_52MHz;
+	switch (readl(&regs->bwr) & FTSDC010_BWR_CAPS_MASK) {
+	case FTSDC010_BWR_CAPS_4BIT:
+		mmc->host_caps |= MMC_MODE_4BIT;
+		break;
+	case FTSDC010_BWR_CAPS_8BIT:
+		mmc->host_caps |= MMC_MODE_4BIT | MMC_MODE_8BIT;
+		break;
+	default:
+		break;
+	}
+
 #ifdef CONFIG_SYS_CLK_FREQ
 	chip->sclk = CONFIG_SYS_CLK_FREQ;
 #else
 	chip->sclk = clk_get_rate("SDC");
 #endif
 
-	chip->cfg.name = "ftsdc010";
-	chip->cfg.ops = &ftsdc010_ops;
-	chip->cfg.host_caps = MMC_MODE_HS | MMC_MODE_HS_52MHz;
-	switch (readl(&regs->bwr) & FTSDC010_BWR_CAPS_MASK) {
-	case FTSDC010_BWR_CAPS_4BIT:
-		chip->cfg.host_caps |= MMC_MODE_4BIT;
-		break;
-	case FTSDC010_BWR_CAPS_8BIT:
-		chip->cfg.host_caps |= MMC_MODE_4BIT | MMC_MODE_8BIT;
-		break;
-	default:
-		break;
-	}
+	mmc->voltages  = MMC_VDD_32_33 | MMC_VDD_33_34;
+	mmc->f_max     = chip->sclk / 2;
+	mmc->f_min     = chip->sclk / 0x100;
+	mmc->block_dev.part_type = PART_TYPE_DOS;
 
-	chip->cfg.voltages  = MMC_VDD_32_33 | MMC_VDD_33_34;
-	chip->cfg.f_max     = chip->sclk / 2;
-	chip->cfg.f_min     = chip->sclk / 0x100;
-
-	chip->cfg.part_type = PART_TYPE_DOS;
-	chip->cfg.b_max	    = CONFIG_SYS_MMC_MAX_BLK_COUNT;
-
-	mmc = mmc_create(&chip->cfg, chip);
-	if (mmc == NULL) {
-		free(chip);
-		return -ENOMEM;
-	}
+	mmc_register(mmc);
 
 	return 0;
 }

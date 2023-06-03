@@ -3,7 +3,19 @@
  *
  * Copyright (C) 2012 Lukasz Dalek <luk0104@gmail.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #ifndef __CONFIG_H
@@ -16,6 +28,8 @@
 #define CONFIG_BOARD_H2200
 
 #define CONFIG_SYS_NO_FLASH
+
+#define CONFIG_SYS_HZ			1000
 
 #define CONFIG_NR_DRAM_BANKS		1
 #define PHYS_SDRAM_1			0xa0000000 /* SDRAM Bank #1 */
@@ -115,12 +129,21 @@
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 38400, 115200 }
 
-#define CONFIG_FIT_DISABLE_SHA256
+#define CONFIG_CMD_IMPORTENV		1
+#define CONFIG_CMD_LOADB
+#define CONFIG_CMD_SOURCE
+#define CONFIG_CMD_RUN
+#define CONFIG_CMD_IMI
+
+#define CONFIG_FIT
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_CMDLINE_TAG
 #define CONFIG_INITRD_TAG
 
 /* Monitor Command Prompt */
+#define CONFIG_SYS_PROMPT		"> "
+#define CONFIG_SYS_HUSH_PARSER
+#define CONFIG_SYS_PROMPT_HUSH_PS2	"$ "
 
 /* Console I/O Buffer Size */
 #define CONFIG_SYS_CBSIZE		256
@@ -131,9 +154,14 @@
 
 #define CONFIG_BOOTARGS "root=/dev/ram0 ro console=ttyS0,115200n8"
 
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #define CONFIG_USB_DEV_PULLUP_GPIO	33
 /* USB VBUS GPIO 3 */
 
+#define CONFIG_CMD_NET
+#define CONFIG_CMD_PING
+
+#define CONFIG_BOOTDELAY		2
 #define CONFIG_BOOTCOMMAND		\
 	"setenv downloaded 0 ; while test $downloaded -eq 0 ; do " \
 	"if bootp ; then setenv downloaded 1 ; fi ; done ; " \

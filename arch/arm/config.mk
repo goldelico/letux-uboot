@@ -2,11 +2,29 @@
 # (C) Copyright 2000-2002
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
-# SPDX-License-Identifier:	GPL-2.0+
+# See file CREDITS for list of people who contributed to this
+# project.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307 USA
 #
 
+CROSS_COMPILE ?= arm-linux-
+
 ifndef CONFIG_STANDALONE_LOAD_ADDR
-ifneq ($(CONFIG_OMAP_COMMON),)
+ifneq ($(CONFIG_AM33XX)$(CONFIG_OMAP34XX)$(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX)$(CONFIG_TI814X),)
 CONFIG_STANDALONE_LOAD_ADDR = 0x80300000
 else
 CONFIG_STANDALONE_LOAD_ADDR = 0xc100000
@@ -14,24 +32,16 @@ endif
 endif
 
 LDFLAGS_FINAL += --gc-sections
-PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections \
-		     -fno-common -ffixed-r9
-PLATFORM_RELFLAGS += $(call cc-option, -msoft-float) \
-      $(call cc-option,-mshort-load-bytes,$(call cc-option,-malignment-traps,))
+PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections
 
-# LLVM support
-LLVMS_RELFLAGS		:= $(call cc-option,-mllvm,) \
-			$(call cc-option,-target arm-none-eabi,) \
-			$(call cc-option,-arm-use-movt=0,)
-PLATFORM_RELFLAGS	+= $(LLVM_RELFLAGS)
+# Support generic board on ARM
+__HAVE_ARCH_GENERIC_BOARD := y
 
-PLATFORM_CPPFLAGS += -D__ARM__
+PLATFORM_CPPFLAGS += -DCONFIG_ARM -D__ARM__
 
 # Choose between ARM/Thumb instruction sets
 ifeq ($(CONFIG_SYS_THUMB_BUILD),y)
-AFLAGS_IMPLICIT_IT	:= $(call as-option,-Wa$(comma)-mimplicit-it=always)
-PF_CPPFLAGS_ARM		:= $(AFLAGS_IMPLICIT_IT) \
-			$(call cc-option, -mthumb -mthumb-interwork,\
+PF_CPPFLAGS_ARM := $(call cc-option, -mthumb -mthumb-interwork,\
 			$(call cc-option,-marm,)\
 			$(call cc-option,-mno-thumb-interwork,)\
 		)
@@ -42,18 +52,7 @@ endif
 
 # Only test once
 ifneq ($(CONFIG_SPL_BUILD),y)
-ifeq ($(CONFIG_SYS_THUMB_BUILD),y)
-archprepare: checkthumb
-
-checkthumb:
-	@if test "$(call cc-name)" = "gcc" -a \
-			"$(call cc-version)" -lt "0404"; then \
-		echo -n '*** Your GCC does not produce working '; \
-		echo 'binaries in THUMB mode.'; \
-		echo '*** Your board is configured for THUMB mode.'; \
-		false; \
-	fi
-endif
+ALL-$(CONFIG_SYS_THUMB_BUILD)	+= checkthumb
 endif
 
 # Try if EABI is supported, else fall back to old API,
@@ -81,8 +80,13 @@ ifneq (,$(findstring -mabi=aapcs-linux,$(PLATFORM_CPPFLAGS)))
 # times. Also, the prefix needs to be different based on whether
 # CONFIG_SPL_BUILD is defined or not. 'filter-out' the existing entry
 # before adding the correct one.
-PLATFORM_LIBS := arch/arm/lib/eabi_compat.o \
-	$(filter-out arch/arm/lib/eabi_compat.o, $(PLATFORM_LIBS))
+ifdef CONFIG_SPL_BUILD
+PLATFORM_LIBS := $(SPLTREE)/arch/arm/lib/eabi_compat.o \
+	$(filter-out %/arch/arm/lib/eabi_compat.o, $(PLATFORM_LIBS))
+else
+PLATFORM_LIBS := $(OBJTREE)/arch/arm/lib/eabi_compat.o \
+	$(filter-out %/arch/arm/lib/eabi_compat.o, $(PLATFORM_LIBS))
+endif
 endif
 
 # needed for relocation
@@ -106,45 +110,7 @@ PLATFORM_RELFLAGS += -fno-optimize-sibling-calls
 endif
 endif
 
+# check that only R_ARM_RELATIVE relocations are generated
 ifneq ($(CONFIG_SPL_BUILD),y)
-# Check that only R_ARM_RELATIVE relocations are generated.
-ALL-y += checkarmreloc
-# The movt / movw can hardcode 16 bit parts of the addresses in the
-# instruction. Relocation is not supported for that case, so disable
-# such usage by requiring word relocations.
-PLATFORM_CPPFLAGS += $(call cc-option, -mword-relocations)
-PLATFORM_CPPFLAGS += $(call cc-option, -fno-pic)
-endif
-
-# limit ourselves to the sections we want in the .bin.
-ifdef CONFIG_ARM64
-OBJCOPYFLAGS += -j .text -j .rodata -j .data -j .u_boot_list -j .rela.dyn
-else
-OBJCOPYFLAGS += -j .text -j .secure_text -j .secure_data -j .rodata -j .hash \
-		-j .data -j .got -j .got.plt -j .u_boot_list -j .rel.dyn
-endif
-
-ifdef CONFIG_OF_EMBED
-OBJCOPYFLAGS += -j .dtb.init.rodata
-endif
-
-ifdef CONFIG_EFI_LOADER
-OBJCOPYFLAGS += -j .efi_runtime -j .efi_runtime_rel
-endif
-
-ifneq ($(CONFIG_IMX_CONFIG),)
-ifdef CONFIG_SPL
-ifndef CONFIG_SPL_BUILD
-ALL-y += SPL
-endif
-else
-ifeq ($(CONFIG_OF_SEPARATE),y)
-ALL-y += u-boot-dtb.imx
-else
-ALL-y += u-boot.imx
-endif
-endif
-ifneq ($(CONFIG_VF610),)
-ALL-y += u-boot.vyb
-endif
+ALL-y	+= checkarmreloc
 endif

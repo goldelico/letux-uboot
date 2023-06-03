@@ -1,5 +1,5 @@
 /*
- * U-Boot - main board file
+ * U-boot - main board file
  *
  * Copyright (c) 2008-2011 Analog Devices Inc.
  *
@@ -10,7 +10,6 @@
 #include <netdev.h>
 #include <asm/blackfin.h>
 #include <asm/io.h>
-#include <asm/sdh.h>
 #include <asm/portmux.h>
 #include "soft_switch.h"
 
@@ -33,7 +32,7 @@ int board_early_init_f(void)
 	return 0;
 }
 
-#ifdef CONFIG_ETH_DESIGNWARE
+#ifdef CONFIG_DESIGNWARE_ETH
 int board_eth_init(bd_t *bis)
 {
 	int ret = 0;
@@ -41,12 +40,12 @@ int board_eth_init(bd_t *bis)
 	if (CONFIG_DW_PORTS & 1) {
 		static const unsigned short pins[] = P_RMII0;
 		if (!peripheral_request_list(pins, "emac0"))
-			ret += designware_initialize(EMAC0_MACCFG, 0);
+			ret += designware_initialize(0, EMAC0_MACCFG, 1, 0);
 	}
 	if (CONFIG_DW_PORTS & 2) {
 		static const unsigned short pins[] = P_RMII1;
 		if (!peripheral_request_list(pins, "emac1"))
-			ret += designware_initialize(EMAC1_MACCFG, 0);
+			ret += designware_initialize(1, EMAC1_MACCFG, 1, 0);
 	}
 
 	return ret;

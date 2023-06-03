@@ -7,11 +7,28 @@
  *
  * Configuation settings for the MPL VCMA9 board.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
+
 
 #define MACH_TYPE_MPL_VCMA9	227
 
@@ -19,9 +36,8 @@
  * High Level Configuration Options
  * (easy to change)
  */
-#define CONFIG_SYS_THUMB_BUILD
-
-#define CONFIG_S3C24X0		/* This is a SAMSUNG S3C24x0-type SoC */
+#define CONFIG_ARM920T		/* This is an ARM920T Core */
+#define CONFIG_S3C24X0		/* in a SAMSUNG S3C24x0-type SoC */
 #define CONFIG_S3C2410		/* specifically a SAMSUNG S3C2410 SoC */
 #define CONFIG_VCMA9		/* on a MPL VCMA9 Board  */
 #define CONFIG_MACH_TYPE	MACH_TYPE_MPL_VCMA9 /* Machine type */
@@ -48,14 +64,24 @@
 /*
  * Command line configuration.
  */
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_CACHE
 #define CONFIG_CMD_EEPROM
+#define CONFIG_CMD_I2C
+#define CONFIG_CMD_USB
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_DATE
+#define CONFIG_CMD_ELF
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_PING
 #define CONFIG_CMD_BSP
 #define CONFIG_CMD_NAND
+#define CONFIG_CMD_NAND_YAFFS
 
 #define CONFIG_BOARD_LATE_INIT
 
+#define CONFIG_SYS_HUSH_PARSER
 #define CONFIG_CMDLINE_EDITING
 
 /*
@@ -63,12 +89,12 @@
  * the MPL VCMA9 is equipped with an ATMEL 24C256 EEPROM at
  * address 0x50 with 16bit addressing
  */
-#define CONFIG_SYS_I2C
+#define CONFIG_HARD_I2C				/* I2C with hardware support */
+#define CONFIG_SYS_I2C_SPEED		100000	/* I2C speed */
+#define CONFIG_SYS_I2C_SLAVE		0x7F	/* I2C slave addr */
 
 /* we use the built-in I2C controller */
-#define CONFIG_SYS_I2C_S3C24X0
-#define CONFIG_SYS_I2C_S3C24X0_SPEED    100000	/* I2C speed */
-#define CONFIG_SYS_I2C_S3C24X0_SLAVE    0x7F	/* I2C slave addr */
+#define CONFIG_DRIVER_S3C24X0_I2C
 
 #define CONFIG_SYS_I2C_EEPROM_ADDR	0x50
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	2
@@ -100,20 +126,26 @@
 /* USB support (currently only works with D-cache off) */
 #define CONFIG_USB_OHCI
 #define CONFIG_USB_OHCI_S3C24XX
+#define CONFIG_USB_KEYBOARD
+#define CONFIG_USB_STORAGE
 #define CONFIG_DOS_PARTITION
 
 /* Enable needed helper functions */
+#define CONFIG_SYS_STDIO_DEREGISTER	/* needs stdio_deregister */
 
 /* RTC */
 #define CONFIG_RTC_S3C24X0
+
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 
 #define CONFIG_BAUDRATE			9600
 
+#define CONFIG_BOOTDELAY		5
 #define CONFIG_BOOT_RETRY_TIME		-1
 #define CONFIG_RESET_TO_RETRY
+#define CONFIG_ZERO_BOOTDELAY_CHECK
 
 #define CONFIG_NETMASK			255.255.255.0
 #define CONFIG_IPADDR			10.0.0.110
@@ -122,16 +154,22 @@
 #if defined(CONFIG_CMD_KGDB)
 /* speed to run kgdb serial port */
 #define CONFIG_KGDB_BAUDRATE		115200
+/* what's this ? it's not used anywhere */
+#define CONFIG_KGDB_SER_INDEX		2	/* which serial port to use */
 #endif
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
+#define CONFIG_SYS_PROMPT		"VCMA9 # "
 #define CONFIG_SYS_CBSIZE		256
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)
 #define CONFIG_SYS_MAXARGS		16
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
+
+#define CONFIG_DISPLAY_CPUINFO				/* Display cpu info */
+#define CONFIG_DISPLAY_BOARDINFO			/* Display board info */
 
 #define CONFIG_SYS_MEMTEST_START	0x30000000	/* memtest works on */
 #define CONFIG_SYS_MEMTEST_END		0x31FFFFFF	/* 32 MB in DRAM */
@@ -140,11 +178,18 @@
 #define CONFIG_SYS_LOAD_ADDR		0x30800000
 
 /* we configure PWM Timer 4 to 1ms 1000Hz  */
+#define CONFIG_SYS_HZ			1000
 
 /* support additional compression methods */
 #define CONFIG_BZIP2
 #define CONFIG_LZO
 #define CONFIG_LZMA
+
+/* Ident */
+/*#define VERSION_TAG "released"*/
+#define VERSION_TAG "unstable"
+#define CONFIG_IDENT_STRING "\n(c) 2003 - 2011 by MPL AG Switzerland, " \
+			    "MEV-10080-001 " VERSION_TAG
 
 /* Physical Memory Map */
 #define CONFIG_NR_DRAM_BANKS	1		/* we have 1 bank of DRAM */
@@ -187,6 +232,9 @@
 #define MULTI_PURPOSE_SOCKET_ADDR	0x08000000
 
 /* File system */
+#define CONFIG_CMD_FAT
+#define CONFIG_CMD_EXT2
+#define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
 #define CONFIG_CMD_JFFS2
 #define CONFIG_YAFFS2

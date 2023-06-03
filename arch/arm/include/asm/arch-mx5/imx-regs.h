@@ -1,7 +1,23 @@
 /*
  * (C) Copyright 2009 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __ASM_ARCH_MX5_IMX_REGS_H__
@@ -202,6 +218,11 @@
  */
 #define WBED		1
 
+#define CS0_128					0
+#define CS0_64M_CS1_64M				1
+#define CS0_64M_CS1_32M_CS2_32M			2
+#define CS0_32M_CS1_32M_CS2_32M_CS3_32M		3
+
 /*
  * CSPI register definitions
  */
@@ -225,10 +246,9 @@
 #define MXC_CSPICTRL_CHAN	18
 
 /* Bit position inside CON register to be associated with SS */
-#define MXC_CSPICON_PHA		0  /* SCLK phase control */
-#define MXC_CSPICON_POL		4  /* SCLK polarity */
-#define MXC_CSPICON_SSPOL	12 /* SS polarity */
-#define MXC_CSPICON_CTL		20 /* inactive state of SCLK */
+#define MXC_CSPICON_POL		4
+#define MXC_CSPICON_PHA		0
+#define MXC_CSPICON_SSPOL	12
 #define MXC_SPI_BASE_ADDRESSES \
 	CSPI1_BASE_ADDR, \
 	CSPI2_BASE_ADDR, \
@@ -288,6 +308,17 @@
 #define DP_OP_216	((6 << 4) + ((3 - 1)  << 0))
 #define DP_MFD_216	(4 - 1)
 #define DP_MFN_216	3
+
+#define CHIP_REV_1_0            0x10
+#define CHIP_REV_1_1            0x11
+#define CHIP_REV_2_0            0x20
+#define CHIP_REV_2_5		0x25
+#define CHIP_REV_3_0            0x30
+
+#define BOARD_REV_1_0           0x0
+#define BOARD_REV_2_0           0x1
+
+#define BOARD_VER_OFFSET	0x8
 
 #define IMX_IIM_BASE            (IIM_BASE_ADDR)
 
@@ -398,7 +429,8 @@ struct weim {
 
 #if defined(CONFIG_MX51)
 struct iomuxc {
-	u32	gpr[2];
+	u32	gpr0;
+	u32	gpr1;
 	u32	omux0;
 	u32	omux1;
 	u32	omux2;
@@ -407,7 +439,9 @@ struct iomuxc {
 };
 #elif defined(CONFIG_MX53)
 struct iomuxc {
-	u32	gpr[3];
+	u32	gpr0;
+	u32	gpr1;
+	u32	gpr2;
 	u32	omux0;
 	u32	omux1;
 	u32	omux2;

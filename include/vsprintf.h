@@ -2,13 +2,27 @@
  * (C) Copyright 2000-2009
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __VSPRINTF_H
 #define __VSPRINTF_H
-
-#include <stdarg.h>
 
 ulong simple_strtoul(const char *cp, char **endp, unsigned int base);
 
@@ -41,57 +55,8 @@ int strict_strtoul(const char *cp, unsigned int base, unsigned long *res);
 unsigned long long simple_strtoull(const char *cp, char **endp,
 					unsigned int base);
 long simple_strtol(const char *cp, char **endp, unsigned int base);
-
-/**
- * trailing_strtol() - extract a trailing integer from a string
- *
- * Given a string this finds a trailing number on the string and returns it.
- * For example, "abc123" would return 123.
- *
- * @str:	String to exxamine
- * @return training number if found, else -1
- */
-long trailing_strtol(const char *str);
-
-/**
- * trailing_strtoln() - extract a trailing integer from a fixed-length string
- *
- * Given a fixed-length string this finds a trailing number on the string
- * and returns it. For example, "abc123" would return 123. Only the
- * characters between @str and @end - 1 are examined. If @end is NULL, it is
- * set to str + strlen(str).
- *
- * @str:	String to exxamine
- * @end:	Pointer to end of string to examine, or NULL to use the
- *		whole string
- * @return training number if found, else -1
- */
-long trailing_strtoln(const char *str, const char *end);
-
-/**
- * panic() - Print a message and reset/hang
- *
- * Prints a message on the console(s) and then resets. If CONFIG_PANIC_HANG is
- * defined, then it will hang instead of resetting.
- *
- * @param fmt:	printf() format string for message, which should not include
- *		\n, followed by arguments
- */
 void panic(const char *fmt, ...)
 		__attribute__ ((format (__printf__, 1, 2), noreturn));
-
-/**
- * panic_str() - Print a message and reset/hang
- *
- * Prints a message on the console(s) and then resets. If CONFIG_PANIC_HANG is
- * defined, then it will hang instead of resetting.
- *
- * This function can be used instead of panic() when your board does not
- * already use printf(), * to keep code size small.
- *
- * @param fmt:	string to display, which should not include \n
- */
-void panic_str(const char *str) __attribute__ ((noreturn));
 
 /**
  * Format a string and place it in a buffer
@@ -126,6 +91,7 @@ int sprintf(char *buf, const char *fmt, ...)
 int vsprintf(char *buf, const char *fmt, va_list args);
 char *simple_itoa(ulong i);
 
+#ifdef CONFIG_SYS_VSNPRINTF
 /**
  * Format a string and place it in a buffer
  *
@@ -200,6 +166,17 @@ int vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
  * See the vsprintf() documentation for format string extensions over C99.
  */
 int vscnprintf(char *buf, size_t size, const char *fmt, va_list args);
+#else
+/*
+ * Use macros to silently drop the size parameter. Note that the 'cn'
+ * versions are the same as the 'n' versions since the functions assume
+ * there is always enough buffer space when !CONFIG_SYS_VSNPRINTF
+ */
+#define snprintf(buf, size, fmt, args...) sprintf(buf, fmt, ##args)
+#define scnprintf(buf, size, fmt, args...) sprintf(buf, fmt, ##args)
+#define vsnprintf(buf, size, fmt, args...) vsprintf(buf, fmt, ##args)
+#define vscnprintf(buf, size, fmt, args...) vsprintf(buf, fmt, ##args)
+#endif /* CONFIG_SYS_VSNPRINTF */
 
 /**
  * print_grouped_ull() - print a value with digits grouped by ','
@@ -212,6 +189,4 @@ int vscnprintf(char *buf, size_t size, const char *fmt, va_list args);
  */
 void print_grouped_ull(unsigned long long int_val, int digits);
 
-bool str2off(const char *p, loff_t *num);
-bool str2long(const char *p, ulong *num);
 #endif

@@ -2,7 +2,20 @@
  * Copyright (c) 2010 Texas Instruments, Inc.
  * Jason Kridner <jkridner@beagleboard.org>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #include <common.h>
 #include <status_led.h>
@@ -27,46 +40,47 @@ void green_led_on(void)
 }
 #endif
 
-static int get_led_gpio(led_id_t mask)
-{
-#ifdef STATUS_LED_BIT
-	if (STATUS_LED_BIT & mask)
-		return BEAGLE_LED_USR0;
-#endif
-#ifdef STATUS_LED_BIT1
-	if (STATUS_LED_BIT1 & mask)
-		return BEAGLE_LED_USR1;
-#endif
-
-	return 0;
-}
-
 void __led_init (led_id_t mask, int state)
 {
-	int toggle_gpio;
-
-	toggle_gpio = get_led_gpio(mask);
-
-	if (toggle_gpio && !gpio_request(toggle_gpio, "led"))
-		__led_set(mask, state);
+	__led_set (mask, state);
 }
 
 void __led_toggle (led_id_t mask)
 {
-	int state, toggle_gpio;
-
-	toggle_gpio = get_led_gpio(mask);
+	int state, toggle_gpio = 0;
+#ifdef STATUS_LED_BIT
+	if (!toggle_gpio && STATUS_LED_BIT & mask)
+		toggle_gpio = BEAGLE_LED_USR0;
+#endif
+#ifdef STATUS_LED_BIT1
+	if (!toggle_gpio && STATUS_LED_BIT1 & mask)
+		toggle_gpio = BEAGLE_LED_USR1;
+#endif
 	if (toggle_gpio) {
-		state = gpio_get_value(toggle_gpio);
-		gpio_direction_output(toggle_gpio, !state);
+		if (!gpio_request(toggle_gpio, "")) {
+			gpio_direction_output(toggle_gpio, 0);
+			state = gpio_get_value(toggle_gpio);
+			gpio_set_value(toggle_gpio, !state);
+		}
 	}
 }
 
 void __led_set (led_id_t mask, int state)
 {
-	int toggle_gpio;
-
-	toggle_gpio = get_led_gpio(mask);
-	if (toggle_gpio)
-		gpio_direction_output(toggle_gpio, state);
+#ifdef STATUS_LED_BIT
+	if (STATUS_LED_BIT & mask) {
+		if (!gpio_request(BEAGLE_LED_USR0, "")) {
+			gpio_direction_output(BEAGLE_LED_USR0, 0);
+			gpio_set_value(BEAGLE_LED_USR0, state);
+		}
+	}
+#endif
+#ifdef STATUS_LED_BIT1
+	if (STATUS_LED_BIT1 & mask) {
+		if (!gpio_request(BEAGLE_LED_USR1, "")) {
+			gpio_direction_output(BEAGLE_LED_USR1, 0);
+			gpio_set_value(BEAGLE_LED_USR1, state);
+		}
+	}
+#endif
 }

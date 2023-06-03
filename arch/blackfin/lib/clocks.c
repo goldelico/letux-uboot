@@ -36,10 +36,7 @@ u_long get_vco(void)
 u_long get_cclk(void)
 {
 	static u_long cached_cclk_pll_div, cached_cclk;
-	u_long div, csel;
-#ifndef CGU_DIV
-	u_long ssel;
-#endif
+	u_long div, csel, ssel;
 
 	if (pll_is_bypassed())
 		return CONFIG_CLKIN_HZ;

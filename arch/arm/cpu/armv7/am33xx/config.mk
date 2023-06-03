@@ -1,48 +1,19 @@
 #
 # Copyright (C) 2011, Texas Instruments, Incorporated - http://www.ti.com/
 #
-# SPDX-License-Identifier:	GPL-2.0+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
 #
-
-include  $(srctree)/$(CPUDIR)/omap-common/config_secure.mk
-
+# This program is distributed "as is" WITHOUT ANY WARRANTY of any
+# kind, whether express or implied; without even the implied warranty
+# of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
 ifdef CONFIG_SPL_BUILD
-ifeq ($(CONFIG_TI_SECURE_DEVICE),y)
-#
-# For booting from SPI use
-# u-boot-spl_HS_SPI_X-LOADER to program flash
-#
-# On AM43XX:
-#
-# For booting spl from all other media use
-# u-boot-spl_HS_ISSW
-#
-# On AM33XX:
-#
-# For booting spl from NAND flash use
-# u-boot-spl_HS_X-LOADER
-#
-# For booting spl from SD/MMC/eMMC media use
-# u-boot-spl_HS_MLO
-#
-# For booting spl over UART, USB, or Ethernet use
-# u-boot-spl_HS_2ND
-#
-# Refer to README.ti-secure for more info
-#
-ALL-y	+= u-boot-spl_HS_ISSW
-ALL-y += u-boot-spl_HS_SPI_X-LOADER
-ALL-y += u-boot-spl_HS_X-LOADER
-ALL-y += u-boot-spl_HS_MLO
-ALL-y += u-boot-spl_HS_2ND
+ALL-y	+= $(OBJTREE)/MLO
+ALL-$(CONFIG_SPL_SPI_SUPPORT) += $(OBJTREE)/MLO.byteswap
 else
-ALL-y	+= MLO
-ALL-y += MLO.byteswap
-endif
-else
-ifeq ($(CONFIG_TI_SECURE_DEVICE),y)
-ALL-$(CONFIG_QSPI_BOOT) += u-boot_HS_XIP_X-LOADER
-ALL-$(CONFIG_SPL_LOAD_FIT) += u-boot_HS.img
-endif
-ALL-y	+= u-boot.img
+ALL-y	+= $(obj)u-boot.img
 endif

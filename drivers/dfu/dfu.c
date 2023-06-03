@@ -4,7 +4,19 @@
  * Copyright (C) 2012 Samsung Electronics
  * author: Lukasz Majewski <l.majewski@samsung.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include <common.h>
@@ -13,30 +25,11 @@
 #include <mmc.h>
 #include <fat.h>
 #include <dfu.h>
-#include <hash.h>
 #include <linux/list.h>
 #include <linux/compiler.h>
 
 static LIST_HEAD(dfu_list);
 static int dfu_alt_num;
-static int alt_num_cnt;
-static struct hash_algo *dfu_hash_algo;
-
-/*
- * The purpose of the dfu_usb_get_reset() function is to
- * provide information if after USB_DETACH request
- * being sent the dfu-util performed reset of USB
- * bus.
- *
- * Described behaviour is the only way to distinct if
- * user has typed -e (detach) or -R (reset) when invoking
- * dfu-util command.
- *
- */
-__weak bool dfu_usb_get_reset(void)
-{
-	return true;
-}
 
 static int dfu_find_alt_num(const char *s)
 {
@@ -49,48 +42,17 @@ static int dfu_find_alt_num(const char *s)
 	return ++i;
 }
 
-int dfu_init_env_entities(char *interface, char *devstr)
-{
-	const char *str_env;
-	char *env_bkp;
-	int ret;
-
-#ifdef CONFIG_SET_DFU_ALT_INFO
-	set_dfu_alt_info(interface, devstr);
-#endif
-	str_env = getenv("dfu_alt_info");
-	if (!str_env) {
-		error("\"dfu_alt_info\" env variable not defined!\n");
-		return -EINVAL;
-	}
-
-	env_bkp = strdup(str_env);
-	ret = dfu_config_entities(env_bkp, interface, devstr);
-	if (ret) {
-		error("DFU entities configuration failed!\n");
-		return ret;
-	}
-
-	free(env_bkp);
-	return 0;
-}
-
 static unsigned char *dfu_buf;
-static unsigned long dfu_buf_size;
+static unsigned long dfu_buf_size = CONFIG_SYS_DFU_DATA_BUF_SIZE;
 
-unsigned char *dfu_free_buf(void)
+static unsigned char *dfu_free_buf(void)
 {
 	free(dfu_buf);
 	dfu_buf = NULL;
 	return dfu_buf;
 }
 
-unsigned long dfu_get_buf_size(void)
-{
-	return dfu_buf_size;
-}
-
-unsigned char *dfu_get_buf(struct dfu_entity *dfu)
+static unsigned char *dfu_get_buf(void)
 {
 	char *s;
 
@@ -98,14 +60,8 @@ unsigned char *dfu_get_buf(struct dfu_entity *dfu)
 		return dfu_buf;
 
 	s = getenv("dfu_bufsiz");
-	if (s)
-		dfu_buf_size = (unsigned long)simple_strtol(s, NULL, 0);
-
-	if (!s || !dfu_buf_size)
-		dfu_buf_size = CONFIG_SYS_DFU_DATA_BUF_SIZE;
-
-	if (dfu->max_buf_size && dfu_buf_size > dfu->max_buf_size)
-		dfu_buf_size = dfu->max_buf_size;
+	dfu_buf_size = s ? (unsigned long)simple_strtol(s, NULL, 16) :
+			CONFIG_SYS_DFU_DATA_BUF_SIZE;
 
 	dfu_buf = memalign(CONFIG_SYS_CACHELINE_SIZE, dfu_buf_size);
 	if (dfu_buf == NULL)
@@ -113,23 +69,6 @@ unsigned char *dfu_get_buf(struct dfu_entity *dfu)
 		       __func__, dfu_buf_size);
 
 	return dfu_buf;
-}
-
-static char *dfu_get_hash_algo(void)
-{
-	char *s;
-
-	s = getenv("dfu_hash_algo");
-	if (!s)
-		return NULL;
-
-	if (!strcmp(s, "crc32")) {
-		debug("%s: DFU hash method: %s\n", __func__, s);
-		return s;
-	}
-
-	error("DFU hash method: %s not supported!\n", s);
-	return NULL;
 }
 
 static int dfu_write_buffer_drain(struct dfu_entity *dfu)
@@ -142,9 +81,8 @@ static int dfu_write_buffer_drain(struct dfu_entity *dfu)
 	if (w_size == 0)
 		return 0;
 
-	if (dfu_hash_algo)
-		dfu_hash_algo->hash_update(dfu_hash_algo, &dfu->crc,
-					   dfu->i_buf_start, w_size, 0);
+	/* update CRC32 */
+	dfu->crc = crc32(dfu->crc, dfu->i_buf_start, w_size);
 
 	ret = dfu->write_medium(dfu, dfu->offset, dfu->i_buf_start, &w_size);
 	if (ret)
@@ -161,45 +99,14 @@ static int dfu_write_buffer_drain(struct dfu_entity *dfu)
 	return ret;
 }
 
-void dfu_write_transaction_cleanup(struct dfu_entity *dfu)
-{
-	/* clear everything */
-	dfu->crc = 0;
-	dfu->offset = 0;
-	dfu->i_blk_seq_num = 0;
-	dfu->i_buf_start = dfu_buf;
-	dfu->i_buf_end = dfu_buf;
-	dfu->i_buf = dfu->i_buf_start;
-	dfu->inited = 0;
-}
-
-int dfu_flush(struct dfu_entity *dfu, void *buf, int size, int blk_seq_num)
-{
-	int ret = 0;
-
-	ret = dfu_write_buffer_drain(dfu);
-	if (ret)
-		return ret;
-
-	if (dfu->flush_medium)
-		ret = dfu->flush_medium(dfu);
-
-	if (dfu_hash_algo)
-		printf("\nDFU complete %s: 0x%08x\n", dfu_hash_algo->name,
-		       dfu->crc);
-
-	dfu_write_transaction_cleanup(dfu);
-
-	return ret;
-}
-
 int dfu_write(struct dfu_entity *dfu, void *buf, int size, int blk_seq_num)
 {
-	int ret;
+	int ret = 0;
+	int tret;
 
-	debug("%s: name: %s buf: 0x%p size: 0x%x p_num: 0x%x offset: 0x%llx bufoffset: 0x%lx\n",
+	debug("%s: name: %s buf: 0x%p size: 0x%x p_num: 0x%x offset: 0x%llx bufoffset: 0x%x\n",
 	      __func__, dfu->name, buf, size, blk_seq_num, dfu->offset,
-	      (unsigned long)(dfu->i_buf - dfu->i_buf_start));
+	      dfu->i_buf - dfu->i_buf_start);
 
 	if (!dfu->inited) {
 		/* initial state */
@@ -207,10 +114,10 @@ int dfu_write(struct dfu_entity *dfu, void *buf, int size, int blk_seq_num)
 		dfu->offset = 0;
 		dfu->bad_skip = 0;
 		dfu->i_blk_seq_num = 0;
-		dfu->i_buf_start = dfu_get_buf(dfu);
+		dfu->i_buf_start = dfu_get_buf();
 		if (dfu->i_buf_start == NULL)
 			return -ENOMEM;
-		dfu->i_buf_end = dfu_get_buf(dfu) + dfu_buf_size;
+		dfu->i_buf_end = dfu_get_buf() + dfu_buf_size;
 		dfu->i_buf = dfu->i_buf_start;
 
 		dfu->inited = 1;
@@ -219,7 +126,6 @@ int dfu_write(struct dfu_entity *dfu, void *buf, int size, int blk_seq_num)
 	if (dfu->i_blk_seq_num != blk_seq_num) {
 		printf("%s: Wrong sequence number! [%d] [%d]\n",
 		       __func__, dfu->i_blk_seq_num, blk_seq_num);
-		dfu_write_transaction_cleanup(dfu);
 		return -1;
 	}
 
@@ -241,18 +147,15 @@ int dfu_write(struct dfu_entity *dfu, void *buf, int size, int blk_seq_num)
 
 	/* flush buffer if overflow */
 	if ((dfu->i_buf + size) > dfu->i_buf_end) {
-		ret = dfu_write_buffer_drain(dfu);
-		if (ret) {
-			dfu_write_transaction_cleanup(dfu);
-			return ret;
-		}
+		tret = dfu_write_buffer_drain(dfu);
+		if (ret == 0)
+			ret = tret;
 	}
 
 	/* we should be in buffer now (if not then size too large) */
 	if ((dfu->i_buf + size) > dfu->i_buf_end) {
-		error("Buffer overflow! (0x%p + 0x%x > 0x%p)\n", dfu->i_buf,
-		      size, dfu->i_buf_end);
-		dfu_write_transaction_cleanup(dfu);
+		printf("%s: Wrong size! [%d] [%d] - %d\n",
+		       __func__, dfu->i_blk_seq_num, blk_seq_num, size);
 		return -1;
 	}
 
@@ -261,14 +164,32 @@ int dfu_write(struct dfu_entity *dfu, void *buf, int size, int blk_seq_num)
 
 	/* if end or if buffer full flush */
 	if (size == 0 || (dfu->i_buf + size) > dfu->i_buf_end) {
-		ret = dfu_write_buffer_drain(dfu);
-		if (ret) {
-			dfu_write_transaction_cleanup(dfu);
-			return ret;
-		}
+		tret = dfu_write_buffer_drain(dfu);
+		if (ret == 0)
+			ret = tret;
 	}
 
-	return 0;
+	/* end? */
+	if (size == 0) {
+		/* Now try and flush to the medium if needed. */
+		if (dfu->flush_medium)
+			ret = dfu->flush_medium(dfu);
+		printf("\nDFU complete CRC32: 0x%08x\n", dfu->crc);
+
+		/* clear everything */
+		dfu_free_buf();
+		dfu->crc = 0;
+		dfu->offset = 0;
+		dfu->i_blk_seq_num = 0;
+		dfu->i_buf_start = dfu_buf;
+		dfu->i_buf_end = dfu_buf;
+		dfu->i_buf = dfu->i_buf_start;
+
+		dfu->inited = 0;
+
+	}
+
+	return ret = 0 ? size : ret;
 }
 
 static int dfu_read_buffer_fill(struct dfu_entity *dfu, void *buf, int size)
@@ -279,15 +200,11 @@ static int dfu_read_buffer_fill(struct dfu_entity *dfu, void *buf, int size)
 	readn = 0;
 	while (size > 0) {
 		/* get chunk that can be read */
-		chunk = min((long)size, dfu->b_left);
+		chunk = min(size, dfu->b_left);
 		/* consume */
 		if (chunk > 0) {
 			memcpy(buf, dfu->i_buf, chunk);
-			if (dfu_hash_algo)
-				dfu_hash_algo->hash_update(dfu_hash_algo,
-							   &dfu->crc, buf,
-							   chunk, 0);
-
+			dfu->crc = crc32(dfu->crc, buf, chunk);
 			dfu->i_buf += chunk;
 			dfu->b_left -= chunk;
 			size -= chunk;
@@ -331,20 +248,22 @@ int dfu_read(struct dfu_entity *dfu, void *buf, int size, int blk_seq_num)
 	       __func__, dfu->name, buf, size, blk_seq_num, dfu->i_buf);
 
 	if (!dfu->inited) {
-		dfu->i_buf_start = dfu_get_buf(dfu);
+		dfu->i_buf_start = dfu_get_buf();
 		if (dfu->i_buf_start == NULL)
 			return -ENOMEM;
 
-		dfu->r_left = dfu->get_medium_size(dfu);
-		if (dfu->r_left < 0)
-			return dfu->r_left;
+		ret = dfu->read_medium(dfu, 0, dfu->i_buf_start, &dfu->r_left);
+		if (ret != 0) {
+			debug("%s: failed to get r_left\n", __func__);
+			return ret;
+		}
 
 		debug("%s: %s %ld [B]\n", __func__, dfu->name, dfu->r_left);
 
 		dfu->i_blk_seq_num = 0;
 		dfu->crc = 0;
 		dfu->offset = 0;
-		dfu->i_buf_end = dfu_get_buf(dfu) + dfu_buf_size;
+		dfu->i_buf_end = dfu_get_buf() + dfu_buf_size;
 		dfu->i_buf = dfu->i_buf_start;
 		dfu->b_left = 0;
 
@@ -368,11 +287,10 @@ int dfu_read(struct dfu_entity *dfu, void *buf, int size, int blk_seq_num)
 	}
 
 	if (ret < size) {
-		if (dfu_hash_algo)
-			debug("%s: %s %s: 0x%x\n", __func__, dfu->name,
-			      dfu_hash_algo->name, dfu->crc);
+		debug("%s: %s CRC32: 0x%x\n", __func__, dfu->name, dfu->crc);
 		puts("\nUPLOAD ... done\nCtrl+C to exit ...\n");
 
+		dfu_free_buf();
 		dfu->i_blk_seq_num = 0;
 		dfu->crc = 0;
 		dfu->offset = 0;
@@ -390,37 +308,29 @@ int dfu_read(struct dfu_entity *dfu, void *buf, int size, int blk_seq_num)
 }
 
 static int dfu_fill_entity(struct dfu_entity *dfu, char *s, int alt,
-			   char *interface, char *devstr)
+			    char *interface, int num)
 {
 	char *st;
 
-	debug("%s: %s interface: %s dev: %s\n", __func__, s, interface, devstr);
+	debug("%s: %s interface: %s num: %d\n", __func__, s, interface, num);
 	st = strsep(&s, " ");
 	strcpy(dfu->name, st);
 
+	dfu->dev_num = num;
 	dfu->alt = alt;
-	dfu->max_buf_size = 0;
-	dfu->free_entity = NULL;
 
 	/* Specific for mmc device */
 	if (strcmp(interface, "mmc") == 0) {
-		if (dfu_fill_entity_mmc(dfu, devstr, s))
+		if (dfu_fill_entity_mmc(dfu, s))
 			return -1;
 	} else if (strcmp(interface, "nand") == 0) {
-		if (dfu_fill_entity_nand(dfu, devstr, s))
-			return -1;
-	} else if (strcmp(interface, "ram") == 0) {
-		if (dfu_fill_entity_ram(dfu, devstr, s))
-			return -1;
-	} else if (strcmp(interface, "sf") == 0) {
-		if (dfu_fill_entity_sf(dfu, devstr, s))
+		if (dfu_fill_entity_nand(dfu, s))
 			return -1;
 	} else {
 		printf("%s: Device %s not (yet) supported!\n",
 		       __func__,  interface);
 		return -1;
 	}
-	dfu_get_buf(dfu);
 
 	return 0;
 }
@@ -429,21 +339,16 @@ void dfu_free_entities(void)
 {
 	struct dfu_entity *dfu, *p, *t = NULL;
 
-	dfu_free_buf();
 	list_for_each_entry_safe_reverse(dfu, p, &dfu_list, list) {
 		list_del(&dfu->list);
-		if (dfu->free_entity)
-			dfu->free_entity(dfu);
 		t = dfu;
 	}
 	if (t)
 		free(t);
 	INIT_LIST_HEAD(&dfu_list);
-
-	alt_num_cnt = 0;
 }
 
-int dfu_config_entities(char *env, char *interface, char *devstr)
+int dfu_config_entities(char *env, char *interface, int num)
 {
 	struct dfu_entity *dfu;
 	int i, ret;
@@ -452,29 +357,17 @@ int dfu_config_entities(char *env, char *interface, char *devstr)
 	dfu_alt_num = dfu_find_alt_num(env);
 	debug("%s: dfu_alt_num=%d\n", __func__, dfu_alt_num);
 
-	dfu_hash_algo = NULL;
-	s = dfu_get_hash_algo();
-	if (s) {
-		ret = hash_lookup_algo(s, &dfu_hash_algo);
-		if (ret)
-			error("Hash algorithm %s not supported\n", s);
-	}
-
 	dfu = calloc(sizeof(*dfu), dfu_alt_num);
 	if (!dfu)
 		return -1;
 	for (i = 0; i < dfu_alt_num; i++) {
 
 		s = strsep(&env, ";");
-		ret = dfu_fill_entity(&dfu[i], s, alt_num_cnt, interface,
-				      devstr);
-		if (ret) {
-			free(dfu);
+		ret = dfu_fill_entity(&dfu[i], s, i, interface, num);
+		if (ret)
 			return -1;
-		}
 
 		list_add_tail(&dfu[i].list, &dfu_list);
-		alt_num_cnt++;
 	}
 
 	return 0;
@@ -482,14 +375,14 @@ int dfu_config_entities(char *env, char *interface, char *devstr)
 
 const char *dfu_get_dev_type(enum dfu_device_type t)
 {
-	const char *dev_t[] = {NULL, "eMMC", "OneNAND", "NAND", "RAM", "SF" };
+	const char *dev_t[] = {NULL, "eMMC", "OneNAND", "NAND" };
 	return dev_t[t];
 }
 
 const char *dfu_get_layout(enum dfu_layout l)
 {
 	const char *dfu_layout[] = {NULL, "RAW_ADDR", "FAT", "EXT2",
-					   "EXT3", "EXT4", "RAM_ADDR" };
+					   "EXT3", "EXT4" };
 	return dfu_layout[l];
 }
 
@@ -521,78 +414,4 @@ struct dfu_entity *dfu_get_entity(int alt)
 	}
 
 	return NULL;
-}
-
-int dfu_get_alt(char *name)
-{
-	struct dfu_entity *dfu;
-	char *str;
-
-	list_for_each_entry(dfu, &dfu_list, list) {
-		if (dfu->name[0] != '/') {
-			if (!strncmp(dfu->name, name, strlen(dfu->name)))
-				return dfu->alt;
-		} else {
-			/*
-			 * One must also consider absolute path
-			 * (/boot/bin/uImage) available at dfu->name when
-			 * compared "plain" file name (uImage)
-			 *
-			 * It is the case for e.g. thor gadget where lthor SW
-			 * sends only the file name, so only the very last part
-			 * of path must be checked for equality
-			 */
-
-			str = strstr(dfu->name, name);
-			if (!str)
-				continue;
-
-			/*
-			 * Check if matching substring is the last element of
-			 * dfu->name (uImage)
-			 */
-			if (strlen(dfu->name) ==
-			    ((str - dfu->name) + strlen(name)))
-				return dfu->alt;
-		}
-	}
-
-	return -ENODEV;
-}
-
-int dfu_write_from_mem_addr(struct dfu_entity *dfu, void *buf, int size)
-{
-	unsigned long dfu_buf_size, write, left = size;
-	int i, ret = 0;
-	void *dp = buf;
-
-	/*
-	 * Here we must call dfu_get_buf(dfu) first to be sure that dfu_buf_size
-	 * has been properly initialized - e.g. if "dfu_bufsiz" has been taken
-	 * into account.
-	 */
-	dfu_get_buf(dfu);
-	dfu_buf_size = dfu_get_buf_size();
-	debug("%s: dfu buf size: %lu\n", __func__, dfu_buf_size);
-
-	for (i = 0; left > 0; i++) {
-		write = min(dfu_buf_size, left);
-
-		debug("%s: dp: 0x%p left: %lu write: %lu\n", __func__,
-		      dp, left, write);
-		ret = dfu_write(dfu, dp, write, i);
-		if (ret) {
-			error("DFU write failed\n");
-			return ret;
-		}
-
-		dp += write;
-		left -= write;
-	}
-
-	ret = dfu_flush(dfu, NULL, 0, i);
-	if (ret)
-		error("DFU flush failed!");
-
-	return ret;
 }

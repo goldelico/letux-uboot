@@ -6,7 +6,23 @@
  *
  * Aneesh V <aneesh@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -96,7 +112,7 @@ static const struct lpddr2_ac_timings const*
 	&timings_jedec_400_mhz
 };
 
-const struct lpddr2_device_timings jedec_default_timings = {
+static const struct lpddr2_device_timings jedec_default_timings = {
 	.ac_timings = jedec_ac_timings,
 	.min_tck = &min_tck_jedec
 };

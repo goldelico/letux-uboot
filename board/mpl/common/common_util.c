@@ -2,7 +2,24 @@
  * (C) Copyright 2001
  * Denis Peter, MPL AG Switzerland, d.peter@mpl.ch
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ *
  */
 
 #include <common.h>
@@ -15,13 +32,12 @@
 #include <pci.h>
 #include <malloc.h>
 #include <bzlib.h>
-#include <video.h>
 
 #ifdef CONFIG_PIP405
 #include "../pip405/pip405.h"
 #include <asm/4xx_pci.h>
 #endif
-#if defined(CONFIG_TARGET_MIP405) || defined(CONFIG_TARGET_MIP405T)
+#ifdef CONFIG_MIP405
 #include "../mip405/mip405.h"
 #include <asm/4xx_pci.h>
 #endif
@@ -37,8 +53,7 @@ extern int mem_test(ulong start, ulong ramsize, int quiet);
 #define I2C_BACKUP_ADDR 0x7C00		/* 0x200 bytes for backup */
 #define IMAGE_SIZE CONFIG_SYS_MONITOR_LEN	/* ugly, but it works for now */
 
-#if defined(CONFIG_PIP405) || defined(CONFIG_TARGET_MIP405) \
-	|| defined(CONFIG_TARGET_MIP405T)
+#if defined(CONFIG_PIP405) || defined(CONFIG_MIP405)
 /*-----------------------------------------------------------------------
  * On PIP/MIP405 we have 3 (4) possible boot mode
  *
@@ -118,7 +133,7 @@ void setup_cs_reloc(void)
 		mtdcr(EBC0_CFGDATA, FLASH_CR_B);
 	}
 }
-#endif /* #if defined(CONFIG_PIP405) || defined(CONFIG_TARGET_MIP405) */
+#endif /* #if defined(CONFIG_PIP405) || defined(CONFIG_MIP405) */
 
 #ifdef CONFIG_SYS_UPDATE_FLASH_SIZE
 /* adjust flash start and protection info */
@@ -192,11 +207,12 @@ mpl_prg(uchar *src, ulong size)
 #if defined(CONFIG_PATI)
 	int start_sect;
 #endif
-#if defined(CONFIG_PIP405) || defined(CONFIG_TARGET_MIP405) \
-		|| defined(CONFIG_TARGET_MIP405T) || defined(CONFIG_PATI)
+#if defined(CONFIG_PIP405) || defined(CONFIG_MIP405) || defined(CONFIG_PATI)
 	char *copystr = (char *)src;
 	ulong *magic = (ulong *)src;
+#endif
 
+#if defined(CONFIG_PIP405) || defined(CONFIG_MIP405) || defined(CONFIG_PATI)
 	if (uimage_to_cpu (magic[0]) != IH_MAGIC) {
 		puts("Bad Magic number\n");
 		return -1;
@@ -242,7 +258,7 @@ mpl_prg(uchar *src, ulong size)
 		return (1);
 	}
 
-#else /* #if !defined(CONFIG_PATI) */
+#else /* #if !defined(CONFIG_PATI */
 	start = FIRM_START;
 	start_sect = -1;
 
@@ -699,12 +715,12 @@ void video_get_info_str (int line_number, char *info)
 		s=getenv ("serial#");
 #ifdef CONFIG_PIP405
 		if (!s || strncmp (s, "PIP405", 6)) {
-			strcpy(buf,"### No HW ID - assuming PIP405");
+			sprintf(buf,"### No HW ID - assuming PIP405");
 		}
 #endif
-#if defined(CONFIG_TARGET_MIP405) || defined(CONFIG_TARGET_MIP405T)
+#ifdef CONFIG_MIP405
 		if (!s || strncmp (s, "MIP405", 6)) {
-			strcpy(buf,"### No HW ID - assuming MIP405");
+			sprintf(buf,"### No HW ID - assuming MIP405");
 		}
 #endif
 		else {
@@ -719,7 +735,7 @@ void video_get_info_str (int line_number, char *info)
 				}
 				buf[i++] = *s;
 			}
-			strcpy(&buf[i]," SN ");
+			sprintf(&buf[i]," SN ");
 			i+=4;
 			for (; s < e; ++s) {
 				buf[i++] = *s;
@@ -745,7 +761,7 @@ void video_get_info_str (int line_number, char *info)
 			ctfb.modeIdent);
 		return;
 	case 1:
-		strcpy(buf, CONFIG_IDENT_STRING);
+		sprintf	(buf, "%s",CONFIG_IDENT_STRING);
 		sprintf (info, " %s", &buf[1]);
 		return;
     }

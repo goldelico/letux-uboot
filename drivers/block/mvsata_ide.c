@@ -3,7 +3,23 @@
  *
  * Written-by: Albert ARIBAUD <albert.u.boot@aribaud.net>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301 USA
  */
 
 #include <common.h>
@@ -12,9 +28,7 @@
 #if defined(CONFIG_ORION5X)
 #include <asm/arch/orion5x.h>
 #elif defined(CONFIG_KIRKWOOD)
-#include <asm/arch/soc.h>
-#elif defined(CONFIG_ARCH_MVEBU)
-#include <linux/mbus.h>
+#include <asm/arch/kirkwood.h>
 #endif
 
 /* SATA port registers */
@@ -83,48 +97,13 @@ struct mvsata_port_registers {
  * Status codes to return to client callers. Currently, callers ignore
  * exact value and only care for zero or nonzero, so no need to make this
  * public, it is only #define'd for clarity.
- * If/when standard negative codes are implemented in U-Boot, then these
+ * If/when standard negative codes are implemented in U-boot, then these
  * #defines should be moved to, or replaced by ones from, the common list
  * of status codes.
  */
 
 #define MVSATA_STATUS_OK	0
 #define MVSATA_STATUS_TIMEOUT	-1
-
-/*
- * Registers for SATA MBUS memory windows
- */
-
-#define MVSATA_WIN_CONTROL(w)	(MVEBU_AXP_SATA_BASE + 0x30 + ((w) << 4))
-#define MVSATA_WIN_BASE(w)	(MVEBU_AXP_SATA_BASE + 0x34 + ((w) << 4))
-
-/*
- * Initialize SATA memory windows for Armada XP
- */
-
-#ifdef CONFIG_ARCH_MVEBU
-static void mvsata_ide_conf_mbus_windows(void)
-{
-	const struct mbus_dram_target_info *dram;
-	int i;
-
-	dram = mvebu_mbus_dram_info();
-
-	/* Disable windows, Set Size/Base to 0  */
-	for (i = 0; i < 4; i++) {
-		writel(0, MVSATA_WIN_CONTROL(i));
-		writel(0, MVSATA_WIN_BASE(i));
-	}
-
-	for (i = 0; i < dram->num_cs; i++) {
-		const struct mbus_dram_window *cs = dram->cs + i;
-		writel(((cs->size - 1) & 0xffff0000) | (cs->mbus_attr << 8) |
-				(dram->mbus_dram_target_id << 4) | 1,
-				MVSATA_WIN_CONTROL(i));
-		writel(cs->base & 0xffff0000, MVSATA_WIN_BASE(i));
-	}
-}
-#endif
 
 /*
  * Initialize one MVSATAHC port: set SControl's IPM to "always active"
@@ -173,10 +152,6 @@ int ide_preinit(void)
 {
 	int ret = MVSATA_STATUS_TIMEOUT;
 	int status;
-
-#ifdef CONFIG_ARCH_MVEBU
-	mvsata_ide_conf_mbus_windows();
-#endif
 
 	/* Enable ATA port 0 (could be SATA port 0 or 1) if declared */
 #if defined(CONFIG_SYS_ATA_IDE0_OFFSET)

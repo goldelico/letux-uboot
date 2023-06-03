@@ -6,14 +6,26 @@
  *  Copyright (c) 2008 Eric Jarrige <eric.jarrige@armadeus.org>
  *  Copyright (c) 2009 Ilya Yanok <yanok@emcraft.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <div64.h>
 #include <netdev.h>
 #include <asm/io.h>
-#include <asm/arch-imx/cpu.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/clock.h>
 
@@ -182,7 +194,7 @@ int print_cpuinfo(void)
 		(cpurev & 0xF0) >> 4, (cpurev & 0x0F),
 		((cpurev & 0x8000) ? " unknown" : ""),
 		strmhz(buf, imx_get_armclk()));
-	printf("Reset cause: %s\n", get_reset_cause());
+	printf("Reset cause: %s\n\n", get_reset_cause());
 	return 0;
 }
 #endif

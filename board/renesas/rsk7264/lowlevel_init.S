@@ -5,9 +5,11 @@
  *
  * Based on board/renesas/rsk7203/lowlevel_init.S
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This file is released under the terms of GPL v2 and any later version.
+ * See the file COPYING in the root directory of the source tree for details.
  */
 #include <config.h>
+#include <version.h>
 
 #include <asm/processor.h>
 #include <asm/macro.h>

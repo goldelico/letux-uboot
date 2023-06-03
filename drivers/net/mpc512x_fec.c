@@ -22,10 +22,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #error "CONFIG_MII has to be defined!"
 #endif
 
-int fec512x_miiphy_read(struct mii_dev *bus, int phyAddr, int devad,
-			int regAddr);
-int fec512x_miiphy_write(struct mii_dev *bus, int phyAddr, int devad,
-			 int regAddr, u16 data);
+int fec512x_miiphy_read(const char *devname, u8 phyAddr, u8 regAddr, u16 * retVal);
+int fec512x_miiphy_write(const char *devname, u8 phyAddr, u8 regAddr, u16 data);
 int mpc512x_fec_init_phy(struct eth_device *dev, bd_t * bis);
 
 static uchar rx_buff[FEC_BUFFER_SIZE];
@@ -593,8 +591,7 @@ static int mpc512x_fec_recv (struct eth_device *dev)
 			rx_buff_idx = frame_length;
 
 			if (pRbd->status & FEC_RBD_LAST) {
-				net_process_received_packet((uchar *)rx_buff,
-							    frame_length);
+				NetReceive ((uchar*)rx_buff, frame_length);
 				rx_buff_idx = 0;
 			}
 		}
@@ -637,21 +634,12 @@ int mpc512x_fec_initialize (bd_t * bis)
 	dev->send = mpc512x_fec_send;
 	dev->recv = mpc512x_fec_recv;
 
-	strcpy(dev->name, "FEC");
+	sprintf (dev->name, "FEC");
 	eth_register (dev);
 
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
-	int retval;
-	struct mii_dev *mdiodev = mdio_alloc();
-	if (!mdiodev)
-		return -ENOMEM;
-	strncpy(mdiodev->name, dev->name, MDIO_NAME_LEN);
-	mdiodev->read = fec512x_miiphy_read;
-	mdiodev->write = fec512x_miiphy_write;
-
-	retval = mdio_register(mdiodev);
-	if (retval < 0)
-		return retval;
+	miiphy_register (dev->name,
+			fec512x_miiphy_read, fec512x_miiphy_write);
 #endif
 
 	/* Clean up space FEC's MIB and FIFO RAM ...*/
@@ -681,10 +669,8 @@ int mpc512x_fec_initialize (bd_t * bis)
 
 /* MII-interface related functions */
 /********************************************************************/
-int fec512x_miiphy_read(struct mii_dev *bus, int phyAddr, int devad,
-			int regAddr)
+int fec512x_miiphy_read(const char *devname, u8 phyAddr, u8 regAddr, u16 *retVal)
 {
-	u16 retVal = 0;
 	volatile immap_t *im = (immap_t *) CONFIG_SYS_IMMR;
 	volatile fec512x_t *eth = &im->fec;
 	u32 reg;		/* convenient holder for the PHY register */
@@ -724,14 +710,13 @@ int fec512x_miiphy_read(struct mii_dev *bus, int phyAddr, int devad,
 	/*
 	 * it's now safe to read the PHY's register
 	 */
-	retVal = (u16) in_be32(&eth->mii_data);
+	*retVal = (u16) in_be32(&eth->mii_data);
 
-	return retVal;
+	return 0;
 }
 
 /********************************************************************/
-int fec512x_miiphy_write(struct mii_dev *bus, int phyAddr, int devad,
-			 int regAddr, u16 data)
+int fec512x_miiphy_write(const char *devname, u8 phyAddr, u8 regAddr, u16 data)
 {
 	volatile immap_t *im = (immap_t *) CONFIG_SYS_IMMR;
 	volatile fec512x_t *eth = &im->fec;

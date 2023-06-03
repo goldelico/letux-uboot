@@ -2,7 +2,23 @@
  * (C) Copyright 2011
  * Marvell Inc, <www.marvell.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef _MV_I2C_H_
@@ -23,7 +39,12 @@ extern void i2c_clk_enable(void);
 #define I2C_READ		0
 #define I2C_WRITE		1
 
+#if (CONFIG_SYS_I2C_SPEED == 400000)
+#define I2C_ICR_INIT	(ICR_FM | ICR_BEIE | ICR_IRFIE | ICR_ITEIE | ICR_GCD \
+		| ICR_SCLE)
+#else
 #define I2C_ICR_INIT	(ICR_BEIE | ICR_IRFIE | ICR_ITEIE | ICR_GCD | ICR_SCLE)
+#endif
 
 #define I2C_ISR_INIT		0x7FF
 /* ----- Control register bits ---------------------------------------- */
@@ -43,15 +64,7 @@ extern void i2c_clk_enable(void);
 #define ICR_ALDIE	0x1000		/* enable arbitration interrupt */
 #define ICR_SADIE	0x2000		/* slave address detected int enable */
 #define ICR_UR		0x4000		/* unit reset */
-#ifdef CONFIG_ARMADA_3700
-#define ICR_SM		0x00000		/* Standard Mode */
-#define ICR_FM		0x10000		/* Fast Mode */
-#define ICR_MODE_MASK	0x30000		/* Mode mask */
-#else
-#define ICR_SM		0x00000		/* Standard Mode */
-#define ICR_FM		0x08000		/* Fast Mode */
-#define ICR_MODE_MASK	0x18000		/* Mode mask */
-#endif
+#define ICR_FM		0x8000		/* Fast Mode */
 
 /* ----- Status register bits ----------------------------------------- */
 

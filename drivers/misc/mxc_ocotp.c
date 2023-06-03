@@ -9,16 +9,31 @@
  * which is:
  * Copyright (C) 2011 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <fuse.h>
-#include <linux/errno.h>
+#include <asm/errno.h>
 #include <asm/io.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/imx-regs.h>
-#include <asm/imx-common/sys_proto.h>
 
 #define BO_CTRL_WR_UNLOCK		16
 #define BM_CTRL_WR_UNLOCK		0xffff0000
@@ -26,21 +41,8 @@
 #define BM_CTRL_ERROR			0x00000200
 #define BM_CTRL_BUSY			0x00000100
 #define BO_CTRL_ADDR			0
-#ifdef CONFIG_MX7
-#define BM_CTRL_ADDR                    0x0000000f
-#define BM_CTRL_RELOAD                  0x00000400
-#else
 #define BM_CTRL_ADDR			0x0000007f
-#endif
 
-#ifdef CONFIG_MX7
-#define BO_TIMING_FSOURCE               12
-#define BM_TIMING_FSOURCE               0x0007f000
-#define BV_TIMING_FSOURCE_NS            1001
-#define BO_TIMING_PROG                  0
-#define BM_TIMING_PROG                  0x00000fff
-#define BV_TIMING_PROG_US               10
-#else
 #define BO_TIMING_STROBE_READ		16
 #define BM_TIMING_STROBE_READ		0x003f0000
 #define BV_TIMING_STROBE_READ_NS	37
@@ -50,96 +52,12 @@
 #define BO_TIMING_STROBE_PROG		0
 #define BM_TIMING_STROBE_PROG		0x00000fff
 #define BV_TIMING_STROBE_PROG_US	10
-#endif
 
 #define BM_READ_CTRL_READ_FUSE		0x00000001
 
 #define BF(value, field)		(((value) << BO_##field) & BM_##field)
 
 #define WRITE_POSTAMBLE_US		2
-
-#if defined(CONFIG_MX6) || defined(CONFIG_VF610)
-#define FUSE_BANK_SIZE	0x80
-#ifdef CONFIG_MX6SL
-#define FUSE_BANKS	8
-#elif defined(CONFIG_MX6ULL)
-#define FUSE_BANKS	9
-#else
-#define FUSE_BANKS	16
-#endif
-#elif defined CONFIG_MX7
-#define FUSE_BANK_SIZE	0x40
-#define FUSE_BANKS	16
-#else
-#error "Unsupported architecture\n"
-#endif
-
-#if defined(CONFIG_MX6)
-
-/*
- * There is a hole in shadow registers address map of size 0x100
- * between bank 5 and bank 6 on iMX6QP, iMX6DQ, iMX6SDL, iMX6SX,
- * iMX6UL and i.MX6ULL.
- * Bank 5 ends at 0x6F0 and Bank 6 starts at 0x800. When reading the fuses,
- * we should account for this hole in address space.
- *
- * Similar hole exists between bank 14 and bank 15 of size
- * 0x80 on iMX6QP, iMX6DQ, iMX6SDL and iMX6SX.
- * Note: iMX6SL has only 0-7 banks and there is no hole.
- * Note: iMX6UL doesn't have this one.
- *
- * This function is to covert user input to physical bank index.
- * Only needed when read fuse, because we use register offset, so
- * need to calculate real register offset.
- * When write, no need to consider hole, always use the bank/word
- * index from fuse map.
- */
-u32 fuse_bank_physical(int index)
-{
-	u32 phy_index;
-
-	if (is_mx6sl()) {
-		phy_index = index;
-	} else if (is_mx6ul() || is_mx6ull()) {
-		if (is_mx6ull() && index == 8)
-			index = 7;
-
-		if (index >= 6)
-			phy_index = fuse_bank_physical(5) + (index - 6) + 3;
-		else
-			phy_index = index;
-	} else {
-		if (index >= 15)
-			phy_index = fuse_bank_physical(14) + (index - 15) + 2;
-		else if (index >= 6)
-			phy_index = fuse_bank_physical(5) + (index - 6) + 3;
-		else
-			phy_index = index;
-	}
-	return phy_index;
-}
-
-u32 fuse_word_physical(u32 bank, u32 word_index)
-{
-	if (is_mx6ull()) {
-		if (bank == 8)
-			word_index = word_index + 4;
-	}
-
-	return word_index;
-}
-#else
-u32 fuse_bank_physical(int index)
-{
-	return index;
-}
-
-u32 fuse_word_physical(u32 bank, u32 word_index)
-{
-	return word_index;
-}
-
-#endif
 
 static void wait_busy(struct ocotp_regs *regs, unsigned int delay_us)
 {
@@ -157,19 +75,11 @@ static int prepare_access(struct ocotp_regs **regs, u32 bank, u32 word,
 {
 	*regs = (struct ocotp_regs *)OCOTP_BASE_ADDR;
 
-	if (bank >= FUSE_BANKS ||
-	    word >= ARRAY_SIZE((*regs)->bank[0].fuse_regs) >> 2 ||
-	    !assert) {
+	if (bank >= ARRAY_SIZE((*regs)->bank) ||
+			word >= ARRAY_SIZE((*regs)->bank[0].fuse_regs) >> 2 ||
+			!assert) {
 		printf("mxc_ocotp %s(): Invalid argument\n", caller);
 		return -EINVAL;
-	}
-
-	if (is_mx6ull()) {
-		if ((bank == 7 || bank == 8) &&
-		    word >= ARRAY_SIZE((*regs)->bank[0].fuse_regs) >> 3) {
-			printf("mxc_ocotp %s(): Invalid argument on 6ULL\n", caller);
-			return -EINVAL;
-		}
 	}
 
 	enable_ocotp_clk(1);
@@ -186,6 +96,8 @@ static int finish_access(struct ocotp_regs *regs, const char *caller)
 
 	err = !!(readl(&regs->ctrl) & BM_CTRL_ERROR);
 	clear_error(regs);
+
+	enable_ocotp_clk(0);
 
 	if (err) {
 		printf("mxc_ocotp %s(): Access protect error\n", caller);
@@ -205,40 +117,16 @@ int fuse_read(u32 bank, u32 word, u32 *val)
 {
 	struct ocotp_regs *regs;
 	int ret;
-	u32 phy_bank;
-	u32 phy_word;
 
 	ret = prepare_read(&regs, bank, word, val, __func__);
 	if (ret)
 		return ret;
 
-	phy_bank = fuse_bank_physical(bank);
-	phy_word = fuse_word_physical(bank, word);
-
-	*val = readl(&regs->bank[phy_bank].fuse_regs[phy_word << 2]);
+	*val = readl(&regs->bank[bank].fuse_regs[word << 2]);
 
 	return finish_access(regs, __func__);
 }
 
-#ifdef CONFIG_MX7
-static void set_timing(struct ocotp_regs *regs)
-{
-	u32 ipg_clk;
-	u32 fsource, prog;
-	u32 timing;
-
-	ipg_clk = mxc_get_clock(MXC_IPG_CLK);
-
-	fsource = DIV_ROUND_UP((ipg_clk / 1000) * BV_TIMING_FSOURCE_NS,
-			+       1000000) + 1;
-	prog = DIV_ROUND_CLOSEST(ipg_clk * BV_TIMING_PROG_US, 1000000) + 1;
-
-	timing = BF(fsource, TIMING_FSOURCE) | BF(prog, TIMING_PROG);
-
-	clrsetbits_le32(&regs->timing, BM_TIMING_FSOURCE | BM_TIMING_PROG,
-			timing);
-}
-#else
 static void set_timing(struct ocotp_regs *regs)
 {
 	u32 ipg_clk;
@@ -250,8 +138,8 @@ static void set_timing(struct ocotp_regs *regs)
 	relax = DIV_ROUND_UP(ipg_clk * BV_TIMING_RELAX_NS, 1000000000) - 1;
 	strobe_read = DIV_ROUND_UP(ipg_clk * BV_TIMING_STROBE_READ_NS,
 					1000000000) + 2 * (relax + 1) - 1;
-	strobe_prog = DIV_ROUND_CLOSEST(ipg_clk * BV_TIMING_STROBE_PROG_US,
-						1000000) + 2 * (relax + 1) - 1;
+	strobe_prog = DIV_ROUND(ipg_clk * BV_TIMING_STROBE_PROG_US, 1000000) +
+			2 * (relax + 1) - 1;
 
 	timing = BF(strobe_read, TIMING_STROBE_READ) |
 			BF(relax, TIMING_RELAX) |
@@ -260,23 +148,12 @@ static void set_timing(struct ocotp_regs *regs)
 	clrsetbits_le32(&regs->timing, BM_TIMING_STROBE_READ | BM_TIMING_RELAX |
 			BM_TIMING_STROBE_PROG, timing);
 }
-#endif
 
 static void setup_direct_access(struct ocotp_regs *regs, u32 bank, u32 word,
 				int write)
 {
 	u32 wr_unlock = write ? BV_CTRL_WR_UNLOCK_KEY : 0;
-#ifdef CONFIG_MX7
-	u32 addr = bank;
-#else
-	u32 addr;
-	/* Bank 7 and Bank 8 only supports 4 words each for i.MX6ULL */
-	if ((is_mx6ull()) && (bank > 7)) {
-		bank = bank - 1;
-		word += 4;
-	}
-	addr = bank << 3 | word;
-#endif
+	u32 addr = bank << 3 | word;
 
 	set_timing(regs);
 	clrsetbits_le32(&regs->ctrl, BM_CTRL_WR_UNLOCK | BM_CTRL_ADDR,
@@ -296,11 +173,7 @@ int fuse_sense(u32 bank, u32 word, u32 *val)
 	setup_direct_access(regs, bank, word, false);
 	writel(BM_READ_CTRL_READ_FUSE, &regs->read_ctrl);
 	wait_busy(regs, 1);
-#ifdef CONFIG_MX7
-	*val = readl((&regs->read_fuse_data0) + (word << 2));
-#else
 	*val = readl(&regs->read_fuse_data);
-#endif
 
 	return finish_access(regs, __func__);
 }
@@ -321,38 +194,8 @@ int fuse_prog(u32 bank, u32 word, u32 val)
 		return ret;
 
 	setup_direct_access(regs, bank, word, true);
-#ifdef CONFIG_MX7
-	switch (word) {
-	case 0:
-		writel(0, &regs->data1);
-		writel(0, &regs->data2);
-		writel(0, &regs->data3);
-		writel(val, &regs->data0);
-		break;
-	case 1:
-		writel(val, &regs->data1);
-		writel(0, &regs->data2);
-		writel(0, &regs->data3);
-		writel(0, &regs->data0);
-		break;
-	case 2:
-		writel(0, &regs->data1);
-		writel(val, &regs->data2);
-		writel(0, &regs->data3);
-		writel(0, &regs->data0);
-		break;
-	case 3:
-		writel(0, &regs->data1);
-		writel(0, &regs->data2);
-		writel(val, &regs->data3);
-		writel(0, &regs->data0);
-		break;
-	}
-	wait_busy(regs, BV_TIMING_PROG_US);
-#else
 	writel(val, &regs->data);
 	wait_busy(regs, BV_TIMING_STROBE_PROG_US);
-#endif
 	udelay(WRITE_POSTAMBLE_US);
 
 	return finish_access(regs, __func__);
@@ -362,17 +205,12 @@ int fuse_override(u32 bank, u32 word, u32 val)
 {
 	struct ocotp_regs *regs;
 	int ret;
-	u32 phy_bank;
-	u32 phy_word;
 
 	ret = prepare_write(&regs, bank, word, __func__);
 	if (ret)
 		return ret;
 
-	phy_bank = fuse_bank_physical(bank);
-	phy_word = fuse_word_physical(bank, word);
-
-	writel(val, &regs->bank[phy_bank].fuse_regs[phy_word << 2]);
+	writel(val, &regs->bank[bank].fuse_regs[word << 2]);
 
 	return finish_access(regs, __func__);
 }

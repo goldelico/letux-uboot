@@ -1,7 +1,18 @@
 /*
  * Copyright 2012-2013 Stefan Roese <sr@denx.de>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
  */
 
 #ifndef __CONFIG_H
@@ -13,7 +24,8 @@
  */
 
 #define CONFIG_MPC5200
-#define CONFIG_A3M071			/* A3M071 board */
+#define CONFIG_MPC5xxx		1	/* This is an MPC5xxx CPU */
+#define CONFIG_A3M071			/* ... on A3M071 board */
 
 #define	CONFIG_SYS_TEXT_BASE	0x01000000	/* boot low for 32 MiB boards */
 
@@ -30,8 +42,6 @@
 #define CONFIG_HOSTNAME		a3m071
 #endif
 
-#define CONFIG_BOOTCOUNT_LIMIT
-
 /*
  * Serial console configuration
  */
@@ -43,8 +53,13 @@
 /*
  * Command line configuration.
  */
+#include <config_cmd_default.h>
+
 #define CONFIG_CMD_BSP
+#define CONFIG_CMD_CACHE
+#define CONFIG_CMD_MII
 #define CONFIG_CMD_REGINFO
+#define CONFIG_CMD_DHCP
 #define CONFIG_BOOTP_SEND_HOSTNAME
 #define CONFIG_BOOTP_SERVERIP
 #define CONFIG_BOOTP_MAY_FAIL
@@ -52,14 +67,16 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_SERVERIP
 #define CONFIG_NET_RETRY_COUNT 3
+#define CONFIG_CMD_LINK_LOCAL
 #define CONFIG_NETCONSOLE
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+#define CONFIG_CMD_PING
 #define CONFIG_MTD_DEVICE	/* needed for mtdparts commands */
 #define CONFIG_MTD_PARTITIONS	/* needed for UBI */
 #define CONFIG_FLASH_CFI_MTD
 #define MTDIDS_DEFAULT          "nor0=fc000000.flash"
 #define MTDPARTS_DEFAULT	"mtdparts=fc000000.flash:512k(u-boot),"	\
-						"128k(env1),"	\
-						"128k(env2),"	\
+						"256k(env),"	\
 						"128k(hwinfo),"	\
 						"1M(nvramsim),"	\
 						"128k(dtb),"	\
@@ -67,13 +84,13 @@
 						"128k(sysinfo),"	\
 						"7552k(root),"	\
 						"4M(app),"	\
-						"5376k(data),"	\
-						"8M(install)"
-
+						"13568k(data)"
 #define CONFIG_LZO			/* needed for UBI */
 #define CONFIG_RBTREE			/* needed for UBI */
 #define CONFIG_CMD_MTDPARTS
+#define CONFIG_CMD_UBI
 #define CONFIG_CMD_UBIFS
+#define CONFIG_FIT
 
 /*
  * IPB Bus clocking configuration.
@@ -85,6 +102,10 @@
 #else
 #undef CONFIG_SYS_PCICLK_EQUALS_IPBCLK_DIV2
 #endif
+
+/* pass open firmware flat tree */
+#define CONFIG_OF_LIBFDT
+#define CONFIG_OF_BOARD_SETUP
 
 /* maximum size of the flat tree (8K) */
 #define OF_FLAT_TREE_MAX_SIZE	8192
@@ -133,9 +154,9 @@
 
 /* Use SRAM until RAM will be available */
 #define CONFIG_SYS_INIT_RAM_ADDR	MPC5XXX_SRAM
-#define CONFIG_SYS_INIT_RAM_SIZE	MPC5XXX_SRAM_SIZE
+#define CONFIG_SYS_INIT_RAM_END		MPC5XXX_SRAM_SIZE
 
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - \
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - \
 					 GENERATED_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
@@ -225,12 +246,16 @@
  *                                                        +- 31    0 PSC1
  */
 
+
 /*
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP
+#define CONFIG_SYS_PROMPT		"=> "
 
 #define CONFIG_CMDLINE_EDITING
+#define	CONFIG_SYS_HUSH_PARSER
+#define	CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_SYS_CBSIZE		1024
@@ -245,6 +270,10 @@
 #define CONFIG_SYS_MEMTEST_END		0x00f00000
 
 #define CONFIG_SYS_LOAD_ADDR		0x00100000
+
+#define CONFIG_SYS_HZ			1000
+#define CONFIG_LOOPW
+#define CONFIG_SYS_CONSOLE_INFO_QUIET	/* don't print console @ startup*/
 
 /*
  * Various low-level settings
@@ -316,7 +345,9 @@
  * Environment Configuration
  */
 
+#define CONFIG_BOOTDELAY	3	/* -1 disables auto-boot */
 #undef  CONFIG_BOOTARGS
+#define CONFIG_ZERO_BOOTDELAY_CHECK
 
 #define CONFIG_SYS_AUTOLOAD	"n"
 
@@ -327,8 +358,8 @@
 
 #undef	CONFIG_BOOTARGS
 
+#define CONFIG_SYS_OS_BASE	0xfc200000
 #define CONFIG_SYS_FDT_BASE	0xfc1e0000
-#define CONFIG_SYS_FDT_SIZE	(16<<10)
 
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
 	"netdev=eth0\0"							\
@@ -347,7 +378,7 @@
 	"nfsargs=setenv bootargs root=/dev/nfs rw "			\
 		"nfsroot=${serverip}:${rootpath}\0"			\
 	"ramargs=setenv bootargs root=/dev/ram rw\0"			\
-	"mtdargs=setenv bootargs root=/dev/mtdblock8 "			\
+	"mtdargs=setenv bootargs root=/dev/mtdblock7 "			\
 		"rootfstype=squashfs,jffs2\0"				\
 	"addhost=setenv bootargs ${bootargs} "				\
 		"hostname=${hostname}\0"				\
@@ -356,32 +387,22 @@
 		":${hostname}:${netdev}:off panic=1\0"			\
 	"addtty=setenv bootargs ${bootargs} "				\
 		"console=${consoledev},${baudrate}\0"			\
-	"flash_nfs=run nfsargs addip addtty addmtd addhost;"		\
+	"flash_nfs=run nfsargs addip addtty addhost;"			\
 		"bootm ${kernel_addr} - ${fdt_addr}\0"			\
-	"flash_mtd=run mtdargs addip addtty addmtd addhost;"		\
+	"flash_mtd=run mtdargs addip addtty addhost;"			\
 		"bootm ${kernel_addr} - ${fdt_addr}\0"			\
-	"flash_self=run ramargs addip addtty addmtd addhost;"		\
+	"flash_self=run ramargs addip addtty addhost;"			\
 		"bootm ${kernel_addr} ${ramdisk_addr} ${fdt_addr}\0"	\
 	"net_nfs=tftp ${kernel_addr_r} ${bootfile};"			\
 		"tftp ${fdt_addr_r} ${fdtfile};"			\
-		"run nfsargs addip addtty addmtd addhost;"		\
+		"run nfsargs addip addtty addhost;"			\
 		"bootm ${kernel_addr_r} - ${fdt_addr_r}\0"		\
 	"load=tftp ${loadaddr} " __stringify(CONFIG_HOSTNAME)		\
 		"/u-boot-img.bin\0"					\
-	"update=protect off fc000000 fc07ffff;"				\
+	"update=protect off fc000000 fc07ffff; "			\
 		"era fc000000 fc07ffff;"				\
 		"cp.b ${loadaddr} fc000000 ${filesize}\0"		\
 	"upd=run load;run update\0"					\
-	"upd_fdt=tftp 1800000 a3m071/a3m071.dtb;"			\
-		"run mtdargs addip addtty addmtd addhost;"		\
-		"fdt addr 1800000;fdt boardsetup;fdt chosen;"		\
-		"erase fc1e0000 fc1fffff;cp.b 1800000 fc1e0000 20000"	\
-	"upd_kernel=tftp 1000000 a3m071/uImage-uncompressed;"		\
-		"erase fc200000 fc6fffff;"				\
-		"cp.b 1000000 fc200000 ${filesize}"			\
-	"addmtd=setenv bootargs ${bootargs} ${mtdparts}\0"		\
-	"mtdids=" MTDIDS_DEFAULT "\0"					\
-	"mtdparts=" MTDPARTS_DEFAULT "\0"				\
 	""
 
 #define CONFIG_BOOTCOMMAND	"run flash_mtd"
@@ -389,14 +410,23 @@
 /*
  * SPL related defines
  */
+#define CONFIG_SPL
 #define CONFIG_SPL_FRAMEWORK
 #define CONFIG_SPL_BOARD_INIT
+#define CONFIG_SPL_NOR_SUPPORT
 #define CONFIG_SPL_TEXT_BASE	0xfc000000
+#define	CONFIG_SPL_START_S_PATH	"arch/powerpc/cpu/mpc5xxx"
+#define CONFIG_SPL_LDSCRIPT	"arch/powerpc/cpu/mpc5xxx/u-boot-spl.lds"
+#define CONFIG_SPL_LIBCOMMON_SUPPORT	/* image.c */
+#define CONFIG_SPL_LIBGENERIC_SUPPORT	/* string.c */
+#define CONFIG_SPL_SERIAL_SUPPORT
 
 /* Place BSS for SPL near end of SDRAM */
 #define CONFIG_SPL_BSS_START_ADDR	((128 - 1) << 20)
 #define CONFIG_SPL_BSS_MAX_SIZE		(64 << 10)
 
+#define CONFIG_SPL_OS_BOOT
+#define CONFIG_SPL_ENV_SUPPORT
 /* Place patched DT blob (fdt) at this address */
 #define CONFIG_SYS_SPL_ARGS_ADDR	0x01800000
 

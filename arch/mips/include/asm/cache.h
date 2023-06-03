@@ -1,31 +1,36 @@
 /*
  * Copyright (c) 2011 The Chromium OS Authors.
+ * See file CREDITS for list of people who contributed to this
+ * project.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __MIPS_CACHE_H__
 #define __MIPS_CACHE_H__
 
-#define L1_CACHE_SHIFT		CONFIG_MIPS_L1_CACHE_SHIFT
-#define L1_CACHE_BYTES		(1 << L1_CACHE_SHIFT)
-
-#define ARCH_DMA_MINALIGN	(L1_CACHE_BYTES)
-
 /*
- * CONFIG_SYS_CACHELINE_SIZE is still used in various drivers primarily for
- * DMA buffer alignment. Satisfy those drivers by providing it as a synonym
- * of ARCH_DMA_MINALIGN for now.
+ * The maximum L1 data cache line size on MIPS seems to be 128 bytes.  We use
+ * that as a default for aligning DMA buffers unless the board config has
+ * specified another cache line size.
  */
-#define CONFIG_SYS_CACHELINE_SIZE ARCH_DMA_MINALIGN
-
-/**
- * mips_cache_probe() - Probe the properties of the caches
- *
- * Call this to probe the properties such as line sizes of the caches
- * present in the system, if any. This must be done before cache maintenance
- * functions such as flush_cache may be called.
- */
-void mips_cache_probe(void);
+#ifdef CONFIG_SYS_CACHELINE_SIZE
+#define ARCH_DMA_MINALIGN	CONFIG_SYS_CACHELINE_SIZE
+#else
+#define ARCH_DMA_MINALIGN	128
+#endif
 
 #endif /* __MIPS_CACHE_H__ */

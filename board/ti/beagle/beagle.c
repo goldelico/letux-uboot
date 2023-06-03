@@ -11,11 +11,25 @@
  *	Syed Mohammed Khasim <khasim@ti.com>
  *
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #include <common.h>
-#include <dm.h>
-#include <ns16550.h>
 #ifdef CONFIG_STATUS_LED
 #include <status_led.h>
 #endif
@@ -29,7 +43,7 @@
 #include <asm/gpio.h>
 #include <asm/mach-types.h>
 #include <asm/omap_musb.h>
-#include <linux/errno.h>
+#include <asm/errno.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <linux/usb/musb.h>
@@ -72,17 +86,6 @@ static struct {
 	char env_setting[64];
 } expansion_config;
 
-static const struct ns16550_platdata beagle_serial = {
-	.base = OMAP34XX_UART3,
-	.reg_shift = 2,
-	.clock = V_NS16550_CLK
-};
-
-U_BOOT_DEVICE(beagle_uart) = {
-	"ns16550_serial",
-	&beagle_serial
-};
-
 /*
  * Routine: board_init
  * Description: Early hardware init.
@@ -116,22 +119,22 @@ int board_init(void)
  */
 static int get_board_revision(void)
 {
-	static int revision = -1;
+	int revision;
 
-	if (revision == -1) {
-		if (!gpio_request(171, "rev0") &&
-		    !gpio_request(172, "rev1") &&
-		    !gpio_request(173, "rev2")) {
-			gpio_direction_input(171);
-			gpio_direction_input(172);
-			gpio_direction_input(173);
+	if (!gpio_request(171, "") &&
+	    !gpio_request(172, "") &&
+	    !gpio_request(173, "")) {
 
-			revision = gpio_get_value(173) << 2 |
-				gpio_get_value(172) << 1 |
-				gpio_get_value(171);
-		} else {
-			printf("Error: unable to acquire board revision GPIOs\n");
-		}
+		gpio_direction_input(171);
+		gpio_direction_input(172);
+		gpio_direction_input(173);
+
+		revision = gpio_get_value(173) << 2 |
+			   gpio_get_value(172) << 1 |
+			   gpio_get_value(171);
+	} else {
+		printf("Error: unable to acquire board revision GPIOs\n");
+		revision = -1;
 	}
 
 	return revision;
@@ -179,25 +182,15 @@ void get_board_mem_timings(struct board_sdrc_timings *timings)
 			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
 			break;
 		}
-	case REVISION_XM_AB:
+	case REVISION_XM_A:
+	case REVISION_XM_B:
 	case REVISION_XM_C:
 		if (pop_mfr == 0) {
-// check for OneNAND!
-			if(pop_id == 0) {
-				// FIXME: SAMSUNG_MCP with 1GB DDR
-				// should do this: http://git.goldelico.com/?p=gta04-xloader.git;a=blob;f=board/omap3530beagle/omap3530beagle.c;h=97e9ffc9c5296073a6e81354548bea9c243a23e5;hb=f1cbec2c777e82b7375b3a931dc51db5ccf61e83#l688
-				/* 256MB DDR */
-				timings->mcfg = MICRON_V_MCFG_200(256 << 20);
-				timings->ctrla = MICRON_V_ACTIMA_200;
-				timings->ctrlb = MICRON_V_ACTIMB_200;
-				timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
-			} else {
-				/* 256MB DDR */
-				timings->mcfg = MICRON_V_MCFG_200(256 << 20);
-				timings->ctrla = MICRON_V_ACTIMA_200;
-				timings->ctrlb = MICRON_V_ACTIMB_200;
-				timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
-			}
+			/* 256MB DDR */
+			timings->mcfg = MICRON_V_MCFG_200(256 << 20);
+			timings->ctrla = MICRON_V_ACTIMA_200;
+			timings->ctrlb = MICRON_V_ACTIMB_200;
+			timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_200MHz;
 		} else {
 			/* 512MB DDR */
 			timings->mcfg = NUMONYX_V_MCFG_165(512 << 20);
@@ -263,7 +256,8 @@ static void beagle_display_init(void)
 	case REVISION_C4:
 		omap3_dss_panel_config(&dvid_cfg);
 		break;
-	case REVISION_XM_AB:
+	case REVISION_XM_A:
+	case REVISION_XM_B:
 	case REVISION_XM_C:
 	default:
 		omap3_dss_panel_config(&dvid_cfg_xm);
@@ -282,11 +276,12 @@ static void beagle_dvi_pup(void)
 	case REVISION_AXBX:
 	case REVISION_CX:
 	case REVISION_C4:
-		gpio_request(170, "dvi");
+	case REVISION_XM_A:
+		gpio_request(170, "");
 		gpio_direction_output(170, 0);
 		gpio_set_value(170, 1);
 		break;
-	case REVISION_XM_AB:
+	case REVISION_XM_B:
 	case REVISION_XM_C:
 	default:
 		#define GPIODATADIR1 (TWL4030_BASEADD_GPIO+3)
@@ -317,12 +312,12 @@ static struct omap_musb_board_data musb_board_data = {
 };
 
 static struct musb_hdrc_platform_data musb_plat = {
-#if defined(CONFIG_USB_MUSB_HOST)
+#if defined(CONFIG_MUSB_HOST)
 	.mode           = MUSB_HOST,
-#elif defined(CONFIG_USB_MUSB_GADGET)
+#elif defined(CONFIG_MUSB_GADGET)
 	.mode		= MUSB_PERIPHERAL,
 #else
-#error "Please define either CONFIG_USB_MUSB_HOST or CONFIG_USB_MUSB_GADGET"
+#error "Please define either CONFIG_MUSB_HOST or CONFIG_MUSB_GADGET"
 #endif
 	.config         = &musb_config,
 	.power          = 100,
@@ -340,13 +335,9 @@ int misc_init_r(void)
 	struct gpio *gpio5_base = (struct gpio *)OMAP34XX_GPIO5_BASE;
 	struct gpio *gpio6_base = (struct gpio *)OMAP34XX_GPIO6_BASE;
 	struct control_prog_io *prog_io_base = (struct control_prog_io *)OMAP34XX_CTRL_BASE;
-	bool generate_fake_mac = false;
-	u32 value;
 
 	/* Enable i2c2 pullup resisters */
-	value = readl(&prog_io_base->io1);
-	value &= ~(PRG_I2C2_PULLUPRESX);
-	writel(value, &prog_io_base->io1);
+	writel(~(PRG_I2C2_PULLUPRESX), &prog_io_base->io1);
 
 	switch (get_board_revision()) {
 	case REVISION_AXBX:
@@ -368,16 +359,25 @@ int misc_init_r(void)
 					TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
 					TWL4030_PM_RECEIVER_DEV_GRP_P1);
 		break;
-	case REVISION_XM_AB:
-		printf("Beagle xM Rev A/B\n");
-		setenv("beaglerev", "xMAB");
+	case REVISION_XM_A:
+		printf("Beagle xM Rev A\n");
+		setenv("beaglerev", "xMA");
 		MUX_BEAGLE_XM();
 		/* Set VAUX2 to 1.8V for EHCI PHY */
 		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
 					TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
 					TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
 					TWL4030_PM_RECEIVER_DEV_GRP_P1);
-		generate_fake_mac = true;
+		break;
+	case REVISION_XM_B:
+		printf("Beagle xM Rev B\n");
+		setenv("beaglerev", "xMB");
+		MUX_BEAGLE_XM();
+		/* Set VAUX2 to 1.8V for EHCI PHY */
+		twl4030_pmrecv_vsel_cfg(TWL4030_PM_RECEIVER_VAUX2_DEDICATED,
+					TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
+					TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
+					TWL4030_PM_RECEIVER_DEV_GRP_P1);
 		break;
 	case REVISION_XM_C:
 		printf("Beagle xM Rev C\n");
@@ -388,7 +388,6 @@ int misc_init_r(void)
 					TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
 					TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
 					TWL4030_PM_RECEIVER_DEV_GRP_P1);
-		generate_fake_mac = true;
 		break;
 	default:
 		printf("Beagle unknown 0x%02x\n", get_board_revision());
@@ -398,7 +397,6 @@ int misc_init_r(void)
 					TWL4030_PM_RECEIVER_VAUX2_VSEL_18,
 					TWL4030_PM_RECEIVER_VAUX2_DEV_GRP,
 					TWL4030_PM_RECEIVER_DEV_GRP_P1);
-		generate_fake_mac = true;
 	}
 
 	switch (get_expansion_id()) {
@@ -486,7 +484,8 @@ int misc_init_r(void)
 
 	twl4030_power_init();
 	switch (get_board_revision()) {
-	case REVISION_XM_AB:
+	case REVISION_XM_A:
+	case REVISION_XM_B:
 		twl4030_led_init(TWL4030_LED_LEDEN_LEDBON);
 		break;
 	default:
@@ -505,7 +504,7 @@ int misc_init_r(void)
 	writel(~(GPIO31 | GPIO30 | GPIO29 | GPIO28 | GPIO22 | GPIO21 |
 		GPIO15 | GPIO14 | GPIO13 | GPIO12), &gpio5_base->oe);
 
-	omap_die_id_display();
+	dieid_num_r();
 
 #ifdef CONFIG_VIDEO_OMAP3
 	beagle_dvi_pup();
@@ -516,9 +515,6 @@ int misc_init_r(void)
 #ifdef CONFIG_USB_MUSB_OMAP2PLUS
 	musb_register(&musb_plat, &musb_board_data, (void *)MUSB_BASE);
 #endif
-
-	if (generate_fake_mac)
-		omap_die_id_usbethaddr();
 
 	return 0;
 }
@@ -541,18 +537,6 @@ int board_mmc_init(bd_t *bis)
 }
 #endif
 
-#if defined(CONFIG_GENERIC_MMC)
-void board_mmc_power_init(void)
-{
-#if defined(CONFIG_SPL_BUILD)
-	int pop_mfr, pop_id;
-	identify_nand_chip(&pop_mfr, &pop_id);
-	printk("pop_mfr = %02x pop_id = %02x\n", pop_mfr, pop_id);
-#endif
-	twl4030_power_mmc_init(0);
-}
-#endif
-
 #if defined(CONFIG_USB_EHCI) && !defined(CONFIG_SPL_BUILD)
 /* Call usb_stop() before starting the kernel */
 void show_boot_progress(int val)
@@ -567,10 +551,9 @@ static struct omap_usbhs_board_data usbhs_bdata = {
 	.port_mode[2] = OMAP_USBHS_PORT_MODE_UNUSED
 };
 
-int ehci_hcd_init(int index, enum usb_init_type init,
-		struct ehci_hccr **hccr, struct ehci_hcor **hcor)
+int ehci_hcd_init(int index, struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
-	return omap_ehci_hcd_init(index, &usbhs_bdata, hccr, hcor);
+	return omap_ehci_hcd_init(&usbhs_bdata, hccr, hcor);
 }
 
 int ehci_hcd_stop(int index)
@@ -580,7 +563,7 @@ int ehci_hcd_stop(int index)
 
 #endif /* CONFIG_USB_EHCI */
 
-#if defined(CONFIG_USB_ETHER) && defined(CONFIG_USB_MUSB_GADGET)
+#if defined(CONFIG_USB_ETHER) && defined(CONFIG_MUSB_GADGET)
 int board_eth_init(bd_t *bis)
 {
 	return usb_eth_initialize(bis);

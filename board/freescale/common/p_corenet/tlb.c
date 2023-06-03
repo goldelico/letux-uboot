@@ -4,7 +4,23 @@
  * (C) Copyright 2000
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -43,8 +59,6 @@ struct fsl_e_tlb_entry tlb_table[] = {
 	/* TLB 1 */
 	/* *I*** - Covers boot page */
 #if defined(CONFIG_SYS_RAMBOOT) && defined(CONFIG_SYS_INIT_L3_ADDR)
-
-#if !defined(CONFIG_SECURE_BOOT)
 	/*
 	 * *I*G - L3SRAM. When L3 is used as 1M SRAM, the address of the
 	 * SRAM is at 0xfff00000, it covered the 0xfffff000.
@@ -52,19 +66,6 @@ struct fsl_e_tlb_entry tlb_table[] = {
 	SET_TLB_ENTRY(1, CONFIG_SYS_INIT_L3_ADDR, CONFIG_SYS_INIT_L3_ADDR,
 			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 			0, 0, BOOKE_PAGESZ_1M, 1),
-#else
-	/*
-	 * *I*G - L3SRAM. When L3 is used as 1M SRAM, in case of Secure Boot
-	 * the physical address of the SRAM is at CONFIG_SYS_INIT_L3_ADDR,
-	 * and virtual address is CONFIG_SYS_MONITOR_BASE
-	 */
-
-	SET_TLB_ENTRY(1, CONFIG_SYS_MONITOR_BASE & 0xfff00000,
-			CONFIG_SYS_INIT_L3_ADDR & 0xfff00000,
-			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
-			0, 0, BOOKE_PAGESZ_1M, 1),
-#endif
-
 #elif defined(CONFIG_SRIO_PCIE_BOOT_SLAVE)
 	/*
 	 * SRIO_PCIE_BOOT-SLAVE. When slave boot, the address of the

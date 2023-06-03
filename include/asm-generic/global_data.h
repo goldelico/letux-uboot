@@ -3,7 +3,23 @@
  * (C) Copyright 2002-2010
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __ASM_GENERIC_GBL_DATA_H
@@ -21,97 +37,60 @@
  */
 
 #ifndef __ASSEMBLY__
-#include <membuff.h>
-#include <linux/list.h>
-
 typedef struct global_data {
 	bd_t *bd;
 	unsigned long flags;
 	unsigned int baudrate;
-	unsigned long cpu_clk;		/* CPU clock in Hz!		*/
+	unsigned long cpu_clk;	/* CPU clock in Hz!		*/
 	unsigned long bus_clk;
 	/* We cannot bracket this with CONFIG_PCI due to mpc5xxx */
 	unsigned long pci_clk;
 	unsigned long mem_clk;
 #if defined(CONFIG_LCD) || defined(CONFIG_VIDEO)
-	unsigned long fb_base;		/* Base address of framebuffer mem */
+	unsigned long fb_base;	/* Base address of framebuffer mem */
 #endif
 #if defined(CONFIG_POST) || defined(CONFIG_LOGBUFFER)
-	unsigned long post_log_word;	/* Record POST activities */
-	unsigned long post_log_res;	/* success of POST test */
-	unsigned long post_init_f_time;	/* When post_init_f started */
+	unsigned long post_log_word;  /* Record POST activities */
+	unsigned long post_log_res; /* success of POST test */
+	unsigned long post_init_f_time;  /* When post_init_f started */
 #endif
 #ifdef CONFIG_BOARD_TYPES
 	unsigned long board_type;
 #endif
 	unsigned long have_console;	/* serial_init() was called */
-#if CONFIG_IS_ENABLED(PRE_CONSOLE_BUFFER)
+#ifdef CONFIG_PRE_CONSOLE_BUFFER
 	unsigned long precon_buf_idx;	/* Pre-Console buffer index */
 #endif
-	unsigned long env_addr;		/* Address  of Environment struct */
+#ifdef CONFIG_MODEM_SUPPORT
+	unsigned long do_mdm_init;
+	unsigned long be_quiet;
+#endif
+	unsigned long env_addr;	/* Address  of Environment struct */
 	unsigned long env_valid;	/* Checksum of Environment valid? */
 
-	unsigned long ram_top;		/* Top address of RAM used by U-Boot */
+	unsigned long ram_top;	/* Top address of RAM used by U-Boot */
+
 	unsigned long relocaddr;	/* Start address of U-Boot in RAM */
-	phys_size_t ram_size;		/* RAM size */
-	unsigned long mon_len;		/* monitor len */
+	phys_size_t ram_size;	/* RAM size */
+	unsigned long mon_len;	/* monitor len */
 	unsigned long irq_sp;		/* irq stack pointer */
 	unsigned long start_addr_sp;	/* start_addr_stackpointer */
 	unsigned long reloc_off;
 	struct global_data *new_gd;	/* relocated global data */
-
-#ifdef CONFIG_DM
-	struct udevice	*dm_root;	/* Root instance for Driver Model */
-	struct udevice	*dm_root_f;	/* Pre-relocation root instance */
-	struct list_head uclass_root;	/* Head of core tree */
-#endif
-#ifdef CONFIG_TIMER
-	struct udevice	*timer;		/* Timer instance for Driver Model */
-#endif
-
-	const void *fdt_blob;		/* Our device tree, NULL if none */
-	void *new_fdt;			/* Relocated FDT */
-	unsigned long fdt_size;		/* Space reserved for relocated FDT */
-	struct jt_funcs *jt;		/* jump table */
-	char env_buf[32];		/* buffer for getenv() before reloc. */
+	const void *fdt_blob;	/* Our device tree, NULL if none */
+	void *new_fdt;		/* Relocated FDT */
+	unsigned long fdt_size;	/* Space reserved for relocated FDT */
+	void **jt;		/* jump table */
+	char env_buf[32];	/* buffer for getenv() before reloc. */
 #ifdef CONFIG_TRACE
 	void		*trace_buff;	/* The trace buffer */
 #endif
-#if defined(CONFIG_SYS_I2C)
-	int		cur_i2c_bus;	/* current used i2c bus */
-#endif
-#ifdef CONFIG_SYS_I2C_MXC
-	void *srdata[10];
-#endif
-	unsigned long timebase_h;
-	unsigned long timebase_l;
-#ifdef CONFIG_SYS_MALLOC_F_LEN
-	unsigned long malloc_base;	/* base address of early malloc() */
-	unsigned long malloc_limit;	/* limit address */
-	unsigned long malloc_ptr;	/* current address */
-#endif
-#ifdef CONFIG_PCI
-	struct pci_controller *hose;	/* PCI hose for early use */
-	phys_addr_t pci_ram_top;	/* top of region accessible to PCI */
-#endif
-#ifdef CONFIG_PCI_BOOTDELAY
-	int pcidelay_done;
-#endif
-	struct udevice *cur_serial_dev;	/* current serial device */
 	struct arch_global_data arch;	/* architecture-specific data */
-#ifdef CONFIG_CONSOLE_RECORD
-	struct membuff console_out;	/* console output */
-	struct membuff console_in;	/* console input */
-#endif
-#ifdef CONFIG_DM_VIDEO
-	ulong video_top;		/* Top of video frame buffer area */
-	ulong video_bottom;		/* Bottom of video frame buffer area */
-#endif
 } gd_t;
 #endif
 
 /*
- * Global Data Flags - the top 16 bits are reserved for arch-specific flags
+ * Global Data Flags
  */
 #define GD_FLG_RELOC		0x00001	/* Code was relocated to RAM	   */
 #define GD_FLG_DEVINIT		0x00002	/* Devices have been initialized   */
@@ -121,11 +100,6 @@ typedef struct global_data {
 #define GD_FLG_LOGINIT		0x00020	/* Log Buffer has been initialized */
 #define GD_FLG_DISABLE_CONSOLE	0x00040	/* Disable console (in & out)	   */
 #define GD_FLG_ENV_READY	0x00080	/* Env. imported into hash table   */
-#define GD_FLG_SERIAL_READY	0x00100	/* Pre-reloc serial console ready  */
-#define GD_FLG_FULL_MALLOC_INIT	0x00200	/* Full malloc() is ready	   */
-#define GD_FLG_SPL_INIT		0x00400	/* spl_init() has been called	   */
-#define GD_FLG_SKIP_RELOC	0x00800	/* Don't relocate		   */
-#define GD_FLG_RECORD		0x01000	/* Record console		   */
-#define GD_FLG_ENV_DEFAULT	0x02000 /* Default variable flag	   */
+#define GD_FLG_ENV_DEFAULT	0x00100 /* Env. using default env */
 
 #endif /* __ASM_GENERIC_GBL_DATA_H */

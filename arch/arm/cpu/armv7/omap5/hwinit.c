@@ -10,14 +10,30 @@
  *	Steve Sakoman	<steve@sakoman.com>
  *	Sricharan	<r.sricharan@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #include <common.h>
 #include <asm/armv7.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/clock.h>
-#include <linux/sizes.h>
+#include <asm/sizes.h>
 #include <asm/utils.h>
 #include <asm/arch/gpio.h>
 #include <asm/emif.h>
@@ -27,29 +43,18 @@ DECLARE_GLOBAL_DATA_PTR;
 
 u32 *const omap_si_rev = (u32 *)OMAP_SRAM_SCRATCH_OMAP_REV;
 
-#ifndef CONFIG_DM_GPIO
 static struct gpio_bank gpio_bank_54xx[8] = {
-	{ (void *)OMAP54XX_GPIO1_BASE },
-	{ (void *)OMAP54XX_GPIO2_BASE },
-	{ (void *)OMAP54XX_GPIO3_BASE },
-	{ (void *)OMAP54XX_GPIO4_BASE },
-	{ (void *)OMAP54XX_GPIO5_BASE },
-	{ (void *)OMAP54XX_GPIO6_BASE },
-	{ (void *)OMAP54XX_GPIO7_BASE },
-	{ (void *)OMAP54XX_GPIO8_BASE },
+	{ (void *)OMAP54XX_GPIO1_BASE, METHOD_GPIO_24XX },
+	{ (void *)OMAP54XX_GPIO2_BASE, METHOD_GPIO_24XX },
+	{ (void *)OMAP54XX_GPIO3_BASE, METHOD_GPIO_24XX },
+	{ (void *)OMAP54XX_GPIO4_BASE, METHOD_GPIO_24XX },
+	{ (void *)OMAP54XX_GPIO5_BASE, METHOD_GPIO_24XX },
+	{ (void *)OMAP54XX_GPIO6_BASE, METHOD_GPIO_24XX },
+	{ (void *)OMAP54XX_GPIO7_BASE, METHOD_GPIO_24XX },
+	{ (void *)OMAP54XX_GPIO8_BASE, METHOD_GPIO_24XX },
 };
 
 const struct gpio_bank *const omap_gpio_bank = gpio_bank_54xx;
-#endif
-
-void do_set_mux32(u32 base, struct pad_conf_entry const *array, int size)
-{
-	int i;
-	struct pad_conf_entry *pad = (struct pad_conf_entry *)array;
-
-	for (i = 0; i < size; i++, pad++)
-		writel(pad->val, base + pad->offset);
-}
 
 #ifdef CONFIG_SPL_BUILD
 /* LPDDR2 specific IO settings */
@@ -86,20 +91,16 @@ static void io_settings_ddr3(void)
 
 	writel(ioregs->ctrl_ddrio_0, (*ctrl)->control_ddrio_0);
 	writel(ioregs->ctrl_ddrio_1, (*ctrl)->control_ddrio_1);
-
-	if (!is_dra7xx()) {
-		writel(ioregs->ctrl_ddrio_2, (*ctrl)->control_ddrio_2);
-		writel(ioregs->ctrl_lpddr2ch, (*ctrl)->control_lpddr2ch1_1);
-	}
+	writel(ioregs->ctrl_ddrio_2, (*ctrl)->control_ddrio_2);
 
 	/* omap5432 does not use lpddr2 */
 	writel(ioregs->ctrl_lpddr2ch, (*ctrl)->control_lpddr2ch1_0);
+	writel(ioregs->ctrl_lpddr2ch, (*ctrl)->control_lpddr2ch1_1);
 
 	writel(ioregs->ctrl_emif_sdram_config_ext,
 	       (*ctrl)->control_emif1_sdram_config_ext);
-	if (!is_dra72x())
-		writel(ioregs->ctrl_emif_sdram_config_ext,
-		       (*ctrl)->control_emif2_sdram_config_ext);
+	writel(ioregs->ctrl_emif_sdram_config_ext,
+	       (*ctrl)->control_emif2_sdram_config_ext);
 
 	if (is_omap54xx()) {
 		/* Disable DLL select */
@@ -124,7 +125,6 @@ static void io_settings_ddr3(void)
 void do_io_settings(void)
 {
 	u32 io_settings = 0, mask = 0;
-	struct emif_reg_struct *emif = (struct emif_reg_struct *)EMIF1_BASE;
 
 	/* Impedance settings EMMC, C2C 1,2, hsi2 */
 	mask = (ds_mask << 2) | (ds_mask << 8) |
@@ -180,10 +180,16 @@ void do_io_settings(void)
 		       (sc_fast << 17) | (sc_fast << 14);
 	writel(io_settings, (*ctrl)->control_smart3io_padconf_1);
 
-	if (emif_sdram_type(emif->emif_sdram_config) == EMIF_SDRAM_TYPE_LPDDR2)
+	if (emif_sdram_type() == EMIF_SDRAM_TYPE_LPDDR2)
 		io_settings_lpddr2();
 	else
 		io_settings_ddr3();
+
+	/* Efuse settings */
+	writel(EFUSE_1, (*ctrl)->control_efuse_1);
+	writel(EFUSE_2, (*ctrl)->control_efuse_2);
+	writel(EFUSE_3, (*ctrl)->control_efuse_3);
+	writel(EFUSE_4, (*ctrl)->control_efuse_4);
 }
 
 static const struct srcomp_params srcomp_parameters[NUM_SYS_CLKS] = {
@@ -307,32 +313,13 @@ void srcomp_enable(void)
 
 void config_data_eye_leveling_samples(u32 emif_base)
 {
-	const struct ctrl_ioregs *ioregs;
-
-	get_ioregs(&ioregs);
-
 	/*EMIF_SDRAM_CONFIG_EXT-Read data eye leveling no of samples =4*/
 	if (emif_base == EMIF1_BASE)
-		writel(ioregs->ctrl_emif_sdram_config_ext_final,
-		       (*ctrl)->control_emif1_sdram_config_ext);
+		writel(SDRAM_CONFIG_EXT_RD_LVL_4_SAMPLES,
+			(*ctrl)->control_emif1_sdram_config_ext);
 	else if (emif_base == EMIF2_BASE)
-		writel(ioregs->ctrl_emif_sdram_config_ext_final,
-		       (*ctrl)->control_emif2_sdram_config_ext);
-}
-
-void init_cpu_configuration(void)
-{
-	u32 l2actlr;
-
-	asm volatile("mrc p15, 1, %0, c15, c0, 0" : "=r"(l2actlr));
-	/*
-	 * L2ACTLR: Ensure to enable the following:
-	 * 3: Disable clean/evict push to external
-	 * 4: Disable WriteUnique and WriteLineUnique transactions from master
-	 * 8: Disable DVM/CMO message broadcast
-	 */
-	l2actlr |= 0x118;
-	omap_smc1(OMAP5_SERVICE_L2ACTLR_SET, l2actlr);
+		writel(SDRAM_CONFIG_EXT_RD_LVL_4_SAMPLES,
+			(*ctrl)->control_emif2_sdram_config_ext);
 }
 
 void init_omap_revision(void)
@@ -364,30 +351,9 @@ void init_omap_revision(void)
 	case DRA752_CONTROL_ID_CODE_ES1_0:
 		*omap_si_rev = DRA752_ES1_0;
 		break;
-	case DRA752_CONTROL_ID_CODE_ES1_1:
-		*omap_si_rev = DRA752_ES1_1;
-		break;
-	case DRA752_CONTROL_ID_CODE_ES2_0:
-		*omap_si_rev = DRA752_ES2_0;
-		break;
-	case DRA722_CONTROL_ID_CODE_ES1_0:
-		*omap_si_rev = DRA722_ES1_0;
-		break;
-	case DRA722_CONTROL_ID_CODE_ES2_0:
-		*omap_si_rev = DRA722_ES2_0;
-		break;
 	default:
 		*omap_si_rev = OMAP5430_SILICON_ID_INVALID;
 	}
-	init_cpu_configuration();
-}
-
-void omap_die_id(unsigned int *die_id)
-{
-	die_id[0] = readl((*ctrl)->control_std_fuse_die_id_0);
-	die_id[1] = readl((*ctrl)->control_std_fuse_die_id_1);
-	die_id[2] = readl((*ctrl)->control_std_fuse_die_id_2);
-	die_id[3] = readl((*ctrl)->control_std_fuse_die_id_3);
 }
 
 void reset_cpu(ulong ignored)
@@ -426,28 +392,4 @@ void setup_warmreset_time(void)
 	rst_val = readl((*prcm)->prm_rsttime) & ~RSTTIME1_MASK;
 	rst_val |= rst_time;
 	writel(rst_val, (*prcm)->prm_rsttime);
-}
-
-void v7_arch_cp15_set_l2aux_ctrl(u32 l2auxctrl, u32 cpu_midr,
-				 u32 cpu_rev_comb, u32 cpu_variant,
-				 u32 cpu_rev)
-{
-	omap_smc1(OMAP5_SERVICE_L2ACTLR_SET, l2auxctrl);
-}
-
-void v7_arch_cp15_set_acr(u32 acr, u32 cpu_midr, u32 cpu_rev_comb,
-			  u32 cpu_variant, u32 cpu_rev)
-{
-
-#ifdef CONFIG_ARM_ERRATA_801819
-	/*
-	 * DRA72x processors are uniprocessors and DONOT have
-	 * ACP (Accelerator Coherency Port) hooked to ACE (AXI Coherency
-	 * Extensions) Hence the erratum workaround is not applicable for
-	 * DRA72x processors.
-	 */
-	if (is_dra72x())
-		acr &= ~((0x3 << 23) | (0x3 << 25));
-#endif
-	omap_smc1(OMAP5_SERVICE_ACR_SET, acr);
 }

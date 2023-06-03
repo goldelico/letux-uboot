@@ -3,7 +3,23 @@
  *
  * (C) Copyright 2002 Scott McNutt <smcnutt@artesyncp.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -12,7 +28,7 @@
 #include <asm/mmu.h>
 #include <asm/immap_85xx.h>
 #include <asm/fsl_pci.h>
-#include <fsl_ddr_sdram.h>
+#include <asm/fsl_ddr_sdram.h>
 #include <asm/fsl_serdes.h>
 #include <miiphy.h>
 #include <libfdt.h>
@@ -301,9 +317,9 @@ void configure_rgmii(void)
 	return;
 }
 
+#ifdef CONFIG_TSEC_ENET
 int board_eth_init(bd_t *bis)
 {
-#ifdef CONFIG_TSEC_ENET
 	struct fsl_pq_mdio_info mdio_info;
 	struct tsec_info_struct tsec_info[4];
 	int num = 0;
@@ -345,10 +361,10 @@ int board_eth_init(bd_t *bis)
 
 	tsec_eth_init(bis, tsec_info, num);
 	configure_rgmii();
-#endif
 
 	return pci_eth_init(bis);
 }
+#endif
 
 #if defined(CONFIG_OF_BOARD_SETUP)
 void ft_pci_setup(void *blob, bd_t *bd)

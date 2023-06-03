@@ -1,7 +1,9 @@
 /*
  * Copyright 2007-2011 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * Version 2 as published by the Free Software Foundation.
  */
 
 /*
@@ -12,18 +14,24 @@
 #define __CONFIG_H
 
 /* High Level Configuration Options */
+#define CONFIG_MPC86xx		1	/* MPC86xx */
 #define CONFIG_MPC8610		1	/* MPC8610 specific */
 #define CONFIG_MPC8610HPCD	1	/* MPC8610HPCD board specific */
 #define CONFIG_LINUX_RESET_VEC	0x100	/* Reset vector used by Linux */
 
 #define	CONFIG_SYS_TEXT_BASE	0xfff00000
 
+
 /* video */
 #define CONFIG_FSL_DIU_FB
 
 #ifdef CONFIG_FSL_DIU_FB
 #define CONFIG_SYS_DIU_ADDR	(CONFIG_SYS_CCSRBAR + 0x2c000)
+#define CONFIG_VIDEO
 #define CONFIG_CMD_BMP
+#define CONFIG_CFB_CONSOLE
+#define CONFIG_VIDEO_SW_CURSOR
+#define CONFIG_VGA_AS_SINGLE_DEVICE
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
 #endif
@@ -38,7 +46,8 @@
  */
 #define CONFIG_SYS_SCRATCH_VA	0xc0000000
 
-#define CONFIG_PCI1		1	/* PCI controller 1 */
+#define CONFIG_PCI		1	/* Enable PCI/PCIE*/
+#define CONFIG_PCI1		1	/* PCI controler 1 */
 #define CONFIG_PCIE1		1	/* PCIe 1 connected to ULI bridge */
 #define CONFIG_PCIE2		1	/* PCIe 2 connected to slot */
 #define CONFIG_FSL_PCI_INIT	1	/* Use common FSL init code */
@@ -83,7 +92,7 @@
 #define CONFIG_SYS_CCSRBAR_PHYS		CONFIG_SYS_CCSRBAR_PHYS_LOW
 
 /* DDR Setup */
-#define CONFIG_SYS_FSL_DDR2
+#define CONFIG_FSL_DDR2
 #undef CONFIG_FSL_DDR_INTERACTIVE
 #define CONFIG_SPD_EEPROM		/* Use SPD for DDR */
 #define CONFIG_DDR_SPD
@@ -128,11 +137,13 @@
 
 #endif
 
+
 #define CONFIG_ID_EEPROM
 #define CONFIG_SYS_I2C_EEPROM_NXID
 #define CONFIG_ID_EEPROM
 #define CONFIG_SYS_I2C_EEPROM_ADDR     0x57
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN 1
+
 
 #define CONFIG_SYS_FLASH_BASE		0xf0000000 /* start of FLASH 128M */
 #define CONFIG_SYS_FLASH_BASE2		0xf8000000
@@ -150,6 +161,7 @@
 #endif
 #define CONFIG_SYS_BR3_PRELIM		0xe8000801 /* port size 8bit */
 #define CONFIG_SYS_OR3_PRELIM		0xfff06ff7 /* 1MB PIXIS area*/
+
 
 #define CONFIG_FSL_PIXIS	1	/* use common PIXIS code */
 #define PIXIS_BASE	0xe8000000	/* PIXIS registers */
@@ -212,6 +224,7 @@
 
 /* Serial Port */
 #define CONFIG_CONS_INDEX	1
+#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
@@ -222,18 +235,30 @@
 #define CONFIG_SYS_NS16550_COM1	(CONFIG_SYS_CCSRBAR+0x4500)
 #define CONFIG_SYS_NS16550_COM2	(CONFIG_SYS_CCSRBAR+0x4600)
 
+/* Use the HUSH parser */
+#define CONFIG_SYS_HUSH_PARSER
+
+/*
+ * Pass open firmware flat tree to kernel
+ */
+#define CONFIG_OF_LIBFDT		1
+#define CONFIG_OF_BOARD_SETUP		1
+#define CONFIG_OF_STDOUT_VIA_ALIAS	1
+
+
 /* maximum size of the flat tree (8K) */
 #define OF_FLAT_TREE_MAX_SIZE	8192
 
 /*
  * I2C
  */
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_FSL
-#define CONFIG_SYS_FSL_I2C_SPEED	400000
-#define CONFIG_SYS_FSL_I2C_SLAVE	0x7F
-#define CONFIG_SYS_FSL_I2C_OFFSET	0x3000
-#define CONFIG_SYS_I2C_NOPROBES		{ {0, 0x69} }
+#define CONFIG_FSL_I2C		/* Use FSL common I2C driver */
+#define CONFIG_HARD_I2C		/* I2C with hardware support*/
+#undef	CONFIG_SOFT_I2C			/* I2C bit-banged */
+#define CONFIG_SYS_I2C_SPEED		400000	/* I2C speed and slave address */
+#define CONFIG_SYS_I2C_SLAVE		0x7F
+#define CONFIG_SYS_I2C_NOPROBES	{0x69}	/* Don't probe these addrs */
+#define CONFIG_SYS_I2C_OFFSET		0x3000
 
 /*
  * General PCI
@@ -266,14 +291,18 @@
 #define CONFIG_SYS_PCIE2_IO_PHYS	0xe2000000
 #define CONFIG_SYS_PCIE2_IO_SIZE	0x00100000	/* 1M */
 
+
 #if defined(CONFIG_PCI)
 
 #define CONFIG_PCI_SCAN_SHOW		/* show pci devices on startup */
 
+#define CONFIG_CMD_NET
+#define CONFIG_PCI_PNP		/* do pci plug-and-play */
 #define CONFIG_CMD_REGINFO
 
 #define CONFIG_ULI526X
 #ifdef CONFIG_ULI526X
+#define CONFIG_ETHADDR   00:E0:0C:00:00:01
 #endif
 
 /************************************************************
@@ -281,6 +310,8 @@
  ************************************************************/
 #define CONFIG_PCI_OHCI		1
 #define CONFIG_USB_OHCI_NEW		1
+#define CONFIG_USB_KEYBOARD	1
+#define CONFIG_SYS_STDIO_DEREGISTER
 #define CONFIG_SYS_USB_EVENT_POLL	1
 #define CONFIG_SYS_USB_OHCI_SLOT_NAME	"ohci_pci"
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS 15
@@ -296,7 +327,6 @@
 #define CONFIG_SCSI_AHCI
 
 #ifdef CONFIG_SCSI_AHCI
-#define CONFIG_LIBATA
 #define CONFIG_SATA_ULI5288
 #define CONFIG_SYS_SCSI_MAX_SCSI_ID	4
 #define CONFIG_SYS_SCSI_MAX_LUN	1
@@ -371,6 +401,7 @@
 #define CONFIG_SYS_IBAT4L	(CONFIG_SYS_PCIE2_IO_PHYS | BATL_PP_RW | BATL_CACHEINHIBIT)
 #define CONFIG_SYS_IBAT4U	CONFIG_SYS_DBAT4U
 
+
 /*
  * BAT5		128K	Cacheable, non-guarded
  * 0xe400_0000	128K	Init RAM for stack in the CPU DCache (no backing memory)
@@ -408,6 +439,7 @@
 #define CONFIG_SYS_IBAT7L	(PIXIS_BASE | BATL_PP_RW | BATL_CACHEINHIBIT)
 #define CONFIG_SYS_IBAT7U	CONFIG_SYS_DBAT7U
 
+
 /*
  * Environment
  */
@@ -425,6 +457,7 @@
 #define CONFIG_LOADS_ECHO	1	/* echo on for serial download */
 #define CONFIG_SYS_LOADS_BAUD_CHANGE	1	/* allow baudrate change */
 
+
 /*
  * BOOTP options
  */
@@ -433,14 +466,27 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_HOSTNAME
 
+
 /*
  * Command line configuration.
  */
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_I2C
+#define CONFIG_CMD_MII
+
+#if defined(CONFIG_SYS_RAMBOOT)
+#undef CONFIG_CMD_SAVEENV
+#endif
 
 #if defined(CONFIG_PCI)
 #define CONFIG_CMD_PCI
-#define CONFIG_SCSI
+#define CONFIG_CMD_SCSI
+#define CONFIG_CMD_EXT2
+#define CONFIG_CMD_USB
 #endif
+
 
 #define CONFIG_WATCHDOG			/* watchdog enabled */
 #define CONFIG_SYS_WATCHDOG_FREQ	5000	/* Feed interval, 5s */
@@ -451,6 +497,7 @@
 #define CONFIG_SYS_LONGHELP			/* undef to save memory	*/
 #define CONFIG_CMDLINE_EDITING          /* Command-line editing */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
+#define CONFIG_SYS_PROMPT	"=> "		/* Monitor Command Prompt */
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O Buffer Size */
@@ -461,17 +508,18 @@
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16) /* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS	16		/* max number of command args */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
+#define CONFIG_SYS_HZ		1000		/* decrementer freq: 1ms ticks */
 
 /*
  * For booting Linux, the board info and command line data
  * have to be in the first 8 MB of memory, since this is
  * the maximum mapped by the Linux kernel during initialization.
  */
-#define CONFIG_SYS_BOOTMAPSZ	(256 << 20)	/* Initial Memory map for Linux*/
-#define CONFIG_SYS_BOOTM_LEN	(256 << 20)	/* Increase max gunzip size */
+#define CONFIG_SYS_BOOTMAPSZ	(8 << 20)	/* Initial Memory map for Linux*/
 
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */
+#define CONFIG_KGDB_SER_INDEX	2	/* which serial port to use */
 #endif
 
 /*
@@ -489,8 +537,9 @@
 #define CONFIG_NETMASK		255.255.255.0
 
 /* default location for tftp and bootm */
-#define CONFIG_LOADADDR		0x10000000
+#define CONFIG_LOADADDR		1000000
 
+#define CONFIG_BOOTDELAY 10	/* -1 disables auto-boot */
 #undef	CONFIG_BOOTARGS		/* the boot command will set bootargs */
 
 #define CONFIG_BAUDRATE	115200
@@ -557,9 +606,9 @@
 	"cmp.b $loadaddr " __stringify(CONFIG_SYS_TEXT_BASE)	\
 		" $filesize\0"	\
 "consoledev=ttyS0\0"						\
-"ramdiskaddr=0x18000000\0"					\
+"ramdiskaddr=2000000\0"					\
 "ramdiskfile=8610hpcd/ramdisk.uboot\0"				\
-"fdtaddr=0x17c00000\0"						\
+"fdtaddr=c00000\0"						\
 "fdtfile=8610hpcd/mpc8610_hpcd.dtb\0"				\
 "bdev=sda3\0"					\
 "en-wd=mw.b f8100010 0x08; echo -expect:- 08; md.b f8100010 1\0" \
@@ -595,9 +644,9 @@
 	"netdev=eth0\0"						\
 	"uboot=" __stringify(CONFIG_UBOOTPATH) "\0"		\
 	"consoledev=ttyS0\0"					\
-	"ramdiskaddr=0x18000000\0"				\
+	"ramdiskaddr=2000000\0"					\
 	"ramdiskfile=8610hpcd/ramdisk.uboot\0"			\
-	"fdtaddr=0x17c00000\0"					\
+	"fdtaddr=c00000\0"					\
 	"fdtfile=8610hpcd/mpc8610_hpcd.dtb\0"			\
 	"bdev=sda3\0"
 #endif

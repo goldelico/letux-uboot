@@ -2,45 +2,60 @@
 # (C) Copyright 2002-2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
-# SPDX-License-Identifier:	GPL-2.0+
+# See file CREDITS for list of people who contributed to this
+# project.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307 USA
 #
 
-obj-y += bios.o
-obj-y += bios_asm.o
-obj-y += bios_interrupts.o
-obj-$(CONFIG_CMD_BOOTM) += bootm.o
-obj-y	+= cmd_boot.o
-obj-$(CONFIG_SEABIOS) += coreboot_table.o
-obj-$(CONFIG_EFI) += efi/
-obj-y	+= e820.o
-obj-y	+= gcc.o
-obj-y	+= init_helpers.o
-obj-y	+= interrupts.o
-obj-y	+= lpc-uclass.o
-obj-y	+= mpspec.o
-obj-$(CONFIG_ENABLE_MRC_CACHE) += mrccache.o
-obj-y += cmd_mtrr.o
-obj-y	+= northbridge-uclass.o
-obj-$(CONFIG_I8259_PIC) += i8259.o
-obj-$(CONFIG_I8254_TIMER) += i8254.o
-obj-y	+= pinctrl_ich6.o
-obj-y	+= pirq_routing.o
-obj-y	+= relocate.o
-obj-y += physmem.o
-obj-$(CONFIG_X86_RAMTEST) += ramtest.o
-obj-y	+= sections.o
-obj-y += sfi.o
-obj-y	+= string.o
-ifndef CONFIG_QEMU
-obj-$(CONFIG_GENERATE_ACPI_TABLE) += acpi_table.o
-endif
-obj-y	+= tables.o
-obj-$(CONFIG_CMD_ZBOOT)	+= zimage.o
-obj-$(CONFIG_HAVE_FSP) += fsp/
+include $(TOPDIR)/config.mk
 
-extra-$(CONFIG_USE_PRIVATE_LIBGCC) += lib.a
+LIB	= $(obj)lib$(ARCH).o
 
-NORMAL_LIBGCC = $(shell $(CC) $(PLATFORM_CPPFLAGS) -print-libgcc-file-name)
-OBJCOPYFLAGS := --prefix-symbols=__normal_
-$(obj)/lib.a: $(NORMAL_LIBGCC) FORCE
-	$(call if_changed,objcopy)
+COBJS-$(CONFIG_CMD_BOOTM) += bootm.o
+COBJS-y	+= cmd_boot.o
+COBJS-y	+= gcc.o
+COBJS-y	+= init_helpers.o
+COBJS-y	+= interrupts.o
+COBJS-$(CONFIG_SYS_PCAT_INTERRUPTS) += pcat_interrupts.o
+COBJS-$(CONFIG_SYS_PCAT_TIMER) += pcat_timer.o
+COBJS-$(CONFIG_PCI) += pci_type1.o
+COBJS-y	+= relocate.o
+COBJS-y += physmem.o
+COBJS-y	+= string.o
+COBJS-$(CONFIG_SYS_X86_TSC_TIMER)	+= tsc_timer.o
+COBJS-$(CONFIG_VIDEO_VGA)	+= video.o
+COBJS-$(CONFIG_CMD_ZBOOT)	+= zimage.o
+
+SRCS	:= $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
+OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))
+
+$(LIB):	$(obj).depend $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
+
+$(PREFIXED_LIBGCC): $(NORMAL_LIBGCC)
+	$(OBJCOPY) $< $@ --prefix-symbols=__normal_
+
+$(LIB): $(PREFIXED_LIBGCC)
+
+#########################################################################
+
+# defines $(obj).depend target
+include $(SRCTREE)/rules.mk
+
+sinclude $(obj).depend
+
+#########################################################################

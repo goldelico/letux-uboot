@@ -2,7 +2,23 @@
  * (C) Copyright 2001, 2002
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 /*
@@ -17,6 +33,8 @@
  * (easy to change)
  ***********************************************************/
 #define CONFIG_405GP		1	/* This is a PPC405 CPU		*/
+#define CONFIG_4xx		1	/* ...member of PPC4xx family	*/
+#define CONFIG_MIP405		1	/* ...on a MIP405 board		*/
 
 #define	CONFIG_SYS_TEXT_BASE	0xFFF80000
 
@@ -35,6 +53,7 @@
  ***********************************************************/
 #define CONFIG_SYS_CLK_FREQ	33000000 /* external frequency to pll   */
 
+
 /*
  * BOOTP options
  */
@@ -43,19 +62,35 @@
 #define CONFIG_BOOTP_GATEWAY
 #define CONFIG_BOOTP_HOSTNAME
 
+
 /*
  * Command line configuration.
  */
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_CACHE
 #define CONFIG_CMD_DATE
+#define CONFIG_CMD_DHCP
 #define CONFIG_CMD_EEPROM
+#define CONFIG_CMD_ELF
+#define CONFIG_CMD_FAT
+#define CONFIG_CMD_I2C
 #define CONFIG_CMD_IDE
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_JFFS2
+#define CONFIG_CMD_MII
 #define CONFIG_CMD_PCI
+#define CONFIG_CMD_PING
 #define CONFIG_CMD_REGINFO
 #define CONFIG_CMD_SAVES
 #define CONFIG_CMD_BSP
 
+#if !defined(CONFIG_MIP405T)
+    #define CONFIG_CMD_USB
+#endif
+
+
+#define	 CONFIG_SYS_HUSH_PARSER
 /**************************************************************
  * I2C Stuff:
  * the MIP405 is equiped with an Atmel 24C128/256 EEPROM at address
@@ -63,11 +98,10 @@
  * The Atmel EEPROM uses 16Bit addressing.
  ***************************************************************/
 
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_PPC4XX
-#define CONFIG_SYS_I2C_PPC4XX_CH0
-#define CONFIG_SYS_I2C_PPC4XX_SPEED_0		50000
-#define CONFIG_SYS_I2C_PPC4XX_SLAVE_0		0x7F
+#define CONFIG_HARD_I2C			/* I2c with hardware support */
+#define CONFIG_PPC4XX_I2C		/* use PPC4xx driver		*/
+#define CONFIG_SYS_I2C_SPEED		50000	/* I2C speed and slave address */
+#define CONFIG_SYS_I2C_SLAVE		0x7F
 
 #define CONFIG_SYS_I2C_EEPROM_ADDR	0x53	/* EEPROM 24C128/256		*/
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	2	/* Bytes of address		*/
@@ -77,6 +111,7 @@
 					/* 64 byte page write mode using*/
 					/* last	6 bits of the address	*/
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	10	/* and takes up to 10 msec */
+
 
 #define CONFIG_ENV_IS_IN_EEPROM	1	/* use EEPROM for environment vars */
 #define CONFIG_ENV_OFFSET		0x00000	/* environment starts at the beginning of the EEPROM */
@@ -93,8 +128,10 @@
  * Environment definitions
  **************************************************************/
 #define CONFIG_BAUDRATE		9600	/* STD Baudrate */
+#define CONFIG_BOOTDELAY	5
 /* autoboot (do NOT change this set environment variable "bootdelay" to -1 instead) */
 /* #define CONFIG_BOOT_RETRY_TIME	-10	/XXX* feature is available but not enabled */
+#define CONFIG_ZERO_BOOTDELAY_CHECK	/* check console even if bootdelay = 0 */
 
 #define CONFIG_BOOTCOMMAND	"diskboot 400000 0:1; bootm" /* autoboot command		*/
 #define CONFIG_BOOTARGS		"console=ttyS0,9600 root=/dev/hda5" /* boot arguments */
@@ -103,12 +140,19 @@
 #define CONFIG_SERVERIP		10.0.0.1
 #define CONFIG_PREBOOT
 /***************************************************************
+ * defines if the console is stored in the environment
+ ***************************************************************/
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV	/* stdin, stdout and stderr are in evironment */
+/***************************************************************
  * defines if an overwrite_console function exists
  *************************************************************/
+#define CONFIG_SYS_CONSOLE_OVERWRITE_ROUTINE
+#define CONFIG_SYS_CONSOLE_INFO_QUIET
 /***************************************************************
  * defines if the overwrite_console should be stored in the
  * environment
  **************************************************************/
+#undef CONFIG_SYS_CONSOLE_ENV_OVERWRITE
 
 /**************************************************************
  * loads config
@@ -121,6 +165,7 @@
  * Miscellaneous configurable options
  **********************************************************/
 #define CONFIG_SYS_LONGHELP			/* undef to save memory		*/
+#define CONFIG_SYS_PROMPT	"=> "		/* Monitor Command Prompt	*/
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O Buffer Size	*/
 #else
@@ -134,6 +179,7 @@
 #define CONFIG_SYS_MEMTEST_END		0x0C00000	/* 1 ... 12 MB in DRAM	*/
 
 #define CONFIG_CONS_INDEX	1	/* Use UART0			*/
+#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_serial_clock()
@@ -149,6 +195,8 @@
 #define CONFIG_SYS_LOAD_ADDR	0x400000	/* default load address */
 #define CONFIG_SYS_EXTBDINFO	1		/* To use extended board_into (bd_t) */
 
+#define CONFIG_SYS_HZ		1000		/* decrementer freq: 1 ms ticks */
+
 /*-----------------------------------------------------------------------
  * PCI stuff
  *-----------------------------------------------------------------------
@@ -157,8 +205,10 @@
 #define PCI_HOST_FORCE  1               /* configure as pci host        */
 #define PCI_HOST_AUTO   2               /* detected via arbiter enable  */
 
+#define CONFIG_PCI			/* include pci support		*/
 #define CONFIG_PCI_INDIRECT_BRIDGE	/* indirect PCI bridge support */
 #define CONFIG_PCI_HOST PCI_HOST_FORCE	/* configure as pci-host	*/
+#define CONFIG_PCI_PNP			/* pci plug-and-play		*/
 					/* resource configuration	*/
 #define CONFIG_SYS_PCI_SUBSYS_VENDORID 0x0000	/* PCI Vendor ID: to-do!!!	*/
 #define CONFIG_SYS_PCI_SUBSYS_DEVICEID 0x0000	/* PCI Device ID: to-do!!!	*/
@@ -257,6 +307,7 @@
 #define MULTI_PURPOSE_SOCKET_ADDR 0xF8000000
 #define CONFIG_PORT_ADDR	PER_PLD_ADDR + 5
 
+
 /*-----------------------------------------------------------------------
  * Definitions for initial stack pointer and data area (in On Chip SRAM)
  */
@@ -299,7 +350,7 @@
 /************************************************************
  * IDE/ATA stuff
  ************************************************************/
-#if defined(CONFIG_TARGET_MIP405T)
+#if defined(CONFIG_MIP405T)
 #define CONFIG_SYS_IDE_MAXBUS		1   /* MIP405T has only one IDE bus	*/
 #else
 #define CONFIG_SYS_IDE_MAXBUS		2   /* max. 2 IDE busses	*/
@@ -332,28 +383,61 @@
 #define CONFIG_ISO_PARTITION /* Experimental */
 
 /************************************************************
+ * Keyboard support
+ ************************************************************/
+#undef CONFIG_ISA_KEYBOARD
+
+/************************************************************
  * Video support
  ************************************************************/
+#define CONFIG_VIDEO			/*To enable video controller support */
+#define CONFIG_VIDEO_CT69000
+#define CONFIG_CFB_CONSOLE
 #define CONFIG_VIDEO_LOGO
+#define CONFIG_CONSOLE_EXTRA_INFO
+#define CONFIG_VGA_AS_SINGLE_DEVICE
+#define CONFIG_VIDEO_SW_CURSOR
 #undef CONFIG_VIDEO_ONBOARD
 /************************************************************
  * USB support EXPERIMENTAL
  ************************************************************/
-#if !defined(CONFIG_TARGET_MIP405T)
+#if !defined(CONFIG_MIP405T)
 #define CONFIG_USB_UHCI
+#define CONFIG_USB_KEYBOARD
+#define CONFIG_USB_STORAGE
 
 /* Enable needed helper functions */
+#define CONFIG_SYS_STDIO_DEREGISTER		/* needs stdio_deregister */
 #endif
 /************************************************************
  * Debug support
  ************************************************************/
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_KGDB_BAUDRATE	230400	/* speed to run kgdb serial port */
+#define CONFIG_KGDB_SER_INDEX	2	/* which serial port to use */
 #endif
 
 /************************************************************
  * support BZIP2 compression
  ************************************************************/
 #define CONFIG_BZIP2		1
+
+/************************************************************
+ * Ident
+ ************************************************************/
+
+#define VERSION_TAG "released"
+#if !defined(CONFIG_MIP405T)
+#define CONFIG_ISO_STRING "MEV-10072-001"
+#else
+#define CONFIG_ISO_STRING "MEV-10082-001"
+#endif
+
+#if !defined(CONFIG_BOOT_PCI)
+#define CONFIG_IDENT_STRING "\n(c) 2003 by MPL AG Switzerland, " CONFIG_ISO_STRING " " VERSION_TAG
+#else
+#define CONFIG_IDENT_STRING "\n(c) 2003 by MPL AG Switzerland, PCI_BOOT Version"
+#endif
+
 
 #endif	/* __CONFIG_H */

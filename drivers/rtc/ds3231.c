@@ -2,7 +2,23 @@
  * (C) Copyright 2006
  * Markus Klotzbuecher, mk@denx.de
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 /*
@@ -49,8 +65,6 @@
 #define RTC_STAT_BIT_A1F	0x1	/* Alarm 1 flag                 */
 #define RTC_STAT_BIT_A2F	0x2	/* Alarm 2 flag                 */
 #define RTC_STAT_BIT_OSF	0x80	/* Oscillator stop flag         */
-#define RTC_STAT_BIT_BB32KHZ	0x40	/* Battery backed 32KHz Output  */
-#define RTC_STAT_BIT_EN32KHZ	0x8	/* Enable 32KHz Output  */
 
 
 static uchar rtc_read (uchar reg);
@@ -143,14 +157,6 @@ void rtc_reset (void)
 	rtc_write (RTC_CTL_REG_ADDR, RTC_CTL_BIT_RS1 | RTC_CTL_BIT_RS2);
 }
 
-/*
- * Enable 32KHz output
- */
-void rtc_enable_32khz_output(void)
-{
-	rtc_write(RTC_STAT_REG_ADDR,
-		  RTC_STAT_BIT_BB32KHZ | RTC_STAT_BIT_EN32KHZ);
-}
 
 /*
  * Helper functions

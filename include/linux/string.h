@@ -26,9 +26,6 @@ extern char * strcpy(char *,const char *);
 #ifndef __HAVE_ARCH_STRNCPY
 extern char * strncpy(char *,const char *, __kernel_size_t);
 #endif
-#ifndef __HAVE_ARCH_STRLCPY
-size_t strlcpy(char *, const char *, size_t);
-#endif
 #ifndef __HAVE_ARCH_STRCAT
 extern char * strcat(char *, const char *);
 #endif
@@ -91,9 +88,6 @@ extern void * memchr(const void *,int,__kernel_size_t);
 #ifndef __HAVE_ARCH_MEMCHR_INV
 void *memchr_inv(const void *, int, size_t);
 #endif
-
-unsigned long ustrtoul(const char *cp, char **endp, unsigned int base);
-unsigned long long ustrtoull(const char *cp, char **endp, unsigned int base);
 
 #ifdef __cplusplus
 }

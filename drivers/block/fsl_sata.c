@@ -2,12 +2,24 @@
  * Copyright (C) 2008,2010 Freescale Semiconductor, Inc.
  *		Dave Liu <daveliu@freescale.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <command.h>
-#include <console.h>
 #include <asm/io.h>
 #include <asm/processor.h>
 #include <asm/fsl_serdes.h>
@@ -114,7 +126,7 @@ int init_sata(int dev)
 	/* Save the private struct to block device struct */
 	sata_dev_desc[dev].priv = (void *)sata;
 
-	snprintf(sata->name, 12, "SATA%d", dev);
+	sprintf(sata->name, "SATA%d", dev);
 
 	/* Set the controller register base address to device struct */
 	reg = (fsl_sata_reg_t *)(fsl_sata_info[dev].sata_reg_base);
@@ -256,11 +268,6 @@ int init_sata(int dev)
 	return 0;
 }
 
-int reset_sata(int dev)
-{
-	return 0;
-}
-
 static void fsl_sata_dump_regs(fsl_sata_reg_t __iomem *reg)
 {
 	printf("\n\rSATA:           %08x\n\r", (u32)reg);
@@ -398,7 +405,7 @@ static int fsl_ata_exec_ata_cmd(struct fsl_sata *sata, struct sata_fis_h2d *cfis
 	debug("attribute = %08x\n\r", val32);
 	cmd_hdr->attribute = cpu_to_le32(val32);
 
-	/* Make sure cmd desc and cmd slot valid before command issue */
+	/* Make sure cmd desc and cmd slot valid before commmand issue */
 	sync();
 
 	/* PMP*/

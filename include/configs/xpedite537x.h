@@ -2,7 +2,23 @@
  * Copyright 2008 Extreme Engineering Solutions, Inc.
  * Copyright 2007-2008 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 /*
@@ -16,6 +32,7 @@
  */
 #define CONFIG_BOOKE		1	/* BOOKE */
 #define CONFIG_E500		1	/* BOOKE e500 family */
+#define CONFIG_MPC85xx		1	/* MPC8540/60/55/41/48 */
 #define CONFIG_MPC8572		1
 #define CONFIG_XPEDITE5370	1
 #define CONFIG_SYS_BOARD_NAME	"XPedite5370"
@@ -26,9 +43,11 @@
 #define CONFIG_SYS_TEXT_BASE	0xfff80000
 #endif
 
+#define CONFIG_PCI		1	/* Enable PCI/PCIE */
+#define CONFIG_PCI_PNP		1	/* do pci plug-and-play */
 #define CONFIG_PCI_SCAN_SHOW	1	/* show pci devices on startup */
-#define CONFIG_PCIE1		1	/* PCIE controller 1 */
-#define CONFIG_PCIE2		1	/* PCIE controller 2 */
+#define CONFIG_PCIE1		1	/* PCIE controler 1 */
+#define CONFIG_PCIE2		1	/* PCIE controler 2 */
 #define CONFIG_FSL_PCI_INIT	1	/* Use common FSL init code */
 #define CONFIG_PCI_INDIRECT_BRIDGE 1	/* indirect PCI bridge support */
 #define CONFIG_SYS_PCI_64BIT	1	/* enable 64-bit PCI resources */
@@ -46,7 +65,7 @@
 /*
  * DDR config
  */
-#define CONFIG_SYS_FSL_DDR2
+#define CONFIG_FSL_DDR2
 #undef CONFIG_FSL_DDR_INTERACTIVE
 #define CONFIG_SPD_EEPROM		/* Use SPD EEPROM for DDR setup */
 #define CONFIG_DDR_SPD
@@ -127,6 +146,8 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_SYS_NAND_BASE_LIST	{CONFIG_SYS_NAND_BASE, \
 					 CONFIG_SYS_NAND_BASE2}
 #define CONFIG_SYS_MAX_NAND_DEVICE	2
+#define CONFIG_MTD_NAND_VERIFY_WRITE
+#define CONFIG_SYS_NAND_QUIET_TEST	/* 2nd NAND flash not always populated */
 #define CONFIG_NAND_FSL_ELBC
 
 /*
@@ -210,6 +231,7 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
  * Serial Port
  */
 #define CONFIG_CONS_INDEX		1
+#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
@@ -222,17 +244,27 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 #define CONFIG_SYS_LOADS_BAUD_CHANGE	1	/* allow baudrate change */
 
 /*
+ * Use the HUSH parser
+ */
+#define CONFIG_SYS_HUSH_PARSER
+
+/*
+ * Pass open firmware flat tree
+ */
+#define CONFIG_OF_LIBFDT		1
+#define CONFIG_OF_BOARD_SETUP		1
+#define CONFIG_OF_STDOUT_VIA_ALIAS	1
+
+/*
  * I2C
  */
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_FSL
-#define CONFIG_SYS_FSL_I2C_SPEED	400000
-#define CONFIG_SYS_FSL_I2C_SLAVE	0x7F
-#define CONFIG_SYS_FSL_I2C_OFFSET	0x3000
-#define CONFIG_SYS_FSL_I2C2_SPEED	400000
-#define CONFIG_SYS_FSL_I2C2_SLAVE	0x7F
-#define CONFIG_SYS_FSL_I2C2_OFFSET	0x3100
-#define CONFIG_SYS_I2C_NOPROBES		{ {0, 0x69} }
+#define CONFIG_FSL_I2C				/* Use FSL common I2C driver */
+#define CONFIG_HARD_I2C				/* I2C with hardware support */
+#define CONFIG_SYS_I2C_SPEED		400000	/* I2C speed and slave address */
+#define CONFIG_SYS_I2C_SLAVE		0x7F
+#define CONFIG_SYS_I2C_OFFSET		0x3000
+#define CONFIG_SYS_I2C2_OFFSET		0x3100
+#define CONFIG_I2C_MULTI_BUS
 
 /* PEX8518 slave I2C interface */
 #define CONFIG_SYS_I2C_PEX8518_ADDR	0x70
@@ -363,17 +395,29 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 /*
  * Command configuration.
  */
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_ASKENV
 #define CONFIG_CMD_DATE
+#define CONFIG_CMD_DHCP
 #define CONFIG_CMD_DS4510
 #define CONFIG_CMD_DS4510_INFO
 #define CONFIG_CMD_DTT
 #define CONFIG_CMD_EEPROM
+#define CONFIG_CMD_ELF
+#define CONFIG_CMD_FLASH
+#define CONFIG_CMD_I2C
 #define CONFIG_CMD_JFFS2
+#define CONFIG_CMD_MII
 #define CONFIG_CMD_NAND
+#define CONFIG_CMD_NET
 #define CONFIG_CMD_PCA953X
 #define CONFIG_CMD_PCA953X_INFO
 #define CONFIG_CMD_PCI
 #define CONFIG_CMD_PCI_ENUM
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_SAVEENV
+#define CONFIG_CMD_SNTP
 #define CONFIG_CMD_REGINFO
 
 /*
@@ -381,15 +425,20 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
  */
 #define CONFIG_SYS_LONGHELP			/* undef to save memory	*/
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
+#define CONFIG_SYS_PROMPT	"=> "		/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	256		/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16) /* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS	16		/* max number of command args */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE	/* Boot Argument Buffer Size */
+#define CONFIG_SYS_HZ		1000		/* decrementer freq: 1ms ticks */
 #define CONFIG_CMDLINE_EDITING	1		/* add command line history	*/
 #define CONFIG_AUTO_COMPLETE	1		/* add autocompletion support */
 #define CONFIG_LOADADDR		0x1000000	/* default location for tftp and bootm */
+#define CONFIG_BOOTDELAY	3		/* -1 disables auto-boot */
 #define CONFIG_PANIC_HANG			/* do not reset board on panic */
 #define CONFIG_PREBOOT				/* enable preboot variable */
+#define CONFIG_FIT		1
+#define CONFIG_FIT_VERBOSE	1
 #define CONFIG_INTEGRITY			/* support booting INTEGRITY OS */
 
 /*
@@ -551,7 +600,7 @@ extern unsigned long get_board_ddr_clk(unsigned long dummy);
 	"osfile=/home/user/board.uImage\0"				\
 	"fdtfile=/home/user/board.dtb\0"				\
 	"ubootfile=/home/user/u-boot.bin\0"				\
-	"fdtaddr=0x1e00000\0"						\
+	"fdtaddr=c00000\0"						\
 	"osaddr=0x1000000\0"						\
 	"loadaddr=0x1000000\0"						\
 	"prog_uboot1="CONFIG_PROG_UBOOT1"\0"				\

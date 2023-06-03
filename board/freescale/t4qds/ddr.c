@@ -1,19 +1,92 @@
 /*
  * Copyright 2012 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * Version 2 or later as published by the Free Software Foundation.
  */
 
 #include <common.h>
 #include <i2c.h>
 #include <hwconfig.h>
 #include <asm/mmu.h>
-#include <fsl_ddr_sdram.h>
-#include <fsl_ddr_dimm_params.h>
+#include <asm/fsl_ddr_sdram.h>
+#include <asm/fsl_ddr_dimm_params.h>
 #include <asm/fsl_law.h>
-#include "ddr.h"
 
 DECLARE_GLOBAL_DATA_PTR;
+
+struct board_specific_parameters {
+	u32 n_ranks;
+	u32 datarate_mhz_high;
+	u32 rank_gb;
+	u32 clk_adjust;
+	u32 wrlvl_start;
+	u32 wrlvl_ctl_2;
+	u32 wrlvl_ctl_3;
+	u32 cpo;
+	u32 write_data_delay;
+	u32 force_2T;
+};
+
+/*
+ * This table contains all valid speeds we want to override with board
+ * specific parameters. datarate_mhz_high values need to be in ascending order
+ * for each n_ranks group.
+ */
+static const struct board_specific_parameters udimm0[] = {
+	/*
+	 * memory controller 0
+	 *   num|  hi| rank|  clk| wrlvl |   wrlvl   |  wrlvl | cpo  |wrdata|2T
+	 * ranks| mhz| GB  |adjst| start |   ctl2    |  ctl3  |      |delay |
+	 */
+	{2,  1350, 4, 4,     8, 0x0809090b, 0x0c0c0d0a,   0xff,    2,  0},
+	{2,  1350, 0, 5,     7, 0x0709090b, 0x0c0c0d09,   0xff,    2,  0},
+	{2,  1666, 4, 4,     8, 0x080a0a0d, 0x0d10100b,   0xff,    2,  0},
+	{2,  1666, 0, 5,     7, 0x080a0a0c, 0x0d0d0e0a,   0xff,    2,  0},
+	{2,  1900, 0, 4,     8, 0x090a0b0e, 0x0f11120c,   0xff,    2,  0},
+	{2,  2140, 0, 4,     8, 0x090a0b0e, 0x0f11120c,   0xff,    2,  0},
+	{1,  1350, 0, 5,     8, 0x0809090b, 0x0c0c0d0a,   0xff,    2,  0},
+	{1,  1700, 0, 5,     8, 0x080a0a0c, 0x0c0d0e0a,   0xff,    2,  0},
+	{1,  1900, 0, 4,     8, 0x080a0a0c, 0x0e0e0f0a,   0xff,    2,  0},
+	{1,  2140, 0, 4,     8, 0x090a0b0c, 0x0e0f100b,   0xff,    2,  0},
+	{}
+};
+
+/*
+ * The three slots have slightly different timing. The center values are good
+ * for all slots. We use identical speed tables for them. In future use, if
+ * DIMMs require separated tables, make more entries as needed.
+ */
+static const struct board_specific_parameters *udimms[] = {
+	udimm0,
+};
+
+static const struct board_specific_parameters rdimm0[] = {
+	/*
+	 * memory controller 0
+	 *   num|  hi| rank|  clk| wrlvl |   wrlvl   |  wrlvl | cpo  |wrdata|2T
+	 * ranks| mhz| GB  |adjst| start |   ctl2    |  ctl3  |      |delay |
+	 */
+	{4,  1350, 0, 5,     9, 0x08070605, 0x07080805,   0xff,    2,  0},
+	{4,  1666, 0, 5,     8, 0x08070605, 0x07080805,   0xff,    2,  0},
+	{4,  2140, 0, 5,     8, 0x08070605, 0x07081805,   0xff,    2,  0},
+	{2,  1350, 0, 5,     7, 0x0809090b, 0x0c0c0d09,   0xff,    2,  0},
+	{2,  1666, 0, 5,     8, 0x080a0a0c, 0x0c0d0e0a,   0xff,    2,  0},
+	{2,  2140, 0, 5,     8, 0x090a0b0c, 0x0e0f100b,   0xff,    2,  0},
+	{1,  1350, 0, 5,     8, 0x0809090b, 0x0c0c0d0a,   0xff,    2,  0},
+	{1,  1700, 0, 5,     8, 0x080a0a0c, 0x0c0d0e0a,   0xff,    2,  0},
+	{1,  1900, 0, 4,     8, 0x080a0a0c, 0x0e0e0f0a,   0xff,    2,  0},
+	{1,  2140, 0, 4,     8, 0x090a0b0c, 0x0e0f100b,   0xff,    2,  0},
+	{}
+};
+
+/*
+ * The three slots have slightly different timing. See comments above.
+ */
+static const struct board_specific_parameters *rdimms[] = {
+	rdimm0,
+};
 
 void fsl_ddr_board_options(memctl_options_t *popts,
 				dimm_params_t *pdimm,
@@ -54,7 +127,7 @@ void fsl_ddr_board_options(memctl_options_t *popts,
 				popts->wrlvl_start = pbsp->wrlvl_start;
 				popts->wrlvl_ctl_2 = pbsp->wrlvl_ctl_2;
 				popts->wrlvl_ctl_3 = pbsp->wrlvl_ctl_3;
-				popts->twot_en = pbsp->force_2t;
+				popts->twoT_en = pbsp->force_2T;
 				goto found;
 			}
 			pbsp_highest = pbsp;
@@ -73,7 +146,7 @@ void fsl_ddr_board_options(memctl_options_t *popts,
 		popts->wrlvl_start = pbsp_highest->wrlvl_start;
 		popts->wrlvl_ctl_2 = pbsp->wrlvl_ctl_2;
 		popts->wrlvl_ctl_3 = pbsp->wrlvl_ctl_3;
-		popts->twot_en = pbsp_highest->force_2t;
+		popts->twoT_en = pbsp_highest->force_2T;
 	} else {
 		panic("DIMM is not supported by this board");
 	}
@@ -115,14 +188,11 @@ phys_size_t initdram(int board_type)
 
 	puts("Initializing....using SPD\n");
 
-#if defined(CONFIG_SPL_BUILD) || !defined(CONFIG_RAMBOOT_PBL)
 	dram_size = fsl_ddr_sdram();
-#else
-	/* DDR has been initialised by first stage boot loader */
-	dram_size = fsl_ddr_sdram_size();
-#endif
+
 	dram_size = setup_ddr_tlbs(dram_size / 0x100000);
 	dram_size *= 0x100000;
 
+	puts("    DDR: ");
 	return dram_size;
 }

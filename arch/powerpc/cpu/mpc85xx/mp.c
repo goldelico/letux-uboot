@@ -1,7 +1,23 @@
 /*
  * Copyright 2008-2011 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -11,7 +27,7 @@
 #include <asm/io.h>
 #include <asm/mmu.h>
 #include <asm/fsl_law.h>
-#include <fsl_ddr_sdram.h>
+#include <asm/fsl_ddr_sdram.h>
 #include "mp.h"
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -30,7 +46,7 @@ u32 get_my_id()
  */
 int hold_cores_in_reset(int verbose)
 {
-	/* Default to no, overridden by 'y', 'yes', 'Y', 'Yes', or '1' */
+	/* Default to no, overriden by 'y', 'yes', 'Y', 'Yes', or '1' */
 	if (getenv_yesno("mp_holdoff") == 1) {
 		if (verbose) {
 			puts("Secondary cores are being held in reset.\n");

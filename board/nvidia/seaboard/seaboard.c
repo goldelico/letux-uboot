@@ -2,13 +2,28 @@
  *  (C) Copyright 2010,2011
  *  NVIDIA Corporation <www.nvidia.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <asm/io.h>
 #include <asm/arch/tegra.h>
-#include <asm/arch-tegra/board.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/funcmux.h>
 #include <asm/arch/gpio.h>
@@ -20,8 +35,10 @@
 void gpio_early_init_uart(void)
 {
 	/* Enable UART via GPIO_PI3 (port 8, bit 3) so serial console works */
-	gpio_request(TEGRA_GPIO(I, 3), "uart_en");
-	gpio_direction_output(TEGRA_GPIO(I, 3), 0);
+#ifndef CONFIG_SPL_BUILD
+	gpio_request(GPIO_PI3, NULL);
+#endif
+	gpio_direction_output(GPIO_PI3, 0);
 }
 #endif
 
@@ -36,20 +53,14 @@ void pin_mux_mmc(void)
 	funcmux_select(PERIPH_ID_SDMMC3, FUNCMUX_SDMMC3_SDB_4BIT);
 
 	/* For power GPIO PI6 */
-	pinmux_tristate_disable(PMUX_PINGRP_ATA);
+	pinmux_tristate_disable(PINGRP_ATA);
 	/* For CD GPIO PI5 */
-	pinmux_tristate_disable(PMUX_PINGRP_ATC);
+	pinmux_tristate_disable(PINGRP_ATC);
 }
 #endif
 
 void pin_mux_usb(void)
 {
-	/* For USB0's GPIO PD0. For now, since we have no pinmux in fdt */
-	pinmux_tristate_disable(PMUX_PINGRP_SLXK);
-	/* For USB1's ULPI signals */
-	funcmux_select(PERIPH_ID_USB2, FUNCMUX_USB2_ULPI);
-	pinmux_set_func(PMUX_PINGRP_CDEV2, PMUX_FUNC_PLLP_OUT4);
-	pinmux_tristate_disable(PMUX_PINGRP_CDEV2);
-	/* USB1 PHY reset GPIO */
-	pinmux_tristate_disable(PMUX_PINGRP_UAC);
+	/* For USB's GPIO PD0. For now, since we have no pinmux in fdt */
+	pinmux_tristate_disable(PINGRP_SLXK);
 }

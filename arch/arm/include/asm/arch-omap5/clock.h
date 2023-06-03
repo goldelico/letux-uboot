@@ -5,7 +5,23 @@
  *	Aneesh V <aneesh@ti.com>
  *	Sricharan R <r.sricharan@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #ifndef _CLOCKS_OMAP5_H_
 #define _CLOCKS_OMAP5_H_
@@ -137,9 +153,6 @@
 #define HSMMC_CLKCTRL_CLKSEL_MASK		(1 << 24)
 #define HSMMC_CLKCTRL_CLKSEL_DIV_MASK		(1 << 25)
 
-/* CM_L3INIT_SATA_CLKCTRL */
-#define SATA_CLKCTRL_OPTFCLKEN_MASK		(1 << 8)
-
 /* CM_WKUP_GPTIMER1_CLKCTRL */
 #define GPTIMER1_CLKCTRL_CLKSEL_MASK		(1 << 24)
 
@@ -151,36 +164,6 @@
 
 /* CM_L3INIT_USBPHY_CLKCTRL */
 #define USBPHY_CLKCTRL_OPTFCLKEN_PHY_48M_MASK	8
-
-/* CM_L3INIT_USB_HOST_HS_CLKCTRL */
-#define OPTFCLKEN_FUNC48M_CLK			(1 << 15)
-#define OPTFCLKEN_HSIC480M_P2_CLK		(1 << 14)
-#define OPTFCLKEN_HSIC480M_P1_CLK		(1 << 13)
-#define OPTFCLKEN_HSIC60M_P2_CLK		(1 << 12)
-#define OPTFCLKEN_HSIC60M_P1_CLK		(1 << 11)
-#define OPTFCLKEN_UTMI_P3_CLK			(1 << 10)
-#define OPTFCLKEN_UTMI_P2_CLK			(1 << 9)
-#define OPTFCLKEN_UTMI_P1_CLK			(1 << 8)
-#define OPTFCLKEN_HSIC480M_P3_CLK		(1 << 7)
-#define OPTFCLKEN_HSIC60M_P3_CLK		(1 << 6)
-
-/* CM_L3INIT_USB_TLL_HS_CLKCTRL */
-#define OPTFCLKEN_USB_CH0_CLK_ENABLE	(1 << 8)
-#define OPTFCLKEN_USB_CH1_CLK_ENABLE	(1 << 9)
-#define OPTFCLKEN_USB_CH2_CLK_ENABLE	(1 << 10)
-
-/* CM_COREAON_USB_PHY_CORE_CLKCTRL */
-#define USBPHY_CORE_CLKCTRL_OPTFCLKEN_CLK32K	(1 << 8)
-
-/* CM_COREAON_L3INIT_60M_GFCLK_CLKCTRL */
-#define L3INIT_CLKCTRL_OPTFCLKEN_60M_GFCLK	(1 << 8)
-
-/* CM_L3INIT_USB_OTG_SS_CLKCTRL */
-#define OTG_SS_CLKCTRL_MODULEMODE_HW	(1 << 0)
-#define OPTFCLKEN_REFCLK960M			(1 << 8)
-
-/* CM_L3INIT_OCP2SCP1_CLKCTRL */
-#define OCP2SCP1_CLKCTRL_MODULEMODE_HW	(1 << 0)
 
 /* CM_MPU_MPU_CLKCTRL */
 #define MPU_CLKCTRL_CLKSEL_EMIF_DIV_MODE_SHIFT	24
@@ -208,10 +191,6 @@
 /* PRM_VC_VAL_BYPASS */
 #define PRM_VC_I2C_CHANNEL_FREQ_KHZ	400
 
-/* CTRL_CORE_SRCOMP_NORTH_SIDE */
-#define USB2PHY_DISCHGDET	(1 << 29)
-#define USB2PHY_AUTORESUME_EN (1 << 30)
-
 /* SMPS */
 #define SMPS_I2C_SLAVE_ADDR	0x12
 #define SMPS_REG_ADDR_12_MPU	0x23
@@ -236,38 +215,15 @@
 #define VDD_MPU_ES2_HIGH 1250
 #define VDD_MM_ES2_OD  1120
 
-/* Efuse register offsets for OMAP5 platform */
-#define OMAP5_ES2_EFUSE_BASE	0x4A002000
-#define OMAP5_ES2_PROD_REGBITS	16
+#define VDD_MPU_ES2_LOW 880
+#define VDD_MM_ES2_LOW 880
 
-/* CONTROL_STD_FUSE_OPP_VDD_CORE_3 */
-#define OMAP5_ES2_PROD_CORE_OPNO_VMIN	(OMAP5_ES2_EFUSE_BASE + 0x1D8)
-
-/* CONTROL_STD_FUSE_OPP_VDD_MM_4 */
-#define OMAP5_ES2_PROD_MM_OPNO_VMIN	(OMAP5_ES2_EFUSE_BASE + 0x1A4)
-/* CONTROL_STD_FUSE_OPP_VDD_MM_5 */
-#define OMAP5_ES2_PROD_MM_OPOD_VMIN	(OMAP5_ES2_EFUSE_BASE + 0x1A8)
-/* CONTROL_STD_FUSE_OPP_VDD_MPU_6 */
-#define OMAP5_ES2_PROD_MPU_OPNO_VMIN	(OMAP5_ES2_EFUSE_BASE + 0x1C4)
-/* CONTROL_STD_FUSE_OPP_VDD_MPU_7 */
-#define OMAP5_ES2_PROD_MPU_OPHI_VMIN	(OMAP5_ES2_EFUSE_BASE + 0x1C8)
-
-/* DRA74x/75x/72x voltage settings in mv for OPP_NOM per DM */
-#define VDD_MPU_DRA7_NOM	1150
-#define VDD_CORE_DRA7_NOM	1150
-#define VDD_EVE_DRA7_NOM	1060
-#define VDD_GPU_DRA7_NOM	1060
-#define VDD_IVA_DRA7_NOM	1060
-
-/* DRA74x/75x/72x voltage settings in mv for OPP_OD per DM */
-#define VDD_EVE_DRA7_OD		1150
-#define VDD_GPU_DRA7_OD		1150
-#define VDD_IVA_DRA7_OD		1150
-
-/* DRA74x/75x/72x voltage settings in mv for OPP_HIGH per DM */
-#define VDD_EVE_DRA7_HIGH	1250
-#define VDD_GPU_DRA7_HIGH	1250
-#define VDD_IVA_DRA7_HIGH	1250
+/* TPS659038 Voltage settings in mv for OPP_NOMINAL */
+#define VDD_MPU_DRA752		1090
+#define VDD_EVE_DRA752		1060
+#define VDD_GPU_DRA752		1060
+#define VDD_CORE_DRA752		1030
+#define VDD_IVA_DRA752		1060
 
 /* Efuse register offsets for DRA7xx platform */
 #define DRA752_EFUSE_BASE	0x4A002000
@@ -299,37 +255,16 @@
 /* STD_FUSE_OPP_VMIN_MPU_4 */
 #define STD_FUSE_OPP_VMIN_MPU_HIGH	(DRA752_EFUSE_BASE + 0x1B28)
 
-/* Common voltage and Efuse register macros */
-/* DRA74x/DRA75x/DRA72x */
-#define VDD_MPU_DRA7			VDD_MPU_DRA7_NOM
-#define VDD_CORE_DRA7			VDD_CORE_DRA7_NOM
-#define VDD_EVE_DRA7			VDD_EVE_DRA7_NOM
-#define VDD_GPU_DRA7			VDD_GPU_DRA7_NOM
-#define VDD_IVA_DRA7			VDD_IVA_DRA7_NOM
-
-#define STD_FUSE_OPP_VMIN_MPU		STD_FUSE_OPP_VMIN_MPU_NOM
-#define STD_FUSE_OPP_VMIN_CORE		STD_FUSE_OPP_VMIN_CORE_NOM
-#define STD_FUSE_OPP_VMIN_DSPEVE	STD_FUSE_OPP_VMIN_DSPEVE_NOM
-#define STD_FUSE_OPP_VMIN_GPU		STD_FUSE_OPP_VMIN_GPU_NOM
-#define STD_FUSE_OPP_VMIN_IVA		STD_FUSE_OPP_VMIN_IVA_NOM
-
 /* Standard offset is 0.5v expressed in uv */
 #define PALMAS_SMPS_BASE_VOLT_UV 500000
 
 /* TPS659038 */
 #define TPS659038_I2C_SLAVE_ADDR		0x58
-#define TPS659038_REG_ADDR_SMPS12		0x23
-#define TPS659038_REG_ADDR_SMPS45		0x2B
-#define TPS659038_REG_ADDR_SMPS6		0x2F
-#define TPS659038_REG_ADDR_SMPS7		0x33
-#define TPS659038_REG_ADDR_SMPS8		0x37
-
-/* TPS65917 */
-#define TPS65917_I2C_SLAVE_ADDR		0x58
-#define TPS65917_REG_ADDR_SMPS1		0x23
-#define TPS65917_REG_ADDR_SMPS2		0x27
-#define TPS65917_REG_ADDR_SMPS3		0x2F
-
+#define TPS659038_REG_ADDR_SMPS12_MPU		0x23
+#define TPS659038_REG_ADDR_SMPS45_EVE		0x2B
+#define TPS659038_REG_ADDR_SMPS6_GPU		0x2F
+#define TPS659038_REG_ADDR_SMPS7_CORE		0x33
+#define TPS659038_REG_ADDR_SMPS8_IVA		0x37
 
 /* TPS */
 #define TPS62361_I2C_SLAVE_ADDR		0x60
@@ -361,16 +296,13 @@
  */
 #define CONFIG_DEFAULT_OMAP_RESET_TIME_MAX_USEC	31219
 
-#if defined(CONFIG_DRA7XX) || defined(CONFIG_AM57XX)
+#ifdef CONFIG_DRA7XX
 #define V_OSCK			20000000	/* Clock output from T2 */
 #else
 #define V_OSCK			19200000	/* Clock output from T2 */
 #endif
 
 #define V_SCLK	V_OSCK
-
-/* CKO buffer control */
-#define CKOBUFFER_CLK_ENABLE_MASK	(1 << 28)
 
 /* AUXCLKx reg fields */
 #define AUXCLK_ENABLE_MASK		(1 << 8)

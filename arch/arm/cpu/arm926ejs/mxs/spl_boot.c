@@ -4,7 +4,23 @@
  * Copyright (C) 2011 Marek Vasut <marek.vasut@gmail.com>
  * on behalf of DENX Software Engineering GmbH
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -13,15 +29,8 @@
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
-#include <linux/compiler.h>
 
 #include "mxs_init.h"
-
-DECLARE_GLOBAL_DATA_PTR;
-static gd_t gdata __section(".data");
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
-static bd_t bdata __section(".data");
-#endif
 
 /*
  * This delay function is intended to be used only in early stage of boot, where
@@ -49,6 +58,13 @@ static const iomux_cfg_t iomux_boot[] = {
 	MX23_PAD_LCD_D03__GPIO_1_3 | MUX_CONFIG_BOOTMODE_PAD,
 	MX23_PAD_LCD_D04__GPIO_1_4 | MUX_CONFIG_BOOTMODE_PAD,
 	MX23_PAD_LCD_D05__GPIO_1_5 | MUX_CONFIG_BOOTMODE_PAD,
+#elif defined(CONFIG_MX28)
+	MX28_PAD_LCD_D00__GPIO_1_0 | MUX_CONFIG_BOOTMODE_PAD,
+	MX28_PAD_LCD_D01__GPIO_1_1 | MUX_CONFIG_BOOTMODE_PAD,
+	MX28_PAD_LCD_D02__GPIO_1_2 | MUX_CONFIG_BOOTMODE_PAD,
+	MX28_PAD_LCD_D03__GPIO_1_3 | MUX_CONFIG_BOOTMODE_PAD,
+	MX28_PAD_LCD_D04__GPIO_1_4 | MUX_CONFIG_BOOTMODE_PAD,
+	MX28_PAD_LCD_D05__GPIO_1_5 | MUX_CONFIG_BOOTMODE_PAD,
 #endif
 };
 
@@ -58,10 +74,10 @@ static uint8_t mxs_get_bootmode_index(void)
 	int i;
 	uint8_t masked;
 
-#if defined(CONFIG_MX23)
 	/* Setup IOMUX of bootmode pads to GPIO */
 	mxs_iomux_setup_multiple_pads(iomux_boot, ARRAY_SIZE(iomux_boot));
 
+#if defined(CONFIG_MX23)
 	/* Setup bootmode pins as GPIO input */
 	gpio_direction_input(MX23_PAD_LCD_D00__GPIO_1_0);
 	gpio_direction_input(MX23_PAD_LCD_D01__GPIO_1_1);
@@ -76,11 +92,21 @@ static uint8_t mxs_get_bootmode_index(void)
 	bootmode |= (gpio_get_value(MX23_PAD_LCD_D03__GPIO_1_3) ? 1 : 0) << 3;
 	bootmode |= (gpio_get_value(MX23_PAD_LCD_D05__GPIO_1_5) ? 1 : 0) << 5;
 #elif defined(CONFIG_MX28)
-	/* The global boot mode will be detected by ROM code and its value
-	 * is stored at the fixed address 0x00019BF0 in OCRAM.
-	 */
-#define GLOBAL_BOOT_MODE_ADDR 0x00019BF0
-	bootmode = __raw_readl(GLOBAL_BOOT_MODE_ADDR);
+	/* Setup bootmode pins as GPIO input */
+	gpio_direction_input(MX28_PAD_LCD_D00__GPIO_1_0);
+	gpio_direction_input(MX28_PAD_LCD_D01__GPIO_1_1);
+	gpio_direction_input(MX28_PAD_LCD_D02__GPIO_1_2);
+	gpio_direction_input(MX28_PAD_LCD_D03__GPIO_1_3);
+	gpio_direction_input(MX28_PAD_LCD_D04__GPIO_1_4);
+	gpio_direction_input(MX28_PAD_LCD_D05__GPIO_1_5);
+
+	/* Read bootmode pads */
+	bootmode |= (gpio_get_value(MX28_PAD_LCD_D00__GPIO_1_0) ? 1 : 0) << 0;
+	bootmode |= (gpio_get_value(MX28_PAD_LCD_D01__GPIO_1_1) ? 1 : 0) << 1;
+	bootmode |= (gpio_get_value(MX28_PAD_LCD_D02__GPIO_1_2) ? 1 : 0) << 2;
+	bootmode |= (gpio_get_value(MX28_PAD_LCD_D03__GPIO_1_3) ? 1 : 0) << 3;
+	bootmode |= (gpio_get_value(MX28_PAD_LCD_D04__GPIO_1_4) ? 1 : 0) << 4;
+	bootmode |= (gpio_get_value(MX28_PAD_LCD_D05__GPIO_1_5) ? 1 : 0) << 5;
 #endif
 
 	for (i = 0; i < ARRAY_SIZE(mxs_boot_modes); i++) {
@@ -92,46 +118,14 @@ static uint8_t mxs_get_bootmode_index(void)
 	return i;
 }
 
-static void mxs_spl_fixup_vectors(void)
-{
-	/*
-	 * Copy our vector table to 0x0, since due to HAB, we cannot
-	 * be loaded to 0x0. We want to have working vectoring though,
-	 * thus this fixup. Our vectoring table is PIC, so copying is
-	 * fine.
-	 */
-	extern uint32_t _start;
-
-	/* cppcheck-suppress nullPointer */
-	memcpy(0x0, &_start, 0x60);
-}
-
-static void mxs_spl_console_init(void)
-{
-#ifdef CONFIG_SPL_SERIAL_SUPPORT
-	gd->bd = &bdata;
-	gd->baudrate = CONFIG_BAUDRATE;
-	serial_init();
-	gd->have_console = 1;
-#endif
-}
-
-void mxs_common_spl_init(const uint32_t arg, const uint32_t *resptr,
-			 const iomux_cfg_t *iomux_setup,
-			 const unsigned int iomux_size)
+void mxs_common_spl_init(const iomux_cfg_t *iomux_setup,
+			const unsigned int iomux_size)
 {
 	struct mxs_spl_data *data = (struct mxs_spl_data *)
 		((CONFIG_SYS_TEXT_BASE - sizeof(struct mxs_spl_data)) & ~0xf);
 	uint8_t bootmode = mxs_get_bootmode_index();
-	gd = &gdata;
-
-	mxs_spl_fixup_vectors();
 
 	mxs_iomux_setup_multiple_pads(iomux_setup, iomux_size);
-
-	mxs_spl_console_init();
-	debug("SPL: Serial Console Initialised\n");
-
 	mxs_power_init();
 
 	mxs_mem_init();
@@ -140,11 +134,6 @@ void mxs_common_spl_init(const uint32_t arg, const uint32_t *resptr,
 	data->boot_mode_idx = bootmode;
 
 	mxs_power_wait_pswitch();
-
-	if (mxs_boot_modes[data->boot_mode_idx].boot_pads == MXS_BM_JTAG) {
-		debug("SPL: Waiting for JTAG user\n");
-		asm volatile ("x: b x");
-	}
 }
 
 /* Support aparatus */

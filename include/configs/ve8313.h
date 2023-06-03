@@ -4,7 +4,23 @@
  * (C) Copyright 2010
  * Heiko Schocher, DENX Software Engineering, hs@denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 /*
  * ve8313 board configuration file
@@ -17,6 +33,7 @@
  * High Level Configuration Options
  */
 #define CONFIG_E300		1
+#define CONFIG_MPC83xx		1
 #define CONFIG_MPC831x		1
 #define CONFIG_MPC8313		1
 #define CONFIG_VE8313		1
@@ -25,6 +42,7 @@
 #define CONFIG_SYS_TEXT_BASE	0xfe000000
 #endif
 
+#define CONFIG_PCI		1
 #define CONFIG_PCI_INDIRECT_BRIDGE 1
 #define CONFIG_FSL_ELBC		1
 
@@ -182,6 +200,7 @@
  */
 #define CONFIG_SYS_NAND_BASE		0x61000000
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_MTD_NAND_VERIFY_WRITE
 #define CONFIG_CMD_NAND 1
 #define CONFIG_NAND_FSL_ELBC 1
 #define CONFIG_SYS_NAND_BLOCK_SIZE 16384
@@ -239,10 +258,16 @@
 				| OR_GPCM_EAD)
 				/* 0xfe0009f7 */
 
+/* pass open firmware flat tree */
+#define CONFIG_OF_LIBFDT	1
+#define CONFIG_OF_BOARD_SETUP	1
+#define CONFIG_OF_STDOUT_VIA_ALIAS	1
+
 /*
  * Serial Port
  */
 #define CONFIG_CONS_INDEX	1
+#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_bus_freq(0)
@@ -252,6 +277,9 @@
 
 #define CONFIG_SYS_NS16550_COM1	(CONFIG_SYS_IMMR+0x4500)
 #define CONFIG_SYS_NS16550_COM2	(CONFIG_SYS_IMMR+0x4600)
+
+/* Use the HUSH parser */
+#define CONFIG_SYS_HUSH_PARSER
 
 #if defined(CONFIG_PCI)
 /*
@@ -268,6 +296,7 @@
 #define CONFIG_SYS_PCI1_IO_PHYS		0xE2000000
 #define CONFIG_SYS_PCI1_IO_SIZE		0x00100000	/* 1M */
 
+#define CONFIG_PCI_PNP		/* do pci plug-and-play */
 #define CONFIG_SYS_PCI_SUBSYS_VENDORID 0x1957	/* Freescale */
 #endif
 
@@ -275,6 +304,7 @@
  * TSEC
  */
 #define CONFIG_TSEC_ENET		/* TSEC ethernet support */
+
 
 #define CONFIG_TSEC1
 #ifdef CONFIG_TSEC1
@@ -316,6 +346,11 @@
 /*
  * Command line configuration.
  */
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_PING
 #define CONFIG_CMD_PCI
 
 #define CONFIG_CMDLINE_EDITING 1
@@ -326,11 +361,13 @@
  */
 #define CONFIG_SYS_LONGHELP			/* undef to save memory */
 #define CONFIG_SYS_LOAD_ADDR	0x100000	/* default load address */
+#define CONFIG_SYS_PROMPT	"=> "		/* Monitor Command Prompt */
 #define CONFIG_SYS_CBSIZE	1024		/* Console I/O Buffer Size */
 
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16)
 #define CONFIG_SYS_MAXARGS	16		/* max number of cmd args */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE /* Boot arg Buffer size */
+#define CONFIG_SYS_HZ		1000		/* 1ms ticks */
 
 /*
  * For booting Linux, the board info and command line data
@@ -461,6 +498,7 @@
 #define CONFIG_HOSTNAME		ve8313
 #define CONFIG_UBOOTPATH	ve8313/u-boot.bin
 
+#define CONFIG_BOOTDELAY	6	/* -1 disables auto-boot */
 #define CONFIG_BAUDRATE		115200
 
 #define CONFIG_EXTRA_ENV_SETTINGS \

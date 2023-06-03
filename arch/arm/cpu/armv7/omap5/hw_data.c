@@ -7,7 +7,23 @@
  *
  * Sricharan R <r.sricharan@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #include <common.h>
 #include <palmas.h>
@@ -37,6 +53,17 @@ static const struct dpll_params mpu_dpll_params_1_5ghz[NUM_SYS_CLKS] = {
 	{750, 12, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 26 MHz   */
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 27 MHz   */
 	{625, 15, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}	/* 38.4 MHz */
+};
+
+/* OPP NOM FREQUENCY for ES2.0, OPP HIGH for ES1.0 */
+static const struct dpll_params mpu_dpll_params_1100mhz[NUM_SYS_CLKS] = {
+	{275, 2, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 12 MHz   */
+	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 13 MHz   */
+	{1375, 20, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 16.8 MHz */
+	{1375, 23, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 19.2 MHz */
+	{550, 12, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 26 MHz   */
+	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 27 MHz   */
+	{1375, 47, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}	/* 38.4 MHz */
 };
 
 /* OPP NOM FREQUENCY for ES1.0 */
@@ -72,7 +99,6 @@ static const struct dpll_params mpu_dpll_params_499mhz[NUM_SYS_CLKS] = {
 	{493, 37, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1}	/* 38.4 MHz */
 };
 
-/* OPP NOM FREQUENCY for OMAP5 ES2.0, and DRA7 ES1.0 */
 static const struct dpll_params mpu_dpll_params_1ghz[NUM_SYS_CLKS] = {
 	{250, 2, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1},		/* 12 MHz   */
 	{500, 9, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1},		/* 20 MHz   */
@@ -159,13 +185,13 @@ static const struct dpll_params per_dpll_params_768mhz_es2[NUM_SYS_CLKS] = {
 };
 
 static const struct dpll_params per_dpll_params_768mhz_dra7xx[NUM_SYS_CLKS] = {
-	{32, 0, 4, 1, 3, 4, 4, 2, -1, -1, -1, -1},		/* 12 MHz   */
+	{32, 0, 4, 1, 3, 4, 10, 2, -1, -1, -1, -1},		/* 12 MHz   */
 	{96, 4, 4, 1, 3, 4, 10, 2, -1, -1, -1, -1},		/* 20 MHz   */
-	{160, 6, 4, 1, 3, 4, 4, 2, -1, -1, -1, -1},		/* 16.8 MHz */
-	{20, 0, 4, 1, 3, 4, 4, 2, -1, -1, -1, -1},		/* 19.2 MHz */
-	{192, 12, 4, 1, 3, 4, 4, 2, -1, -1, -1, -1},		/* 26 MHz   */
+	{160, 6, 4, 1, 3, 4, 10, 2, -1, -1, -1, -1},		/* 16.8 MHz */
+	{20, 0, 4, 1, 3, 4, 10, 2, -1, -1, -1, -1},		/* 19.2 MHz */
+	{192, 12, 4, 1, 3, 4, 10, 2, -1, -1, -1, -1},		/* 26 MHz   */
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 27 MHz   */
-	{10, 0, 4, 1, 3, 4, 4, 2, -1, -1, -1, -1},		/* 38.4 MHz */
+	{10, 0, 4, 1, 3, 4, 10, 2, -1, -1, -1, -1},		/* 38.4 MHz */
 };
 
 static const struct dpll_params iva_dpll_params_2330mhz[NUM_SYS_CLKS] = {
@@ -227,16 +253,6 @@ static const struct dpll_params usb_dpll_params_1920mhz[NUM_SYS_CLKS] = {
 	{400, 15, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 38.4 MHz */
 };
 
-static const struct dpll_params ddr_dpll_params_2664mhz[NUM_SYS_CLKS] = {
-	{111, 0, 2, 1, 8, -1, -1, -1, -1, -1, -1, -1},		/* 12 MHz   */
-	{333, 4, 2, 1, 8, -1, -1, -1, -1, -1, -1, -1},		/* 20 MHz   */
-	{555, 6, 2, 1, 8, -1, -1, -1, -1, -1, -1, -1},		/* 16.8 MHz */
-	{555, 7, 2, 1, 8, -1, -1, -1, -1, -1, -1, -1},		/* 19.2 MHz */
-	{666, 12, 2, 1, 8, -1, -1, -1, -1, -1, -1, -1},		/* 26 MHz   */
-	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 27 MHz   */
-	{555, 15, 2, 1, 8, -1, -1, -1, -1, -1, -1, -1},		/* 38.4 MHz */
-};
-
 static const struct dpll_params ddr_dpll_params_2128mhz[NUM_SYS_CLKS] = {
 	{266, 2, 2, 1, 8, -1, -1, -1, -1, -1, -1, -1},		/* 12 MHz   */
 	{266, 4, 2, 1, 8, -1, -1, -1, -1, -1, -1, -1},		/* 20 MHz   */
@@ -245,16 +261,6 @@ static const struct dpll_params ddr_dpll_params_2128mhz[NUM_SYS_CLKS] = {
 	{532, 12, 2, 1, 8, -1, -1, -1, -1, -1, -1, -1},		/* 26 MHz   */
 	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 27 MHz   */
 	{665, 23, 2, 1, 8, -1, -1, -1, -1, -1, -1, -1},		/* 38.4 MHz */
-};
-
-static const struct dpll_params gmac_dpll_params_2000mhz[NUM_SYS_CLKS] = {
-	{250, 2, 4, 10, 40, 8, 10, -1, -1, -1, -1, -1},		/* 12 MHz   */
-	{250, 4, 4, 10, 40, 8, 10, -1, -1, -1, -1, -1},		/* 20 MHz   */
-	{119, 1, 4, 10, 40, 8, 10, -1, -1, -1, -1, -1},		/* 16.8 MHz */
-	{625, 11, 4, 10, 40, 8, 10, -1, -1, -1, -1, -1},	/* 19.2 MHz */
-	{500, 12, 4, 10, 40, 8, 10, -1, -1, -1, -1, -1},	/* 26 MHz   */
-	{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* 27 MHz   */
-	{625, 23, 4, 10, 40, 8, 10, -1, -1, -1, -1, -1},	/* 38.4 MHz */
 };
 
 struct dplls omap5_dplls_es1 = {
@@ -272,7 +278,7 @@ struct dplls omap5_dplls_es1 = {
 };
 
 struct dplls omap5_dplls_es2 = {
-	.mpu = mpu_dpll_params_1ghz,
+	.mpu = mpu_dpll_params_1100mhz,
 	.core = core_dpll_params_2128mhz_ddr532_es2,
 	.per = per_dpll_params_768mhz_es2,
 	.iva = iva_dpll_params_2330mhz,
@@ -293,18 +299,6 @@ struct dplls dra7xx_dplls = {
 	.iva = iva_dpll_params_2330mhz_dra7xx,
 	.usb = usb_dpll_params_1920mhz,
 	.ddr = ddr_dpll_params_2128mhz,
-	.gmac = gmac_dpll_params_2000mhz,
-};
-
-struct dplls dra72x_dplls = {
-	.mpu = mpu_dpll_params_1ghz,
-	.core = core_dpll_params_2128mhz_dra7xx,
-	.per = per_dpll_params_768mhz_dra7xx,
-	.abe = abe_dpll_params_sysclk2_361267khz,
-	.iva = iva_dpll_params_2330mhz_dra7xx,
-	.usb = usb_dpll_params_1920mhz,
-	.ddr =	ddr_dpll_params_2664mhz,
-	.gmac = gmac_dpll_params_2000mhz,
 };
 
 struct pmic_data palmas = {
@@ -318,10 +312,8 @@ struct pmic_data palmas = {
 	.i2c_slave_addr	= SMPS_I2C_SLAVE_ADDR,
 	.pmic_bus_init	= sri2c_init,
 	.pmic_write	= omap_vc_bypass_send_value,
-	.gpio_en = 0,
 };
 
-/* The TPS659038 and TPS65917 are software-compatible, use common struct */
 struct pmic_data tps659038 = {
 	.base_offset = PALMAS_SMPS_BASE_VOLT_UV,
 	.step = 10000, /* 10 mV represented in uV */
@@ -333,7 +325,6 @@ struct pmic_data tps659038 = {
 	.i2c_slave_addr	= TPS659038_I2C_SLAVE_ADDR,
 	.pmic_bus_init	= gpi2c_init,
 	.pmic_write	= palmas_i2c_write_u8,
-	.gpio_en = 0,
 };
 
 struct vcores_data omap5430_volts = {
@@ -354,7 +345,6 @@ struct vcores_data omap5430_volts_es2 = {
 	.mpu.value = VDD_MPU_ES2,
 	.mpu.addr = SMPS_REG_ADDR_12_MPU,
 	.mpu.pmic = &palmas,
-	.mpu.abb_tx_done_mask = OMAP_ABB_MPU_TXDONE_MASK,
 
 	.core.value = VDD_CORE_ES2,
 	.core.addr = SMPS_REG_ADDR_8_CORE,
@@ -363,16 +353,38 @@ struct vcores_data omap5430_volts_es2 = {
 	.mm.value = VDD_MM_ES2,
 	.mm.addr = SMPS_REG_ADDR_45_IVA,
 	.mm.pmic = &palmas,
-	.mm.abb_tx_done_mask = OMAP_ABB_MM_TXDONE_MASK,
+};
 
-	.mpu.efuse.reg		= OMAP5_ES2_PROD_MPU_OPNO_VMIN,
-	.mpu.efuse.reg_bits	= OMAP5_ES2_PROD_REGBITS,
+struct vcores_data dra752_volts = {
+	.mpu.value	= VDD_MPU_DRA752,
+	.mpu.efuse.reg	= STD_FUSE_OPP_VMIN_MPU_NOM,
+	.mpu.efuse.reg_bits	= DRA752_EFUSE_REGBITS,
+	.mpu.addr	= TPS659038_REG_ADDR_SMPS12_MPU,
+	.mpu.pmic	= &tps659038,
 
-	.core.efuse.reg		= OMAP5_ES2_PROD_CORE_OPNO_VMIN,
-	.core.efuse.reg_bits	= OMAP5_ES2_PROD_REGBITS,
+	.eve.value	= VDD_EVE_DRA752,
+	.eve.efuse.reg	= STD_FUSE_OPP_VMIN_DSPEVE_NOM,
+	.eve.efuse.reg_bits	= DRA752_EFUSE_REGBITS,
+	.eve.addr	= TPS659038_REG_ADDR_SMPS45_EVE,
+	.eve.pmic	= &tps659038,
 
-	.mm.efuse.reg		= OMAP5_ES2_PROD_MM_OPNO_VMIN,
-	.mm.efuse.reg_bits	= OMAP5_ES2_PROD_REGBITS,
+	.gpu.value	= VDD_GPU_DRA752,
+	.gpu.efuse.reg	= STD_FUSE_OPP_VMIN_GPU_NOM,
+	.gpu.efuse.reg_bits	= DRA752_EFUSE_REGBITS,
+	.gpu.addr	= TPS659038_REG_ADDR_SMPS6_GPU,
+	.gpu.pmic	= &tps659038,
+
+	.core.value	= VDD_CORE_DRA752,
+	.core.efuse.reg	= STD_FUSE_OPP_VMIN_CORE_NOM,
+	.core.efuse.reg_bits = DRA752_EFUSE_REGBITS,
+	.core.addr	= TPS659038_REG_ADDR_SMPS7_CORE,
+	.core.pmic	= &tps659038,
+
+	.iva.value	= VDD_IVA_DRA752,
+	.iva.efuse.reg	= STD_FUSE_OPP_VMIN_IVA_NOM,
+	.iva.efuse.reg_bits	= DRA752_EFUSE_REGBITS,
+	.iva.addr	= TPS659038_REG_ADDR_SMPS8_IVA,
+	.iva.pmic	= &tps659038,
 };
 
 /*
@@ -386,9 +398,6 @@ void enable_basic_clocks(void)
 		(*prcm)->cm_l3init_clkstctrl,
 		(*prcm)->cm_memif_clkstctrl,
 		(*prcm)->cm_l4cfg_clkstctrl,
-#ifdef CONFIG_DRIVER_TI_CPSW
-		(*prcm)->cm_gmac_clkstctrl,
-#endif
 		0
 	};
 
@@ -416,13 +425,6 @@ void enable_basic_clocks(void)
 		(*prcm)->cm_wkup_wdtimer2_clkctrl,
 		(*prcm)->cm_l4per_uart3_clkctrl,
 		(*prcm)->cm_l4per_i2c1_clkctrl,
-#ifdef CONFIG_DRIVER_TI_CPSW
-		(*prcm)->cm_gmac_gmac_clkctrl,
-#endif
-
-#ifdef CONFIG_TI_QSPI
-		(*prcm)->cm_l4per_qspi_clkctrl,
-#endif
 		0
 	};
 
@@ -451,10 +453,6 @@ void enable_basic_clocks(void)
 			 clk_modules_explicit_en_essential,
 			 1);
 
-#ifdef CONFIG_TI_QSPI
-	setbits_le32((*prcm)->cm_l4per_qspi_clkctrl, (1<<24));
-#endif
-
 	/* Enable SCRM OPT clocks for PER and CORE dpll */
 	setbits_le32((*prcm)->cm_wkupaon_scrm_clkctrl,
 			OPTFCLKEN_SCRM_PER_MASK);
@@ -465,9 +463,6 @@ void enable_basic_clocks(void)
 void enable_basic_uboot_clocks(void)
 {
 	u32 const clk_domains_essential[] = {
-#if defined(CONFIG_DRA7XX) || defined(CONFIG_AM57XX)
-		(*prcm)->cm_ipu_clkstctrl,
-#endif
 		0
 	};
 
@@ -481,168 +476,105 @@ void enable_basic_uboot_clocks(void)
 		(*prcm)->cm_l4per_i2c2_clkctrl,
 		(*prcm)->cm_l4per_i2c3_clkctrl,
 		(*prcm)->cm_l4per_i2c4_clkctrl,
-#if defined(CONFIG_DRA7XX) || defined(CONFIG_AM57XX)
-		(*prcm)->cm_ipu_i2c5_clkctrl,
-#else
 		(*prcm)->cm_l4per_i2c5_clkctrl,
-#endif
 		(*prcm)->cm_l3init_hsusbhost_clkctrl,
 		(*prcm)->cm_l3init_fsusb_clkctrl,
 		0
 	};
+
 	do_enable_clocks(clk_domains_essential,
 			 clk_modules_hw_auto_essential,
 			 clk_modules_explicit_en_essential,
 			 1);
 }
 
-#ifdef CONFIG_TI_EDMA3
-void enable_edma3_clocks(void)
+/*
+ * Enable non-essential clock domains, modules and
+ * do some additional special settings needed
+ */
+void enable_non_essential_clocks(void)
 {
-	u32 const clk_domains_edma3[] = {
+	u32 const clk_domains_non_essential[] = {
+		(*prcm)->cm_mpu_m3_clkstctrl,
+		(*prcm)->cm_ivahd_clkstctrl,
+		(*prcm)->cm_dsp_clkstctrl,
+		(*prcm)->cm_dss_clkstctrl,
+		(*prcm)->cm_sgx_clkstctrl,
+		(*prcm)->cm1_abe_clkstctrl,
+		(*prcm)->cm_c2c_clkstctrl,
+		(*prcm)->cm_cam_clkstctrl,
+		(*prcm)->cm_dss_clkstctrl,
+		(*prcm)->cm_sdma_clkstctrl,
 		0
 	};
 
-	u32 const clk_modules_hw_auto_edma3[] = {
-		(*prcm)->cm_l3main1_tptc1_clkctrl,
-		(*prcm)->cm_l3main1_tptc2_clkctrl,
+	u32 const clk_modules_hw_auto_non_essential[] = {
+		(*prcm)->cm_mpu_m3_mpu_m3_clkctrl,
+		(*prcm)->cm_ivahd_ivahd_clkctrl,
+		(*prcm)->cm_ivahd_sl2_clkctrl,
+		(*prcm)->cm_dsp_dsp_clkctrl,
+		(*prcm)->cm_l3instr_l3_3_clkctrl,
+		(*prcm)->cm_l3instr_l3_instr_clkctrl,
+		(*prcm)->cm_l3instr_intrconn_wp1_clkctrl,
+		(*prcm)->cm_l3init_hsi_clkctrl,
+		(*prcm)->cm_l4per_hdq1w_clkctrl,
 		0
 	};
 
-	u32 const clk_modules_explicit_en_edma3[] = {
+	u32 const clk_modules_explicit_en_non_essential[] = {
+		(*prcm)->cm1_abe_aess_clkctrl,
+		(*prcm)->cm1_abe_pdm_clkctrl,
+		(*prcm)->cm1_abe_dmic_clkctrl,
+		(*prcm)->cm1_abe_mcasp_clkctrl,
+		(*prcm)->cm1_abe_mcbsp1_clkctrl,
+		(*prcm)->cm1_abe_mcbsp2_clkctrl,
+		(*prcm)->cm1_abe_mcbsp3_clkctrl,
+		(*prcm)->cm1_abe_slimbus_clkctrl,
+		(*prcm)->cm1_abe_timer5_clkctrl,
+		(*prcm)->cm1_abe_timer6_clkctrl,
+		(*prcm)->cm1_abe_timer7_clkctrl,
+		(*prcm)->cm1_abe_timer8_clkctrl,
+		(*prcm)->cm1_abe_wdt3_clkctrl,
+		(*prcm)->cm_l4per_gptimer9_clkctrl,
+		(*prcm)->cm_l4per_gptimer10_clkctrl,
+		(*prcm)->cm_l4per_gptimer11_clkctrl,
+		(*prcm)->cm_l4per_gptimer3_clkctrl,
+		(*prcm)->cm_l4per_gptimer4_clkctrl,
+		(*prcm)->cm_l4per_mcspi2_clkctrl,
+		(*prcm)->cm_l4per_mcspi3_clkctrl,
+		(*prcm)->cm_l4per_mcspi4_clkctrl,
+		(*prcm)->cm_l4per_mmcsd3_clkctrl,
+		(*prcm)->cm_l4per_mmcsd4_clkctrl,
+		(*prcm)->cm_l4per_mmcsd5_clkctrl,
+		(*prcm)->cm_l4per_uart1_clkctrl,
+		(*prcm)->cm_l4per_uart2_clkctrl,
+		(*prcm)->cm_l4per_uart4_clkctrl,
+		(*prcm)->cm_wkup_keyboard_clkctrl,
+		(*prcm)->cm_wkup_wdtimer2_clkctrl,
+		(*prcm)->cm_cam_iss_clkctrl,
+		(*prcm)->cm_cam_fdif_clkctrl,
+		(*prcm)->cm_dss_dss_clkctrl,
+		(*prcm)->cm_sgx_sgx_clkctrl,
 		0
 	};
 
-	do_enable_clocks(clk_domains_edma3,
-			 clk_modules_hw_auto_edma3,
-			 clk_modules_explicit_en_edma3,
-			 1);
+	/* Enable optional functional clock for ISS */
+	setbits_le32((*prcm)->cm_cam_iss_clkctrl, ISS_CLKCTRL_OPTFCLKEN_MASK);
+
+	/* Enable all optional functional clocks of DSS */
+	setbits_le32((*prcm)->cm_dss_dss_clkctrl, DSS_CLKCTRL_OPTFCLKEN_MASK);
+
+	do_enable_clocks(clk_domains_non_essential,
+			 clk_modules_hw_auto_non_essential,
+			 clk_modules_explicit_en_non_essential,
+			 0);
+
+	/* Put camera module in no sleep mode */
+	clrsetbits_le32((*prcm)->cm_cam_clkstctrl,
+			MODULE_CLKCTRL_MODULEMODE_MASK,
+			CD_CLKCTRL_CLKTRCTRL_NO_SLEEP <<
+			MODULE_CLKCTRL_MODULEMODE_SHIFT);
 }
-
-void disable_edma3_clocks(void)
-{
-	u32 const clk_domains_edma3[] = {
-		0
-	};
-
-	u32 const clk_modules_disable_edma3[] = {
-		(*prcm)->cm_l3main1_tptc1_clkctrl,
-		(*prcm)->cm_l3main1_tptc2_clkctrl,
-		0
-	};
-
-	do_disable_clocks(clk_domains_edma3,
-			  clk_modules_disable_edma3,
-			  1);
-}
-#endif
-
-#if defined(CONFIG_USB_DWC3) || defined(CONFIG_USB_XHCI_OMAP)
-void enable_usb_clocks(int index)
-{
-	u32 cm_l3init_usb_otg_ss_clkctrl = 0;
-
-	if (index == 0) {
-		cm_l3init_usb_otg_ss_clkctrl =
-			(*prcm)->cm_l3init_usb_otg_ss1_clkctrl;
-		/* Enable 960 MHz clock for dwc3 */
-		setbits_le32((*prcm)->cm_l3init_usb_otg_ss1_clkctrl,
-			     OPTFCLKEN_REFCLK960M);
-
-		/* Enable 32 KHz clock for USB_PHY1 */
-		setbits_le32((*prcm)->cm_coreaon_usb_phy1_core_clkctrl,
-			     USBPHY_CORE_CLKCTRL_OPTFCLKEN_CLK32K);
-
-		/* Enable 32 KHz clock for USB_PHY3 */
-		if (is_dra7xx())
-			setbits_le32((*prcm)->cm_coreaon_usb_phy3_core_clkctrl,
-				     USBPHY_CORE_CLKCTRL_OPTFCLKEN_CLK32K);
-	} else if (index == 1) {
-		cm_l3init_usb_otg_ss_clkctrl =
-			(*prcm)->cm_l3init_usb_otg_ss2_clkctrl;
-		/* Enable 960 MHz clock for dwc3 */
-		setbits_le32((*prcm)->cm_l3init_usb_otg_ss2_clkctrl,
-			     OPTFCLKEN_REFCLK960M);
-
-		/* Enable 32 KHz clock for dwc3 */
-		setbits_le32((*prcm)->cm_coreaon_usb_phy2_core_clkctrl,
-			     USBPHY_CORE_CLKCTRL_OPTFCLKEN_CLK32K);
-
-		/* Enable 60 MHz clock for USB2PHY2 */
-		setbits_le32((*prcm)->cm_coreaon_l3init_60m_gfclk_clkctrl,
-			     L3INIT_CLKCTRL_OPTFCLKEN_60M_GFCLK);
-	}
-
-	u32 const clk_domains_usb[] = {
-		0
-	};
-
-	u32 const clk_modules_hw_auto_usb[] = {
-		(*prcm)->cm_l3init_ocp2scp1_clkctrl,
-		cm_l3init_usb_otg_ss_clkctrl,
-		0
-	};
-
-	u32 const clk_modules_explicit_en_usb[] = {
-		0
-	};
-
-	do_enable_clocks(clk_domains_usb,
-			 clk_modules_hw_auto_usb,
-			 clk_modules_explicit_en_usb,
-			 1);
-}
-
-void disable_usb_clocks(int index)
-{
-	u32 cm_l3init_usb_otg_ss_clkctrl = 0;
-
-	if (index == 0) {
-		cm_l3init_usb_otg_ss_clkctrl =
-			(*prcm)->cm_l3init_usb_otg_ss1_clkctrl;
-		/* Disable 960 MHz clock for dwc3 */
-		clrbits_le32((*prcm)->cm_l3init_usb_otg_ss1_clkctrl,
-			     OPTFCLKEN_REFCLK960M);
-
-		/* Disable 32 KHz clock for USB_PHY1 */
-		clrbits_le32((*prcm)->cm_coreaon_usb_phy1_core_clkctrl,
-			     USBPHY_CORE_CLKCTRL_OPTFCLKEN_CLK32K);
-
-		/* Disable 32 KHz clock for USB_PHY3 */
-		if (is_dra7xx())
-			clrbits_le32((*prcm)->cm_coreaon_usb_phy3_core_clkctrl,
-				     USBPHY_CORE_CLKCTRL_OPTFCLKEN_CLK32K);
-	} else if (index == 1) {
-		cm_l3init_usb_otg_ss_clkctrl =
-			(*prcm)->cm_l3init_usb_otg_ss2_clkctrl;
-		/* Disable 960 MHz clock for dwc3 */
-		clrbits_le32((*prcm)->cm_l3init_usb_otg_ss2_clkctrl,
-			     OPTFCLKEN_REFCLK960M);
-
-		/* Disable 32 KHz clock for dwc3 */
-		clrbits_le32((*prcm)->cm_coreaon_usb_phy2_core_clkctrl,
-			     USBPHY_CORE_CLKCTRL_OPTFCLKEN_CLK32K);
-
-		/* Disable 60 MHz clock for USB2PHY2 */
-		clrbits_le32((*prcm)->cm_coreaon_l3init_60m_gfclk_clkctrl,
-			     L3INIT_CLKCTRL_OPTFCLKEN_60M_GFCLK);
-	}
-
-	u32 const clk_domains_usb[] = {
-		0
-	};
-
-	u32 const clk_modules_disable[] = {
-		(*prcm)->cm_l3init_ocp2scp1_clkctrl,
-		cm_l3init_usb_otg_ss_clkctrl,
-		0
-	};
-
-	do_disable_clocks(clk_domains_usb,
-			  clk_modules_disable,
-			  1);
-}
-#endif
 
 const struct ctrl_ioregs ioregs_omap5430 = {
 	.ctrl_ddrch = DDR_IO_I_34OHM_SR_FASTEST_WD_DQ_NO_PULL_DQS_PULL_DOWN,
@@ -660,7 +592,6 @@ const struct ctrl_ioregs ioregs_omap5432_es1 = {
 	.ctrl_ddrio_1 = DDR_IO_1_VREF_CELLS_DDR3_VALUE,
 	.ctrl_ddrio_2 = DDR_IO_2_VREF_CELLS_DDR3_VALUE,
 	.ctrl_emif_sdram_config_ext = SDRAM_CONFIG_EXT_RD_LVL_11_SAMPLES,
-	.ctrl_emif_sdram_config_ext_final = SDRAM_CONFIG_EXT_RD_LVL_4_SAMPLES,
 };
 
 const struct ctrl_ioregs ioregs_omap5432_es2 = {
@@ -671,46 +602,20 @@ const struct ctrl_ioregs ioregs_omap5432_es2 = {
 	.ctrl_ddrio_1 = DDR_IO_1_VREF_CELLS_DDR3_VALUE_ES2,
 	.ctrl_ddrio_2 = DDR_IO_2_VREF_CELLS_DDR3_VALUE_ES2,
 	.ctrl_emif_sdram_config_ext = SDRAM_CONFIG_EXT_RD_LVL_11_SAMPLES,
-	.ctrl_emif_sdram_config_ext_final = SDRAM_CONFIG_EXT_RD_LVL_4_SAMPLES,
 };
 
 const struct ctrl_ioregs ioregs_dra7xx_es1 = {
 	.ctrl_ddrch = 0x40404040,
 	.ctrl_lpddr2ch = 0x40404040,
 	.ctrl_ddr3ch = 0x80808080,
-	.ctrl_ddrio_0 = 0x00094A40,
-	.ctrl_ddrio_1 = 0x04A52000,
+	.ctrl_ddrio_0 = 0xbae8c631,
+	.ctrl_ddrio_1 = 0xb46318d8,
 	.ctrl_ddrio_2 = 0x84210000,
-	.ctrl_emif_sdram_config_ext = 0x0001C1A7,
-	.ctrl_emif_sdram_config_ext_final = 0x0001C1A7,
+	.ctrl_emif_sdram_config_ext = 0xb2c00000,
 	.ctrl_ddr_ctrl_ext_0 = 0xA2000000,
 };
 
-const struct ctrl_ioregs ioregs_dra72x_es1 = {
-	.ctrl_ddrch = 0x40404040,
-	.ctrl_lpddr2ch = 0x40404040,
-	.ctrl_ddr3ch = 0x60606080,
-	.ctrl_ddrio_0 = 0x00094A40,
-	.ctrl_ddrio_1 = 0x04A52000,
-	.ctrl_ddrio_2 = 0x84210000,
-	.ctrl_emif_sdram_config_ext = 0x0001C1A7,
-	.ctrl_emif_sdram_config_ext_final = 0x0001C1A7,
-	.ctrl_ddr_ctrl_ext_0 = 0xA2000000,
-};
-
-const struct ctrl_ioregs ioregs_dra72x_es2 = {
-	.ctrl_ddrch = 0x40404040,
-	.ctrl_lpddr2ch = 0x40404040,
-	.ctrl_ddr3ch = 0x60606060,
-	.ctrl_ddrio_0 = 0x00094A40,
-	.ctrl_ddrio_1 = 0x00000000,
-	.ctrl_ddrio_2 = 0x00000000,
-	.ctrl_emif_sdram_config_ext = 0x0001C1A7,
-	.ctrl_emif_sdram_config_ext_final = 0x0001C1A7,
-	.ctrl_ddr_ctrl_ext_0 = 0xA2000000,
-};
-
-void __weak hw_data_init(void)
+void hw_data_init(void)
 {
 	u32 omap_rev = omap_revision();
 
@@ -733,17 +638,9 @@ void __weak hw_data_init(void)
 	break;
 
 	case DRA752_ES1_0:
-	case DRA752_ES1_1:
-	case DRA752_ES2_0:
 	*prcm = &dra7xx_prcm;
 	*dplls_data = &dra7xx_dplls;
-	*ctrl = &dra7xx_ctrl;
-	break;
-
-	case DRA722_ES1_0:
-	case DRA722_ES2_0:
-	*prcm = &dra7xx_prcm;
-	*dplls_data = &dra72x_dplls;
+	*omap_vcores = &dra752_volts;
 	*ctrl = &dra7xx_ctrl;
 	break;
 
@@ -768,15 +665,7 @@ void get_ioregs(const struct ctrl_ioregs **regs)
 		*regs = &ioregs_omap5432_es2;
 		break;
 	case DRA752_ES1_0:
-	case DRA752_ES1_1:
-	case DRA752_ES2_0:
 		*regs = &ioregs_dra7xx_es1;
-		break;
-	case DRA722_ES1_0:
-		*regs = &ioregs_dra72x_es1;
-		break;
-	case DRA722_ES2_0:
-		*regs = &ioregs_dra72x_es2;
 		break;
 
 	default:

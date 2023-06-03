@@ -17,7 +17,10 @@
  * (C) Copyright 2010-2011
  * Thomas Reufer, KEYMILE Ltd, thomas.reufer@keymile.com
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
  */
 
 #ifndef __CONFIG_KM8321_COMMON_H
@@ -61,12 +64,6 @@
 	HRCWH_ROM_LOC_LOCAL_16BIT | \
 	HRCWH_BIG_ENDIAN | \
 	HRCWH_LALE_NORMAL)
-
-#define CONFIG_SYS_DDRCDR (\
-	DDRCDR_EN | \
-	DDRCDR_PZ_MAXZ | \
-	DDRCDR_NZ_MAXZ | \
-	DDRCDR_M_ODR)
 
 #define CONFIG_SYS_DDR_CS0_BNDS		0x0000007f
 #define CONFIG_SYS_DDR_SDRAM_CFG	(SDRAM_CFG_SDRAM_TYPE_DDR2 | \

@@ -1,8 +1,6 @@
 /*
  * Copyright (c) 2011 The Chromium OS Authors.
  *
- * Modified from Linux arch/arm/include/asm/bitops.h
- *
  * Copyright 1995, Russell King.
  * Various bits and pieces copyrights include:
  *  Linus Torvalds (test_bit).
@@ -19,12 +17,7 @@
 #ifndef __ASM_SANDBOX_BITOPS_H
 #define __ASM_SANDBOX_BITOPS_H
 
-#include <linux/compiler.h>
 #include <asm/system.h>
-#include <asm-generic/bitops/fls.h>
-#include <asm-generic/bitops/__fls.h>
-#include <asm-generic/bitops/fls64.h>
-#include <asm-generic/bitops/__ffs.h>
 
 #ifdef __KERNEL__
 
@@ -60,7 +53,7 @@ static inline int __test_and_set_bit(int nr, void *addr)
 
 static inline int test_and_set_bit(int nr, void *addr)
 {
-	unsigned long __always_unused flags;
+	unsigned long flags;
 	int out;
 
 	local_irq_save(flags);
@@ -82,7 +75,7 @@ static inline int __test_and_clear_bit(int nr, void *addr)
 
 static inline int test_and_clear_bit(int nr, void *addr)
 {
-	unsigned long __always_unused flags;
+	unsigned long flags;
 	int out;
 
 	local_irq_save(flags);

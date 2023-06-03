@@ -5,7 +5,23 @@
  * based on kilauea.c
  * by Stefan Roese, DENX Software Engineering, sr@denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -15,7 +31,7 @@
 #include <fdt_support.h>
 #include <asm/processor.h>
 #include <asm/io.h>
-#include <linux/errno.h>
+#include <asm/errno.h>
 #include <asm/ppc4xx-gpio.h>
 #include <flash.h>
 
@@ -51,8 +67,6 @@ enum {
 	HWVER_110 = 1,
 };
 
-struct ihs_fpga *fpga_ptr[] = CONFIG_SYS_FPGA_PTR;
-
 static inline void blank_string(int size)
 {
 	int i;
@@ -86,19 +100,16 @@ int misc_init_r(void)
 
 static void print_fpga_info(unsigned dev)
 {
-	u16 versions;
-	u16 fpga_version;
-	u16 fpga_features;
+	struct ihs_fpga *fpga = (struct ihs_fpga *) CONFIG_SYS_FPGA_BASE(dev);
+	u16 versions = in_le16(&fpga->versions);
+	u16 fpga_version = in_le16(&fpga->fpga_version);
+	u16 fpga_features = in_le16(&fpga->fpga_features);
 	int fpga_state = get_fpga_state(dev);
 
 	unsigned unit_type;
 	unsigned hardware_version;
 	unsigned feature_channels;
 	unsigned feature_expansion;
-
-	FPGA_GET_REG(dev, versions, &versions);
-	FPGA_GET_REG(dev, fpga_version, &fpga_version);
-	FPGA_GET_REG(dev, fpga_features, &fpga_features);
 
 	printf("FPGA%d: ", dev);
 	if (fpga_state & FPGA_STATE_PLATFORM)
@@ -231,6 +242,8 @@ int last_stage_init(void)
 {
 	unsigned int k;
 	unsigned int fpga;
+	struct ihs_fpga *fpga0 = (struct ihs_fpga *) CONFIG_SYS_FPGA_BASE(0);
+	struct ihs_fpga *fpga1 = (struct ihs_fpga *) CONFIG_SYS_FPGA_BASE(1);
 	int failed = 0;
 	char str_phys[] = "Setup PHYs -";
 	char str_serdes[] = "Start SERDES blocks";
@@ -246,17 +259,8 @@ int last_stage_init(void)
 	/* setup Gbit PHYs */
 	puts("TRANS: ");
 	puts(str_phys);
-	int retval;
-	struct mii_dev *mdiodev = mdio_alloc();
-	if (!mdiodev)
-		return -ENOMEM;
-	strncpy(mdiodev->name, CONFIG_SYS_GBIT_MII_BUSNAME, MDIO_NAME_LEN);
-	mdiodev->read = bb_miiphy_read;
-	mdiodev->write = bb_miiphy_write;
-
-	retval = mdio_register(mdiodev);
-	if (retval < 0)
-		return retval;
+	miiphy_register(CONFIG_SYS_GBIT_MII_BUSNAME,
+		bb_miiphy_read, bb_miiphy_write);
 
 	for (k = 0; k < 32; ++k) {
 		configure_gbit_phy(CONFIG_SYS_GBIT_MII_BUSNAME, k);
@@ -264,16 +268,8 @@ int last_stage_init(void)
 		putc(slash[k % 8]);
 	}
 
-	mdiodev = mdio_alloc();
-	if (!mdiodev)
-		return -ENOMEM;
-	strncpy(mdiodev->name, CONFIG_SYS_GBIT_MII1_BUSNAME, MDIO_NAME_LEN);
-	mdiodev->read = bb_miiphy_read;
-	mdiodev->write = bb_miiphy_write;
-
-	retval = mdio_register(mdiodev);
-	if (retval < 0)
-		return retval;
+	miiphy_register(CONFIG_SYS_GBIT_MII1_BUSNAME,
+		bb_miiphy_read, bb_miiphy_write);
 
 	for (k = 0; k < 32; ++k) {
 		configure_gbit_phy(CONFIG_SYS_GBIT_MII1_BUSNAME, k);
@@ -285,16 +281,17 @@ int last_stage_init(void)
 	/* take fpga serdes blocks out of reset */
 	puts(str_serdes);
 	udelay(500000);
-	FPGA_SET_REG(0, quad_serdes_reset, 0);
-	FPGA_SET_REG(1, quad_serdes_reset, 0);
+	out_le16(&fpga0->quad_serdes_reset, 0);
+	out_le16(&fpga1->quad_serdes_reset, 0);
 	blank_string(strlen(str_serdes));
 
 	/* take channels out of reset */
 	puts(str_channels);
 	udelay(500000);
 	for (fpga = 0; fpga < 2; ++fpga) {
+		u16 *ch0_config_int = &(fpga ? fpga1 : fpga0)->ch0_config_int;
 		for (k = 0; k < 32; ++k)
-			FPGA_SET_REG(fpga, ch[k].config_int, 0);
+			out_le16(ch0_config_int + 4 * k, 0);
 	}
 	blank_string(strlen(str_channels));
 
@@ -302,16 +299,16 @@ int last_stage_init(void)
 	puts(str_locks);
 	udelay(500000);
 	for (fpga = 0; fpga < 2; ++fpga) {
+		u16 *ch0_status_int = &(fpga ? fpga1 : fpga0)->ch0_status_int;
 		for (k = 0; k < 32; ++k) {
-			u16 status;
-			FPGA_GET_REG(fpga, ch[k].status_int, &status);
+			u16 status = in_le16(ch0_status_int + 4*k);
 			if (!(status & (1 << 4))) {
 				failed = 1;
 				printf("fpga %d channel %d: no serdes lock\n",
 					fpga, k);
 			}
 			/* reset events */
-			FPGA_SET_REG(fpga, ch[k].status_int, 0);
+			out_le16(ch0_status_int + 4*k, status);
 		}
 	}
 	blank_string(strlen(str_locks));
@@ -319,14 +316,14 @@ int last_stage_init(void)
 	/* verify hicb_status */
 	puts(str_hicb);
 	for (fpga = 0; fpga < 2; ++fpga) {
+		u16 *ch0_hicb_status_int = &(fpga ? fpga1 : fpga0)->ch0_hicb_status_int;
 		for (k = 0; k < 32; ++k) {
-			u16 status;
-			FPGA_GET_REG(fpga, hicb_ch[k].status_int, &status);
+			u16 status = in_le16(ch0_hicb_status_int + 4*k);
 			if (status)
 				printf("fpga %d hicb %d: hicb status %04x\n",
 					fpga, k, status);
 			/* reset events */
-			FPGA_SET_REG(fpga, hicb_ch[k].status_int, 0);
+			out_le16(ch0_hicb_status_int + 4*k, status);
 		}
 	}
 	blank_string(strlen(str_hicb));

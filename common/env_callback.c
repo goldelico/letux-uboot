@@ -2,7 +2,23 @@
  * (C) Copyright 2012
  * Joe Hershberger, National Instruments, joe.hershberger@ni.com
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -35,9 +51,6 @@ static struct env_clbk_tbl *find_env_callback(const char *name)
 	return NULL;
 }
 
-static int first_call = 1;
-static const char *callback_list;
-
 /*
  * Look for a possible callback for a newly added variable
  * This is called specifically when the variable did not exist in the hash
@@ -46,14 +59,10 @@ static const char *callback_list;
 void env_callback_init(ENTRY *var_entry)
 {
 	const char *var_name = var_entry->key;
+	const char *callback_list = getenv(ENV_CALLBACK_VAR);
 	char callback_name[256] = "";
 	struct env_clbk_tbl *clbkp;
 	int ret = 1;
-
-	if (first_call) {
-		callback_list = getenv(ENV_CALLBACK_VAR);
-		first_call = 0;
-	}
 
 	/* look in the ".callbacks" var for a reference to this variable */
 	if (callback_list != NULL)
@@ -90,14 +99,13 @@ static int clear_callback(ENTRY *entry)
 /*
  * Call for each element in the list that associates variables to callbacks
  */
-static int set_callback(const char *name, const char *value, void *priv)
+static int set_callback(const char *name, const char *value)
 {
 	ENTRY e, *ep;
 	struct env_clbk_tbl *clbkp;
 
 	e.key	= name;
 	e.data	= NULL;
-	e.callback = NULL;
 	hsearch_r(e, FIND, &ep, &env_htab, 0);
 
 	/* does the env variable actually exist? */
@@ -127,9 +135,9 @@ static int on_callbacks(const char *name, const char *value, enum env_op op,
 	hwalk_r(&env_htab, clear_callback);
 
 	/* configure any static callback bindings */
-	env_attr_walk(ENV_CALLBACK_LIST_STATIC, set_callback, NULL);
+	env_attr_walk(ENV_CALLBACK_LIST_STATIC, set_callback);
 	/* configure any dynamic callback bindings */
-	env_attr_walk(value, set_callback, NULL);
+	env_attr_walk(value, set_callback);
 
 	return 0;
 }

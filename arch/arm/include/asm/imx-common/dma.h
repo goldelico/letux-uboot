@@ -7,7 +7,20 @@
  * Based on code from LTIB:
  * Copyright 2008-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
  */
 
 #ifndef __DMA_H__
@@ -22,7 +35,7 @@
 #define	DMA_PIO_WORDS		CONFIG_ARCH_DMA_PIO_WORDS
 #endif
 
-#define MXS_DMA_ALIGNMENT	ARCH_DMA_MINALIGN
+#define MXS_DMA_ALIGNMENT	32
 
 /*
  * MXS DMA channels
@@ -59,7 +72,7 @@ enum {
 	MXS_DMA_CHANNEL_AHB_APBH_RESERVED1,
 	MXS_MAX_DMA_CHANNELS,
 };
-#elif defined(CONFIG_MX6) || defined(CONFIG_MX7)
+#elif defined(CONFIG_MX6)
 enum {
 	MXS_DMA_CHANNEL_AHB_APBH_GPMI0 = 0,
 	MXS_DMA_CHANNEL_AHB_APBH_GPMI1,
@@ -160,7 +173,5 @@ int mxs_dma_go(int chan);
 void mxs_dma_init(void);
 int mxs_dma_init_channel(int chan);
 int mxs_dma_release(int chan);
-
-void mxs_dma_circ_start(int chan, struct mxs_dma_desc *pdesc);
 
 #endif	/* __DMA_H__ */

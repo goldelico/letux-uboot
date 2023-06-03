@@ -2,7 +2,24 @@
  * (C) Copyright 2002
  * Rich Ireland, Enterasys Networks, rireland@enterasys.com.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ *
  */
 
 /* Generic FPGA support */
@@ -31,14 +48,14 @@ static void fpga_no_sup(char *fn, char *msg)
 	else if (msg)
 		printf("No support for %s.\n", msg);
 	else
-		printf("No FPGA support!\n");
+		printf("No FPGA suport!\n");
 }
 
 
 /* fpga_get_desc
  *	map a device number to a descriptor
  */
-const fpga_desc *const fpga_get_desc(int devnum)
+static const fpga_desc *const fpga_get_desc(int devnum)
 {
 	fpga_desc *desc = (fpga_desc *)NULL;
 
@@ -120,7 +137,7 @@ static int fpga_dev_info(int devnum)
 }
 
 /*
- * fpga_init is usually called from misc_init_r() and MUST be called
+ * fgpa_init is usually called from misc_init_r() and MUST be called
  * before any of the other fpga functions are used.
  */
 void fpga_init(void)
@@ -173,45 +190,16 @@ int fpga_add(fpga_type devtype, void *desc)
 /*
  * Convert bitstream data and load into the fpga
  */
-int __weak fpga_loadbitstream(int devnum, char *fpgadata, size_t size,
-			      bitstream_type bstype)
+int __weak fpga_loadbitstream(int devnum, char *fpgadata, size_t size)
 {
 	printf("Bitstream support not implemented for this FPGA device\n");
 	return FPGA_FAIL;
 }
 
-#if defined(CONFIG_CMD_FPGA_LOADFS)
-int fpga_fsload(int devnum, const void *buf, size_t size,
-		 fpga_fs_info *fpga_fsinfo)
-{
-	int ret_val = FPGA_FAIL;           /* assume failure */
-	const fpga_desc *desc = fpga_validate(devnum, buf, size,
-					      (char *)__func__);
-
-	if (desc) {
-		switch (desc->devtype) {
-		case fpga_xilinx:
-#if defined(CONFIG_FPGA_XILINX)
-			ret_val = xilinx_loadfs(desc->devdesc, buf, size,
-						fpga_fsinfo);
-#else
-			fpga_no_sup((char *)__func__, "Xilinx devices");
-#endif
-			break;
-		default:
-			printf("%s: Invalid or unsupported device type %d\n",
-			       __func__, desc->devtype);
-		}
-	}
-
-	return ret_val;
-}
-#endif
-
 /*
  * Generic multiplexing code
  */
-int fpga_load(int devnum, const void *buf, size_t bsize, bitstream_type bstype)
+int fpga_load(int devnum, const void *buf, size_t bsize)
 {
 	int ret_val = FPGA_FAIL;           /* assume failure */
 	const fpga_desc *desc = fpga_validate(devnum, buf, bsize,
@@ -221,8 +209,7 @@ int fpga_load(int devnum, const void *buf, size_t bsize, bitstream_type bstype)
 		switch (desc->devtype) {
 		case fpga_xilinx:
 #if defined(CONFIG_FPGA_XILINX)
-			ret_val = xilinx_load(desc->devdesc, buf, bsize,
-					      bstype);
+			ret_val = xilinx_load(desc->devdesc, buf, bsize);
 #else
 			fpga_no_sup((char *)__func__, "Xilinx devices");
 #endif

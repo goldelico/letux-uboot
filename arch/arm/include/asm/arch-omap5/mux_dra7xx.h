@@ -5,7 +5,23 @@
  * Nishant Kamat <nskamat@ti.com>
  * Lokesh Vutla <lokeshvutla@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #ifndef _MUX_DRA7XX_H_
 #define _MUX_DRA7XX_H_
@@ -26,21 +42,6 @@
 #define WKEN	(1 << 24)
 #define WKDIS	(0 << 24)
 
-#define PULL_ENA		(0 << 16)
-#define PULL_DIS		(1 << 16)
-#define PULL_UP			(1 << 17)
-#define INPUT_EN		(1 << 18)
-#define SLEWCONTROL		(1 << 19)
-
-/* Active pin states */
-#define PIN_OUTPUT		(0 | PULL_DIS)
-#define PIN_OUTPUT_PULLUP	(PULL_UP)
-#define PIN_OUTPUT_PULLDOWN	(0)
-#define PIN_INPUT		(INPUT_EN | PULL_DIS)
-#define PIN_INPUT_SLEW		(INPUT_EN | SLEWCONTROL)
-#define PIN_INPUT_PULLUP	(PULL_ENA | INPUT_EN | PULL_UP)
-#define PIN_INPUT_PULLDOWN	(PULL_ENA | INPUT_EN)
-
 #define M0	0
 #define M1	1
 #define M2	2
@@ -57,28 +58,6 @@
 #define M13	13
 #define M14	14
 #define M15	15
-
-#define MODE_SELECT		(1 << 8)
-#define DELAYMODE_SHIFT		4
-
-#define MANUAL_MODE	MODE_SELECT
-
-#define VIRTUAL_MODE0	(MODE_SELECT | (0x0 << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE1	(MODE_SELECT | (0x1 << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE2	(MODE_SELECT | (0x2 << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE3	(MODE_SELECT | (0x3 << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE4	(MODE_SELECT | (0x4 << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE5	(MODE_SELECT | (0x5 << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE6	(MODE_SELECT | (0x6 << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE7	(MODE_SELECT | (0x7 << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE8	(MODE_SELECT | (0x8 << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE9	(MODE_SELECT | (0x9 << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE10	(MODE_SELECT | (0xa << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE11	(MODE_SELECT | (0xb << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE12	(MODE_SELECT | (0xc << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE13	(MODE_SELECT | (0xd << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE14	(MODE_SELECT | (0xe << DELAYMODE_SHIFT))
-#define VIRTUAL_MODE15	(MODE_SELECT | (0xf << DELAYMODE_SHIFT))
 
 #define SAFE_MODE	M15
 

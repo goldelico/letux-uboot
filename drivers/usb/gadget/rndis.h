@@ -4,10 +4,12 @@
  * Authors:	Benedikt Spranger, Pengutronix
  *		Robert Schwebel, Pengutronix
  *
+ *		This program is free software; you can redistribute it and/or
+ *		modify it under the terms of the GNU General Public License
+ *		version 2, as published by the Free Software Foundation.
+ *
  *		This software was originally developed in conformance with
  *		Microsoft's Remote NDIS Specification License Agreement.
- *
- * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef _USBGADGET_RNDIS_H
@@ -22,6 +24,10 @@
  * However, this will cause 1 sec delay on Ethernet device halt.
  * Usually you do not need to define it. Mostly usable for debugging.
  */
+
+#ifdef CONFIG_USB_ETH_HALT
+#define RNDIS_COMPLETE_SIGNAL_DISCONNECT
+#endif
 
 #define RNDIS_MAXIMUM_FRAME_SIZE	1518
 #define RNDIS_MAX_TOTAL_SIZE		1558

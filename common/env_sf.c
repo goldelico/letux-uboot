@@ -7,16 +7,30 @@
  *
  * (C) Copyright 2008 Atmel Corporation
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #include <common.h>
 #include <environment.h>
 #include <malloc.h>
-#include <spi.h>
 #include <spi_flash.h>
 #include <search.h>
 #include <errno.h>
-#include <dm/device-internal.h>
 
 #ifndef CONFIG_ENV_SPI_BUS
 # define CONFIG_ENV_SPI_BUS	0
@@ -49,22 +63,10 @@ static struct spi_flash *env_flash;
 int saveenv(void)
 {
 	env_t	env_new;
-	char	*saved_buffer = NULL, flag = OBSOLETE_FLAG;
+	ssize_t	len;
+	char	*res, *saved_buffer = NULL, flag = OBSOLETE_FLAG;
 	u32	saved_size, saved_offset, sector = 1;
 	int	ret;
-#ifdef CONFIG_DM_SPI_FLASH
-	struct udevice *new;
-
-	/* speed and mode will be read from DT */
-	ret = spi_flash_probe_bus_cs(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
-				     0, 0, &new);
-	if (ret) {
-		set_default_env("!spi_flash_probe_bus_cs() failed");
-		return 1;
-	}
-
-	env_flash = dev_get_uclass_priv(new);
-#else
 
 	if (!env_flash) {
 		env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS,
@@ -75,11 +77,14 @@ int saveenv(void)
 			return 1;
 		}
 	}
-#endif
 
-	ret = env_export(&env_new);
-	if (ret)
-		return ret;
+	res = (char *)&env_new.data;
+	len = hexport_r(&env_htab, '\0', 0, &res, ENV_SIZE, 0, NULL);
+	if (len < 0) {
+		error("Cannot export environment: errno = %d\n", errno);
+		return 1;
+	}
+	env_new.crc	= crc32(0, env_new.data, ENV_SIZE);
 	env_new.flags	= ACTIVE_FLAG;
 
 	if (gd->env_valid == 1) {
@@ -94,7 +99,7 @@ int saveenv(void)
 	if (CONFIG_ENV_SECT_SIZE > CONFIG_ENV_SIZE) {
 		saved_size = CONFIG_ENV_SECT_SIZE - CONFIG_ENV_SIZE;
 		saved_offset = env_new_offset + CONFIG_ENV_SIZE;
-		saved_buffer = memalign(ARCH_DMA_MINALIGN, saved_size);
+		saved_buffer = malloc(saved_size);
 		if (!saved_buffer) {
 			ret = 1;
 			goto done;
@@ -157,10 +162,9 @@ void env_relocate_spec(void)
 	env_t *tmp_env2 = NULL;
 	env_t *ep = NULL;
 
-	tmp_env1 = (env_t *)memalign(ARCH_DMA_MINALIGN,
-			CONFIG_ENV_SIZE);
-	tmp_env2 = (env_t *)memalign(ARCH_DMA_MINALIGN,
-			CONFIG_ENV_SIZE);
+	tmp_env1 = (env_t *)malloc(CONFIG_ENV_SIZE);
+	tmp_env2 = (env_t *)malloc(CONFIG_ENV_SIZE);
+
 	if (!tmp_env1 || !tmp_env2) {
 		set_default_env("!malloc() failed");
 		goto out;
@@ -204,17 +208,15 @@ void env_relocate_spec(void)
 		   tmp_env2->flags == ACTIVE_FLAG) {
 		gd->env_valid = 2;
 	} else if (tmp_env1->flags == tmp_env2->flags) {
-		gd->env_valid = 1;
+		gd->env_valid = 2;
 	} else if (tmp_env1->flags == 0xFF) {
-		gd->env_valid = 1;
-	} else if (tmp_env2->flags == 0xFF) {
 		gd->env_valid = 2;
 	} else {
 		/*
 		 * this differs from code in env_flash.c, but I think a sane
 		 * default path is desirable.
 		 */
-		gd->env_valid = 1;
+		gd->env_valid = 2;
 	}
 
 	if (gd->env_valid == 1)
@@ -225,7 +227,7 @@ void env_relocate_spec(void)
 	ret = env_import((char *)ep, 0);
 	if (!ret) {
 		error("Cannot import environment: errno = %d\n", errno);
-		set_default_env("!env_import failed");
+		set_default_env("env_import failed");
 	}
 
 err_read:
@@ -239,22 +241,10 @@ out:
 int saveenv(void)
 {
 	u32	saved_size, saved_offset, sector = 1;
-	char	*saved_buffer = NULL;
+	char	*res, *saved_buffer = NULL;
 	int	ret = 1;
 	env_t	env_new;
-#ifdef CONFIG_DM_SPI_FLASH
-	struct udevice *new;
-
-	/* speed and mode will be read from DT */
-	ret = spi_flash_probe_bus_cs(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
-				     0, 0, &new);
-	if (ret) {
-		set_default_env("!spi_flash_probe_bus_cs() failed");
-		return 1;
-	}
-
-	env_flash = dev_get_uclass_priv(new);
-#else
+	ssize_t	len;
 
 	if (!env_flash) {
 		env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS,
@@ -265,7 +255,6 @@ int saveenv(void)
 			return 1;
 		}
 	}
-#endif
 
 	/* Is the sector larger than the env (i.e. embedded) */
 	if (CONFIG_ENV_SECT_SIZE > CONFIG_ENV_SIZE) {
@@ -287,9 +276,13 @@ int saveenv(void)
 			sector++;
 	}
 
-	ret = env_export(&env_new);
-	if (ret)
+	res = (char *)&env_new.data;
+	len = hexport_r(&env_htab, '\0', 0, &res, ENV_SIZE, 0, NULL);
+	if (len < 0) {
+		error("Cannot export environment: errno = %d\n", errno);
 		goto done;
+	}
+	env_new.crc = crc32(0, env_new.data, ENV_SIZE);
 
 	puts("Erasing SPI flash...");
 	ret = spi_flash_erase(env_flash, CONFIG_ENV_OFFSET,
@@ -322,16 +315,13 @@ int saveenv(void)
 
 void env_relocate_spec(void)
 {
+	char buf[CONFIG_ENV_SIZE];
 	int ret;
-	char *buf = NULL;
 
-	buf = (char *)memalign(ARCH_DMA_MINALIGN, CONFIG_ENV_SIZE);
 	env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
 			CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
 	if (!env_flash) {
 		set_default_env("!spi_flash_probe() failed");
-		if (buf)
-			free(buf);
 		return;
 	}
 
@@ -347,8 +337,6 @@ void env_relocate_spec(void)
 		gd->env_valid = 1;
 out:
 	spi_flash_free(env_flash);
-	if (buf)
-		free(buf);
 	env_flash = NULL;
 }
 #endif

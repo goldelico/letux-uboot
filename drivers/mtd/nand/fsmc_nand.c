@@ -5,7 +5,23 @@
  * (C) Copyright 2012
  * Amit Virdi, ST Microelectronics, amit.virdi@st.com.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -165,7 +181,7 @@ static int count_written_bits(uint8_t *buff, int size, int max_bits)
 
 static void fsmc_nand_hwcontrol(struct mtd_info *mtd, int cmd, uint ctrl)
 {
-	struct nand_chip *this = mtd_to_nand(mtd);
+	struct nand_chip *this = mtd->priv;
 	ulong IO_ADDR_W;
 
 	if (ctrl & NAND_CTRL_CHANGE) {
@@ -390,59 +406,11 @@ static int fsmc_read_page_hwecc(struct mtd_info *mtd, struct nand_chip *chip,
 	return 0;
 }
 
-#ifndef CONFIG_SPL_BUILD
-/*
- * fsmc_nand_switch_ecc - switch the ECC operation between different engines
- *
- * @eccstrength		- the number of bits that could be corrected
- *			  (1 - HW, 4 - SW BCH4)
- */
-int fsmc_nand_switch_ecc(uint32_t eccstrength)
-{
-	struct nand_chip *nand;
-	struct mtd_info *mtd;
-	int err;
-
-	/*
-	 * This functions is only called on SPEAr600 platforms, supporting
-	 * 1 bit HW ECC. The BCH8 HW ECC (FSMC_VER8) from the ST-Ericsson
-	 * Nomadik SoC is currently supporting this fsmc_nand_switch_ecc()
-	 * function, as it doesn't need to switch to a different ECC layout.
-	 */
-	mtd = nand_info[nand_curr_device];
-	nand = mtd_to_nand(mtd);
-
-	/* Setup the ecc configurations again */
-	if (eccstrength == 1) {
-		nand->ecc.mode = NAND_ECC_HW;
-		nand->ecc.bytes = 3;
-		nand->ecc.strength = 1;
-		nand->ecc.layout = &fsmc_ecc1_layout;
-		nand->ecc.calculate = fsmc_read_hwecc;
-		nand->ecc.correct = nand_correct_data;
-	} else if (eccstrength == 4) {
-		/*
-		 * .calculate .correct and .bytes will be set in
-		 * nand_scan_tail()
-		 */
-		nand->ecc.mode = NAND_ECC_SOFT_BCH;
-		nand->ecc.strength = 4;
-		nand->ecc.layout = NULL;
-	} else {
-		printf("Error: ECC strength %d not supported!\n", eccstrength);
-	}
-
-	/* Update NAND handling after ECC mode switch */
-	err = nand_scan_tail(mtd);
-
-	return err;
-}
-#endif /* CONFIG_SPL_BUILD */
-
 int fsmc_nand_init(struct nand_chip *nand)
 {
 	static int chip_nr;
 	struct mtd_info *mtd;
+	int i;
 	u32 peripid2 = readl(&fsmc_regs_p->peripid2);
 
 	fsmc_version = (peripid2 >> FSMC_REVISION_SHFT) &
@@ -479,7 +447,8 @@ int fsmc_nand_init(struct nand_chip *nand)
 		(void  __iomem *)CONFIG_SYS_NAND_BASE;
 	nand->badblockbits = 7;
 
-	mtd = nand_to_mtd(nand);
+	mtd = &nand_info[chip_nr++];
+	mtd->priv = nand;
 
 	switch (fsmc_version) {
 	case FSMC_VER8:
@@ -512,8 +481,9 @@ int fsmc_nand_init(struct nand_chip *nand)
 	if (nand_scan_tail(mtd))
 		return -ENXIO;
 
-	if (nand_register(chip_nr++, mtd))
-		return -ENXIO;
+	for (i = 0; i < CONFIG_SYS_MAX_NAND_DEVICE; i++)
+		if (nand_register(i))
+			return -ENXIO;
 
 	return 0;
 }

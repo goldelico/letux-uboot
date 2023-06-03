@@ -4,7 +4,10 @@
  *
  * Based on km8321-common.h, see respective copyright notice for credits
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
  */
 
 #ifndef __CONFIG_KM8309_COMMON_H
@@ -15,6 +18,7 @@
  */
 #define CONFIG_E300		1	/* E300 family */
 #define CONFIG_QE		1	/* Has QE */
+#define CONFIG_MPC83xx		1	/* MPC83xx family */
 #define CONFIG_MPC830x		1	/* MPC830x family */
 #define CONFIG_MPC8309		1	/* MPC8309 CPU specific */
 
@@ -26,10 +30,8 @@
 
 /* QE microcode/firmware address */
 #define CONFIG_SYS_QE_FMAN_FW_IN_NOR
-/* between the u-boot partition and env */
-#ifndef CONFIG_SYS_QE_FW_ADDR
-#define CONFIG_SYS_QE_FW_ADDR   0xF00C0000
-#endif
+/* at end of uboot partition, before env */
+#define CONFIG_SYS_QE_FMAN_FW_ADDR   0xF00B0000
 
 /*
  * System IO Config
@@ -97,12 +99,6 @@
 	HRCWH_ROM_LOC_LOCAL_16BIT | \
 	HRCWH_BIG_ENDIAN | \
 	HRCWH_LALE_NORMAL)
-
-#define CONFIG_SYS_DDRCDR (\
-	DDRCDR_EN | \
-	DDRCDR_PZ_MAXZ | \
-	DDRCDR_NZ_MAXZ | \
-	DDRCDR_M_ODR)
 
 #define CONFIG_SYS_DDR_CS0_BNDS		0x0000007f
 #define CONFIG_SYS_DDR_SDRAM_CFG	(SDRAM_CFG_SDRAM_TYPE_DDR2 | \

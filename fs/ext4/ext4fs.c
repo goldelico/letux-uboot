@@ -18,14 +18,25 @@
  *
  * ext4write : Based on generic ext4 protocol.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
 #include <common.h>
 #include <ext_common.h>
 #include <ext4fs.h>
 #include "ext4_common.h"
-#include <div64.h>
 
 int ext4fs_symlinknest;
 struct ext_filesystem ext_fs;
@@ -46,8 +57,8 @@ void ext4fs_free_node(struct ext2fs_node *node, struct ext2fs_node *currroot)
  * Optimized read file API : collects and defers contiguous sector
  * reads into one potentially more efficient larger sequential read action
  */
-int ext4fs_read_file(struct ext2fs_node *node, loff_t pos,
-		loff_t len, char *buf, loff_t *actread)
+int ext4fs_read_file(struct ext2fs_node *node, int pos,
+		unsigned int len, char *buf)
 {
 	struct ext_filesystem *fs = get_fs();
 	int i;
@@ -55,7 +66,7 @@ int ext4fs_read_file(struct ext2fs_node *node, loff_t pos,
 	int log2blksz = fs->dev_desc->log2blksz;
 	int log2_fs_blocksize = LOG2_BLOCK_SIZE(node->data) - log2blksz;
 	int blocksize = (1 << (log2_fs_blocksize + log2blksz));
-	unsigned int filesize = le32_to_cpu(node->inode.size);
+	unsigned int filesize = __le32_to_cpu(node->inode.size);
 	lbaint_t previous_block_number = -1;
 	lbaint_t delayed_start = 0;
 	lbaint_t delayed_extent = 0;
@@ -68,11 +79,11 @@ int ext4fs_read_file(struct ext2fs_node *node, loff_t pos,
 	if (len > filesize)
 		len = filesize;
 
-	blockcnt = lldiv(((len + pos) + blocksize - 1), blocksize);
+	blockcnt = ((len + pos) + blocksize - 1) / blocksize;
 
-	for (i = lldiv(pos, blocksize); i < blockcnt; i++) {
+	for (i = pos / blocksize; i < blockcnt; i++) {
 		lbaint_t blknr;
-		int blockoff = pos - (blocksize * i);
+		int blockoff = pos % blocksize;
 		int blockend = blocksize;
 		int skipfirst = 0;
 		blknr = read_allocated_block(&(node->inode), i);
@@ -83,7 +94,7 @@ int ext4fs_read_file(struct ext2fs_node *node, loff_t pos,
 
 		/* Last block.  */
 		if (i == blockcnt - 1) {
-			blockend = (len + pos) - (blocksize * i);
+			blockend = (len + pos) % blocksize;
 
 			/* The last portion is exactly blocksize. */
 			if (!blockend)
@@ -91,7 +102,7 @@ int ext4fs_read_file(struct ext2fs_node *node, loff_t pos,
 		}
 
 		/* First block. */
-		if (i == lldiv(pos, blocksize)) {
+		if (i == pos / blocksize) {
 			skipfirst = blockoff;
 			blockend -= skipfirst;
 		}
@@ -151,8 +162,7 @@ int ext4fs_read_file(struct ext2fs_node *node, loff_t pos,
 		previous_block_number = -1;
 	}
 
-	*actread  = len;
-	return 0;
+	return len;
 }
 
 int ext4fs_ls(const char *dirname)
@@ -176,29 +186,15 @@ int ext4fs_ls(const char *dirname)
 	return 0;
 }
 
-int ext4fs_exists(const char *filename)
-{
-	loff_t file_len;
-	int ret;
-
-	ret = ext4fs_open(filename, &file_len);
-	return ret == 0;
-}
-
-int ext4fs_size(const char *filename, loff_t *size)
-{
-	return ext4fs_open(filename, size);
-}
-
-int ext4fs_read(char *buf, loff_t len, loff_t *actread)
+int ext4fs_read(char *buf, unsigned len)
 {
 	if (ext4fs_root == NULL || ext4fs_file == NULL)
 		return 0;
 
-	return ext4fs_read_file(ext4fs_file, 0, len, buf, actread);
+	return ext4fs_read_file(ext4fs_file, 0, len, buf);
 }
 
-int ext4fs_probe(struct blk_desc *fs_dev_desc,
+int ext4fs_probe(block_dev_desc_t *fs_dev_desc,
 		 disk_partition_t *fs_partition)
 {
 	ext4fs_set_blk_dev(fs_dev_desc, fs_partition);
@@ -211,19 +207,18 @@ int ext4fs_probe(struct blk_desc *fs_dev_desc,
 	return 0;
 }
 
-int ext4_read_file(const char *filename, void *buf, loff_t offset, loff_t len,
-		   loff_t *len_read)
+int ext4_read_file(const char *filename, void *buf, int offset, int len)
 {
-	loff_t file_len;
-	int ret;
+	int file_len;
+	int len_read;
 
 	if (offset != 0) {
 		printf("** Cannot support non-zero offset **\n");
 		return -1;
 	}
 
-	ret = ext4fs_open(filename, &file_len);
-	if (ret < 0) {
+	file_len = ext4fs_open(filename);
+	if (file_len < 0) {
 		printf("** File not found %s **\n", filename);
 		return -1;
 	}
@@ -231,20 +226,7 @@ int ext4_read_file(const char *filename, void *buf, loff_t offset, loff_t len,
 	if (len == 0)
 		len = file_len;
 
-	return ext4fs_read(buf, len, len_read);
-}
+	len_read = ext4fs_read(buf, len);
 
-int ext4fs_uuid(char *uuid_str)
-{
-	if (ext4fs_root == NULL)
-		return -1;
-
-#ifdef CONFIG_LIB_UUID
-	uuid_bin_to_str((unsigned char *)ext4fs_root->sblock.unique_id,
-			uuid_str, UUID_STR_FORMAT_STD);
-
-	return 0;
-#else
-	return -ENOSYS;
-#endif
+	return len_read;
 }

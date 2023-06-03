@@ -11,12 +11,23 @@
  *
  * All rights reserved.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
-#include "imagetool.h"
 #include "mkimage.h"
-
 #include <image.h>
 #include <u-boot/crc.h>
 
@@ -31,7 +42,7 @@ static int image_check_image_types(uint8_t type)
 		return EXIT_FAILURE;
 }
 
-static int image_check_params(struct image_tool_params *params)
+static int image_check_params(struct mkimage_params *params)
 {
 	return	((params->dflag && (params->fflag || params->lflag)) ||
 		(params->fflag && (params->dflag || params->lflag)) ||
@@ -39,7 +50,7 @@ static int image_check_params(struct image_tool_params *params)
 }
 
 static int image_verify_header(unsigned char *ptr, int image_size,
-			struct image_tool_params *params)
+			struct mkimage_params *params)
 {
 	uint32_t len;
 	const unsigned char *data;
@@ -55,8 +66,9 @@ static int image_verify_header(unsigned char *ptr, int image_size,
 	memcpy(hdr, ptr, sizeof(image_header_t));
 
 	if (be32_to_cpu(hdr->ih_magic) != IH_MAGIC) {
-		debug("%s: Bad Magic Number: \"%s\" is no valid image\n",
-		      params->cmdname, params->imagefile);
+		fprintf(stderr,
+			"%s: Bad Magic Number: \"%s\" is no valid image\n",
+			params->cmdname, params->imagefile);
 		return -FDT_ERR_BADMAGIC;
 	}
 
@@ -67,8 +79,9 @@ static int image_verify_header(unsigned char *ptr, int image_size,
 	hdr->ih_hcrc = cpu_to_be32(0);	/* clear for re-calculation */
 
 	if (crc32(0, data, len) != checksum) {
-		debug("%s: ERROR: \"%s\" has bad header checksum!\n",
-		      params->cmdname, params->imagefile);
+		fprintf(stderr,
+			"%s: ERROR: \"%s\" has bad header checksum!\n",
+			params->cmdname, params->imagefile);
 		return -FDT_ERR_BADSTATE;
 	}
 
@@ -77,18 +90,18 @@ static int image_verify_header(unsigned char *ptr, int image_size,
 
 	checksum = be32_to_cpu(hdr->ih_dcrc);
 	if (crc32(0, data, len) != checksum) {
-		debug("%s: ERROR: \"%s\" has corrupted data!\n",
-		      params->cmdname, params->imagefile);
+		fprintf(stderr,
+			"%s: ERROR: \"%s\" has corrupted data!\n",
+			params->cmdname, params->imagefile);
 		return -FDT_ERR_BADSTRUCTURE;
 	}
 	return 0;
 }
 
 static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
-				struct image_tool_params *params)
+				struct mkimage_params *params)
 {
 	uint32_t checksum;
-	time_t time;
 
 	image_header_t * hdr = (image_header_t *)ptr;
 
@@ -97,11 +110,9 @@ static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
 				sizeof(image_header_t)),
 			sbuf->st_size - sizeof(image_header_t));
 
-	time = imagetool_get_source_date(params, sbuf->st_mtime);
-
 	/* Build new header */
 	image_set_magic(hdr, IH_MAGIC);
-	image_set_time(hdr, time);
+	image_set_time(hdr, sbuf->st_mtime);
 	image_set_size(hdr, sbuf->st_size - sizeof(image_header_t));
 	image_set_load(hdr, params->addr);
 	image_set_ep(hdr, params->ep);
@@ -119,50 +130,21 @@ static void image_set_header(void *ptr, struct stat *sbuf, int ifd,
 	image_set_hcrc(hdr, checksum);
 }
 
-static int image_extract_subimage(void *ptr, struct image_tool_params *params)
-{
-	const image_header_t *hdr = (const image_header_t *)ptr;
-	ulong file_data;
-	ulong file_len;
-
-	if (image_check_type(hdr, IH_TYPE_MULTI)) {
-		ulong idx = params->pflag;
-		ulong count;
-
-		/* get the number of data files present in the image */
-		count = image_multi_count(hdr);
-
-		/* retrieve the "data file" at the idx position */
-		image_multi_getimg(hdr, idx, &file_data, &file_len);
-
-		if ((file_len == 0) || (idx >= count)) {
-			fprintf(stderr, "%s: No such data file %ld in \"%s\"\n",
-				params->cmdname, idx, params->imagefile);
-			return -1;
-		}
-	} else {
-		file_data = image_get_data(hdr);
-		file_len = image_get_size(hdr);
-	}
-
-	/* save the "data file" into the file system */
-	return imagetool_save_subimage(params->outfile, file_data, file_len);
-}
-
 /*
  * Default image type parameters definition
  */
-U_BOOT_IMAGE_TYPE(
-	defimage,
-	"Default Image support",
-	sizeof(image_header_t),
-	(void *)&header,
-	image_check_params,
-	image_verify_header,
-	image_print_contents,
-	image_set_header,
-	image_extract_subimage,
-	image_check_image_types,
-	NULL,
-	NULL
-);
+static struct image_type_params defimage_params = {
+	.name = "Default Image support",
+	.header_size = sizeof(image_header_t),
+	.hdr = (void*)&header,
+	.check_image_type = image_check_image_types,
+	.verify_header = image_verify_header,
+	.print_header = image_print_contents,
+	.set_header = image_set_header,
+	.check_params = image_check_params,
+};
+
+void init_default_image_type(void)
+{
+	mkimage_register(&defimage_params);
+}

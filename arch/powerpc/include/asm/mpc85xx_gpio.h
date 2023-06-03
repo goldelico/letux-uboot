@@ -1,7 +1,20 @@
 /*
  * Copyright 2010 eXMeritus, A Boeing Company
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef POWERPC_ASM_MPC85XX_GPIO_H_
@@ -20,7 +33,7 @@
 static inline void mpc85xx_gpio_set(unsigned int mask,
 		unsigned int dir, unsigned int val)
 {
-	ccsr_gpio_t *gpio = (void *)(CONFIG_SYS_MPC85xx_GPIO_ADDR);
+	ccsr_gpio_t *gpio = (void *)(CONFIG_SYS_MPC85xx_GPIO_ADDR + 0xc00);
 
 	/* First mask off the unwanted parts of "dir" and "val" */
 	dir &= mask;
@@ -56,7 +69,7 @@ static inline void mpc85xx_gpio_set_high(unsigned int gpios)
 
 static inline unsigned int mpc85xx_gpio_get(unsigned int mask)
 {
-	ccsr_gpio_t *gpio = (void *)(CONFIG_SYS_MPC85xx_GPIO_ADDR);
+	ccsr_gpio_t *gpio = (void *)(CONFIG_SYS_MPC85xx_GPIO_ADDR + 0xc00);
 
 	/* Read the requested values */
 	return in_be32(&gpio->gpdat) & mask;
@@ -72,10 +85,9 @@ static inline int gpio_request(unsigned gpio, const char *label)
 	return 0;
 }
 
-static inline int gpio_free(unsigned gpio)
+static inline void gpio_free(unsigned gpio)
 {
 	/* Compatibility shim */
-	return 0;
 }
 
 static inline int gpio_direction_input(unsigned gpio)
@@ -98,13 +110,12 @@ static inline int gpio_get_value(unsigned gpio)
 	return !!mpc85xx_gpio_get(1U << gpio);
 }
 
-static inline int gpio_set_value(unsigned gpio, int value)
+static inline void gpio_set_value(unsigned gpio, int value)
 {
 	if (value)
 		mpc85xx_gpio_set_high(1U << gpio);
 	else
 		mpc85xx_gpio_set_low(1U << gpio);
-	return 0;
 }
 
 static inline int gpio_is_valid(int gpio)

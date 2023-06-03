@@ -4,7 +4,23 @@
  * Keith Outwater, keith_outwater@mvis.com`
  * Steven Scholz, steven.scholz@imc-berlin.de
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 /*
@@ -118,7 +134,7 @@ int rtc_get (struct rtc_time *tm){
 
 	DEBUGR ("Get RTC s since 1.1.1970: %ld\n", time1);
 
-	rtc_to_tm(time1, tm); /* To Gregorian Date */
+	to_tm(time1, tm); /* To Gregorian Date */
 
 	if (rtc_read(RTC_SR_ADDR) & RTC_SR_BIT_OSF) {
 		printf ("### Warning: RTC oscillator has stopped\n");
@@ -147,7 +163,9 @@ int rtc_set (struct rtc_time *tmp){
 	if (tmp->tm_year < 1970 || tmp->tm_year > 2069)
 		printf("WARNING: year should be between 1970 and 2069!\n");
 
-	time = rtc_mktime(tmp);
+	time = mktime(tmp->tm_year, tmp->tm_mon,
+			tmp->tm_mday, tmp->tm_hour,
+			tmp->tm_min, tmp->tm_sec);
 
 	DEBUGR ("Set RTC s since 1.1.1970: %ld (0x%02lx)\n", time, time);
 

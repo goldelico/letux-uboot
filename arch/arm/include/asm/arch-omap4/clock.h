@@ -4,7 +4,23 @@
  *
  * Aneesh V <aneesh@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 #ifndef _CLOCKS_OMAP4_H_
 #define _CLOCKS_OMAP4_H_
@@ -134,11 +150,8 @@
 /* CM_DSS_DSS_CLKCTRL */
 #define DSS_CLKCTRL_OPTFCLKEN_MASK		0xF00
 
-/* CM_COREAON_USB_PHY_CORE_CLKCTRL */
-#define USBPHY_CORE_CLKCTRL_OPTFCLKEN_CLK32K	(1 << 8)
-
 /* CM_L3INIT_USBPHY_CLKCTRL */
-#define USBPHY_CLKCTRL_OPTFCLKEN_PHY_48M_MASK	(1 << 8)
+#define USBPHY_CLKCTRL_OPTFCLKEN_PHY_48M_MASK	8
 
 /* CM_MPU_MPU_CLKCTRL */
 #define MPU_CLKCTRL_CLKSEL_EMIF_DIV_MODE_SHIFT	24
@@ -152,16 +165,11 @@
 /* PRM_VC_VAL_BYPASS */
 #define PRM_VC_I2C_CHANNEL_FREQ_KHZ	400
 
-/* PMIC */
+/* SMPS */
 #define SMPS_I2C_SLAVE_ADDR	0x12
-/* TWL6030 SMPS */
 #define SMPS_REG_ADDR_VCORE1	0x55
 #define SMPS_REG_ADDR_VCORE2	0x5B
 #define SMPS_REG_ADDR_VCORE3	0x61
-/* TWL6032 SMPS */
-#define SMPS_REG_ADDR_SMPS1	0x55
-#define SMPS_REG_ADDR_SMPS2	0x5B
-#define SMPS_REG_ADDR_SMPS5	0x49
 
 #define PHOENIX_SMPS_BASE_VOLT_STD_MODE_UV		607700
 #define PHOENIX_SMPS_BASE_VOLT_STD_MODE_WITH_OFFSET_UV	709000

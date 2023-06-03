@@ -2,7 +2,23 @@
  * Copyright (c) 2011 The Chromium OS Authors.
  * (C) Copyright 2010,2011 NVIDIA Corporation <www.nvidia.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -10,7 +26,9 @@
 #include <asm/io.h>
 #include <i2c.h>
 
-static struct udevice *tps6586x_dev;
+static int bus_num;		/* I2C bus we are on */
+#define I2C_ADDRESS		0x34	/* chip requires this address */
+static char inited;		/* 1 if we have been inited */
 
 enum {
 	/* Registers that we access */
@@ -30,14 +48,18 @@ enum {
 };
 
 #define MAX_I2C_RETRY	3
-static int tps6586x_read(int reg)
+int tps6586x_read(int reg)
 {
 	int	i;
 	uchar	data;
 	int	retval = -1;
+	int	old_bus_num;
+
+	old_bus_num = i2c_get_bus_num();
+	i2c_set_bus_num(bus_num);
 
 	for (i = 0; i < MAX_I2C_RETRY; ++i) {
-		if (!dm_i2c_read(tps6586x_dev, reg,  &data, 1)) {
+		if (!i2c_read(I2C_ADDRESS, reg, 1, &data, 1)) {
 			retval = (int)data;
 			goto exit;
 		}
@@ -47,6 +69,7 @@ static int tps6586x_read(int reg)
 	}
 
 exit:
+	i2c_set_bus_num(old_bus_num);
 	debug("pmu_read %x=%x\n", reg, retval);
 	if (retval < 0)
 		debug("%s: failed to read register %#x: %d\n", __func__, reg,
@@ -54,13 +77,17 @@ exit:
 	return retval;
 }
 
-static int tps6586x_write(int reg, uchar *data, uint len)
+int tps6586x_write(int reg, uchar *data, uint len)
 {
 	int	i;
 	int	retval = -1;
+	int	old_bus_num;
+
+	old_bus_num = i2c_get_bus_num();
+	i2c_set_bus_num(bus_num);
 
 	for (i = 0; i < MAX_I2C_RETRY; ++i) {
-		if (!dm_i2c_write(tps6586x_dev, reg, data, len)) {
+		if (!i2c_write(I2C_ADDRESS, reg, 1, data, len)) {
 			retval = 0;
 			goto exit;
 		}
@@ -70,6 +97,7 @@ static int tps6586x_write(int reg, uchar *data, uint len)
 	}
 
 exit:
+	i2c_set_bus_num(old_bus_num);
 	debug("pmu_write %x=%x: ", reg, retval);
 	for (i = 0; i < len; i++)
 		debug("%x ", data[i]);
@@ -151,7 +179,7 @@ int tps6586x_set_pwm_mode(int mask)
 	uchar val;
 	int ret;
 
-	assert(tps6586x_dev);
+	assert(inited);
 	ret = tps6586x_read(PFM_MODE);
 	if (ret != -1) {
 		val = (uchar)ret;
@@ -172,7 +200,7 @@ int tps6586x_adjust_sm0_sm1(int sm0_target, int sm1_target, int step, int rate,
 	int sm0, sm1;
 	int bad;
 
-	assert(tps6586x_dev);
+	assert(inited);
 
 	/* get current voltage settings */
 	if (read_voltages(&sm0, &sm1)) {
@@ -243,9 +271,10 @@ int tps6586x_adjust_sm0_sm1(int sm0_target, int sm1_target, int step, int rate,
 	return bad ? -1 : 0;
 }
 
-int tps6586x_init(struct udevice *dev)
+int tps6586x_init(int bus)
 {
-	tps6586x_dev = dev;
+	bus_num = bus;
+	inited = 1;
 
 	return 0;
 }

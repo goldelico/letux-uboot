@@ -3,7 +3,20 @@
  *
  * Configuration settings for the MX31ADS Freescale board.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __CONFIG_H
@@ -12,11 +25,25 @@
 #include <asm/arch/imx-regs.h>
 
  /* High Level Configuration Options */
-#define CONFIG_MX31		1		/* This is a mx31 */
+#define CONFIG_ARM1136		1		/* This is an arm1136 CPU core */
+#define CONFIG_MX31		1		/* in a mx31 */
+
+#define CONFIG_DISPLAY_CPUINFO
+#define CONFIG_DISPLAY_BOARDINFO
 
 #define CONFIG_SYS_TEXT_BASE		0xA0000000
 
 #define CONFIG_MACH_TYPE	MACH_TYPE_MX31ADS
+
+/*
+ * Disabled for now due to build problems under Debian and a significant increase
+ * in the final file size: 144260 vs. 109536 Bytes.
+ */
+#if 0
+#define CONFIG_OF_LIBFDT		1
+#define CONFIG_FIT			1
+#define CONFIG_FIT_VERBOSE		1
+#endif
 
 #define CONFIG_CMDLINE_TAG		1	/* enable passing of ATAGs */
 #define CONFIG_SETUP_MEMORY_TAGS	1
@@ -59,8 +86,15 @@
 /***********************************************************
  * Command definition
  ***********************************************************/
+
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_SPI
 #define CONFIG_CMD_DATE
 
+#define CONFIG_BOOTDELAY	3
 
 #define CONFIG_LOADADDR		0x80800000	/* loadaddr env var */
 
@@ -102,6 +136,7 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
+#define CONFIG_SYS_PROMPT		"=> "
 #define CONFIG_SYS_CBSIZE		256		/* Console I/O Buffer Size */
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
@@ -112,6 +147,8 @@
 #define CONFIG_SYS_MEMTEST_END		0x10000
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
+
+#define CONFIG_SYS_HZ			1000
 
 #define CONFIG_CMDLINE_EDITING	1
 
@@ -148,6 +185,7 @@
 /* Address and size of Redundant Environment Sector	*/
 #define CONFIG_ENV_ADDR_REDUND	(CONFIG_ENV_ADDR + CONFIG_ENV_SIZE)
 #define CONFIG_ENV_SIZE_REDUND	CONFIG_ENV_SIZE
+
 
 /*-----------------------------------------------------------------------
  * CFI FLASH driver setup

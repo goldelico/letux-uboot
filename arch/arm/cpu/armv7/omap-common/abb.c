@@ -1,4 +1,5 @@
 /*
+ *
  * Adaptive Body Bias programming sequence for OMAP family
  *
  * (C) Copyright 2013
@@ -6,12 +7,27 @@
  *
  * Andrii Tseglytskyi <andrii.tseglytskyi@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <asm/omap_common.h>
-#include <asm/arch/clock.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 
@@ -48,9 +64,9 @@ static void abb_setup_timings(u32 setup)
 	 */
 
 	/* calculate SR2_WTCNT_VALUE */
-	sys_rate = DIV_ROUND_CLOSEST(V_OSCK, 1000000);
-	clk_cycles = DIV_ROUND_CLOSEST(OMAP_ABB_CLOCK_CYCLES * 10, sys_rate);
-	sr2_cnt = DIV_ROUND_CLOSEST(OMAP_ABB_SETTLING_TIME * 10, clk_cycles);
+	sys_rate = DIV_ROUND(V_OSCK, 1000000);
+	clk_cycles = DIV_ROUND(OMAP_ABB_CLOCK_CYCLES * 10, sys_rate);
+	sr2_cnt = DIV_ROUND(OMAP_ABB_SETTLING_TIME * 10, clk_cycles);
 
 	setbits_le32(setup,
 		     sr2_cnt << (ffs(OMAP_ABB_SETUP_SR2_WTCNT_VALUE_MASK) - 1));

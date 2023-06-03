@@ -16,18 +16,31 @@
  *
  * ----------------------------------------------------------------------------
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * ----------------------------------------------------------------------------
+
  * Modifications:
  * ver. 1.0: Sep 2005, Anant Gole - Created EMAC version for uBoot.
  * ver  1.1: Nov 2005, Anant Gole - Extended the RX logic for multiple descriptors
+ *
  */
 #include <common.h>
 #include <command.h>
 #include <net.h>
 #include <miiphy.h>
 #include <malloc.h>
-#include <netdev.h>
 #include <linux/compiler.h>
 #include <asm/arch/emac_defs.h>
 #include <asm/io.h>
@@ -107,6 +120,26 @@ static u_int8_t	active_phy_addr[CONFIG_SYS_DAVINCI_EMAC_PHY_COUNT];
 static u_int8_t	num_phy;
 
 phy_t				phy[CONFIG_SYS_DAVINCI_EMAC_PHY_COUNT];
+
+static inline void davinci_flush_rx_descs(void)
+{
+	/* flush the whole RX descs area */
+	flush_dcache_range(EMAC_WRAPPER_RAM_ADDR + EMAC_RX_DESC_BASE,
+			EMAC_WRAPPER_RAM_ADDR + EMAC_TX_DESC_BASE);
+}
+
+static inline void davinci_invalidate_rx_descs(void)
+{
+	/* invalidate the whole RX descs area */
+	invalidate_dcache_range(EMAC_WRAPPER_RAM_ADDR + EMAC_RX_DESC_BASE,
+			EMAC_WRAPPER_RAM_ADDR + EMAC_TX_DESC_BASE);
+}
+
+static inline void davinci_flush_desc(emac_desc *desc)
+{
+	flush_dcache_range((unsigned long)desc,
+			(unsigned long)desc + sizeof(*desc));
+}
 
 static int davinci_eth_set_mac_addr(struct eth_device *dev)
 {
@@ -223,10 +256,11 @@ int davinci_eth_phy_read(u_int8_t phy_addr, u_int8_t reg_num, u_int16_t *data)
 
 	if (tmp & MDIO_USERACCESS0_ACK) {
 		*data = tmp & 0xffff;
-		return 1;
+		return(1);
 	}
 
-	return 0;
+	*data = -1;
+	return(0);
 }
 
 /* Write to a PHY register via MDIO inteface. Blocks until operation is complete. */
@@ -247,7 +281,7 @@ int davinci_eth_phy_write(u_int8_t phy_addr, u_int8_t reg_num, u_int16_t data)
 	while (readl(&adap_mdio->USERACCESS0) & MDIO_USERACCESS0_GO)
 		;
 
-	return 1;
+	return(1);
 }
 
 /* PHY functions for a generic PHY */
@@ -369,19 +403,14 @@ static int gen_auto_negotiate(int phy_addr)
 
 
 #if defined(CONFIG_MII) || defined(CONFIG_CMD_MII)
-static int davinci_mii_phy_read(struct mii_dev *bus, int addr, int devad,
-				int reg)
+static int davinci_mii_phy_read(const char *devname, unsigned char addr, unsigned char reg, unsigned short *value)
 {
-	unsigned short value = 0;
-	int retval = davinci_eth_phy_read(addr, reg, &value);
-
-	return retval ? value : -EIO;
+	return(davinci_eth_phy_read(addr, reg, value) ? 0 : 1);
 }
 
-static int davinci_mii_phy_write(struct mii_dev *bus, int addr, int devad,
-				 int reg, u16 value)
+static int davinci_mii_phy_write(const char *devname, unsigned char addr, unsigned char reg, unsigned short value)
 {
-	return davinci_eth_phy_write(addr, reg, value) ? 0 : 1;
+	return(davinci_eth_phy_write(addr, reg, value) ? 0 : 1);
 }
 #endif
 
@@ -443,11 +472,11 @@ static int davinci_eth_open(struct eth_device *dev, bd_t *bis)
 
 	/* Set DMA 8 TX / 8 RX Head pointers to 0 */
 	addr = &adap_emac->TX0HDP;
-	for (cnt = 0; cnt < 8; cnt++)
+	for(cnt = 0; cnt < 16; cnt++)
 		writel(0, addr++);
 
 	addr = &adap_emac->RX0HDP;
-	for (cnt = 0; cnt < 8; cnt++)
+	for(cnt = 0; cnt < 16; cnt++)
 		writel(0, addr++);
 
 	/* Clear Statistics (do this before setting MacControl register) */
@@ -474,6 +503,8 @@ static int davinci_eth_open(struct eth_device *dev, bd_t *bis)
 	rx_desc->next = 0;
 	emac_rx_active_tail = rx_desc;
 	emac_rx_queue_active = 1;
+
+	davinci_flush_rx_descs();
 
 	/* Enable TX/RX */
 	writel(EMAC_MAX_ETHERNET_PKT_SIZE, &adap_emac->RXMAXLEN);
@@ -580,8 +611,7 @@ static void davinci_eth_close(struct eth_device *dev)
 	debug_emac("+ emac_close\n");
 
 	davinci_eth_ch_teardown(EMAC_CH_TX);	/* TX Channel teardown */
-	if (readl(&adap_emac->RXCONTROL) & 1)
-		davinci_eth_ch_teardown(EMAC_CH_RX); /* RX Channel teardown */
+	davinci_eth_ch_teardown(EMAC_CH_RX);	/* RX Channel teardown */
 
 	/* Reset EMAC module and disable interrupts in wrapper */
 	writel(1, &adap_emac->SOFTRESET);
@@ -636,7 +666,8 @@ static int davinci_eth_send_packet (struct eth_device *dev,
 				      EMAC_CPPI_EOP_BIT);
 
 	flush_dcache_range((unsigned long)packet,
-			   (unsigned long)packet + ALIGN(length, PKTALIGN));
+			(unsigned long)packet + length);
+	davinci_flush_desc(emac_tx_desc);
 
 	/* Send the packet */
 	writel(BD_TO_HW((unsigned long)emac_tx_desc), &adap_emac->TX0HDP);
@@ -670,22 +701,21 @@ static int davinci_eth_rcv_packet (struct eth_device *dev)
 	volatile emac_desc *tail_desc;
 	int status, ret = -1;
 
+	davinci_invalidate_rx_descs();
+
 	rx_curr_desc = emac_rx_active_head;
-	if (!rx_curr_desc)
-		return 0;
 	status = rx_curr_desc->pkt_flag_len;
-	if ((status & EMAC_CPPI_OWNERSHIP_BIT) == 0) {
+	if ((rx_curr_desc) && ((status & EMAC_CPPI_OWNERSHIP_BIT) == 0)) {
 		if (status & EMAC_CPPI_RX_ERROR_FRAME) {
 			/* Error in packet - discard it and requeue desc */
 			printf ("WARN: emac_rcv_pkt: Error in packet\n");
 		} else {
 			unsigned long tmp = (unsigned long)rx_curr_desc->buffer;
-			unsigned short len =
-				rx_curr_desc->buff_off_len & 0xffff;
 
-			invalidate_dcache_range(tmp, tmp + ALIGN(len, PKTALIGN));
-			net_process_received_packet(rx_curr_desc->buffer, len);
-			ret = len;
+			invalidate_dcache_range(tmp, tmp + EMAC_RXBUF_SIZE);
+			NetReceive (rx_curr_desc->buffer,
+				    (rx_curr_desc->buff_off_len & 0xffff));
+			ret = rx_curr_desc->buff_off_len & 0xffff;
 		}
 
 		/* Ack received packet descriptor */
@@ -708,6 +738,7 @@ static int davinci_eth_rcv_packet (struct eth_device *dev)
 		rx_curr_desc->buff_off_len = EMAC_MAX_ETHERNET_PKT_SIZE;
 		rx_curr_desc->pkt_flag_len = EMAC_CPPI_OWNERSHIP_BIT;
 		rx_curr_desc->next = 0;
+		davinci_flush_desc(rx_curr_desc);
 
 		if (emac_rx_active_head == 0) {
 			printf ("INFO: emac_rcv_pkt: active queue head = 0\n");
@@ -725,11 +756,13 @@ static int davinci_eth_rcv_packet (struct eth_device *dev)
 			tail_desc->next = BD_TO_HW((ulong) curr_desc);
 			status = tail_desc->pkt_flag_len;
 			if (status & EMAC_CPPI_EOQ_BIT) {
+				davinci_flush_desc(tail_desc);
 				writel(BD_TO_HW((ulong)curr_desc),
 				       &adap_emac->RX0HDP);
 				status &= ~EMAC_CPPI_EOQ_BIT;
 				tail_desc->pkt_flag_len = status;
 			}
+			davinci_flush_desc(tail_desc);
 		}
 		return (ret);
 	}
@@ -755,7 +788,7 @@ int davinci_emac_initialize(void)
 		return -1;
 
 	memset(dev, 0, sizeof *dev);
-	strcpy(dev->name, "DaVinci-EMAC");
+	sprintf(dev->name, "DaVinci-EMAC");
 
 	dev->iobase = 0;
 	dev->init = davinci_eth_open;
@@ -859,17 +892,8 @@ int davinci_emac_initialize(void)
 
 		debug("Ethernet PHY: %s\n", phy[i].name);
 
-		int retval;
-		struct mii_dev *mdiodev = mdio_alloc();
-		if (!mdiodev)
-			return -ENOMEM;
-		strncpy(mdiodev->name, phy[i].name, MDIO_NAME_LEN);
-		mdiodev->read = davinci_mii_phy_read;
-		mdiodev->write = davinci_mii_phy_write;
-
-		retval = mdio_register(mdiodev);
-		if (retval < 0)
-			return retval;
+		miiphy_register(phy[i].name, davinci_mii_phy_read,
+						davinci_mii_phy_write);
 	}
 
 #if defined(CONFIG_DRIVER_TI_EMAC_USE_RMII) && \

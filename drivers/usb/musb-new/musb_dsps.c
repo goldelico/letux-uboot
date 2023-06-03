@@ -7,7 +7,21 @@
  *
  * This file is part of the Inventra Controller Driver for Linux.
  *
- * SPDX-License-Identifier:	GPL-2.0
+ * The Inventra Controller Driver for Linux is free software; you
+ * can redistribute it and/or modify it under the terms of the GNU
+ * General Public License version 2 as published by the Free Software
+ * Foundation.
+ *
+ * The Inventra Controller Driver for Linux is distributed in
+ * the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with The Inventra Controller Driver for Linux ; if not,
+ * write to the Free Software Foundation, Inc., 59 Temple Place,
+ * Suite 330, Boston, MA  02111-1307  USA
  *
  * musb_dsps.c will be a common file for all the TI DSPS platforms
  * such as dm64x, dm36x, dm35x, da8x, am35x and ti81x.
@@ -15,6 +29,7 @@
  * da8xx.c would be merged to this file after testing.
  */
 
+#define __UBOOT__
 #ifndef __UBOOT__
 #include <linux/init.h>
 #include <linux/io.h>
@@ -142,11 +157,7 @@ struct dsps_glue {
 /**
  * dsps_musb_enable - enable interrupts
  */
-#ifndef __UBOOT__
 static void dsps_musb_enable(struct musb *musb)
-#else
-static int dsps_musb_enable(struct musb *musb)
-#endif
 {
 #ifndef __UBOOT__
 	struct device *dev = musb->controller;
@@ -171,8 +182,6 @@ static int dsps_musb_enable(struct musb *musb)
 	if (is_otg_enabled(musb))
 		dsps_writel(reg_base, wrp->coreintr_set,
 			    (1 << wrp->drvvbus) << wrp->usb_shift);
-#else
-	return 0;
 #endif
 }
 
@@ -627,7 +636,7 @@ static int __devinit dsps_probe(struct platform_device *pdev)
 	/* get memory resource */
 	iomem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!iomem) {
-		dev_err(&pdev->dev, "failed to get usbss mem resource\n");
+		dev_err(&pdev->dev, "failed to get usbss mem resourse\n");
 		ret = -ENODEV;
 		goto err1;
 	}

@@ -3,16 +3,31 @@
  * Stelian Pop <stelian@popies.net>
  * Lead Tech Design <www.leadtechdesign.com>
  *
- * (C) Copyright 2009-2015
+ * (C) Copyright 2009-2011
  * Daniel Gorsulowski <daniel.gorsulowski@esd.eu>
  * esd electronic system design gmbh <www.esd.eu>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <asm/io.h>
-#include <asm/gpio.h>
 #include <asm/arch/at91sam9_smc.h>
 #include <asm/arch/at91_common.h>
 #include <asm/arch/at91_pmc.h>
@@ -28,7 +43,6 @@ DECLARE_GLOBAL_DATA_PTR;
  * Miscelaneous platform dependent initialisations
  */
 
-#ifdef CONFIG_REVISION_TAG
 static int hw_rev = -1;	/* hardware revision */
 
 int get_hw_rev(void)
@@ -46,7 +60,6 @@ int get_hw_rev(void)
 
 	return hw_rev;
 }
-#endif /* CONFIG_REVISION_TAG */
 
 #ifdef CONFIG_CMD_NAND
 static void meesc_nand_hw_init(void)
@@ -77,18 +90,19 @@ static void meesc_nand_hw_init(void)
 		&smc->cs[3].mode);
 
 	/* Configure RDY/BSY */
-	gpio_direction_input(CONFIG_SYS_NAND_READY_PIN);
+	at91_set_pio_input(CONFIG_SYS_NAND_READY_PIN, 1);
 
 	/* Enable NandFlash */
-	gpio_direction_output(CONFIG_SYS_NAND_ENABLE_PIN, 1);
+	at91_set_pio_output(CONFIG_SYS_NAND_ENABLE_PIN, 1);
 }
 #endif /* CONFIG_CMD_NAND */
 
 #ifdef CONFIG_MACB
 static void meesc_macb_hw_init(void)
 {
-	at91_periph_clk_enable(ATMEL_ID_EMAC);
-
+	at91_pmc_t	*pmc	= (at91_pmc_t *) ATMEL_BASE_PMC;
+	/* Enable clock */
+	writel(1 << ATMEL_ID_EMAC, &pmc->pcer);
 	at91_macb_hw_init();
 }
 #endif
@@ -126,16 +140,10 @@ static void meesc_ethercat_hw_init(void)
 
 int dram_init(void)
 {
-	/* dram_init must store complete ramsize in gd->ram_size */
-	gd->ram_size = get_ram_size((void *)PHYS_SDRAM,
-				PHYS_SDRAM_SIZE);
+	gd->ram_size = get_ram_size(
+		(void *)CONFIG_SYS_SDRAM_BASE,
+		CONFIG_SYS_SDRAM_SIZE);
 	return 0;
-}
-
-void dram_init_banksize(void)
-{
-	gd->bd->bi_dram[0].start = PHYS_SDRAM;
-	gd->bd->bi_dram[0].size = PHYS_SDRAM_SIZE;
 }
 
 int board_eth_init(bd_t *bis)
@@ -147,7 +155,6 @@ int board_eth_init(bd_t *bis)
 	return rc;
 }
 
-#ifdef CONFIG_DISPLAY_BOARDINFO
 int checkboard(void)
 {
 	char str[32];
@@ -181,13 +188,10 @@ int checkboard(void)
 		puts(", serial# ");
 		puts(str);
 	}
-#ifdef CONFIG_REVISION_TAG
 	printf("\nHardware-revision: 1.%d\n", get_hw_rev());
-#endif
 	printf("Mach-type: %lu\n", gd->bd->bi_arch_number);
 	return 0;
 }
-#endif /* CONFIG_DISPLAY_BOARDINFO */
 
 #ifdef CONFIG_SERIAL_TAG
 void get_board_serial(struct tag_serialnr *serialnr)
@@ -243,10 +247,12 @@ int misc_init_r(void)
 
 int board_early_init_f(void)
 {
-	at91_periph_clk_enable(ATMEL_ID_PIOA);
-	at91_periph_clk_enable(ATMEL_ID_PIOB);
-	at91_periph_clk_enable(ATMEL_ID_PIOCDE);
-	at91_periph_clk_enable(ATMEL_ID_UHP);
+	at91_pmc_t	*pmc	= (at91_pmc_t *) ATMEL_BASE_PMC;
+
+	/* enable all clocks */
+	writel((1 << ATMEL_ID_PIOA) | (1 << ATMEL_ID_PIOB) |
+		(1 << ATMEL_ID_PIOCDE) | (1 << ATMEL_ID_UHP),
+		&pmc->pcer);
 
 	at91_seriald_hw_init();
 

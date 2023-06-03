@@ -1,15 +1,25 @@
 # Copyright (c) 2011 The Chromium OS Authors.
 #
-# SPDX-License-Identifier:	GPL-2.0+
+# See file CREDITS for list of people who contributed to this
+# project.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307 USA
 #
 
-from __future__ import print_function
-
-try:
-    import configparser as ConfigParser
-except:
-    import ConfigParser
-
+import ConfigParser
 import os
 import re
 
@@ -36,10 +46,7 @@ class _ProjectConfigParser(ConfigParser.SafeConfigParser):
     - Merge general default settings/aliases with project-specific ones.
 
     # Sample config used for tests below...
-    >>> try:
-    ...     from StringIO import StringIO
-    ... except ImportError:
-    ...     from io import StringIO
+    >>> import StringIO
     >>> sample_config = '''
     ... [alias]
     ... me: Peter P. <likesspiders@example.com>
@@ -57,25 +64,25 @@ class _ProjectConfigParser(ConfigParser.SafeConfigParser):
 
     # Check to make sure that bogus project gets general alias.
     >>> config = _ProjectConfigParser("zzz")
-    >>> config.readfp(StringIO(sample_config))
+    >>> config.readfp(StringIO.StringIO(sample_config))
     >>> config.get("alias", "enemies")
     'Evil <evil@example.com>'
 
     # Check to make sure that alias gets overridden by project.
     >>> config = _ProjectConfigParser("sm")
-    >>> config.readfp(StringIO(sample_config))
+    >>> config.readfp(StringIO.StringIO(sample_config))
     >>> config.get("alias", "enemies")
     'Green G. <ugly@example.com>'
 
     # Check to make sure that settings get merged with project.
     >>> config = _ProjectConfigParser("linux")
-    >>> config.readfp(StringIO(sample_config))
+    >>> config.readfp(StringIO.StringIO(sample_config))
     >>> sorted(config.items("settings"))
     [('am_hero', 'True'), ('process_tags', 'False')]
 
     # Check to make sure that settings works with unknown project.
     >>> config = _ProjectConfigParser("unknown")
-    >>> config.readfp(StringIO(sample_config))
+    >>> config.readfp(StringIO.StringIO(sample_config))
     >>> sorted(config.items("settings"))
     [('am_hero', 'True')]
     """
@@ -97,7 +104,7 @@ class _ProjectConfigParser(ConfigParser.SafeConfigParser):
         if not self.has_section(project_settings):
             self.add_section(project_settings)
         project_defaults = _default_settings.get(project_name, {})
-        for setting_name, setting_value in project_defaults.items():
+        for setting_name, setting_value in project_defaults.iteritems():
             self.set(project_settings, setting_name, setting_value)
 
     def get(self, section, option, *args, **kwargs):
@@ -165,7 +172,7 @@ def ReadGitAliases(fname):
     try:
         fd = open(fname, 'r')
     except IOError:
-        print("Warning: Cannot find alias file '%s'" % fname)
+        print "Warning: Cannot find alias file '%s'" % fname
         return
 
     re_line = re.compile('alias\s+(\S+)\s+(.*)')
@@ -176,7 +183,7 @@ def ReadGitAliases(fname):
 
         m = re_line.match(line)
         if not m:
-            print("Warning: Alias file line '%s' not understood" % line)
+            print "Warning: Alias file line '%s' not understood" % line
             continue
 
         list = alias.get(m.group(1), [])
@@ -209,10 +216,10 @@ def CreatePatmanConfigFile(config_fname):
     try:
         f = open(config_fname, 'w')
     except IOError:
-        print("Couldn't create patman config file\n")
+        print "Couldn't create patman config file\n"
         raise
 
-    print("[alias]\nme: %s <%s>" % (name, email), file=f)
+    print >>f, "[alias]\nme: %s <%s>" % (name, email)
     f.close();
 
 def _UpdateDefaults(parser, config):
@@ -242,32 +249,7 @@ def _UpdateDefaults(parser, config):
                 val = config.getint('settings', name)
             parser.set_default(name, val)
         else:
-            print("WARNING: Unknown setting %s" % name)
-
-def _ReadAliasFile(fname):
-    """Read in the U-Boot git alias file if it exists.
-
-    Args:
-        fname: Filename to read.
-    """
-    if os.path.exists(fname):
-        bad_line = None
-        with open(fname) as fd:
-            linenum = 0
-            for line in fd:
-                linenum += 1
-                line = line.strip()
-                if not line or line.startswith('#'):
-                    continue
-                words = line.split(' ', 2)
-                if len(words) < 3 or words[0] != 'alias':
-                    if not bad_line:
-                        bad_line = "%s:%d:Invalid line '%s'" % (fname, linenum,
-                                                                line)
-                    continue
-                alias[words[1]] = [s.strip() for s in words[2].split(',')]
-        if bad_line:
-            print(bad_line)
+            print "WARNING: Unknown setting %s" % name
 
 def Setup(parser, project_name, config_fname=''):
     """Set up the settings module by reading config files.
@@ -278,14 +260,12 @@ def Setup(parser, project_name, config_fname=''):
             for sections named "project_section" as well.
         config_fname:   Config filename to read ('' for default)
     """
-    # First read the git alias file if available
-    _ReadAliasFile('doc/git-mailrc')
     config = _ProjectConfigParser(project_name)
     if config_fname == '':
         config_fname = '%s/.patman' % os.getenv('HOME')
 
     if not os.path.exists(config_fname):
-        print("No config file found ~/.patman\nCreating one...\n")
+        print "No config file found ~/.patman\nCreating one...\n"
         CreatePatmanConfigFile(config_fname)
 
     config.read(config_fname)

@@ -2,7 +2,18 @@
  * (C) Copyright 2009 Wolfgang Denk <wd@denx.de>
  * (C) Copyright 2010 DAVE Srl <www.dave.eu>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
  */
 
 /*
@@ -13,7 +24,6 @@
 #define __CONFIG_H
 
 #define CONFIG_AC14XX 1
-
 /*
  * Memory map for the ifm AC14xx board:
  *
@@ -28,8 +38,14 @@
  * High Level Configuration Options
  */
 #define CONFIG_E300		1	/* E300 Family */
+#define CONFIG_MPC512X		1	/* MPC512X family */
 
 #define CONFIG_SYS_TEXT_BASE	0xFFF00000
+
+#if defined(CONFIG_VIDEO)
+#define CONFIG_CFB_CONSOLE
+#define CONFIG_VGA_AS_SINGLE_DEVICE
+#endif
 
 #define CONFIG_SYS_MPC512X_CLKIN	25000000	/* in Hz */
 #define SCFR1_IPS_DIV			2
@@ -283,10 +299,11 @@
 
 /* Use SRAM for initial stack */
 #define CONFIG_SYS_INIT_RAM_ADDR	CONFIG_SYS_SRAM_BASE
-#define CONFIG_SYS_INIT_RAM_SIZE	CONFIG_SYS_SRAM_SIZE
+#define CONFIG_SYS_INIT_RAM_END		CONFIG_SYS_SRAM_SIZE
 
-#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_SIZE - \
-					 GENERATED_GBL_DATA_SIZE)
+#define CONFIG_SYS_GBL_DATA_SIZE	0x100
+#define CONFIG_SYS_GBL_DATA_OFFSET	(CONFIG_SYS_INIT_RAM_END - \
+					 CONFIG_SYS_GBL_DATA_SIZE)
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
@@ -336,6 +353,7 @@
 			 CLOCK_SCCR2_DIU_EN |		\
 			 CLOCK_SCCR2_I2C_EN)
 
+
 #define CONFIG_CMDLINE_EDITING		1	/* command line history */
 
 /* I2C */
@@ -364,6 +382,7 @@
  * Ethernet configuration
  */
 #define CONFIG_MPC512x_FEC		1
+#define CONFIG_NET_MULTI
 #define CONFIG_PHY_ADDR			0x1F
 #define CONFIG_MII			1	/* MII PHY management */
 #define CONFIG_FEC_AN_TIMEOUT		1
@@ -386,10 +405,19 @@
 #define CONFIG_LOADS_ECHO		1
 #define CONFIG_SYS_LOADS_BAUD_CHANGE	1
 
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_ASKENV
+#define CONFIG_CMD_DHCP
 #define CONFIG_CMD_EEPROM
 #undef CONFIG_CMD_FUSE
+#define CONFIG_CMD_I2C
 #undef CONFIG_CMD_IDE
+#undef CONFIG_CMD_EXT2
 #define CONFIG_CMD_JFFS2
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NFS
+#define CONFIG_CMD_PING
 #define CONFIG_CMD_REGINFO
 
 #if defined(CONFIG_PCI)
@@ -407,6 +435,7 @@
  */
 #define CONFIG_SYS_LONGHELP			/* undef to save memory */
 #define CONFIG_SYS_LOAD_ADDR	0x2000000	/* default load address */
+#define CONFIG_SYS_PROMPT	"ac14xx> "	/* Monitor Command Prompt */
 
 #ifdef CONFIG_CMD_KGDB
 # define CONFIG_SYS_CBSIZE	1024		/* Console I/O Buffer Size */
@@ -421,6 +450,9 @@
 #define CONFIG_SYS_MAXARGS	32
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE	CONFIG_SYS_CBSIZE
+
+/* decrementer freq: 1ms ticks */
+#define CONFIG_SYS_HZ		1000
 
 /*
  * For booting Linux, the board info and command line data
@@ -443,8 +475,17 @@
 
 #define CONFIG_HIGH_BATS		1	/* High BATs supported */
 
+/*
+ * Internal Definitions
+ *
+ * Boot Flags
+ */
+#define BOOTFLAG_COLD			0x01
+#define BOOTFLAG_WARM			0x02
+
 #ifdef CONFIG_CMD_KGDB
 #define CONFIG_KGDB_BAUDRATE		230400	/* speed of kgdb serial port */
+#define CONFIG_KGDB_SER_INDEX		2	/* which serial port to use */
 #endif
 
 /*
@@ -456,6 +497,7 @@
 /* default load addr for tftp and bootm */
 #define CONFIG_LOADADDR		400000
 
+#define CONFIG_BOOTDELAY	2	/* -1 disables auto-boot */
 
 /* the builtin environment and standard greeting */
 #define CONFIG_PREBOOT	"echo;"	\
@@ -535,6 +577,9 @@
 
 #define CONFIG_ARP_TIMEOUT	200UL
 
+#define CONFIG_FIT		1
+#define CONFIG_OF_LIBFDT	1
+#define CONFIG_OF_BOARD_SETUP	1
 #define CONFIG_OF_SUPPORT_OLD_DEVICE_TREES	1
 
 #define OF_CPU			"PowerPC,5121@0"

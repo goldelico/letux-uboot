@@ -3,7 +3,20 @@
  *
  * Copyright (C) 2010 Marek Vasut <marek.vasut@gmail.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -13,7 +26,6 @@
 #include <netdev.h>
 #include <asm/io.h>
 #include <serial.h>
-#include <usb.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -23,7 +35,7 @@ int board_init(void)
 	dcache_disable();
 	icache_disable();
 
-	/* arch number of Toradex Colibri PXA270 */
+	/* arch number of vpac270 */
 	gd->bd->bi_arch_number = MACH_TYPE_COLIBRI;
 
 	/* adress of boot parameters */
@@ -40,7 +52,7 @@ int dram_init(void)
 }
 
 #ifdef	CONFIG_CMD_USB
-int board_usb_init(int index, enum usb_init_type init)
+int usb_board_init(void)
 {
 	writel((readl(UHCHR) | UHCHR_PCPL | UHCHR_PSPL) &
 		~(UHCHR_SSEP0 | UHCHR_SSEP1 | UHCHR_SSEP2 | UHCHR_SSE),
@@ -71,9 +83,9 @@ int board_usb_init(int index, enum usb_init_type init)
 	return 0;
 }
 
-int board_usb_cleanup(int index, enum usb_init_type init)
+void usb_board_init_fail(void)
 {
-	return 0;
+	return;
 }
 
 void usb_board_stop(void)

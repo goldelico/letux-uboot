@@ -1,5 +1,5 @@
 /*
- * U-Boot - start.S Startup file for Blackfin U-Boot
+ * U-boot - start.S Startup file for Blackfin u-boot
  *
  * Copyright (c) 2005-2008 Analog Devices Inc.
  *
@@ -11,7 +11,23 @@
  * (c) 1995, Dionne & Associates
  * (c) 1995, DKG Display Tech.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+ * MA 02110-1301 USA
  */
 
 #include <config.h>
@@ -51,7 +67,7 @@ ENTRY(_start)
 #ifdef CONFIG_HW_WATCHDOG
 	/* Program the watchdog with default timeout of ~5 seconds.
 	 * That should be long enough to bootstrap ourselves up and
-	 * then the common U-Boot code can take over.
+	 * then the common u-boot code can take over.
 	 */
 	r1 = WDDIS;
 # ifdef __ADSPBF60x__
@@ -190,19 +206,19 @@ ENTRY(_start)
 	call _memcpy_ASM;
 #endif
 
-.Lnorelocate:
 	/* Initialize BSS section ... we know that memset() does not
 	 * use the BSS, so it is safe to call here.  The bootrom LDR
 	 * takes care of clearing things for us.
 	 */
 	serial_early_puts("Zero BSS");
-	r0.l = __bss_start;
-	r0.h = __bss_start;
+	r0.l = __bss_vma;
+	r0.h = __bss_vma;
 	r1 = 0 (x);
 	r2.l = __bss_len;
 	r2.h = __bss_len;
 	call _memset;
 
+.Lnorelocate:
 
 	/* Setup the actual stack in external memory */
 	sp.h = HI(CONFIG_STACKBASE);
@@ -251,13 +267,3 @@ LENTRY(_get_pc)
 #endif
 	rts;
 ENDPROC(_get_pc)
-
-ENTRY(_relocate_code)
-	/* Fake relocate code. Setup the new stack only */
-	sp = r0;
-	fp = sp;
-	r0 = p3;
-	r1.h = 0x2000;
-	r1.l = 0x10;
-	jump.l _board_init_r
-ENDPROC(_relocate_code)

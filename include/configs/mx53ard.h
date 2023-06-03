@@ -3,13 +3,29 @@
  *
  * Configuration settings for the MX53ARD Freescale board.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
 #define CONFIG_MX53
+
+#define CONFIG_DISPLAY_CPUINFO
+#define CONFIG_DISPLAY_BOARDINFO
 
 #define CONFIG_MACH_TYPE	MACH_TYPE_MX53_ARD
 
@@ -19,8 +35,6 @@
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
 #define CONFIG_REVISION_TAG
-
-#define CONFIG_SYS_FSL_CLK
 
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 2 * 1024 * 1024)
@@ -42,11 +56,11 @@
 #define CONFIG_MXC_UART_BASE	UART1_BASE
 
 /* I2C Configs */
-#define CONFIG_SYS_I2C
-#define CONFIG_SYS_I2C_MXC
-#define CONFIG_SYS_I2C_MXC_I2C1		/* enable I2C bus 1 */
-#define CONFIG_SYS_I2C_MXC_I2C2		/* enable I2C bus 2 */
-#define CONFIG_SYS_I2C_MXC_I2C3		/* enable I2C bus 3 */
+#define CONFIG_CMD_I2C
+#define CONFIG_HARD_I2C
+#define CONFIG_I2C_MXC
+#define CONFIG_SYS_I2C_BASE		I2C2_BASE_ADDR
+#define CONFIG_SYS_I2C_SPEED            100000
 
 /* MMC Configs */
 #define CONFIG_FSL_ESDHC
@@ -54,12 +68,19 @@
 #define CONFIG_SYS_FSL_ESDHC_NUM	2
 
 #define CONFIG_MMC
+#define CONFIG_CMD_MMC
 #define CONFIG_GENERIC_MMC
+#define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
 
 /* Eth Configs */
 #define CONFIG_HAS_ETH1
 #define CONFIG_MII
+
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_MII
+#define CONFIG_CMD_NET
 
 /* allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
@@ -67,6 +88,12 @@
 #define CONFIG_BAUDRATE			115200
 
 /* Command definition */
+#include <config_cmd_default.h>
+
+#undef CONFIG_CMD_IMLS
+#define CONFIG_CMD_SETEXPR
+
+#define CONFIG_BOOTDELAY	3
 
 #define CONFIG_ETHPRIME		"smc911x"
 
@@ -78,14 +105,16 @@
 #define CONFIG_LOADADDR		0x72000000	/* loadaddr env var */
 #define CONFIG_SYS_TEXT_BASE    0x77800000
 
+#define CONFIG_DEFAULT_FDT_FILE		"imx53-ard.dtb"
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \
-	"uimage=zImage\0" \
+	"uimage=uImage\0" \
 	"console=ttymxc0\0" \
 	"fdt_high=0xffffffff\0" \
 	"initrd_high=0xffffffff\0" \
 	"fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \
-	"fdt_addr=0x78000000\0" \
+	"fdt_addr=0x71000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
 	"mmcdev=" __stringify(CONFIG_SYS_MMC_ENV_DEV) "\0" \
@@ -117,16 +146,16 @@
 		"run mmcargs; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if run loadfdt; then " \
-				"bootz ${loadaddr} - ${fdt_addr}; " \
+				"bootm ${loadaddr} - ${fdt_addr}; " \
 			"else " \
 				"if test ${boot_fdt} = try; then " \
-					"bootz; " \
+					"bootm; " \
 				"else " \
 					"echo WARN: Cannot load the DT; " \
 				"fi; " \
 			"fi; " \
 		"else " \
-			"bootz; " \
+			"bootm; " \
 		"fi;\0" \
 	"netargs=setenv bootargs console=${console},${baudrate} " \
 		"root=/dev/nfs " \
@@ -141,16 +170,16 @@
 		"${get_cmd} ${uimage}; " \
 		"if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
 			"if ${get_cmd} ${fdt_addr} ${fdt_file}; then " \
-				"bootz ${loadaddr} - ${fdt_addr}; " \
+				"bootm ${loadaddr} - ${fdt_addr}; " \
 			"else " \
 				"if test ${boot_fdt} = try; then " \
-					"bootz; " \
+					"bootm; " \
 				"else " \
 					"echo WARN: Cannot load the DT; " \
 				"fi; " \
 			"fi; " \
 		"else " \
-			"bootz; " \
+			"bootm; " \
 		"fi;\0"
 
 #define CONFIG_BOOTCOMMAND \
@@ -169,6 +198,8 @@
 
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP		/* undef to save memory */
+#define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser */
+#define CONFIG_SYS_PROMPT		"MX53ARD U-Boot > "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 
@@ -182,6 +213,7 @@
 
 #define CONFIG_SYS_LOAD_ADDR		CONFIG_LOADADDR
 
+#define CONFIG_SYS_HZ		1000
 #define CONFIG_CMDLINE_EDITING
 
 /* Physical Memory Map */
@@ -208,6 +240,8 @@
 #define CONFIG_ENV_SIZE        (8 * 1024)
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV	0
+
+#define CONFIG_OF_LIBFDT
 
 #define MX53ARD_CS1GCR1		(CSEN | DSZ(2))
 #define MX53ARD_CS1RCR1		(RCSN(2) | OEN (1) | RWSC(22))

@@ -1,7 +1,23 @@
 /*
  * Copyright 2009-2011 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -13,7 +29,7 @@
 #include <asm/io.h>
 #include <asm/processor.h>
 #include <asm/fsl_law.h>
-#include <linux/errno.h>
+#include <asm/errno.h>
 #include "fsl_corenet_serdes.h"
 
 /*
@@ -135,9 +151,6 @@ int is_serdes_configured(enum srds_prtcl device)
 	/* Is serdes enabled at all? */
 	if (!(in_be32(&gur->rcwsr[5]) & FSL_CORENET_RCWSR5_SRDS_EN))
 		return 0;
-
-	if (!(serdes_prtcl_map & (1 << NONE)))
-		fsl_serdes_init();
 
 	return (1 << device) & serdes_prtcl_map;
 }
@@ -517,8 +530,6 @@ void fsl_serdes_init(void)
 	if (getenv_f("hwconfig", buffer, sizeof(buffer)) > 0)
 		buf = buffer;
 #endif
-	if (serdes_prtcl_map & (1 << NONE))
-		return;
 
 	/* Is serdes enabled at all? */
 	if (!(in_be32(&gur->rcwsr[5]) & FSL_CORENET_RCWSR5_SRDS_EN))
@@ -862,24 +873,4 @@ void fsl_serdes_init(void)
 			     SRDS_RSTCTL_SDPD);
 	}
 #endif
-
-	/* Set the first bit to indicate serdes has been initialized */
-	serdes_prtcl_map |= (1 << NONE);
 }
-
-const char *serdes_clock_to_string(u32 clock)
-{
-	switch (clock) {
-	case SRDS_PLLCR0_RFCK_SEL_100:
-		return "100";
-	case SRDS_PLLCR0_RFCK_SEL_125:
-		return "125";
-	case SRDS_PLLCR0_RFCK_SEL_156_25:
-		return "156.25";
-	case SRDS_PLLCR0_RFCK_SEL_161_13:
-		return "161.1328123";
-	default:
-		return "150";
-	}
-}
-

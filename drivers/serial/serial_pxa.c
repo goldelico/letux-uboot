@@ -14,16 +14,29 @@
  *
  * Copyright (C) 1999 2000 2001 Erik Mouw (J.A.K.Mouw@its.tudelft.nl)
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
 #include <common.h>
+#include <watchdog.h>
+#include <serial.h>
 #include <asm/arch/pxa-regs.h>
 #include <asm/arch/regs-uart.h>
 #include <asm/io.h>
 #include <linux/compiler.h>
-#include <serial.h>
-#include <watchdog.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -156,10 +169,6 @@ void pxa_putc_dev(unsigned int uart_index, const char c)
 {
 	struct pxa_uart_regs *uart_regs;
 
-	/* If \n, also do \r */
-	if (c == '\n')
-		pxa_putc_dev(uart_index, '\r');
-
 	uart_regs = pxa_uart_index_to_regs(uart_index);
 	if (!uart_regs)
 		hang();
@@ -167,6 +176,10 @@ void pxa_putc_dev(unsigned int uart_index, const char c)
 	while (!(readl(&uart_regs->lsr) & LSR_TEMT))
 		WATCHDOG_RESET();
 	writel(c, &uart_regs->thr);
+
+	/* If \n, also do \r */
+	if (c == '\n')
+		pxa_putc_dev (uart_index,'\r');
 }
 
 /*

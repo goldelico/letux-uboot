@@ -5,13 +5,19 @@
  *
  * Copyright (C) 2011, Texas Instruments, Incorporated - http://www.ti.com/
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR /PURPOSE.  See the
+ * GNU General Public License for more details.
  */
 
 #include <common.h>
-#include <dm.h>
 #include <errno.h>
-#include <ns16550.h>
 #include <spl.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/hardware.h>
@@ -28,82 +34,22 @@
 #include <i2c.h>
 #include <miiphy.h>
 #include <cpsw.h>
-#include <linux/errno.h>
-#include <linux/compiler.h>
+#include <asm/errno.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <linux/usb/musb.h>
 #include <asm/omap_musb.h>
-#include <asm/davinci_rtc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#if !CONFIG_IS_ENABLED(OF_CONTROL)
-static const struct ns16550_platdata am33xx_serial[] = {
-	{ .base = CONFIG_SYS_NS16550_COM1, .reg_shift = 2, .clock = CONFIG_SYS_NS16550_CLK },
-# ifdef CONFIG_SYS_NS16550_COM2
-	{ .base = CONFIG_SYS_NS16550_COM2, .reg_shift = 2, .clock = CONFIG_SYS_NS16550_CLK },
-#  ifdef CONFIG_SYS_NS16550_COM3
-	{ .base = CONFIG_SYS_NS16550_COM3, .reg_shift = 2, .clock = CONFIG_SYS_NS16550_CLK },
-	{ .base = CONFIG_SYS_NS16550_COM4, .reg_shift = 2, .clock = CONFIG_SYS_NS16550_CLK },
-	{ .base = CONFIG_SYS_NS16550_COM5, .reg_shift = 2, .clock = CONFIG_SYS_NS16550_CLK },
-	{ .base = CONFIG_SYS_NS16550_COM6, .reg_shift = 2, .clock = CONFIG_SYS_NS16550_CLK },
-#  endif
-# endif
-};
-
-U_BOOT_DEVICES(am33xx_uarts) = {
-	{ "ns16550_serial", &am33xx_serial[0] },
-#  ifdef CONFIG_SYS_NS16550_COM2
-	{ "ns16550_serial", &am33xx_serial[1] },
-#   ifdef CONFIG_SYS_NS16550_COM3
-	{ "ns16550_serial", &am33xx_serial[2] },
-	{ "ns16550_serial", &am33xx_serial[3] },
-	{ "ns16550_serial", &am33xx_serial[4] },
-	{ "ns16550_serial", &am33xx_serial[5] },
-#   endif
-#  endif
-};
-
-#ifdef CONFIG_DM_GPIO
-static const struct omap_gpio_platdata am33xx_gpio[] = {
-	{ 0, AM33XX_GPIO0_BASE },
-	{ 1, AM33XX_GPIO1_BASE },
-	{ 2, AM33XX_GPIO2_BASE },
-	{ 3, AM33XX_GPIO3_BASE },
-#ifdef CONFIG_AM43XX
-	{ 4, AM33XX_GPIO4_BASE },
-	{ 5, AM33XX_GPIO5_BASE },
-#endif
-};
-
-U_BOOT_DEVICES(am33xx_gpios) = {
-	{ "gpio_omap", &am33xx_gpio[0] },
-	{ "gpio_omap", &am33xx_gpio[1] },
-	{ "gpio_omap", &am33xx_gpio[2] },
-	{ "gpio_omap", &am33xx_gpio[3] },
-#ifdef CONFIG_AM43XX
-	{ "gpio_omap", &am33xx_gpio[4] },
-	{ "gpio_omap", &am33xx_gpio[5] },
-#endif
-};
-#endif
-#endif
-
-#ifndef CONFIG_DM_GPIO
-static const struct gpio_bank gpio_bank_am33xx[] = {
-	{ (void *)AM33XX_GPIO0_BASE },
-	{ (void *)AM33XX_GPIO1_BASE },
-	{ (void *)AM33XX_GPIO2_BASE },
-	{ (void *)AM33XX_GPIO3_BASE },
-#ifdef CONFIG_AM43XX
-	{ (void *)AM33XX_GPIO4_BASE },
-	{ (void *)AM33XX_GPIO5_BASE },
-#endif
+static const struct gpio_bank gpio_bank_am33xx[4] = {
+	{ (void *)AM33XX_GPIO0_BASE, METHOD_GPIO_24XX },
+	{ (void *)AM33XX_GPIO1_BASE, METHOD_GPIO_24XX },
+	{ (void *)AM33XX_GPIO2_BASE, METHOD_GPIO_24XX },
+	{ (void *)AM33XX_GPIO3_BASE, METHOD_GPIO_24XX },
 };
 
 const struct gpio_bank *const omap_gpio_bank = gpio_bank_am33xx;
-#endif
 
 #if defined(CONFIG_OMAP_HSMMC) && !defined(CONFIG_SPL_BUILD)
 int cpu_mmc_init(bd_t *bis)
@@ -118,8 +64,14 @@ int cpu_mmc_init(bd_t *bis)
 }
 #endif
 
+void setup_clocks_for_console(void)
+{
+	/* Not yet implemented */
+	return;
+}
+
 /* AM33XX has two MUSB controllers which can be host or gadget */
-#if (defined(CONFIG_USB_MUSB_GADGET) || defined(CONFIG_USB_MUSB_HOST)) && \
+#if (defined(CONFIG_MUSB_GADGET) || defined(CONFIG_MUSB_HOST)) && \
 	(defined(CONFIG_AM335X_USB0) || defined(CONFIG_AM335X_USB1))
 static struct ctrl_dev *cdev = (struct ctrl_dev *)CTRL_DEVICE_BASE;
 
@@ -198,57 +150,28 @@ int arch_misc_init(void)
 	return 0;
 }
 
-#ifndef CONFIG_SKIP_LOWLEVEL_INIT
-/*
- * In the case of non-SPL based booting we'll want to call these
- * functions a tiny bit later as it will require gd to be set and cleared
- * and that's not true in s_init in this case so we cannot do it there.
- */
-int board_early_init_f(void)
+#ifdef CONFIG_SPL_BUILD
+void rtc32k_enable(void)
 {
-	prcm_init();
-	set_mux_conf_regs();
-
-	return 0;
-}
-
-/*
- * This function is the place to do per-board things such as ramp up the
- * MPU clock frequency.
- */
-__weak void am33xx_spl_board_init(void)
-{
-	do_setup_dpll(&dpll_core_regs, &dpll_core_opp100);
-	do_setup_dpll(&dpll_mpu_regs, &dpll_mpu_opp100);
-}
-
-#if defined(CONFIG_SPL_AM33XX_ENABLE_RTC32K_OSC)
-static void rtc32k_enable(void)
-{
-	struct davinci_rtc *rtc = (struct davinci_rtc *)RTC_BASE;
+	struct rtc_regs *rtc = (struct rtc_regs *)RTC_BASE;
 
 	/*
 	 * Unlock the RTC's registers.  For more details please see the
 	 * RTC_SS section of the TRM.  In order to unlock we need to
 	 * write these specific values (keys) in this order.
 	 */
-	writel(RTC_KICK0R_WE, &rtc->kick0r);
-	writel(RTC_KICK1R_WE, &rtc->kick1r);
+	writel(0x83e70b13, &rtc->kick0r);
+	writel(0x95a4f1e0, &rtc->kick1r);
 
-//#if defined(CONFIG_SPL_AM33XX_ENABLE_RTC32K_OSC_INTERNAL)
-#if defined(CONFIG_OSD3358)
-#warning internal RTC OSD3358
-	/* Enable the RTC 32K OSC "internal" by resetting bit 3 and setting 6. */
-	writel((0 << 3) | (1 << 6), &rtc->osc);
-#else
-#warning external RTC others
 	/* Enable the RTC 32K OSC by setting bits 3 and 6. */
 	writel((1 << 3) | (1 << 6), &rtc->osc);
-#endif
 }
-#endif
 
-static void uart_soft_reset(void)
+#define UART_RESET		(0x1 << 1)
+#define UART_CLK_RUNNING_MASK	0x1
+#define UART_SMART_IDLE_EN	(0x1 << 0x3)
+
+void uart_soft_reset(void)
 {
 	struct uart_sys *uart_base = (struct uart_sys *)DEFAULT_UART_BASE;
 	u32 regval;
@@ -264,45 +187,5 @@ static void uart_soft_reset(void)
 	regval = readl(&uart_base->uartsyscfg);
 	regval |= UART_SMART_IDLE_EN;
 	writel(regval, &uart_base->uartsyscfg);
-}
-
-static void watchdog_disable(void)
-{
-	struct wd_timer *wdtimer = (struct wd_timer *)WDT_BASE;
-
-	writel(0xAAAA, &wdtimer->wdtwspr);
-	while (readl(&wdtimer->wdtwwps) != 0x0)
-		;
-	writel(0x5555, &wdtimer->wdtwspr);
-	while (readl(&wdtimer->wdtwwps) != 0x0)
-		;
-}
-
-#ifdef CONFIG_SPL_BUILD
-void board_init_f(ulong dummy)
-{
-	board_early_init_f();
-	sdram_init();
-}
-#endif
-
-void s_init(void)
-{
-	/*
-	 * The ROM will only have set up sufficient pinmux to allow for the
-	 * first 4KiB NOR to be read, we must finish doing what we know of
-	 * the NOR mux in this space in order to continue.
-	 */
-#ifdef CONFIG_NOR_BOOT
-	enable_norboot_pin_mux();
-#endif
-	watchdog_disable();
-	set_uart_mux_conf();
-	setup_clocks_for_console();
-	uart_soft_reset();
-#if defined(CONFIG_SPL_AM33XX_ENABLE_RTC32K_OSC)
-	/* Enable RTC32K clock */
-	rtc32k_enable();
-#endif
 }
 #endif

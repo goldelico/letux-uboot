@@ -2,82 +2,59 @@
 # (C) Copyright 2000-2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
-# SPDX-License-Identifier:	GPL-2.0+
+# See file CREDITS for list of people who contributed to this
+# project.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307 USA
 #
 
-extra-$(CONFIG_SPL_BUILD) := start.o
+include $(TOPDIR)/config.mk
 
-obj-y	= clock.o mxs.o iomux.o timer.o
+LIB	= $(obj)lib$(SOC).o
+
+COBJS	= clock.o mxs.o iomux.o timer.o
 
 ifdef	CONFIG_SPL_BUILD
-obj-y	+= spl_boot.o spl_lradc_init.o spl_mem_init.o spl_power_init.o
+COBJS	+= spl_boot.o spl_lradc_init.o spl_mem_init.o spl_power_init.o
 endif
 
+SRCS	:= $(START:.o=.S) $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS))
+START	:= $(addprefix $(obj),$(START))
+
+all:	$(obj).depend $(LIB)
+
+$(LIB):	$(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
+
 # Specify the target for use in elftosb call
-MKIMAGE_TARGET-$(CONFIG_MX23) = mxsimage.mx23.cfg
-MKIMAGE_TARGET-$(CONFIG_MX28) = mxsimage.mx28.cfg
+ELFTOSB_TARGET-$(CONFIG_MX23) = imx23
+ELFTOSB_TARGET-$(CONFIG_MX28) = imx28
 
-# Generate HAB-capable IVT
-#
-# Note on computing the post-IVT size field value for the U-Boot binary.
-# The value is the result of adding the following:
-#  -> The size of U-Boot binary aligned to 64B (u-boot.bin)
-#  -> The size of IVT block aligned to 64B (u-boot.ivt)
-#  -> The size of U-Boot signature (u-boot.sig), 3904 B
-#  -> The 64B hole in front of U-Boot binary for 'struct mxs_spl_data' passing
-#
-quiet_cmd_mkivt_mxs = MXSIVT  $@
-cmd_mkivt_mxs =								\
-	sz=`expr \`stat -c "%s" $^\` + 64 + 3904 + 128` ;		\
-	echo -n "0x402000d1 $2 0 0 0 $3 $4 0 $$sz 0 0 0 0 0 0 0" |	\
-	tr -s " " | xargs -d " " -i printf "%08x\n" "{}" | rev |	\
-	sed "s/\(.\)\(.\)/\\\\\\\\x\2\1\n/g" | xargs -i printf "{}" >$@
+$(OBJTREE)/u-boot.bd: $(SRCTREE)/$(CPUDIR)/$(SOC)/u-boot-$(ELFTOSB_TARGET-y).bd
+	sed "s@OBJTREE@$(OBJTREE)@g" $^ > $@
 
-# Align binary to 64B
-quiet_cmd_mkalign_mxs = MXSALGN $@
-cmd_mkalign_mxs =							\
-	dd if=$^ of=$@ ibs=64 conv=sync 2>/dev/null &&			\
-	mv $@ $^
+$(OBJTREE)/u-boot.sb: $(OBJTREE)/u-boot.bin $(OBJTREE)/spl/u-boot-spl.bin $(OBJTREE)/u-boot.bd
+		elftosb -zf $(ELFTOSB_TARGET-y) -c $(OBJTREE)/u-boot.bd -o $(OBJTREE)/u-boot.sb
 
-# Assemble the CSF file
-quiet_cmd_mkcsfreq_mxs = MXSCSFR $@
-cmd_mkcsfreq_mxs =							\
-	ivt=$(word 1,$^) ;						\
-	bin=$(word 2,$^) ;						\
-	csf=$(word 3,$^) ;						\
-	sed "s@VENDOR@$(VENDOR)@g;s@BOARD@$(BOARD)@g" "$$csf" |		\
-		sed '/^\#\#Blocks/ d' > $@ ;				\
-	echo "  Blocks = $2 0x0 `stat -c '%s' $$bin` \"$$bin\" , \\" >> $@ ; \
-	echo "           $3 0x0 0x40 \"$$ivt\"" >> $@
+#########################################################################
 
-# Sign files
-quiet_cmd_mkcst_mxs = MXSCST  $@
-cmd_mkcst_mxs = cst -o $@ < $^						\
-	$(if $(KBUILD_VERBOSE:1=), >/dev/null)
+# defines $(obj).depend target
+include $(SRCTREE)/rules.mk
 
-spl/u-boot-spl.ivt: spl/u-boot-spl.bin
-	$(call if_changed,mkalign_mxs)
-	$(call if_changed,mkivt_mxs,$(CONFIG_SPL_TEXT_BASE),\
-		0x00008000,0x00008040)
+sinclude $(obj).depend
 
-u-boot.ivt: u-boot.bin
-	$(call if_changed,mkalign_mxs)
-	$(call if_changed,mkivt_mxs,$(CONFIG_SYS_TEXT_BASE),\
-		0x40001000,0x40001040)
-
-spl/u-boot-spl.csf: spl/u-boot-spl.ivt spl/u-boot-spl.bin board/$(VENDOR)/$(BOARD)/sign/u-boot-spl.csf
-	$(call if_changed,mkcsfreq_mxs,$(CONFIG_SPL_TEXT_BASE),0x8000)
-
-u-boot.csf: u-boot.ivt u-boot.bin board/$(VENDOR)/$(BOARD)/sign/u-boot.csf
-	$(call if_changed,mkcsfreq_mxs,$(CONFIG_SYS_TEXT_BASE),0x40001000)
-
-%.sig: %.csf
-	$(call if_changed,mkcst_mxs)
-
-MKIMAGEFLAGS_u-boot.sb = -n $< -T mxsimage
-u-boot.sb: $(src)/$(MKIMAGE_TARGET-y) u-boot.bin spl/u-boot-spl.bin FORCE
-	$(call if_changed,mkimage)
-
-MKIMAGEFLAGS_u-boot-signed.sb = -n $< -T mxsimage
-u-boot-signed.sb: $(src)/mxsimage-signed.cfg u-boot.ivt u-boot.sig spl/u-boot-spl.ivt spl/u-boot-spl.sig FORCE
-	$(call if_changed,mkimage)
+#########################################################################

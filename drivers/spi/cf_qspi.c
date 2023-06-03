@@ -5,10 +5,26 @@
  * This driver is written to transfer 8 bit at-a-time and uses the dedicated
  * SPI slave select pins as bit-banged GPIO to work with spi_flash subsystem.
  *
+ *
  * Copyright (C) 2011 Ruggedcom, Inc.
  * Richard Retanubun (richardretanubun@freescale.com)
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -19,7 +35,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#define to_cf_qspi_slave(s) container_of(s, struct cf_qspi_slave, slave)
+#define clamp(x, low, high) (min(max(low, x), high))
+#define to_cf_qspi_slave(s) container_of(s, struct cf_qspi_slave, s)
 
 struct cf_qspi_slave {
 	struct spi_slave slave;	/* Specific bus:cs ID for each device */
@@ -119,7 +136,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		dev->qmr = 2u;
 	else /* Get the closest baud rate */
 		dev->qmr = clamp(((gd->bus_clk >> 2) + max_hz - 1)/max_hz,
-					2lu, 255lu);
+					2u, 255u);
 
 	/* Map mode to QMR[CPOL] and QMR[CPHA] */
 	if (mode & SPI_CPOL)

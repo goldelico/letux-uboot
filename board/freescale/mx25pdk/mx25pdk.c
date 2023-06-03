@@ -3,7 +3,18 @@
  *
  * Author: Fabio Estevam <fabio.estevam@freescale.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
 
 #include <common.h>
@@ -138,7 +149,7 @@ int board_late_init(void)
 
 	mx25pdk_fec_init();
 
-	ret = pmic_init(I2C_0);
+	ret = pmic_init(I2C_PMIC);
 	if (ret)
 		return ret;
 
@@ -146,8 +157,8 @@ int board_late_init(void)
 	if (!p)
 		return -ENODEV;
 
-	/* Turn on Ethernet PHY and LCD supplies */
-	pmic_reg_write(p, MC34704_GENERAL2_REG, ONOFFE | ONOFFA);
+	/* Turn on Ethernet PHY supply */
+	pmic_reg_write(p, MC34704_GENERAL2_REG, ONOFFE);
 
 	return 0;
 }
@@ -186,6 +197,3 @@ int checkboard(void)
 
 	return 0;
 }
-
-/* Lowlevel init isn't used on mx25pdk, so just provide a dummy one here */
-void lowlevel_init(void) {}

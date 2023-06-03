@@ -9,7 +9,23 @@
  * (C) Copyright 2010-2011
  * Heiko Schocher, DENX Software Engineering, hs@denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301 USA
  */
 
 /*
@@ -20,7 +36,6 @@
 #ifndef _CONFIG_KM_ARM_H
 #define _CONFIG_KM_ARM_H
 
-
 /* We got removed from Linux mach-types.h */
 #define MACH_TYPE_KM_KIRKWOOD          2255
 
@@ -29,6 +44,7 @@
  */
 #define CONFIG_MARVELL
 #define CONFIG_FEROCEON_88FR131		/* CPU Core subversion */
+#define CONFIG_KIRKWOOD			/* SOC Family Name */
 #define CONFIG_KW88F6281		/* SOC Name */
 #define CONFIG_MACH_KM_KIRKWOOD		/* Machine type */
 
@@ -41,6 +57,8 @@
 #include "keymile-common.h"
 
 #define CONFIG_CMD_NAND
+#define CONFIG_CMD_SF
+#define CONFIG_SOFT_I2C		/* I2C bit-banged	*/
 
 /* SPI NOR Flash default params, used by sf commands */
 #define CONFIG_SF_DEFAULT_SPEED		8100000
@@ -52,9 +70,6 @@
 #define CONFIG_ENV_SPI_MAX_HZ		8100000
 #define CONFIG_ENV_SPI_MODE		SPI_MODE_3
 #endif
-
-/* Reserve 4 MB for malloc */
-#define CONFIG_SYS_MALLOC_LEN		(4 * 1024 * 1024)
 
 #include "asm/arch/config.h"
 
@@ -69,8 +84,7 @@
 #define CONFIG_KM_PHRAM		0x17F000
 
 #define CONFIG_KM_CRAMFS_ADDR	0x2400000
-#define CONFIG_KM_KERNEL_ADDR	0x2000000	/* 3098KBytes */
-#define CONFIG_KM_FDT_ADDR	0x23E0000	/*  128KBytes */
+#define CONFIG_KM_KERNEL_ADDR	0x2000000	/* 4096KBytes */
 
 /* architecture specific default bootargs */
 #define CONFIG_KM_DEF_BOOT_ARGS_CPU					\
@@ -78,15 +92,10 @@
 		" boardid=0x${IVM_BoardId} hwkey=0x${IVM_HWKey}"
 
 #define CONFIG_KM_DEF_ENV_CPU						\
+	"boot=bootm ${load_addr_r} - -\0"				\
+	"cramfsloadfdt=true\0"						\
 	"u-boot="__stringify(CONFIG_HOSTNAME) "/u-boot.kwb\0"		\
 	CONFIG_KM_UPDATE_UBOOT						\
-	"set_fdthigh=setenv fdt_high ${kernelmem}\0"			\
-	"checkfdt="							\
-		"if cramfsls fdt_0x${IVM_BoardId}_0x${IVM_HWKey}.dtb; "	\
-		"then true; else setenv cramfsloadfdt true; "		\
-		"setenv boot bootm ${load_addr_r}; "			\
-		"echo No FDT found, booting with the kernel "		\
-		"appended one; fi\0"					\
 	""
 
 #define CONFIG_SKIP_LOWLEVEL_INIT	/* disable board lowlevel_init */
@@ -95,6 +104,7 @@
 /*
  * NS16550 Configuration
  */
+#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	(-4)
 #define CONFIG_SYS_NS16550_CLK		CONFIG_SYS_TCLK
@@ -122,12 +132,16 @@
 /*
  * Commands configuration
  */
+#define CONFIG_CMD_ELF
 #define CONFIG_CMD_MTDPARTS
+#define CONFIG_CMD_NFS
 
 /*
  * Without NOR FLASH we need this
  */
 #define CONFIG_SYS_NO_FLASH
+#undef CONFIG_CMD_FLASH
+#undef CONFIG_CMD_IMLS
 
 /*
  * NAND Flash configuration
@@ -146,8 +160,10 @@
 /*
  * Other required minimal configurations
  */
+#define CONFIG_CONSOLE_INFO_QUIET	/* some code reduction */
 #define CONFIG_ARCH_CPU_INIT		/* call arch_cpu_init() */
 #define CONFIG_ARCH_MISC_INIT		/* call arch_misc_init() */
+#define CONFIG_DISPLAY_CPUINFO		/* Display cpu info */
 #define CONFIG_NR_DRAM_BANKS	4
 #define CONFIG_SYS_RESET_ADDRESS 0xffff0000	/* Rst Vector Adr */
 
@@ -156,12 +172,12 @@
  */
 #define CONFIG_NETCONSOLE	/* include NetConsole support   */
 #define CONFIG_MII		/* expose smi ove miiphy interface */
+#define CONFIG_CMD_MII		/* to debug mdio phy config */
 #define CONFIG_MVGBE		/* Enable Marvell Gbe Controller Driver */
 #define CONFIG_SYS_FAULT_ECHO_LINK_DOWN	/* detect link using phy */
 #define CONFIG_MVGBE_PORTS	{1, 0}	/* enable port 0 only */
 #define CONFIG_PHY_BASE_ADR	0
 #define CONFIG_ENV_OVERWRITE	/* ethaddr can be reprogrammed */
-#define CONFIG_KM_COMMON_ETH_INIT /* standard km ethernet_present for piggy */
 
 /*
  * UBI related stuff
@@ -171,24 +187,10 @@
 /*
  * I2C related stuff
  */
-#undef CONFIG_I2C_MVTWSI
-#define CONFIG_SYS_I2C
-#define	CONFIG_SYS_I2C_SOFT	/* I2C bit-banged	*/
-#define CONFIG_SYS_I2C_INIT_BOARD
-
 #define	CONFIG_KIRKWOOD_GPIO		/* Enable GPIO Support */
-#define CONFIG_SYS_NUM_I2C_BUSES	6
-#define CONFIG_SYS_I2C_MAX_HOPS		1
-#define CONFIG_SYS_I2C_BUSES	{	{0, {I2C_NULL_HOP} }, \
-					{0, {{I2C_MUX_PCA9547, 0x70, 1} } }, \
-					{0, {{I2C_MUX_PCA9547, 0x70, 2} } }, \
-					{0, {{I2C_MUX_PCA9547, 0x70, 3} } }, \
-					{0, {{I2C_MUX_PCA9547, 0x70, 4} } }, \
-					{0, {{I2C_MUX_PCA9547, 0x70, 5} } }, \
-				}
-
+#if defined(CONFIG_SOFT_I2C)
 #ifndef __ASSEMBLY__
-#include <asm/arch/gpio.h>
+#include <asm/arch-kirkwood/gpio.h>
 extern void __set_direction(unsigned pin, int high);
 void set_sda(int state);
 void set_scl(int state);
@@ -209,10 +211,10 @@ int get_scl(void);
 #define I2C_DELAY	udelay(1)
 #define I2C_SOFT_DECLARATIONS
 
-#define	CONFIG_SYS_I2C_SOFT_SLAVE	0x0
-#define	CONFIG_SYS_I2C_SOFT_SPEED	100000
+#endif
 
 /* EEprom support 24C128, 24C256 valid for environment eeprom */
+#define CONFIG_SYS_I2C_MULTI_EEPROMS
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_ENABLE
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_BITS	6 /* 64 Byte write page */
 #define CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS	10
@@ -238,13 +240,15 @@ int get_scl(void);
 #define CONFIG_SYS_EEPROM_WREN
 #define CONFIG_ENV_OFFSET		0x0 /* no bracets! */
 #define CONFIG_ENV_SIZE			(0x2000 - CONFIG_ENV_OFFSET)
-#define CONFIG_I2C_ENV_EEPROM_BUS 5 /* I2C2 (Mux-Port 5) */
+#define CONFIG_I2C_ENV_EEPROM_BUS	KM_ENV_BUS "\0"
 #define CONFIG_ENV_OFFSET_REDUND	0x2000 /* no bracets! */
 #define CONFIG_ENV_SIZE_REDUND		(CONFIG_ENV_SIZE)
 #endif
 
 #define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 
+#define CONFIG_SPI_FLASH
+#define CONFIG_SPI_FLASH_STMICRO
 
 /* SPI bus claim MPP configuration */
 #define CONFIG_SYS_KW_SPI_MPP	0x0
@@ -275,26 +279,21 @@ int get_scl(void);
 #else
 #define CONFIG_KM_NEW_ENV						\
 	"newenv=setenv addr 0x100000 && "				\
-		"i2c dev " __stringify(CONFIG_I2C_ENV_EEPROM_BUS) "; "  \
-		"mw.b ${addr} 0 4 && "					\
+		"i2c dev 1; mw.b ${addr} 0 4 && "			\
 		"eeprom write " __stringify(CONFIG_SYS_DEF_EEPROM_ADDR)	\
 		" ${addr} " __stringify(CONFIG_ENV_OFFSET) " 4 && "	\
 		"eeprom write " __stringify(CONFIG_SYS_DEF_EEPROM_ADDR)	\
 		" ${addr} " __stringify(CONFIG_ENV_OFFSET_REDUND) " 4\0"
 #endif
 
-#ifndef CONFIG_KM_BOARD_EXTRA_ENV
-#define CONFIG_KM_BOARD_EXTRA_ENV       ""
-#endif
-
 /*
  * Default environment variables
  */
 #define CONFIG_EXTRA_ENV_SETTINGS					\
-	CONFIG_KM_BOARD_EXTRA_ENV					\
 	CONFIG_KM_DEF_ENV						\
 	CONFIG_KM_NEW_ENV						\
 	"arch=arm\0"							\
+	"EEprom_ivm=" KM_IVM_BUS "\0"					\
 	""
 
 #if defined(CONFIG_SYS_NO_FLASH)

@@ -178,11 +178,10 @@ struct venc_regs {
 #define LCD_INTERFACE_24_BIT	3
 
 /* Polarity */
-#define DSS_IVS		(1 << 12)
-#define DSS_IHS		(1 << 13)
-#define DSS_IPC		(1 << 14)
-#define DSS_IEO		(1 << 15)
-#define DSS_ONOFF	(1 << 17)
+#define DSS_IVS	(1 << 12)
+#define DSS_IHS	(1 << 13)
+#define DSS_IPC	(1 << 14)
+#define DSS_IEO	(1 << 15)
 
 /* GFX format */
 #define GFXFORMAT_BITMAP1		(0x0 << 1)

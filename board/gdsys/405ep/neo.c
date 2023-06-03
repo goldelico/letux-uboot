@@ -2,7 +2,23 @@
  * (C) Copyright 2011
  * Dirk Eibach,  Guntermann & Drunck GmbH, eibach@gdsys.de
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -27,8 +43,6 @@ enum {
 enum {
 	HWVER_300 = 3,
 };
-
-struct ihs_fpga *fpga_ptr[] = CONFIG_SYS_FPGA_PTR;
 
 int misc_init_r(void)
 {
@@ -56,9 +70,10 @@ int checkboard(void)
 
 static void print_fpga_info(void)
 {
-	u16 versions;
-	u16 fpga_version;
-	u16 fpga_features;
+	struct ihs_fpga *fpga = (struct ihs_fpga *) CONFIG_SYS_FPGA_BASE(0);
+	u16 versions = in_le16(&fpga->versions);
+	u16 fpga_version = in_le16(&fpga->fpga_version);
+	u16 fpga_features = in_le16(&fpga->fpga_features);
 	int fpga_state = get_fpga_state(0);
 	unsigned unit_type;
 	unsigned hardware_version;
@@ -74,10 +89,6 @@ static void print_fpga_info(void)
 		printf(" refelectione test failed\n");
 		return;
 	}
-
-	FPGA_GET_REG(0, versions, &versions);
-	FPGA_GET_REG(0, fpga_version, &fpga_version);
-	FPGA_GET_REG(0, fpga_features, &fpga_features);
 
 	unit_type = (versions & 0xf000) >> 12;
 	hardware_version = versions & 0x000f;

@@ -1,7 +1,23 @@
 /*
  * Copyright 2011,2012 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -14,6 +30,7 @@
 #include <asm/immap_85xx.h>
 #include <asm/fsl_law.h>
 #include <asm/fsl_serdes.h>
+#include <asm/fsl_portals.h>
 #include <asm/fsl_liodn.h>
 #include <fm_eth.h>
 
@@ -27,6 +44,7 @@ int checkboard(void)
 {
 	u8 sw;
 	struct cpu_type *cpu = gd->arch.cpu;
+	ccsr_gur_t *gur = (void *)CONFIG_SYS_MPC85xx_GUTS_ADDR;
 	unsigned int i;
 
 	printf("Board: %sRDB, ", cpu->name);
@@ -35,6 +53,20 @@ int checkboard(void)
 
 	sw = CPLD_READ(fbank_sel);
 	printf("vBank: %d\n", sw & 0x1);
+
+	/*
+	 * Display the RCW, so that no one gets confused as to what RCW
+	 * we're actually using for this boot.
+	 */
+	puts("Reset Configuration Word (RCW):");
+	for (i = 0; i < ARRAY_SIZE(gur->rcwsr); i++) {
+		u32 rcw = in_be32(&gur->rcwsr[i]);
+
+		if ((i % 4) == 0)
+			printf("\n       %08x:", i * 4);
+		printf(" %08x", rcw);
+	}
+	puts("\n");
 
 	/*
 	 * Display the actual SERDES reference clocks as configured by the
@@ -115,7 +147,7 @@ void board_config_lanes_mux(void)
 int board_early_init_r(void)
 {
 	const unsigned int flashbase = CONFIG_SYS_FLASH_BASE;
-	int flash_esel = find_tlb_idx((void *)flashbase, 1);
+	const u8 flash_esel = find_tlb_idx((void *)flashbase, 1);
 
 	/*
 	 * Remap Boot flash + PROMJET region to caching-inhibited
@@ -126,19 +158,15 @@ int board_early_init_r(void)
 	flush_dcache();
 	invalidate_icache();
 
-	if (flash_esel == -1) {
-		/* very unlikely unless something is messed up */
-		puts("Error: Could not find TLB for FLASH BASE\n");
-		flash_esel = 2;	/* give our best effort to continue */
-	} else {
-		/* invalidate existing TLB entry for flash + promjet */
-		disable_tlb(flash_esel);
-	}
+	/* invalidate existing TLB entry for flash + promjet */
+	disable_tlb(flash_esel);
 
 	set_tlb(1, flashbase, CONFIG_SYS_FLASH_BASE_PHYS,
 			MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
 			0, flash_esel, BOOKE_PAGESZ_256M, 1);
 
+	set_liodns();
+	setup_portals();
 	board_config_lanes_mux();
 
 	return 0;
@@ -155,6 +183,20 @@ unsigned long get_board_sys_clk(unsigned long dummy)
 		return 100000000;
 	default:
 		return 66666666;
+	}
+}
+
+static const char *serdes_clock_to_string(u32 clock)
+{
+	switch (clock) {
+	case SRDS_PLLCR0_RFCK_SEL_100:
+		return "100";
+	case SRDS_PLLCR0_RFCK_SEL_125:
+		return "125";
+	case SRDS_PLLCR0_RFCK_SEL_156_25:
+		return "156.25";
+	default:
+		return "150";
 	}
 }
 
@@ -212,7 +254,7 @@ int misc_init_r(void)
 	return 0;
 }
 
-int ft_board_setup(void *blob, bd_t *bd)
+void ft_board_setup(void *blob, bd_t *bd)
 {
 	phys_addr_t base;
 	phys_size_t size;
@@ -225,7 +267,7 @@ int ft_board_setup(void *blob, bd_t *bd)
 	fdt_fixup_memory(blob, (u64)base, (u64)size);
 
 #if defined(CONFIG_HAS_FSL_DR_USB) || defined(CONFIG_HAS_FSL_MPH_USB)
-	fsl_fdt_fixup_dr_usb(blob, bd);
+	fdt_fixup_dr_usb(blob, bd);
 #endif
 
 #ifdef CONFIG_PCI
@@ -236,6 +278,4 @@ int ft_board_setup(void *blob, bd_t *bd)
 #ifdef CONFIG_SYS_DPAA_FMAN
 	fdt_fixup_fman_ethernet(blob);
 #endif
-
-	return 0;
 }

@@ -20,14 +20,12 @@
  */
 
 #include <common.h>
-#include <watchdog.h>
 #include <linux/compat.h>
 #include <linux/mtd/mtd.h>
-#include "linux/mtd/flashchip.h"
 #include <linux/mtd/onenand.h>
 
 #include <asm/io.h>
-#include <linux/errno.h>
+#include <asm/errno.h>
 #include <malloc.h>
 
 /* It should access 16-bit instead of 8-bit */
@@ -93,13 +91,7 @@ static struct nand_ecclayout onenand_oob_32 = {
 	.oobfree	= { {2, 3}, {14, 2}, {18, 3}, {30, 2} }
 };
 
-/*
- * Warning! This array is used with the memcpy_16() function, thus
- * it must be aligned to 2 bytes. GCC can make this array unaligned
- * as the array is made of unsigned char, which memcpy16() doesn't
- * like and will cause unaligned access.
- */
-static const unsigned char __aligned(2) ffchars[] = {
+static const unsigned char ffchars[] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* 16 */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -468,18 +460,15 @@ static int onenand_read_ecc(struct onenand_chip *this)
 static int onenand_wait(struct mtd_info *mtd, int state)
 {
 	struct onenand_chip *this = mtd->priv;
+	unsigned int flags = ONENAND_INT_MASTER;
 	unsigned int interrupt = 0;
 	unsigned int ctrl;
 
-	/* Wait at most 20ms ... */
-	u32 timeo = (CONFIG_SYS_HZ * 20) / 1000;
-	u32 time_start = get_timer(0);
-	do {
-		WATCHDOG_RESET();
-		if (get_timer(time_start) > timeo)
-			return -EIO;
+	while (1) {
 		interrupt = this->read_word(this->base + ONENAND_REG_INTERRUPT);
-	} while ((interrupt & ONENAND_INT_MASTER) == 0);
+		if (interrupt & flags)
+			break;
+	}
 
 	ctrl = this->read_word(this->base + ONENAND_REG_CTRL_STATUS);
 
@@ -772,8 +761,7 @@ static int onenand_transfer_auto_oob(struct mtd_info *mtd, uint8_t *buf,
 	uint8_t *oob_buf = this->oob_buf;
 
 	free = this->ecclayout->oobfree;
-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES_LARGE && free->length;
-	     i++, free++) {
+	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
 		if (readcol >= lastgap)
 			readcol += free->offset - lastgap;
 		if (readend >= lastgap)
@@ -782,8 +770,7 @@ static int onenand_transfer_auto_oob(struct mtd_info *mtd, uint8_t *buf,
 	}
 	this->read_bufferram(mtd, 0, ONENAND_SPARERAM, oob_buf, 0, mtd->oobsize);
 	free = this->ecclayout->oobfree;
-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES_LARGE && free->length;
-	     i++, free++) {
+	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
 		int free_end = free->offset + free->length;
 		if (free->offset < readend && free_end > readcol) {
 			int st = max_t(int,free->offset,readcol);
@@ -982,8 +969,7 @@ static int onenand_read_ops_nolock(struct mtd_info *mtd, loff_t from,
 	if (mtd->ecc_stats.failed - stats.failed)
 		return -EBADMSG;
 
-	/* return max bitflips per ecc step; ONENANDs correct 1 bit only */
-	return mtd->ecc_stats.corrected != stats.corrected ? 1 : 0;
+	return mtd->ecc_stats.corrected - stats.corrected ? -EUCLEAN : 0;
 }
 
 /**
@@ -1158,18 +1144,15 @@ int onenand_read_oob(struct mtd_info *mtd, loff_t from,
 static int onenand_bbt_wait(struct mtd_info *mtd, int state)
 {
 	struct onenand_chip *this = mtd->priv;
+	unsigned int flags = ONENAND_INT_MASTER;
 	unsigned int interrupt;
 	unsigned int ctrl;
 
-	/* Wait at most 20ms ... */
-	u32 timeo = (CONFIG_SYS_HZ * 20) / 1000;
-	u32 time_start = get_timer(0);
-	do {
-		WATCHDOG_RESET();
-		if (get_timer(time_start) > timeo)
-			return ONENAND_BBT_READ_FATAL_ERROR;
+	while (1) {
 		interrupt = this->read_word(this->base + ONENAND_REG_INTERRUPT);
-	} while ((interrupt & ONENAND_INT_MASTER) == 0);
+		if (interrupt & flags)
+			break;
+	}
 
 	/* To get correct interrupt status in timeout case */
 	interrupt = this->read_word(this->base + ONENAND_REG_INTERRUPT);
@@ -1372,8 +1355,7 @@ static int onenand_fill_auto_oob(struct mtd_info *mtd, u_char *oob_buf,
 	unsigned int i;
 
 	free = this->ecclayout->oobfree;
-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES_LARGE && free->length;
-	     i++, free++) {
+	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
 		if (writecol >= lastgap)
 			writecol += free->offset - lastgap;
 		if (writeend >= lastgap)
@@ -1381,8 +1363,7 @@ static int onenand_fill_auto_oob(struct mtd_info *mtd, u_char *oob_buf,
 		lastgap = free->offset + free->length;
 	}
 	free = this->ecclayout->oobfree;
-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES_LARGE && free->length;
-	     i++, free++) {
+	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES && free->length; i++, free++) {
 		int free_end = free->offset + free->length;
 		if (free->offset < writeend && free_end > writecol) {
 			int st = max_t(int,free->offset,writecol);
@@ -2543,8 +2524,7 @@ static int onenand_chip_probe(struct mtd_info *mtd)
 	this->write_word(ONENAND_CMD_RESET, this->base + ONENAND_BOOTRAM);
 
 	/* Wait reset */
-	if (this->wait(mtd, FL_RESETING))
-		return -ENXIO;
+	this->wait(mtd, FL_RESETING);
 
 	/* Restore system configuration 1 */
 	this->write_word(syscfg, this->base + ONENAND_REG_SYS_CFG1);
@@ -2657,7 +2637,6 @@ int onenand_probe(struct mtd_info *mtd)
 	mtd->_sync = onenand_sync;
 	mtd->_block_isbad = onenand_block_isbad;
 	mtd->_block_markbad = onenand_block_markbad;
-	mtd->writebufsize = mtd->writesize;
 
 	return 0;
 }
@@ -2770,8 +2749,7 @@ int onenand_scan(struct mtd_info *mtd, int maxchips)
 	 * the out of band area
 	 */
 	this->ecclayout->oobavail = 0;
-
-	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES_LARGE &&
+	for (i = 0; i < MTD_MAX_OOBFREE_ENTRIES &&
 	    this->ecclayout->oobfree[i].length; i++)
 		this->ecclayout->oobavail +=
 			this->ecclayout->oobfree[i].length;

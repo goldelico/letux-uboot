@@ -1,24 +1,32 @@
 /*
  * Copyright 2010-2011 Calxeda, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#include <config_distro_defaults.h>
-
-#define CONFIG_SYS_DCACHE_OFF
-#define CONFIG_SYS_THUMB_BUILD
+#define CONFIG_L2_OFF
 
 #define CONFIG_SYS_NO_FLASH
+#define CFG_HZ				1000
+#define CONFIG_SYS_HZ			CFG_HZ
 
+#define CONFIG_OF_LIBFDT
+#define CONFIG_FIT
 #define CONFIG_SYS_BOOTMAPSZ		(16 << 20)
-
-#define CONFIG_SYS_TIMER_RATE		(150000000/256)
-#define CONFIG_SYS_TIMER_COUNTER	(0xFFF34000 + 0x4)
-#define CONFIG_SYS_TIMER_COUNTS_DOWN
 
 /*
  * Size of malloc() pool
@@ -30,7 +38,7 @@
 #define CONFIG_PL01x_PORTS		{ (void *)(0xFFF36000) }
 #define CONFIG_CONS_INDEX		0
 
-#define CONFIG_BAUDRATE			115200
+#define CONFIG_BAUDRATE			38400
 
 #define CONFIG_BOOTCOUNT_LIMIT
 #define CONFIG_SYS_BOOTCOUNT_SINGLEWORD
@@ -38,7 +46,6 @@
 #define CONFIG_SYS_BOOTCOUNT_ADDR	0xfff3cf0c
 
 #define CONFIG_MISC_INIT_R
-#define CONFIG_LIBATA
 #define CONFIG_SCSI_AHCI
 #define CONFIG_SCSI_AHCI_PLAT
 #define CONFIG_SYS_SCSI_MAX_SCSI_ID	5
@@ -46,34 +53,51 @@
 #define CONFIG_SYS_SCSI_MAX_DEVICE	(CONFIG_SYS_SCSI_MAX_SCSI_ID * \
 					CONFIG_SYS_SCSI_MAX_LUN)
 
+#define CONFIG_DOS_PARTITION
+
 #define CONFIG_CALXEDA_XGMAC
+
+/* PXE support */
+#define CONFIG_BOOTP_PXE
+#define CONFIG_BOOTP_PXE_CLIENTARCH	0x100
+#define CONFIG_BOOTP_VCI_STRING		"U-boot.armv7.highbank"
 
 /*
  * Command line configuration.
  */
-#define CONFIG_SCSI
+#include <config_cmd_default.h>
 
-#define CONFIG_BOOT_RETRY_TIME		-1
-#define CONFIG_RESET_TO_RETRY
+#define CONFIG_CMD_BDI
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_ELF
+#define CONFIG_CMD_MEMORY
+#define CONFIG_CMD_LOADS
+#define CONFIG_CMD_SCSI
+#define CONFIG_CMD_EXT2
+#define CONFIG_CMD_PXE
+#define CONFIG_MENU
 
+#define CONFIG_BOOTDELAY		2
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size */
+#define CONFIG_CMDLINE_EDITING
+#define CONFIG_AUTO_COMPLETE
+#define CONFIG_SYS_LONGHELP		/* undef to save memory		 */
+#define CONFIG_SYS_CBSIZE		256	/* Console I/O Buffer Size */
 #define CONFIG_SYS_MAXARGS		16	/* max number of cmd args */
 #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
+#define CONFIG_SYS_PROMPT		"Highbank #"
 /* Print Buffer Size */
 #define CONFIG_SYS_PBSIZE		(CONFIG_SYS_CBSIZE + \
 					 sizeof(CONFIG_SYS_PROMPT)+16)
 
 #define CONFIG_SYS_LOAD_ADDR		0x800000
-#define CONFIG_SYS_64BIT_LBA
 
 /*-----------------------------------------------------------------------
  * Physical Memory Map
- * The DRAM is already setup, so do not touch the DT node later.
  */
-#define CONFIG_NR_DRAM_BANKS		0
+#define CONFIG_NR_DRAM_BANKS		1
 #define PHYS_SDRAM_1_SIZE		(4089 << 20)
 #define CONFIG_SYS_MEMTEST_START	0x100000
 #define CONFIG_SYS_MEMTEST_END		(PHYS_SDRAM_1_SIZE - 0x100000)

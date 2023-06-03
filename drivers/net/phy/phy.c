@@ -1,7 +1,21 @@
 /*
  * Generic PHY Management code
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ *
  *
  * Copyright 2011 Freescale Semiconductor, Inc.
  * author Andy Fleming
@@ -11,8 +25,6 @@
 
 #include <config.h>
 #include <common.h>
-#include <console.h>
-#include <dm.h>
 #include <malloc.h>
 #include <net.h>
 #include <command.h>
@@ -20,9 +32,6 @@
 #include <phy.h>
 #include <errno.h>
 #include <linux/err.h>
-#include <linux/compiler.h>
-
-DECLARE_GLOBAL_DATA_PTR;
 
 /* Generic PHY support and helper functions */
 
@@ -38,16 +47,16 @@ DECLARE_GLOBAL_DATA_PTR;
 static int genphy_config_advert(struct phy_device *phydev)
 {
 	u32 advertise;
-	int oldadv, adv, bmsr;
+	int oldadv, adv;
 	int err, changed = 0;
 
-	/* Only allow advertising what this PHY supports */
+	/* Only allow advertising what
+	 * this PHY supports */
 	phydev->advertising &= phydev->supported;
 	advertise = phydev->advertising;
 
 	/* Setup standard advertisement */
-	adv = phy_read(phydev, MDIO_DEVAD_NONE, MII_ADVERTISE);
-	oldadv = adv;
+	oldadv = adv = phy_read(phydev, MDIO_DEVAD_NONE, MII_ADVERTISE);
 
 	if (adv < 0)
 		return adv;
@@ -79,40 +88,29 @@ static int genphy_config_advert(struct phy_device *phydev)
 		changed = 1;
 	}
 
-	bmsr = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMSR);
-	if (bmsr < 0)
-		return bmsr;
-
-	/* Per 802.3-2008, Section 22.2.4.2.16 Extended status all
-	 * 1000Mbits/sec capable PHYs shall have the BMSR_ESTATEN bit set to a
-	 * logical 1.
-	 */
-	if (!(bmsr & BMSR_ESTATEN))
-		return changed;
-
 	/* Configure gigabit if it's supported */
-	adv = phy_read(phydev, MDIO_DEVAD_NONE, MII_CTRL1000);
-	oldadv = adv;
-
-	if (adv < 0)
-		return adv;
-
-	adv &= ~(ADVERTISE_1000FULL | ADVERTISE_1000HALF);
-
 	if (phydev->supported & (SUPPORTED_1000baseT_Half |
 				SUPPORTED_1000baseT_Full)) {
+		oldadv = adv = phy_read(phydev, MDIO_DEVAD_NONE, MII_CTRL1000);
+
+		if (adv < 0)
+			return adv;
+
+		adv &= ~(ADVERTISE_1000FULL | ADVERTISE_1000HALF);
 		if (advertise & SUPPORTED_1000baseT_Half)
 			adv |= ADVERTISE_1000HALF;
 		if (advertise & SUPPORTED_1000baseT_Full)
 			adv |= ADVERTISE_1000FULL;
+
+		if (adv != oldadv) {
+			err = phy_write(phydev, MDIO_DEVAD_NONE, MII_CTRL1000,
+					adv);
+
+			if (err < 0)
+				return err;
+			changed = 1;
+		}
 	}
-
-	if (adv != oldadv)
-		changed = 1;
-
-	err = phy_write(phydev, MDIO_DEVAD_NONE, MII_CTRL1000, adv);
-	if (err < 0)
-		return err;
 
 	return changed;
 }
@@ -128,7 +126,7 @@ static int genphy_config_advert(struct phy_device *phydev)
 static int genphy_setup_forced(struct phy_device *phydev)
 {
 	int err;
-	int ctl = BMCR_ANRESTART;
+	int ctl = 0;
 
 	phydev->pause = phydev->asym_pause = 0;
 
@@ -235,8 +233,7 @@ int genphy_update_link(struct phy_device *phydev)
 	if (phydev->link && mii_reg & BMSR_LSTATUS)
 		return 0;
 
-	if ((phydev->autoneg == AUTONEG_ENABLE) &&
-	    !(mii_reg & BMSR_ANEGCOMPLETE)) {
+	if ((mii_reg & BMSR_ANEGCAPABLE) && !(mii_reg & BMSR_ANEGCOMPLETE)) {
 		int i = 0;
 
 		printf("%s Waiting for PHY auto negotiation to complete",
@@ -248,7 +245,7 @@ int genphy_update_link(struct phy_device *phydev)
 			if (i > PHY_ANEG_TIMEOUT) {
 				printf(" TIMEOUT !\n");
 				phydev->link = 0;
-				return -ETIMEDOUT;
+				return 0;
 			}
 
 			if (ctrlc()) {
@@ -292,22 +289,17 @@ int genphy_parse_link(struct phy_device *phydev)
 	int mii_reg = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMSR);
 
 	/* We're using autonegotiation */
-	if (phydev->autoneg == AUTONEG_ENABLE) {
+	if (mii_reg & BMSR_ANEGCAPABLE) {
 		u32 lpa = 0;
-		int gblpa = 0;
+		u32 gblpa = 0;
 		u32 estatus = 0;
 
 		/* Check for gigabit capability */
-		if (phydev->supported & (SUPPORTED_1000baseT_Full |
-					SUPPORTED_1000baseT_Half)) {
+		if (mii_reg & BMSR_ERCAP) {
 			/* We want a list of states supported by
 			 * both PHYs in the link
 			 */
 			gblpa = phy_read(phydev, MDIO_DEVAD_NONE, MII_STAT1000);
-			if (gblpa < 0) {
-				debug("Could not read MII_STAT1000. Ignoring gigabit capability\n");
-				gblpa = 0;
-			}
 			gblpa &= phy_read(phydev,
 					MDIO_DEVAD_NONE, MII_CTRL1000) << 2;
 		}
@@ -383,6 +375,8 @@ int genphy_config(struct phy_device *phydev)
 	int val;
 	u32 features;
 
+	/* For now, I'll claim that the generic driver supports
+	 * all possible port types */
 	features = (SUPPORTED_TP | SUPPORTED_MII
 			| SUPPORTED_AUI | SUPPORTED_FIBRE |
 			SUPPORTED_BNC);
@@ -421,8 +415,8 @@ int genphy_config(struct phy_device *phydev)
 			features |= SUPPORTED_1000baseX_Half;
 	}
 
-	phydev->supported &= features;
-	phydev->advertising &= features;
+	phydev->supported = features;
+	phydev->advertising = features;
 
 	genphy_config_aneg(phydev);
 
@@ -431,13 +425,10 @@ int genphy_config(struct phy_device *phydev)
 
 int genphy_startup(struct phy_device *phydev)
 {
-	int ret;
+	genphy_update_link(phydev);
+	genphy_parse_link(phydev);
 
-	ret = genphy_update_link(phydev);
-	if (ret)
-		return ret;
-
-	return genphy_parse_link(phydev);
+	return 0;
 }
 
 int genphy_shutdown(struct phy_device *phydev)
@@ -449,9 +440,7 @@ static struct phy_driver genphy_driver = {
 	.uid		= 0xffffffff,
 	.mask		= 0xffffffff,
 	.name		= "Generic PHY",
-	.features	= PHY_GBIT_FEATURES | SUPPORTED_MII |
-			  SUPPORTED_AUI | SUPPORTED_FIBRE |
-			  SUPPORTED_BNC,
+	.features	= 0,
 	.config		= genphy_config,
 	.startup	= genphy_startup,
 	.shutdown	= genphy_shutdown,
@@ -461,26 +450,20 @@ static LIST_HEAD(phy_drivers);
 
 int phy_init(void)
 {
-#ifdef CONFIG_MV88E61XX_SWITCH
-	phy_mv88e61xx_init();
-#endif
-#ifdef CONFIG_PHY_AQUANTIA
-	phy_aquantia_init();
-#endif
 #ifdef CONFIG_PHY_ATHEROS
 	phy_atheros_init();
 #endif
 #ifdef CONFIG_PHY_BROADCOM
 	phy_broadcom_init();
 #endif
-#ifdef CONFIG_PHY_CORTINA
-	phy_cortina_init();
-#endif
 #ifdef CONFIG_PHY_DAVICOM
 	phy_davicom_init();
 #endif
 #ifdef CONFIG_PHY_ET1011C
 	phy_et1011c_init();
+#endif
+#ifdef CONFIG_PHY_ICPLUS
+	phy_icplus_init();
 #endif
 #ifdef CONFIG_PHY_LXT
 	phy_lxt_init();
@@ -503,14 +486,8 @@ int phy_init(void)
 #ifdef CONFIG_PHY_TERANETICS
 	phy_teranetics_init();
 #endif
-#ifdef CONFIG_PHY_TI
-	phy_ti_init();
-#endif
 #ifdef CONFIG_PHY_VITESSE
 	phy_vitesse_init();
-#endif
-#ifdef CONFIG_PHY_XILINX
-	phy_xilinx_init();
 #endif
 
 	return 0;
@@ -520,44 +497,6 @@ int phy_register(struct phy_driver *drv)
 {
 	INIT_LIST_HEAD(&drv->list);
 	list_add_tail(&drv->list, &phy_drivers);
-
-#ifdef CONFIG_NEEDS_MANUAL_RELOC
-	if (drv->probe)
-		drv->probe += gd->reloc_off;
-	if (drv->config)
-		drv->config += gd->reloc_off;
-	if (drv->startup)
-		drv->startup += gd->reloc_off;
-	if (drv->shutdown)
-		drv->shutdown += gd->reloc_off;
-	if (drv->readext)
-		drv->readext += gd->reloc_off;
-	if (drv->writeext)
-		drv->writeext += gd->reloc_off;
-#endif
-	return 0;
-}
-
-int phy_set_supported(struct phy_device *phydev, u32 max_speed)
-{
-	/* The default values for phydev->supported are provided by the PHY
-	 * driver "features" member, we want to reset to sane defaults first
-	 * before supporting higher speeds.
-	 */
-	phydev->supported &= PHY_DEFAULT_FEATURES;
-
-	switch (max_speed) {
-	default:
-		return -ENOTSUPP;
-	case SPEED_1000:
-		phydev->supported |= PHY_1000BT_FEATURES;
-		/* fall through */
-	case SPEED_100:
-		phydev->supported |= PHY_100BT_FEATURES;
-		/* fall through */
-	case SPEED_10:
-		phydev->supported |= PHY_10BT_FEATURES;
-	}
 
 	return 0;
 }
@@ -603,7 +542,7 @@ static struct phy_driver *get_phy_driver(struct phy_device *phydev,
 }
 
 static struct phy_device *phy_device_create(struct mii_dev *bus, int addr,
-					    u32 phy_id,
+					    int phy_id,
 					    phy_interface_t interface)
 {
 	struct phy_device *dev;
@@ -620,7 +559,7 @@ static struct phy_device *phy_device_create(struct mii_dev *bus, int addr,
 	memset(dev, 0, sizeof(*dev));
 
 	dev->duplex = -1;
-	dev->link = 0;
+	dev->link = 1;
 	dev->interface = interface;
 
 	dev->autoneg = AUTONEG_ENABLE;
@@ -647,7 +586,7 @@ static struct phy_device *phy_device_create(struct mii_dev *bus, int addr,
  * Description: Reads the ID registers of the PHY at @addr on the
  *   @bus, stores it in @phy_id and returns zero on success.
  */
-int __weak get_phy_id(struct mii_dev *bus, int addr, int devad, u32 *phy_id)
+static int get_phy_id(struct mii_dev *bus, int addr, int devad, u32 *phy_id)
 {
 	int phy_reg;
 
@@ -678,8 +617,10 @@ static struct phy_device *create_phy_by_mask(struct mii_dev *bus,
 	while (phy_mask) {
 		int addr = ffs(phy_mask) - 1;
 		int r = get_phy_id(bus, addr, devad, &phy_id);
+		if (r < 0)
+			return ERR_PTR(r);
 		/* If the PHY ID is mostly f's, we didn't find anything */
-		if (r == 0 && (phy_id & 0x1fffffff) != 0x1fffffff)
+		if ((phy_id & 0x1fffffff) != 0x1fffffff)
 			return phy_device_create(bus, addr, phy_id, interface);
 		phy_mask &= ~(1 << addr);
 	}
@@ -720,16 +661,8 @@ static struct phy_device *get_phy_device_by_mask(struct mii_dev *bus,
 		if (phydev)
 			return phydev;
 	}
-
-	debug("\n%s PHY: ", bus->name);
-	while (phy_mask) {
-		int addr = ffs(phy_mask) - 1;
-		debug("%d ", addr);
-		phy_mask &= ~(1 << addr);
-	}
-	debug("not found\n");
-
-	return NULL;
+	printf("Phy not found\n");
+	return phy_device_create(bus, ffs(phy_mask) - 1, 0xffffffff, interface);
 }
 
 /**
@@ -752,9 +685,6 @@ int phy_reset(struct phy_device *phydev)
 	int timeout = 500;
 	int devad = MDIO_DEVAD_NONE;
 
-	if (phydev->flags & PHY_FLAG_BROKEN_RESET)
-		return 0;
-
 #ifdef CONFIG_PHYLIB_10G
 	/* If it's 10G, we need to issue reset through one of the MMDs */
 	if (is_10g_interface(phydev->interface)) {
@@ -765,7 +695,15 @@ int phy_reset(struct phy_device *phydev)
 	}
 #endif
 
-	if (phy_write(phydev, devad, MII_BMCR, BMCR_RESET) < 0) {
+	reg = phy_read(phydev, devad, MII_BMCR);
+	if (reg < 0) {
+		debug("PHY status read failed\n");
+		return -1;
+	}
+
+	reg |= BMCR_RESET;
+
+	if (phy_write(phydev, devad, MII_BMCR, reg) < 0) {
 		debug("PHY reset failed\n");
 		return -1;
 	}
@@ -778,7 +716,6 @@ int phy_reset(struct phy_device *phydev)
 	 * auto-clearing).  This should happen within 0.5 seconds per the
 	 * IEEE spec.
 	 */
-	reg = phy_read(phydev, devad, MII_BMCR);
 	while ((reg & BMCR_RESET) && timeout--) {
 		reg = phy_read(phydev, devad, MII_BMCR);
 
@@ -816,25 +753,19 @@ struct phy_device *phy_find_by_mask(struct mii_dev *bus, unsigned phy_mask,
 		phy_interface_t interface)
 {
 	/* Reset the bus */
-	if (bus->reset) {
+	if (bus->reset)
 		bus->reset(bus);
 
-		/* Wait 15ms to make sure the PHY has come out of hard reset */
-		udelay(15000);
-	}
-
+	/* Wait 15ms to make sure the PHY has come out of hard reset */
+	udelay(15000);
 	return get_phy_device_by_mask(bus, phy_mask, interface);
 }
 
-#ifdef CONFIG_DM_ETH
-void phy_connect_dev(struct phy_device *phydev, struct udevice *dev)
-#else
 void phy_connect_dev(struct phy_device *phydev, struct eth_device *dev)
-#endif
 {
 	/* Soft Reset the PHY */
 	phy_reset(phydev);
-	if (phydev->dev && phydev->dev != dev) {
+	if (phydev->dev) {
 		printf("%s:%d is connected to %s.  Reconnecting to %s\n",
 				phydev->bus->name, phydev->addr,
 				phydev->dev->name, dev->name);
@@ -843,13 +774,8 @@ void phy_connect_dev(struct phy_device *phydev, struct eth_device *dev)
 	debug("%s connected to %s\n", dev->name, phydev->drv->name);
 }
 
-#ifdef CONFIG_DM_ETH
-struct phy_device *phy_connect(struct mii_dev *bus, int addr,
-		struct udevice *dev, phy_interface_t interface)
-#else
 struct phy_device *phy_connect(struct mii_dev *bus, int addr,
 		struct eth_device *dev, phy_interface_t interface)
-#endif
 {
 	struct phy_device *phydev;
 
@@ -872,17 +798,22 @@ int phy_startup(struct phy_device *phydev)
 	return 0;
 }
 
-__weak int board_phy_config(struct phy_device *phydev)
+static int __board_phy_config(struct phy_device *phydev)
 {
 	if (phydev->drv->config)
 		return phydev->drv->config(phydev);
 	return 0;
 }
 
+int board_phy_config(struct phy_device *phydev)
+	__attribute__((weak, alias("__board_phy_config")));
+
 int phy_config(struct phy_device *phydev)
 {
 	/* Invoke an optional board-specific helper */
-	return board_phy_config(phydev);
+	board_phy_config(phydev);
+
+	return 0;
 }
 
 int phy_shutdown(struct phy_device *phydev)
@@ -891,16 +822,4 @@ int phy_shutdown(struct phy_device *phydev)
 		phydev->drv->shutdown(phydev);
 
 	return 0;
-}
-
-int phy_get_interface_by_name(const char *str)
-{
-	int i;
-
-	for (i = 0; i < PHY_INTERFACE_MODE_COUNT; i++) {
-		if (!strcmp(str, phy_interface_strings[i]))
-			return i;
-	}
-
-	return -1;
 }

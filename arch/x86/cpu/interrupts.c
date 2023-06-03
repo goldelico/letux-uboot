@@ -8,20 +8,33 @@
  * Portions of this file are derived from the Linux kernel source
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
-#include <dm.h>
 #include <asm/cache.h>
 #include <asm/control_regs.h>
-#include <asm/i8259.h>
 #include <asm/interrupt.h>
 #include <asm/io.h>
-#include <asm/lapic.h>
-#include <asm/msr.h>
 #include <asm/processor-flags.h>
-#include <asm/processor.h>
+#include <linux/compiler.h>
+#include <asm/msr.h>
 #include <asm/u-boot-x86.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -34,78 +47,14 @@ DECLARE_GLOBAL_DATA_PTR;
 	"pushl $"#x"\n" \
 	"jmp irq_common_entry\n"
 
-static char *exceptions[] = {
-	"Divide Error",
-	"Debug",
-	"NMI Interrupt",
-	"Breakpoint",
-	"Overflow",
-	"BOUND Range Exceeded",
-	"Invalid Opcode (Undefined Opcode)",
-	"Device Not Avaiable (No Math Coprocessor)",
-	"Double Fault",
-	"Coprocessor Segment Overrun",
-	"Invalid TSS",
-	"Segment Not Present",
-	"Stack Segment Fault",
-	"General Protection",
-	"Page Fault",
-	"Reserved",
-	"x87 FPU Floating-Point Error",
-	"Alignment Check",
-	"Machine Check",
-	"SIMD Floating-Point Exception",
-	"Virtualization Exception",
-	"Reserved",
-	"Reserved",
-	"Reserved",
-	"Reserved",
-	"Reserved",
-	"Reserved",
-	"Reserved",
-	"Reserved",
-	"Reserved",
-	"Reserved",
-	"Reserved"
-};
-
-static void dump_regs(struct irq_regs *regs)
+void dump_regs(struct irq_regs *regs)
 {
-	unsigned long cs, eip, eflags;
 	unsigned long cr0 = 0L, cr2 = 0L, cr3 = 0L, cr4 = 0L;
 	unsigned long d0, d1, d2, d3, d6, d7;
 	unsigned long sp;
 
-	/*
-	 * Some exceptions cause an error code to be saved on the current stack
-	 * after the EIP value. We should extract CS/EIP/EFLAGS from different
-	 * position on the stack based on the exception number.
-	 */
-	switch (regs->irq_id) {
-	case EXC_DF:
-	case EXC_TS:
-	case EXC_NP:
-	case EXC_SS:
-	case EXC_GP:
-	case EXC_PF:
-	case EXC_AC:
-		cs = regs->context.ctx2.xcs;
-		eip = regs->context.ctx2.eip;
-		eflags = regs->context.ctx2.eflags;
-		/* We should fix up the ESP due to error code */
-		regs->esp += 4;
-		break;
-	default:
-		cs = regs->context.ctx1.xcs;
-		eip = regs->context.ctx1.eip;
-		eflags = regs->context.ctx1.eflags;
-		break;
-	}
-
 	printf("EIP: %04x:[<%08lx>] EFLAGS: %08lx\n",
-			(u16)cs, eip, eflags);
-	if (gd->flags & GD_FLG_RELOC)
-		printf("Original EIP :[<%08lx>]\n", eip - gd->reloc_off);
+			(u16)regs->xcs, regs->eip, regs->eflags);
 
 	printf("EAX: %08lx EBX: %08lx ECX: %08lx EDX: %08lx\n",
 		regs->eax, regs->ebx, regs->ecx, regs->edx);
@@ -151,13 +100,6 @@ static void dump_regs(struct irq_regs *regs)
 	}
 }
 
-static void do_exception(struct irq_regs *regs)
-{
-	printf("%s\n", exceptions[regs->irq_id]);
-	dump_regs(regs);
-	hang();
-}
-
 struct idt_entry {
 	u16	base_low;
 	u16	selector;
@@ -169,6 +111,7 @@ struct idt_entry {
 struct desc_ptr {
 	unsigned short size;
 	unsigned long address;
+	unsigned short segment;
 } __packed;
 
 struct idt_entry idt[256] __aligned(16);
@@ -182,8 +125,8 @@ static inline void load_idt(const struct desc_ptr *dtr)
 
 void set_vector(u8 intnum, void *routine)
 {
-	idt[intnum].base_high = (u16)((ulong)(routine) >> 16);
-	idt[intnum].base_low = (u16)((ulong)(routine) & 0xffff);
+	idt[intnum].base_high = (u16)((u32)(routine) >> 16);
+	idt[intnum].base_low = (u16)((u32)(routine) & 0xffff);
 }
 
 /*
@@ -201,26 +144,28 @@ int cpu_init_interrupts(void)
 	int irq_entry_size = irq_1 - irq_0;
 	void *irq_entry = (void *)irq_0;
 
+	/* Just in case... */
+	disable_interrupts();
+
 	/* Setup the IDT */
 	for (i = 0; i < 256; i++) {
 		idt[i].access = 0x8e;
 		idt[i].res = 0;
-		idt[i].selector = X86_GDT_ENTRY_32BIT_CS * X86_GDT_ENTRY_SIZE;
+		idt[i].selector = 0x10;
 		set_vector(i, irq_entry);
 		irq_entry += irq_entry_size;
 	}
 
-	idt_ptr.size = 256 * 8 - 1;
+	idt_ptr.size = 256 * 8;
 	idt_ptr.address = (unsigned long) idt;
+	idt_ptr.segment = 0x18;
 
 	load_idt(&idt_ptr);
 
-	return 0;
-}
+	/* It is now safe to enable interrupts */
+	enable_interrupts();
 
-void *x86_get_idt(void)
-{
-	return &idt_ptr;
+	return 0;
 }
 
 void __do_irq(int irq)
@@ -238,53 +183,9 @@ int disable_interrupts(void)
 {
 	long flags;
 
-#ifdef CONFIG_X86_64
-	asm volatile ("pushfq ; popq %0 ; cli\n" : "=g" (flags) : );
-#else
 	asm volatile ("pushfl ; popl %0 ; cli\n" : "=g" (flags) : );
-#endif
+
 	return flags & X86_EFLAGS_IF;
-}
-
-int interrupt_init(void)
-{
-	struct udevice *dev;
-	int ret;
-
-	/* Try to set up the interrupt router, but don't require one */
-	ret = uclass_first_device_err(UCLASS_IRQ, &dev);
-	if (ret && ret != -ENODEV)
-		return ret;
-
-	/*
-	 * When running as an EFI application we are not in control of
-	 * interrupts and should leave them alone.
-	 */
-#ifndef CONFIG_EFI_APP
-	/* Just in case... */
-	disable_interrupts();
-
-#ifdef CONFIG_I8259_PIC
-	/* Initialize the master/slave i8259 pic */
-	i8259_init();
-#endif
-
-	lapic_setup();
-
-	/* Initialize core interrupt and exception functionality of CPU */
-	cpu_init_interrupts();
-
-	/*
-	 * It is now safe to enable interrupts.
-	 *
-	 * TODO(sjg@chromium.org): But we don't handle these correctly when
-	 * booted from EFI.
-	 */
-	if (ll_boot_init())
-		enable_interrupts();
-#endif
-
-	return 0;
 }
 
 /* IRQ Low-Level Service Routine */
@@ -297,10 +198,111 @@ void irq_llsr(struct irq_regs *regs)
 	 * Order Number: 253665-029US, November 2008
 	 * Table 6-1. Exceptions and Interrupts
 	 */
-	if (regs->irq_id < 32) {
-		/* Architecture defined exception */
-		do_exception(regs);
-	} else {
+	switch (regs->irq_id) {
+	case 0x00:
+		printf("Divide Error (Division by zero)\n");
+		dump_regs(regs);
+		hang();
+		break;
+	case 0x01:
+		printf("Debug Interrupt (Single step)\n");
+		dump_regs(regs);
+		break;
+	case 0x02:
+		printf("NMI Interrupt\n");
+		dump_regs(regs);
+		break;
+	case 0x03:
+		printf("Breakpoint\n");
+		dump_regs(regs);
+		break;
+	case 0x04:
+		printf("Overflow\n");
+		dump_regs(regs);
+		hang();
+		break;
+	case 0x05:
+		printf("BOUND Range Exceeded\n");
+		dump_regs(regs);
+		hang();
+		break;
+	case 0x06:
+		printf("Invalid Opcode (UnDefined Opcode)\n");
+		dump_regs(regs);
+		hang();
+		break;
+	case 0x07:
+		printf("Device Not Available (No Math Coprocessor)\n");
+		dump_regs(regs);
+		hang();
+		break;
+	case 0x08:
+		printf("Double fault\n");
+		dump_regs(regs);
+		hang();
+		break;
+	case 0x09:
+		printf("Co-processor segment overrun\n");
+		dump_regs(regs);
+		hang();
+		break;
+	case 0x0a:
+		printf("Invalid TSS\n");
+		dump_regs(regs);
+		break;
+	case 0x0b:
+		printf("Segment Not Present\n");
+		dump_regs(regs);
+		hang();
+		break;
+	case 0x0c:
+		printf("Stack Segment Fault\n");
+		dump_regs(regs);
+		hang();
+		break;
+	case 0x0d:
+		printf("General Protection\n");
+		dump_regs(regs);
+		break;
+	case 0x0e:
+		printf("Page fault\n");
+		dump_regs(regs);
+		hang();
+		break;
+	case 0x0f:
+		printf("Floating-Point Error (Math Fault)\n");
+		dump_regs(regs);
+		break;
+	case 0x10:
+		printf("Alignment check\n");
+		dump_regs(regs);
+		break;
+	case 0x11:
+		printf("Machine Check\n");
+		dump_regs(regs);
+		break;
+	case 0x12:
+		printf("SIMD Floating-Point Exception\n");
+		dump_regs(regs);
+		break;
+	case 0x13:
+	case 0x14:
+	case 0x15:
+	case 0x16:
+	case 0x17:
+	case 0x18:
+	case 0x19:
+	case 0x1a:
+	case 0x1b:
+	case 0x1c:
+	case 0x1d:
+	case 0x1e:
+	case 0x1f:
+		printf("Reserved Exception\n");
+		dump_regs(regs);
+		break;
+
+	default:
 		/* Hardware or User IRQ */
 		do_irq(regs->irq_id);
 	}
@@ -617,3 +619,31 @@ asm(".globl irq_common_entry\n" \
 	DECLARE_INTERRUPT(253) \
 	DECLARE_INTERRUPT(254) \
 	DECLARE_INTERRUPT(255));
+
+#if defined(CONFIG_INTEL_CORE_ARCH)
+/*
+ * Get the number of CPU time counter ticks since it was read first time after
+ * restart. This yields a free running counter guaranteed to take almost 6
+ * years to wrap around even at 100GHz clock rate.
+ */
+u64 get_ticks(void)
+{
+	u64 now_tick = rdtsc();
+
+	if (!gd->arch.tsc_base)
+		gd->arch.tsc_base = now_tick;
+
+	return now_tick - gd->arch.tsc_base;
+}
+
+#define PLATFORM_INFO_MSR 0xce
+
+unsigned long get_tbclk(void)
+{
+	u32 ratio;
+	u64 platform_info = native_read_msr(PLATFORM_INFO_MSR);
+
+	ratio = (platform_info >> 8) & 0xff;
+	return 100 * 1000 * 1000 * ratio; /* 100MHz times Max Non Turbo ratio */
+}
+#endif

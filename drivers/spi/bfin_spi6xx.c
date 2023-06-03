@@ -18,12 +18,10 @@
  */
 
 #include <common.h>
-#include <console.h>
 #include <malloc.h>
 #include <spi.h>
 
 #include <asm/blackfin.h>
-#include <asm/clock.h>
 #include <asm/gpio.h>
 #include <asm/portmux.h>
 #include <asm/mach-common/bits/spi6xx.h>
@@ -64,9 +62,9 @@ void spi_cs_activate(struct spi_slave *slave)
 		ssel = bfin_read32(&bss->regs->ssel);
 		ssel |= 1 << slave->cs;
 		if (bss->cs_pol)
-			ssel |= BIT(8) << slave->cs;
+			ssel |= (1 << 8) << slave->cs;
 		else
-			ssel &= ~(BIT(8) << slave->cs);
+			ssel &= ~((1 << 8) << slave->cs);
 		bfin_write32(&bss->regs->ssel, ssel);
 	}
 
@@ -84,9 +82,9 @@ void spi_cs_deactivate(struct spi_slave *slave)
 		u32 ssel;
 		ssel = bfin_read32(&bss->regs->ssel);
 		if (bss->cs_pol)
-			ssel &= ~(BIT(8) << slave->cs);
+			ssel &= ~((1 << 8) << slave->cs);
 		else
-			ssel |= BIT(8) << slave->cs;
+			ssel |= (1 << 8) << slave->cs;
 		/* deassert cs */
 		bfin_write32(&bss->regs->ssel, ssel);
 		SSYNC();
@@ -137,11 +135,11 @@ static const unsigned short cs_pins[][7] = {
 void spi_set_speed(struct spi_slave *slave, uint hz)
 {
 	struct bfin_spi_slave *bss = to_bfin_spi_slave(slave);
-	ulong clk;
+	ulong sclk;
 	u32 clock;
 
-	clk = get_spi_clk();
-	clock = clk / hz;
+	sclk = get_sclk1();
+	clock = sclk / hz;
 	if (clock)
 		clock--;
 	bss->clock = clock;
@@ -156,6 +154,10 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	if (!spi_cs_is_valid(bus, cs))
 		return NULL;
 
+	if (bus >= ARRAY_SIZE(pins) || pins[bus] == NULL) {
+		debug("%s: invalid bus %u\n", __func__, bus);
+		return NULL;
+	}
 	switch (bus) {
 #ifdef SPI0_REGBASE
 	case 0:
@@ -173,7 +175,6 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 		break;
 #endif
 	default:
-		debug("%s: invalid bus %u\n", __func__, bus);
 		return NULL;
 	}
 

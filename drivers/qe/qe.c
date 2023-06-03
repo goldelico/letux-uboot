@@ -4,25 +4,31 @@
  * Dave Liu <daveliu@freescale.com>
  * based on source code of Shlomi Gridish
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
-#include <common.h>
+#include "common.h"
 #include <command.h>
-#include <linux/errno.h>
-#include <asm/io.h>
-#include <linux/immap_qe.h>
-#include <fsl_qe.h>
-#ifdef CONFIG_LS102XA
-#include <asm/arch/immap_ls102xa.h>
-#endif
-
-#define MPC85xx_DEVDISR_QE_DISABLE	0x1
+#include "asm/errno.h"
+#include "asm/io.h"
+#include "asm/immap_qe.h"
+#include "qe.h"
 
 qe_map_t		*qe_immr = NULL;
-#ifdef CONFIG_QE
 static qe_snum_t	snums[QE_NUM_OF_SNUM];
-#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -45,7 +51,6 @@ void qe_issue_cmd(uint cmd, uint sbc, u8 mcn, u32 cmd_data)
 	return;
 }
 
-#ifdef CONFIG_QE
 uint qe_muram_alloc(uint size, uint align)
 {
 	uint	retloc;
@@ -76,14 +81,12 @@ uint qe_muram_alloc(uint size, uint align)
 
 	return retloc;
 }
-#endif
 
 void *qe_muram_addr(uint offset)
 {
 	return (void *)&qe_immr->muram[offset];
 }
 
-#ifdef CONFIG_QE
 static void qe_sdma_init(void)
 {
 	volatile sdma_t	*p;
@@ -175,7 +178,7 @@ void qe_init(uint qe_base)
 	/*
 	 * Upload microcode to IRAM for those SOCs which do not have ROM in QE.
 	 */
-	qe_upload_firmware((const void *)CONFIG_SYS_QE_FW_ADDR);
+	qe_upload_firmware((const void *)CONFIG_SYS_QE_FMAN_FW_ADDR);
 
 	/* enable the microcode in IRAM */
 	out_be32(&qe_immr->iram.iready,QE_IRAM_READY);
@@ -187,28 +190,6 @@ void qe_init(uint qe_base)
 	qe_sdma_init();
 	qe_snums_init();
 }
-#endif
-
-#ifdef CONFIG_U_QE
-void u_qe_init(void)
-{
-	qe_immr = (qe_map_t *)(CONFIG_SYS_IMMR + QE_IMMR_OFFSET);
-
-	u_qe_upload_firmware((const void *)CONFIG_SYS_QE_FW_ADDR);
-	out_be32(&qe_immr->iram.iready, QE_IRAM_READY);
-}
-#endif
-
-#ifdef CONFIG_U_QE
-void u_qe_resume(void)
-{
-	qe_map_t *qe_immrr;
-
-	qe_immrr = (qe_map_t *)(CONFIG_SYS_IMMR + QE_IMMR_OFFSET);
-	u_qe_firmware_resume((const void *)CONFIG_SYS_QE_FW_ADDR, qe_immrr);
-	out_be32(&qe_immrr->iram.iready, QE_IRAM_READY);
-}
-#endif
 
 void qe_reset(void)
 {
@@ -216,7 +197,6 @@ void qe_reset(void)
 			 (u8) QE_CR_PROTOCOL_UNSPECIFIED, 0);
 }
 
-#ifdef CONFIG_QE
 void qe_assign_page(uint snum, uint para_ram_base)
 {
 	u32	cecr;
@@ -232,7 +212,6 @@ void qe_assign_page(uint snum, uint para_ram_base)
 
 	return;
 }
-#endif
 
 /*
  * brg: 0~15 as BRG1~BRG16
@@ -244,7 +223,6 @@ void qe_assign_page(uint snum, uint para_ram_base)
 
 #define BRG_CLK		(gd->arch.brg_clk)
 
-#ifdef CONFIG_QE
 int qe_set_brg(uint brg, uint rate)
 {
 	volatile uint	*bp;
@@ -272,7 +250,6 @@ int qe_set_brg(uint brg, uint rate)
 
 	return 0;
 }
-#endif
 
 /* Set ethernet MII clock master
 */
@@ -317,10 +294,9 @@ static void qe_upload_microcode(const void *base,
 
 	if (ucode->major || ucode->minor || ucode->revision)
 		printf("QE: uploading microcode '%s' version %u.%u.%u\n",
-		       (char *)ucode->id, (u16)ucode->major, (u16)ucode->minor,
-		       (u16)ucode->revision);
+			ucode->id, ucode->major, ucode->minor, ucode->revision);
 	else
-		printf("QE: uploading microcode '%s'\n", (char *)ucode->id);
+		printf("QE: uploading microcode '%s'\n", ucode->id);
 
 	/* Use auto-increment */
 	out_be32(&qe_immr->iram.iadd, be32_to_cpu(ucode->iram_offset) |
@@ -354,13 +330,7 @@ int qe_upload_firmware(const struct qe_firmware *firmware)
 	size_t calc_size = sizeof(struct qe_firmware);
 	size_t length;
 	const struct qe_header *hdr;
-#ifdef CONFIG_DEEP_SLEEP
-#ifdef CONFIG_LS102XA
-	struct ccsr_gur __iomem *gur = (void *)CONFIG_SYS_FSL_GUTS_ADDR;
-#else
-	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
-#endif
-#endif
+
 	if (!firmware) {
 		printf("Invalid address\n");
 		return -EINVAL;
@@ -372,10 +342,7 @@ int qe_upload_firmware(const struct qe_firmware *firmware)
 	/* Check the magic */
 	if ((hdr->magic[0] != 'Q') || (hdr->magic[1] != 'E') ||
 	    (hdr->magic[2] != 'F')) {
-		printf("QE microcode not found\n");
-#ifdef CONFIG_DEEP_SLEEP
-		setbits_be32(&gur->devdisr, MPC85xx_DEVDISR_QE_DISABLE);
-#endif
+		printf("Not a microcode\n");
 		return -EPERM;
 	}
 
@@ -439,7 +406,7 @@ int qe_upload_firmware(const struct qe_firmware *firmware)
 	 * saved microcode information and put in the new.
 	 */
 	memset(&qe_firmware_info, 0, sizeof(qe_firmware_info));
-	strncpy(qe_firmware_info.id, (char *)firmware->id, 62);
+	strcpy(qe_firmware_info.id, (char *)firmware->id);
 	qe_firmware_info.extended_modes = firmware->extended_modes;
 	memcpy(qe_firmware_info.vtraps, firmware->vtraps,
 		sizeof(firmware->vtraps));
@@ -467,205 +434,6 @@ int qe_upload_firmware(const struct qe_firmware *firmware)
 
 	return 0;
 }
-
-#ifdef CONFIG_U_QE
-/*
- * Upload a microcode to the I-RAM at a specific address.
- *
- * See docs/README.qe_firmware for information on QE microcode uploading.
- *
- * Currently, only version 1 is supported, so the 'version' field must be
- * set to 1.
- *
- * The SOC model and revision are not validated, they are only displayed for
- * informational purposes.
- *
- * 'calc_size' is the calculated size, in bytes, of the firmware structure and
- * all of the microcode structures, minus the CRC.
- *
- * 'length' is the size that the structure says it is, including the CRC.
- */
-int u_qe_upload_firmware(const struct qe_firmware *firmware)
-{
-	unsigned int i;
-	unsigned int j;
-	u32 crc;
-	size_t calc_size = sizeof(struct qe_firmware);
-	size_t length;
-	const struct qe_header *hdr;
-#ifdef CONFIG_DEEP_SLEEP
-#ifdef CONFIG_LS102XA
-	struct ccsr_gur __iomem *gur = (void *)CONFIG_SYS_FSL_GUTS_ADDR;
-#else
-	ccsr_gur_t __iomem *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
-#endif
-#endif
-	if (!firmware) {
-		printf("Invalid address\n");
-		return -EINVAL;
-	}
-
-	hdr = &firmware->header;
-	length = be32_to_cpu(hdr->length);
-
-	/* Check the magic */
-	if ((hdr->magic[0] != 'Q') || (hdr->magic[1] != 'E') ||
-	    (hdr->magic[2] != 'F')) {
-		printf("Not a microcode\n");
-#ifdef CONFIG_DEEP_SLEEP
-		setbits_be32(&gur->devdisr, MPC85xx_DEVDISR_QE_DISABLE);
-#endif
-		return -EPERM;
-	}
-
-	/* Check the version */
-	if (hdr->version != 1) {
-		printf("Unsupported version\n");
-		return -EPERM;
-	}
-
-	/* Validate some of the fields */
-	if ((firmware->count < 1) || (firmware->count > MAX_QE_RISC)) {
-		printf("Invalid data\n");
-		return -EINVAL;
-	}
-
-	/* Validate the length and check if there's a CRC */
-	calc_size += (firmware->count - 1) * sizeof(struct qe_microcode);
-
-	for (i = 0; i < firmware->count; i++)
-		/*
-		 * For situations where the second RISC uses the same microcode
-		 * as the first, the 'code_offset' and 'count' fields will be
-		 * zero, so it's okay to add those.
-		 */
-		calc_size += sizeof(u32) *
-			be32_to_cpu(firmware->microcode[i].count);
-
-	/* Validate the length */
-	if (length != calc_size + sizeof(u32)) {
-		printf("Invalid length\n");
-		return -EPERM;
-	}
-
-	/*
-	 * Validate the CRC.  We would normally call crc32_no_comp(), but that
-	 * function isn't available unless you turn on JFFS support.
-	 */
-	crc = be32_to_cpu(*(u32 *)((void *)firmware + calc_size));
-	if (crc != (crc32(-1, (const void *)firmware, calc_size) ^ -1)) {
-		printf("Firmware CRC is invalid\n");
-		return -EIO;
-	}
-
-	/*
-	 * If the microcode calls for it, split the I-RAM.
-	 */
-	if (!firmware->split) {
-		out_be16(&qe_immr->cp.cercr,
-			 in_be16(&qe_immr->cp.cercr) | QE_CP_CERCR_CIR);
-	}
-
-	if (firmware->soc.model)
-		printf("Firmware '%s' for %u V%u.%u\n",
-		       firmware->id, be16_to_cpu(firmware->soc.model),
-		       firmware->soc.major, firmware->soc.minor);
-	else
-		printf("Firmware '%s'\n", firmware->id);
-
-	/* Loop through each microcode. */
-	for (i = 0; i < firmware->count; i++) {
-		const struct qe_microcode *ucode = &firmware->microcode[i];
-
-		/* Upload a microcode if it's present */
-		if (ucode->code_offset)
-			qe_upload_microcode(firmware, ucode);
-
-		/* Program the traps for this processor */
-		for (j = 0; j < 16; j++) {
-			u32 trap = be32_to_cpu(ucode->traps[j]);
-
-			if (trap)
-				out_be32(&qe_immr->rsp[i].tibcr[j], trap);
-		}
-
-		/* Enable traps */
-		out_be32(&qe_immr->rsp[i].eccr, be32_to_cpu(ucode->eccr));
-	}
-
-	return 0;
-}
-#endif
-
-#ifdef CONFIG_U_QE
-int u_qe_firmware_resume(const struct qe_firmware *firmware, qe_map_t *qe_immrr)
-{
-	unsigned int i;
-	unsigned int j;
-	const struct qe_header *hdr;
-	const u32 *code;
-#ifdef CONFIG_DEEP_SLEEP
-#ifdef CONFIG_PPC
-	ccsr_gur_t __iomem *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
-#else
-	struct ccsr_gur __iomem *gur = (void *)CONFIG_SYS_FSL_GUTS_ADDR;
-#endif
-#endif
-
-	if (!firmware)
-		return -EINVAL;
-
-	hdr = &firmware->header;
-
-	/* Check the magic */
-	if ((hdr->magic[0] != 'Q') || (hdr->magic[1] != 'E') ||
-	    (hdr->magic[2] != 'F')) {
-#ifdef CONFIG_DEEP_SLEEP
-		setbits_be32(&gur->devdisr, MPC85xx_DEVDISR_QE_DISABLE);
-#endif
-		return -EPERM;
-	}
-
-	/*
-	 * If the microcode calls for it, split the I-RAM.
-	 */
-	if (!firmware->split) {
-		out_be16(&qe_immrr->cp.cercr,
-			 in_be16(&qe_immrr->cp.cercr) | QE_CP_CERCR_CIR);
-	}
-
-	/* Loop through each microcode. */
-	for (i = 0; i < firmware->count; i++) {
-		const struct qe_microcode *ucode = &firmware->microcode[i];
-
-		/* Upload a microcode if it's present */
-		if (!ucode->code_offset)
-			return 0;
-
-		code = (const void *)firmware + be32_to_cpu(ucode->code_offset);
-
-		/* Use auto-increment */
-		out_be32(&qe_immrr->iram.iadd, be32_to_cpu(ucode->iram_offset) |
-			QE_IRAM_IADD_AIE | QE_IRAM_IADD_BADDR);
-
-		for (i = 0; i < be32_to_cpu(ucode->count); i++)
-			out_be32(&qe_immrr->iram.idata, be32_to_cpu(code[i]));
-
-		/* Program the traps for this processor */
-		for (j = 0; j < 16; j++) {
-			u32 trap = be32_to_cpu(ucode->traps[j]);
-
-			if (trap)
-				out_be32(&qe_immrr->rsp[i].tibcr[j], trap);
-		}
-
-		/* Enable traps */
-		out_be32(&qe_immrr->rsp[i].eccr, be32_to_cpu(ucode->eccr));
-	}
-
-	return 0;
-}
-#endif
 
 struct qe_firmware_info *qe_get_firmware_info(void)
 {

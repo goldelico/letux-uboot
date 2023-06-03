@@ -4,16 +4,26 @@
  * Copyright 2011 Freescale Semiconductor, Inc.
  * Author: Dipen Dudhat <dipen.dudhat@freescale.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <asm/io.h>
-#include <fsl_ifc.h>
+#include <asm/fsl_ifc.h>
 #include <linux/mtd/nand.h>
-#ifdef CONFIG_CHAIN_OF_TRUST
-#include <fsl_validate.h>
-#endif
 
 static inline int is_blank(uchar *addr, int page_size)
 {
@@ -51,25 +61,11 @@ static inline int check_read_ecc(uchar *buf, u32 *eccstat,
 	return 0;
 }
 
-static inline struct fsl_ifc_runtime *runtime_regs_address(void)
-{
-	struct fsl_ifc regs = {(void *)CONFIG_SYS_IFC_ADDR, NULL};
-	int ver = 0;
-
-	ver = ifc_in32(&regs.gregs->ifc_rev);
-	if (ver >= FSL_IFC_V2_0_0)
-		regs.rregs = (void *)CONFIG_SYS_IFC_ADDR + IFC_RREGS_64KOFFSET;
-	else
-		regs.rregs = (void *)CONFIG_SYS_IFC_ADDR + IFC_RREGS_4KOFFSET;
-
-	return regs.rregs;
-}
-
 static inline void nand_wait(uchar *buf, int bufnum, int page_size)
 {
-	struct fsl_ifc_runtime *ifc = runtime_regs_address();
+	struct fsl_ifc *ifc = IFC_BASE_ADDR;
 	u32 status;
-	u32 eccstat[8];
+	u32 eccstat[4];
 	int bufperpage = page_size / 512;
 	int bufnum_end, i;
 
@@ -77,7 +73,7 @@ static inline void nand_wait(uchar *buf, int bufnum, int page_size)
 	bufnum_end = bufnum + bufperpage - 1;
 
 	do {
-		status = ifc_in32(&ifc->ifc_nand.nand_evter_stat);
+		status = in_be32(&ifc->ifc_nand.nand_evter_stat);
 	} while (!(status & IFC_NAND_EVTER_STAT_OPC));
 
 	if (status & IFC_NAND_EVTER_STAT_FTOER) {
@@ -87,14 +83,14 @@ static inline void nand_wait(uchar *buf, int bufnum, int page_size)
 	}
 
 	for (i = bufnum / 4; i <= bufnum_end / 4; i++)
-		eccstat[i] = ifc_in32(&ifc->ifc_nand.nand_eccstat[i]);
+		eccstat[i] = in_be32(&ifc->ifc_nand.nand_eccstat[i]);
 
 	for (i = bufnum; i <= bufnum_end; i++) {
 		if (check_read_ecc(buf, eccstat, i, page_size))
 			break;
 	}
 
-	ifc_out32(&ifc->ifc_nand.nand_evter_stat, status);
+	out_be32(&ifc->ifc_nand.nand_evter_stat, status);
 }
 
 static inline int bad_block(uchar *marker, int port_size)
@@ -105,17 +101,16 @@ static inline int bad_block(uchar *marker, int port_size)
 		return __raw_readw((u16 *)marker) != 0xffff;
 }
 
-int nand_spl_load_image(uint32_t offs, unsigned int uboot_size, void *vdst)
+static void nand_load(unsigned int offs, int uboot_size, uchar *dst)
 {
-	struct fsl_ifc_fcm *gregs = (void *)CONFIG_SYS_IFC_ADDR;
-	struct fsl_ifc_runtime *ifc = NULL;
+	struct fsl_ifc *ifc = IFC_BASE_ADDR;
 	uchar *buf = (uchar *)CONFIG_SYS_NAND_BASE;
 	int page_size;
 	int port_size;
 	int pages_per_blk;
 	int blk_size;
 	int bad_marker = 0;
-	int bufnum_mask, bufnum, ver = 0;
+	int bufnum_mask, bufnum;
 
 	int csor, cspr;
 	int pos = 0;
@@ -123,9 +118,6 @@ int nand_spl_load_image(uint32_t offs, unsigned int uboot_size, void *vdst)
 
 	int sram_addr;
 	int pg_no;
-	uchar *dst = vdst;
-
-	ifc = runtime_regs_address();
 
 	/* Get NAND Flash configuration */
 	csor = CONFIG_SYS_NAND_CSOR;
@@ -133,13 +125,10 @@ int nand_spl_load_image(uint32_t offs, unsigned int uboot_size, void *vdst)
 
 	port_size = (cspr & CSPR_PORT_SIZE_16) ? 16 : 8;
 
-	if ((csor & CSOR_NAND_PGS_MASK) == CSOR_NAND_PGS_8K) {
-		page_size = 8192;
-		bufnum_mask = 0x0;
-	} else if ((csor & CSOR_NAND_PGS_MASK) == CSOR_NAND_PGS_4K) {
+	if (csor & CSOR_NAND_PGS_4K) {
 		page_size = 4096;
 		bufnum_mask = 0x1;
-	} else if ((csor & CSOR_NAND_PGS_MASK) == CSOR_NAND_PGS_2K) {
+	} else if (csor & CSOR_NAND_PGS_2K) {
 		page_size = 2048;
 		bufnum_mask = 0x3;
 	} else {
@@ -150,48 +139,44 @@ int nand_spl_load_image(uint32_t offs, unsigned int uboot_size, void *vdst)
 			bad_marker = 5;
 	}
 
-	ver = ifc_in32(&gregs->ifc_rev);
-	if (ver >= FSL_IFC_V2_0_0)
-		bufnum_mask = (bufnum_mask * 2) + 1;
-
 	pages_per_blk =
 		32 << ((csor & CSOR_NAND_PB_MASK) >> CSOR_NAND_PB_SHIFT);
 
 	blk_size = pages_per_blk * page_size;
 
 	/* Open Full SRAM mapping for spare are access */
-	ifc_out32(&ifc->ifc_nand.ncfgr, 0x0);
+	out_be32(&ifc->ifc_nand.ncfgr, 0x0);
 
 	/* Clear Boot events */
-	ifc_out32(&ifc->ifc_nand.nand_evter_stat, 0xffffffff);
+	out_be32(&ifc->ifc_nand.nand_evter_stat, 0xffffffff);
 
 	/* Program FIR/FCR for Large/Small page */
 	if (page_size > 512) {
-		ifc_out32(&ifc->ifc_nand.nand_fir0,
-			  (IFC_FIR_OP_CW0 << IFC_NAND_FIR0_OP0_SHIFT) |
-			  (IFC_FIR_OP_CA0 << IFC_NAND_FIR0_OP1_SHIFT) |
-			  (IFC_FIR_OP_RA0 << IFC_NAND_FIR0_OP2_SHIFT) |
-			  (IFC_FIR_OP_CMD1 << IFC_NAND_FIR0_OP3_SHIFT) |
-			  (IFC_FIR_OP_BTRD << IFC_NAND_FIR0_OP4_SHIFT));
-		ifc_out32(&ifc->ifc_nand.nand_fir1, 0x0);
+		out_be32(&ifc->ifc_nand.nand_fir0,
+			 (IFC_FIR_OP_CW0 << IFC_NAND_FIR0_OP0_SHIFT) |
+			 (IFC_FIR_OP_CA0 << IFC_NAND_FIR0_OP1_SHIFT) |
+			 (IFC_FIR_OP_RA0 << IFC_NAND_FIR0_OP2_SHIFT) |
+			 (IFC_FIR_OP_CMD1 << IFC_NAND_FIR0_OP3_SHIFT) |
+			 (IFC_FIR_OP_BTRD << IFC_NAND_FIR0_OP4_SHIFT));
+		out_be32(&ifc->ifc_nand.nand_fir1, 0x0);
 
-		ifc_out32(&ifc->ifc_nand.nand_fcr0,
-			  (NAND_CMD_READ0 << IFC_NAND_FCR0_CMD0_SHIFT) |
-			  (NAND_CMD_READSTART << IFC_NAND_FCR0_CMD1_SHIFT));
+		out_be32(&ifc->ifc_nand.nand_fcr0,
+			 (NAND_CMD_READ0 << IFC_NAND_FCR0_CMD0_SHIFT) |
+			 (NAND_CMD_READSTART << IFC_NAND_FCR0_CMD1_SHIFT));
 	} else {
-		ifc_out32(&ifc->ifc_nand.nand_fir0,
-			  (IFC_FIR_OP_CW0 << IFC_NAND_FIR0_OP0_SHIFT) |
-			  (IFC_FIR_OP_CA0 << IFC_NAND_FIR0_OP1_SHIFT) |
-			  (IFC_FIR_OP_RA0  << IFC_NAND_FIR0_OP2_SHIFT) |
-			  (IFC_FIR_OP_BTRD << IFC_NAND_FIR0_OP3_SHIFT));
-		ifc_out32(&ifc->ifc_nand.nand_fir1, 0x0);
+		out_be32(&ifc->ifc_nand.nand_fir0,
+			 (IFC_FIR_OP_CW0 << IFC_NAND_FIR0_OP0_SHIFT) |
+			 (IFC_FIR_OP_CA0 << IFC_NAND_FIR0_OP1_SHIFT) |
+			 (IFC_FIR_OP_RA0  << IFC_NAND_FIR0_OP2_SHIFT) |
+			 (IFC_FIR_OP_BTRD << IFC_NAND_FIR0_OP3_SHIFT));
+		out_be32(&ifc->ifc_nand.nand_fir1, 0x0);
 
-		ifc_out32(&ifc->ifc_nand.nand_fcr0,
-			  NAND_CMD_READ0 << IFC_NAND_FCR0_CMD0_SHIFT);
+		out_be32(&ifc->ifc_nand.nand_fcr0,
+			 NAND_CMD_READ0 << IFC_NAND_FCR0_CMD0_SHIFT);
 	}
 
 	/* Program FBCR = 0 for full page read */
-	ifc_out32(&ifc->ifc_nand.nand_fbcr, 0);
+	out_be32(&ifc->ifc_nand.nand_fbcr, 0);
 
 	/* Read and copy u-boot on SDRAM from NAND device, In parallel
 	 * check for Bad block if found skip it and read continue to
@@ -204,11 +189,11 @@ int nand_spl_load_image(uint32_t offs, unsigned int uboot_size, void *vdst)
 			bufnum = pg_no & bufnum_mask;
 			sram_addr = bufnum * page_size * 2;
 
-			ifc_out32(&ifc->ifc_nand.row0, pg_no);
-			ifc_out32(&ifc->ifc_nand.col0, 0);
+			out_be32(&ifc->ifc_nand.row0, pg_no);
+			out_be32(&ifc->ifc_nand.col0, 0);
 			/* start read */
-			ifc_out32(&ifc->ifc_nand.nandseq_strt,
-				  IFC_NAND_SEQ_STRT_FIR_STRT);
+			out_be32(&ifc->ifc_nand.nandseq_strt,
+				 IFC_NAND_SEQ_STRT_FIR_STRT);
 
 			/* wait for read to complete */
 			nand_wait(&buf[sram_addr], bufnum, page_size);
@@ -233,13 +218,11 @@ int nand_spl_load_image(uint32_t offs, unsigned int uboot_size, void *vdst)
 			offs += page_size;
 		} while ((offs & (blk_size - 1)) && (pos < uboot_size));
 	}
-
-	return 0;
 }
 
 /*
  * Main entrypoint for NAND Boot. It's necessary that SDRAM is already
- * configured and available since this code loads the main U-Boot image
+ * configured and available since this code loads the main U-boot image
  * from NAND into SDRAM and starts from there.
  */
 void nand_boot(void)
@@ -248,17 +231,16 @@ void nand_boot(void)
 	/*
 	 * Load U-Boot image from NAND into RAM
 	 */
-	nand_spl_load_image(CONFIG_SYS_NAND_U_BOOT_OFFS,
-			    CONFIG_SYS_NAND_U_BOOT_SIZE,
-			    (uchar *)CONFIG_SYS_NAND_U_BOOT_DST);
+	nand_load(CONFIG_SYS_NAND_U_BOOT_OFFS, CONFIG_SYS_NAND_U_BOOT_SIZE,
+		  (uchar *)CONFIG_SYS_NAND_U_BOOT_DST);
 
 #ifdef CONFIG_NAND_ENV_DST
-	nand_spl_load_image(CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE,
-			    (uchar *)CONFIG_NAND_ENV_DST);
+	nand_load(CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE,
+		  (uchar *)CONFIG_NAND_ENV_DST);
 
 #ifdef CONFIG_ENV_OFFSET_REDUND
-	nand_spl_load_image(CONFIG_ENV_OFFSET_REDUND, CONFIG_ENV_SIZE,
-			    (uchar *)CONFIG_NAND_ENV_DST + CONFIG_ENV_SIZE);
+	nand_load(CONFIG_ENV_OFFSET_REDUND, CONFIG_ENV_SIZE,
+		  (uchar *)CONFIG_NAND_ENV_DST + CONFIG_ENV_SIZE);
 #endif
 #endif
 	/*
@@ -271,37 +253,6 @@ void nand_boot(void)
 	 */
 	flush_cache(CONFIG_SYS_NAND_U_BOOT_DST, CONFIG_SYS_NAND_U_BOOT_SIZE);
 #endif
-
-#ifdef CONFIG_CHAIN_OF_TRUST
-	/*
-	 * U-Boot header is appended at end of U-boot image, so
-	 * calculate U-boot header address using U-boot header size.
-	 */
-#define CONFIG_U_BOOT_HDR_ADDR \
-		((CONFIG_SYS_NAND_U_BOOT_START + \
-		  CONFIG_SYS_NAND_U_BOOT_SIZE) - \
-		 CONFIG_U_BOOT_HDR_SIZE)
-	spl_validate_uboot(CONFIG_U_BOOT_HDR_ADDR,
-			   CONFIG_SYS_NAND_U_BOOT_START);
-	/*
-	 * In case of failure in validation, spl_validate_uboot would
-	 * not return back in case of Production environment with ITS=1.
-	 * Thus U-Boot will not start.
-	 * In Development environment (ITS=0 and SB_EN=1), the function
-	 * may return back in case of non-fatal failures.
-	 */
-#endif
-
 	uboot = (void *)CONFIG_SYS_NAND_U_BOOT_START;
 	uboot();
 }
-
-#ifndef CONFIG_SPL_NAND_INIT
-void nand_init(void)
-{
-}
-
-void nand_deselect(void)
-{
-}
-#endif

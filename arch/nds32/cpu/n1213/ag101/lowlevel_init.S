@@ -3,10 +3,24 @@
  * Shawn Lin, Andes Technology Corporation <nobuhiro@andestech.com>
  * Macpaul Lin, Andes Technology Corporation <macpaul@andestech.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
-
-.pic
 
 .text
 
@@ -24,7 +38,6 @@
 #define SDMC_CR1_A		(CONFIG_FTSDMC021_BASE + FTSDMC021_CR1)
 #define SDMC_CR2_A		(CONFIG_FTSDMC021_BASE + FTSDMC021_CR2)
 #define SDMC_B0_BSR_A		(CONFIG_FTSDMC021_BASE + FTSDMC021_BANK0_BSR)
-#define SDMC_B1_BSR_A		(CONFIG_FTSDMC021_BASE + FTSDMC021_BANK1_BSR)
 
 #define SDMC_TP1_D		CONFIG_SYS_FTSDMC021_TP1
 #define SDMC_TP2_D		CONFIG_SYS_FTSDMC021_TP2
@@ -32,16 +45,6 @@
 #define SDMC_CR2_D		CONFIG_SYS_FTSDMC021_CR2
 
 #define SDMC_B0_BSR_D		CONFIG_SYS_FTSDMC021_BANK0_BSR
-#define SDMC_B1_BSR_D		CONFIG_SYS_FTSDMC021_BANK1_BSR
-
-
-/*
- * for Orca and Emerald
- */
-#define BOARD_ID_REG		0x104
-#define BOARD_ID_FAMILY_MASK 	0xfff000
-#define BOARD_ID_FAMILY_V5   	0x556000
-#define BOARD_ID_FAMILY_K7   	0x74b000
 
 /*
  * parameters for the static memory controller
@@ -58,10 +61,6 @@
 #define AHBC_CR_A		(CONFIG_FTAHBC020S_BASE + FTAHBC020S_CR)
 #define AHBC_BSR6_A	(CONFIG_FTAHBC020S_BASE + FTAHBC020S_SLAVE_BSR_6)
 
-/*
- * for Orca and Emerald
- */
-#define AHBC_BSR4_A	(CONFIG_FTAHBC020S_BASE + FTAHBC020S_SLAVE_BSR_4)
 #define AHBC_BSR6_D		CONFIG_SYS_FTAHBC020S_SLAVE_BSR_6
 
 /*
@@ -97,11 +96,6 @@ lowlevel_init:
 	led	0x10
 	jal	remap
 
-#if (defined(NDS32_EXT_FPU_DP) || defined(NDS32_EXT_FPU_SP))
-	led	0x1f
-	jal	enable_fpu
-#endif
-
 	led	0x20
 	ret	$r10
 
@@ -115,49 +109,14 @@ mem_init:
 	 *	we need to set onboard SDRAM before remap and relocation.
 	 */
 	led	0x01
-
-  /*
-   * for Orca and Emerald
-   * disable write protection and reset bank size
-   */
-	li	$r0, SMC_BANK0_CR_A
-	lwi $r1, [$r0+#0x00]
-	ori $r1, $r1, 0x8f0
-	xori $r1, $r1, 0x8f0
-  /*
-   * check board
-   */
-	li      $r3, CONFIG_FTPMU010_BASE + BOARD_ID_REG
-  lwi     $r3, [$r3]
-  li      $r4, BOARD_ID_FAMILY_MASK
-  and     $r3, $r3, $r4
-  li      $r4, BOARD_ID_FAMILY_K7
-  xor     $r4, $r3, $r4
-  beqz    $r4, use_flash_16bit_boot
-  /*
-   * 32-bit mode
-   */
-use_flash_32bit_boot:
-	ori     $r1, $r1, 0x50
-  li      $r2, 0x00151151
-  j       sdram_b0_cr
-  /*
-   * 16-bit mode
-   */
-use_flash_16bit_boot:
-  ori     $r1, $r1, 0x60
-  li      $r2, 0x00153153
-  /*
-   * SRAM bank0 config
-   */
-sdram_b0_cr:
-  swi     $r1, [$r0+#0x00]
-  swi     $r2, [$r0+#0x04]
+	write32	SMC_BANK0_CR_A, SMC_BANK0_CR_D			! 0x10000052
+	write32	SMC_BANK0_TPR_A, SMC_BANK0_TPR_D		! 0x00151151
 
 	/*
 	 * config AHB Controller
 	 */
 	led	0x02
+	write32	AHBC_BSR6_A, AHBC_BSR6_D
 
 	/*
 	 * config PMU controller
@@ -207,13 +166,13 @@ relo_base:
 	 * Remapping
 	 */
 	led	0x1a
-	write32	SDMC_B0_BSR_A, SDMC_B0_BSR_D		! 0x00001800
-	write32	SDMC_B1_BSR_A, SDMC_B1_BSR_D		! 0x00001880
+	write32	SDMC_B0_BSR_A, SDMC_B0_BSR_D		! 0x00001100
 
 	/* clear empty BSR registers */
 	led	0x1b
 	li	$r4, CONFIG_FTSDMC021_BASE
 	li	$r5, 0x0
+	swi	$r5, [$r4 + FTSDMC021_BANK1_BSR]
 	swi	$r5, [$r4 + FTSDMC021_BANK2_BSR]
 	swi	$r5, [$r4 + FTSDMC021_BANK3_BSR]
 
@@ -244,17 +203,13 @@ relo_base:
 	 * a FLASH connected to bank0.
 	 */
 	led	0x11
-   /*
-    * for Orca and Emerald
-    * read sdram base address automatically
-    */
-	li	$r5, AHBC_BSR6_A
-	lwi $r8, [$r5]
-	li	$r4, 0xfff00000   /* r4 = bank6 base */
-	and $r4, $r4, $r8
-
-	la	$r5, _start@GOTOFF
-	la  $r6, _end@GOTOFF
+	li	$r4, PHYS_SDRAM_0_AT_INIT		/* 0x10000000 */
+	li	$r5, 0x0
+	la	$r1, relo_base				/* get $pc or $lp */
+	sub	$r2, $r0, $r1
+	sethi	$r6, hi20(_end)
+	ori	$r6, $r6, lo12(_end)
+	add	$r6, $r6, $r2
 1:
 	lwi.p	$r7, [$r5], #4
 	swi.p	$r7, [$r4], #4
@@ -268,62 +223,12 @@ relo_base:
 	 * - after  remap: flash/rom 0x80000000, sdram: 0x00000000
 	 */
 	led	0x1c
-	write32 SDMC_B0_BSR_A, 0x00001000
-	write32 SDMC_B1_BSR_A, 0x00001200
-	li $r5, CONFIG_SYS_TEXT_BASE	/* flash base address */
-	add $r11, $r11, $r5	/* add flash address offset for ret */
-	add $r10, $r10, $r5
-	move $lp, $r11
 	setbf15	AHBC_CR_A, FTAHBC020S_CR_REMAP		! 0x1
 
-  /*
-   * for Orca and Emerald
-   * extend sdram size from 256MB to 2GB
-   */
-	li	$r5, AHBC_BSR6_A
-	lwi $r6, [$r5]
-	li  $r4, 0xfff0ffff
-	and $r6 ,$r4, $r6
-	li	$r4, 0x000b0000
-	or  $r6, $r4, $r6
-	swi	$r6, [$r5]
-
-  /*
-   * for Orca and Emerald
-   * extend rom base from 256MB to 2GB
-   */
-	li	$r4, AHBC_BSR4_A
-	lwi $r5, [$r4]
-	li	$r6, 0xffffff
-	and $r5, $r5, $r6
-	li  $r6, 0x80000000
-	or  $r5, $r5, $r6
-	swi $r5,	[$r4]
 #endif /* #ifdef CONFIG_MEM_REMAP */
-	move $lp, $r11
+	move	$lp, $r11
 2:
 	ret
-
-	/*
-	 * enable_fpu:
-	 *  Some of Andes CPU version support FPU coprocessor, if so,
-	 *  and toolchain support FPU instruction set, we should enable it.
-	 */
-#if (defined(NDS32_EXT_FPU_DP) || defined(NDS32_EXT_FPU_SP))
-enable_fpu:
-	mfsr    $r0, $CPU_VER     /* enable FPU if it exists */
-	srli    $r0, $r0, 3
-	andi    $r0, $r0, 1
-	beqz    $r0, 1f           /* skip if no COP */
-	mfsr    $r0, $FUCOP_EXIST
-	srli    $r0, $r0, 31
-	beqz    $r0, 1f           /* skip if no FPU */
-	mfsr    $r0, $FUCOP_CTL
-	ori     $r0, $r0, 1
-	mtsr    $r0, $FUCOP_CTL
-1:
-	ret
-#endif
 
 .globl show_led
 show_led:

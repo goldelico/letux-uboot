@@ -7,7 +7,19 @@
  * (C) Copyright 2010 Andes Technology
  * Macpaul Lin <macpaul@andestech.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
 #include <config.h>
@@ -423,7 +435,7 @@ static int ftgmac100_init(struct eth_device *dev, bd_t *bd)
 	for (i = 0; i < PKTBUFSRX; i++) {
 		/* RXBUF_BADR */
 		if (!rxdes[i].rxdes2) {
-			buf = net_rx_packets[i];
+			buf = NetRxPackets[i];
 			rxdes[i].rxdes3 = virt_to_phys(buf);
 			rxdes[i].rxdes2 = (uint)buf;
 		}
@@ -493,7 +505,7 @@ static int ftgmac100_recv(struct eth_device *dev)
 	dma_map_single((void *)curr_des->rxdes2, rxlen, DMA_FROM_DEVICE);
 
 	/* pass the packet up to the protocol layers. */
-	net_process_received_packet((void *)curr_des->rxdes2, rxlen);
+	NetReceive((void *)curr_des->rxdes2, rxlen);
 
 	/* release buffer to DMA */
 	curr_des->rxdes0 &= ~FTGMAC100_RXDES0_RXPKT_RDY;
@@ -562,7 +574,7 @@ int ftgmac100_initialize(bd_t *bd)
 	memset(dev, 0, sizeof(*dev));
 	memset(priv, 0, sizeof(*priv));
 
-	strcpy(dev->name, "FTGMAC100");
+	sprintf(dev->name, "FTGMAC100");
 	dev->iobase	= CONFIG_FTGMAC100_BASE;
 	dev->init	= ftgmac100_init;
 	dev->halt	= ftgmac100_halt;

@@ -8,7 +8,23 @@
  *
  * (C) Copyright 2005-2010 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 /* #define DEBUG */
@@ -16,10 +32,9 @@
 #include <linux/types.h>
 #include <linux/err.h>
 #include <asm/io.h>
-#include <linux/errno.h>
+#include <asm/errno.h>
 #include <asm/arch/imx-regs.h>
 #include <asm/arch/crm_regs.h>
-#include <div64.h>
 #include "ipu.h"
 #include "ipu_regs.h"
 
@@ -211,13 +226,9 @@ static struct clk ipu_clk = {
 	.usecount = 0,
 };
 
-#if !defined CONFIG_SYS_LDB_CLOCK
-#define CONFIG_SYS_LDB_CLOCK 65000000
-#endif
-
 static struct clk ldb_clk = {
 	.name = "ldb_clk",
-	.rate = CONFIG_SYS_LDB_CLOCK,
+	.rate = 65000000,
 	.usecount = 0,
 };
 
@@ -276,86 +287,50 @@ static inline void ipu_ch_param_set_buffer(uint32_t ch, int bufNum,
 
 static void ipu_pixel_clk_recalc(struct clk *clk)
 {
-	u32 div;
-	u64 final_rate = (unsigned long long)clk->parent->rate * 16;
-
-	div = __raw_readl(DI_BS_CLKGEN0(clk->id));
-	debug("read BS_CLKGEN0 div:%d, final_rate:%lld, prate:%ld\n",
-	      div, final_rate, clk->parent->rate);
-
-	clk->rate = 0;
-	if (div != 0) {
-		do_div(final_rate, div);
-		clk->rate = final_rate;
-	}
+	u32 div = __raw_readl(DI_BS_CLKGEN0(clk->id));
+	if (div == 0)
+		clk->rate = 0;
+	else
+		clk->rate = (clk->parent->rate * 16) / div;
 }
 
 static unsigned long ipu_pixel_clk_round_rate(struct clk *clk,
 	unsigned long rate)
 {
-	u64 div, final_rate;
-	u32 remainder;
-	u64 parent_rate = (unsigned long long)clk->parent->rate * 16;
-
+	u32 div, div1;
+	u32 tmp;
 	/*
 	 * Calculate divider
 	 * Fractional part is 4 bits,
 	 * so simply multiply by 2^4 to get fractional part.
 	 */
-	div = parent_rate;
-	remainder = do_div(div, rate);
-	/* Round the divider value */
-	if (remainder > (rate / 2))
-		div++;
+	tmp = (clk->parent->rate * 16);
+	div = tmp / rate;
+
 	if (div < 0x10)            /* Min DI disp clock divider is 1 */
 		div = 0x10;
 	if (div & ~0xFEF)
 		div &= 0xFF8;
 	else {
-		/* Round up divider if it gets us closer to desired pix clk */
-		if ((div & 0xC) == 0xC) {
-			div += 0x10;
-			div &= ~0xF;
-		}
+		div1 = div & 0xFE0;
+		if ((tmp/div1 - tmp/div) < rate / 4)
+			div = div1;
+		else
+			div &= 0xFF8;
 	}
-	final_rate = parent_rate;
-	do_div(final_rate, div);
-
-	return final_rate;
+	return (clk->parent->rate * 16) / div;
 }
 
 static int ipu_pixel_clk_set_rate(struct clk *clk, unsigned long rate)
 {
-	u64 div, parent_rate;
-	u32 remainder;
-
-	parent_rate = (unsigned long long)clk->parent->rate * 16;
-	div = parent_rate;
-	remainder = do_div(div, rate);
-	/* Round the divider value */
-	if (remainder > (rate / 2))
-		div++;
-
-	/* Round up divider if it gets us closer to desired pix clk */
-	if ((div & 0xC) == 0xC) {
-		div += 0x10;
-		div &= ~0xF;
-	}
-	if (div > 0x1000)
-		debug("Overflow, DI_BS_CLKGEN0 div:0x%x\n", (u32)div);
+	u32 div = (clk->parent->rate * 16) / rate;
 
 	__raw_writel(div, DI_BS_CLKGEN0(clk->id));
 
-	/*
-	 * Setup pixel clock timing
-	 * Down time is half of period
-	 */
+	/* Setup pixel clock timing */
 	__raw_writel((div / 16) << 16, DI_BS_CLKGEN1(clk->id));
 
-	do_div(parent_rate, div);
-
-	clk->rate = parent_rate;
-
+	clk->rate = (clk->parent->rate * 16) / div;
 	return 0;
 }
 
@@ -420,7 +395,7 @@ static struct clk pixel_clk[] = {
 /*
  * This function resets IPU
  */
-static void ipu_reset(void)
+void ipu_reset(void)
 {
 	u32 *reg;
 	u32 value;
@@ -1234,12 +1209,4 @@ ipu_color_space_t format_to_colorspace(uint32_t fmt)
 		break;
 	}
 	return RGB;
-}
-
-/* should be removed when clk framework is availiable */
-int ipu_set_ldb_clock(int rate)
-{
-	ldb_clk.rate = rate;
-
-	return 0;
 }

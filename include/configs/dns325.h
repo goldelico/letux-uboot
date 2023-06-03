@@ -1,13 +1,29 @@
 /*
  * Copyright (C) 2011
- * Stefan Herbrechtsmeier <stefan@herbrechtsmeier.net>
+ * Stefan Herbrechtsmeier <stefan@code.herbrechtsmeier.net>
  *
  * Based on Kirkwood support:
  * (C) Copyright 2009
  * Marvell Semiconductor <www.marvell.com>
  * Written-by: Prafulla Wadaskar <prafulla@marvell.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ * MA 02110-1301 USA
  */
 
 #ifndef _CONFIG_DNS325_H
@@ -18,11 +34,13 @@
  */
 #define MACH_TYPE_DNS325		3800
 #define CONFIG_MACH_TYPE		MACH_TYPE_DNS325
+#define CONFIG_IDENT_STRING		"\nD-Link DNS-325"
 
 /*
  * High Level Configuration Options (easy to change)
  */
 #define CONFIG_FEROCEON_88FR131		/* CPU Core subversion */
+#define CONFIG_KIRKWOOD			/* SOC Family Name */
 #define CONFIG_KW88F6281		/* SOC Name */
 #define CONFIG_SKIP_LOWLEVEL_INIT	/* disable board lowlevel_init */
 
@@ -30,8 +48,12 @@
  * Commands configuration
  */
 #define CONFIG_SYS_NO_FLASH		/* Declare no flash (NOR/SPI) */
+#include <config_cmd_default.h>
+#define CONFIG_CMD_DHCP
 #define CONFIG_CMD_ENV
 #define CONFIG_CMD_NAND
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_USB
 #define CONFIG_CMD_IDE
 #define CONFIG_CMD_DATE
 #define CONFIG_SYS_MVFS
@@ -45,6 +67,8 @@
 #include "mv-common.h"
 
 /* Remove or override few declarations from mv-common.h */
+#undef CONFIG_SYS_PROMPT
+#define CONFIG_SYS_PROMPT		"=> "
 
 /*
  * Ethernet Driver configuration
@@ -73,6 +97,27 @@
  * Enable GPI0 support
  */
 #define CONFIG_KIRKWOOD_GPIO
+
+/*
+ * Use the HUSH parser
+ */
+#define CONFIG_SYS_HUSH_PARSER
+
+/*
+ * Console configuration
+ */
+#define CONFIG_CONSOLE_MUX
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
+
+/*
+ * Enable device tree support
+ */
+#define CONFIG_OF_LIBFDT
+
+/*
+ * Display cpu info at boot
+ */
+#define CONFIG_DISPLAY_CPUINFO
 
 /*
  * Environment variables configurations

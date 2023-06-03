@@ -11,7 +11,7 @@
  * Some are available on 2.4 kernels; several are available, but not
  * yet pushed in the 2.6 mainline tree.
  *
- * Ported to U-Boot by: Thomas Smits <ts.smits@gmail.com> and
+ * Ported to U-boot by: Thomas Smits <ts.smits@gmail.com> and
  *                      Remy Bohmer <linux@bohmer.net>
  */
 #ifdef CONFIG_USB_GADGET_NET2280
@@ -125,7 +125,7 @@
 #endif
 
 /* Mentor high speed "dual role" controller, in peripheral role */
-#ifdef CONFIG_USB_MUSB_GADGET
+#ifdef CONFIG_MUSB_GADGET
 #define gadget_is_musbhdrc(g)	(!strcmp("musb-hdrc", (g)->name))
 #else
 #define gadget_is_musbhdrc(g)	0
@@ -144,10 +144,10 @@
 #define	gadget_is_m66592(g)	0
 #endif
 
-#ifdef CONFIG_CI_UDC
-#define gadget_is_ci(g)        (!strcmp("ci_udc", (g)->name))
+#ifdef CONFIG_USB_GADGET_MV
+#define gadget_is_mv(g)        (!strcmp("mv_udc", (g)->name))
 #else
-#define gadget_is_ci(g)        0
+#define gadget_is_mv(g)        0
 #endif
 
 #ifdef CONFIG_USB_GADGET_FOTG210
@@ -156,13 +156,11 @@
 #define gadget_is_fotg210(g)        0
 #endif
 
-#ifdef CONFIG_USB_DWC3_GADGET
-#define gadget_is_dwc3(g)        (!strcmp("dwc3-gadget", (g)->name))
+#if defined(CONFIG_USB_JZ_DWC2_UDC) || defined(CONFIG_USB_JZ_DWC2_UDC_V1_1)
+#define gadget_is_jz_dwc2(g)	(!strcmp("jz_dwc2_udc_v1.1", (g)->name) || !strcmp("jz_dwc2_udc", (g)->name))
 #else
-#define gadget_is_dwc3(g)        0
+#define gadget_is_jz_dwc2(g)	0
 #endif
-
-
 
 /*
  * CONFIG_USB_GADGET_SX2
@@ -227,9 +225,11 @@ static inline int usb_gadget_controller_number(struct usb_gadget *gadget)
 		return 0x19;
 	else if (gadget_is_m66592(gadget))
 		return 0x20;
-	else if (gadget_is_ci(gadget))
+	else if (gadget_is_mv(gadget))
 		return 0x21;
 	else if (gadget_is_fotg210(gadget))
 		return 0x22;
+	else if (gadget_is_jz_dwc2(gadget))
+		return 0x23;
 	return -ENOENT;
 }

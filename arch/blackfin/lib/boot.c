@@ -1,5 +1,5 @@
 /*
- * U-Boot - boot.c - misc boot helper functions
+ * U-boot - boot.c - misc boot helper functions
  *
  * Copyright (c) 2005-2008 Analog Devices Inc.
  *

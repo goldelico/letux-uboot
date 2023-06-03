@@ -3,7 +3,12 @@
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
+struct disk_storge_msg {
+	unsigned int    start;	/* # of first block in partition	*/
+	unsigned int	size;	/* number of blocks in partition	*/
+	ulong	blksz;		/* block size in bytes			*/
+	char	*name;	/* partition name			*/
+};
 
-void fb_mmc_flash_write(const char *cmd, void *download_buffer,
-			unsigned int download_bytes);
-void fb_mmc_erase(const char *cmd);
+int fb_mmc_flash_write(const struct disk_storge_msg *storge_msg, unsigned int session_id,
+			void *download_buffer, unsigned int download_bytes);

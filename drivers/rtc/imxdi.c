@@ -6,7 +6,23 @@
  * Copyright 2008-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  * Copyright 2010 Orex Computed Radiography
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 /*
@@ -192,7 +208,7 @@ int rtc_get(struct rtc_time *tmp)
 	}
 
 	now = __raw_readl(&data.regs->dtcmr);
-	rtc_to_tm(now, tmp);
+	to_tm(now, tmp);
 
 err:
 	return rc;
@@ -209,7 +225,8 @@ int rtc_set(struct rtc_time *tmp)
 			goto err;
 	}
 
-	now = rtc_mktime(tmp);
+	now = mktime(tmp->tm_year, tmp->tm_mon, tmp->tm_mday,
+		     tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
 	/* zero the fractional part first */
 	rc = DI_WRITE_WAIT(0, dtclr);
 	if (rc == 0)

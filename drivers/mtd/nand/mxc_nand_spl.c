@@ -8,7 +8,20 @@
  * (C) Copyright 2006-2008
  * Stefan Roese, DENX Software Engineering, sr at denx.de.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -232,7 +245,7 @@ static int nfc_read_page(unsigned int page_address, unsigned char *buf)
 	nfc_nand_read_page(page_address);
 
 	if (nfc_nand_check_ecc())
-		return -EBADMSG;
+		return -1;
 
 	src = (u32 *)&nfc->main_area[0][0];
 	dst = (u32 *)buf;
@@ -337,7 +350,7 @@ void nand_boot(void)
 	if (!nand_spl_load_image(CONFIG_SYS_NAND_U_BOOT_OFFS,
 			CONFIG_SYS_NAND_U_BOOT_SIZE,
 			(uchar *)CONFIG_SYS_NAND_U_BOOT_DST)) {
-		/* Copy from NAND successful, start U-Boot */
+		/* Copy from NAND successful, start U-boot */
 		uboot = (void *)CONFIG_SYS_NAND_U_BOOT_START;
 		uboot();
 	} else {

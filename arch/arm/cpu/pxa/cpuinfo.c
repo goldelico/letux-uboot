@@ -3,19 +3,26 @@
  *
  * Copyright (C) 2011 Marek Vasut <marek.vasut@gmail.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <asm/io.h>
 #include <errno.h>
 #include <linux/compiler.h>
-
-#ifdef CONFIG_CPU_PXA25X
-#if ((CONFIG_SYS_INIT_SP_ADDR) != 0xfffff800)
-#error "Init SP address must be set to 0xfffff800 for PXA250"
-#endif
-#endif
 
 #define	CPU_MASK_PXA_PRODID	0x000003f0
 #define	CPU_MASK_PXA_REVID	0x0000000f
@@ -44,13 +51,6 @@ int cpu_is_pxa27x(void)
 	uint32_t id = pxa_get_cpuid();
 	id &= CPU_MASK_PXA_PRODID;
 	return id == CPU_VALUE_PXA27X;
-}
-
-int cpu_is_pxa27xm(void)
-{
-	uint32_t id = pxa_get_cpuid();
-	return ((id & CPU_MASK_PXA_PRODID) == CPU_VALUE_PXA27X) &&
-			((id & CPU_MASK_PXA_REVID) == 8);
 }
 
 uint32_t pxa_get_cpu_revision(void)
@@ -98,16 +98,12 @@ static const char *pxa27x_get_revision(void)
 
 	id = pxa_get_cpuid() & CPU_MASK_PXA_REVID;
 
-	if ((id == 5) || (id == 6) || (id > 8))
+	if ((id == 5) || (id == 6) || (id > 7))
 		return unknown;
 
 	/* Cap the special PXA270 C5 case. */
 	if (id == 7)
 		id = 5;
-
-	/* Cap the special PXA270M A1 case. */
-	if (id == 8)
-		id = 1;
 
 	return rev[id];
 }
@@ -118,9 +114,7 @@ static int print_cpuinfo_pxa2xx(void)
 		puts("Marvell PXA25x rev. ");
 		puts(pxa25x_get_revision());
 	} else if (cpu_is_pxa27x()) {
-		puts("Marvell PXA27x");
-		if (cpu_is_pxa27xm()) puts("M");
-		puts(" rev. ");
+		puts("Marvell PXA27x rev. ");
 		puts(pxa27x_get_revision());
 	} else
 		return -EINVAL;

@@ -1,7 +1,23 @@
 #
 # Copyright (c) 2011 The Chromium OS Authors.
 #
-# SPDX-License-Identifier:	GPL-2.0+
+# See file CREDITS for list of people who contributed to this
+# project.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307 USA
 #
 
 import os
@@ -55,7 +71,6 @@ This adds functions to enable/disable clocks and reset to on-chip peripherals.
 
 Signed-off-by: Simon Glass <sjg@chromium.org>
 ---
-
  arch/arm/cpu/armv7/tegra2/Makefile         |    2 +-
  arch/arm/cpu/armv7/tegra2/ap20.c           |   57 ++----
  arch/arm/cpu/armv7/tegra2/clock.c          |  163 +++++++++++++++++
@@ -126,11 +141,27 @@ new file mode 100644
 index 0000000..2234c87
 --- /dev/null
 +++ b/common/bootstage.c
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,50 @@
 +/*
 + * Copyright (c) 2011, Google Inc. All rights reserved.
 + *
-+ * SPDX-License-Identifier:	GPL-2.0+
++ * See file CREDITS for list of people who contributed to this
++ * project.
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of
++ * the License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
++ * MA 02111-1307 USA
 + */
 +
 +
@@ -181,7 +212,7 @@ index 0000000..2234c87
         elif data_type == 'indent':
             indent = tab
         else:
-            print('not implemented')
+            print 'not implemented'
         return data % (signoff, tab, indent, tab)
 
     def SetupData(self, data_type):
@@ -201,7 +232,7 @@ index 0000000..2234c87
         self.assertEqual(result.errors, 0)
         self.assertEqual(result.warnings, 0)
         self.assertEqual(result.checks, 0)
-        self.assertEqual(result.lines, 56)
+        self.assertEqual(result.lines, 67)
         os.remove(inf)
 
     def testNoSignoff(self):
@@ -212,18 +243,18 @@ index 0000000..2234c87
         self.assertEqual(result.errors, 1)
         self.assertEqual(result.warnings, 0)
         self.assertEqual(result.checks, 0)
-        self.assertEqual(result.lines, 56)
+        self.assertEqual(result.lines, 67)
         os.remove(inf)
 
     def testSpaces(self):
         inf = self.SetupData('spaces')
         result = checkpatch.CheckPatch(inf)
         self.assertEqual(result.ok, False)
-        self.assertEqual(len(result.problems), 2)
+        self.assertEqual(len(result.problems), 1)
         self.assertEqual(result.errors, 0)
-        self.assertEqual(result.warnings, 2)
+        self.assertEqual(result.warnings, 1)
         self.assertEqual(result.checks, 0)
-        self.assertEqual(result.lines, 56)
+        self.assertEqual(result.lines, 67)
         os.remove(inf)
 
     def testIndent(self):
@@ -234,7 +265,7 @@ index 0000000..2234c87
         self.assertEqual(result.errors, 0)
         self.assertEqual(result.warnings, 0)
         self.assertEqual(result.checks, 1)
-        self.assertEqual(result.lines, 56)
+        self.assertEqual(result.lines, 67)
         os.remove(inf)
 
 

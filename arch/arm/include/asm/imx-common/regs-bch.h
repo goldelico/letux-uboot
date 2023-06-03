@@ -7,7 +7,20 @@
  * Based on code from LTIB:
  * Copyright 2008-2010 Freescale Semiconductor, Inc. All Rights Reserved.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+ *
  */
 
 #ifndef __MX28_REGS_BCH_H__
@@ -123,7 +136,7 @@ struct mxs_bch_regs {
 #define	BCH_FLASHLAYOUT0_NBLOCKS_OFFSET			24
 #define	BCH_FLASHLAYOUT0_META_SIZE_MASK			(0xff << 16)
 #define	BCH_FLASHLAYOUT0_META_SIZE_OFFSET		16
-#if (defined(CONFIG_MX6) || defined(CONFIG_MX7))
+#if defined(CONFIG_MX6)
 #define	BCH_FLASHLAYOUT0_ECC0_MASK			(0x1f << 11)
 #define	BCH_FLASHLAYOUT0_ECC0_OFFSET			11
 #else
@@ -148,13 +161,12 @@ struct mxs_bch_regs {
 #define	BCH_FLASHLAYOUT0_ECC0_ECC30			(0xf << 12)
 #define	BCH_FLASHLAYOUT0_ECC0_ECC32			(0x10 << 12)
 #define	BCH_FLASHLAYOUT0_GF13_0_GF14_1			(1 << 10)
-#define	BCH_FLASHLAYOUT0_GF13_0_GF14_1_OFFSET		10
 #define	BCH_FLASHLAYOUT0_DATA0_SIZE_MASK		0xfff
 #define	BCH_FLASHLAYOUT0_DATA0_SIZE_OFFSET		0
 
 #define	BCH_FLASHLAYOUT1_PAGE_SIZE_MASK			(0xffff << 16)
 #define	BCH_FLASHLAYOUT1_PAGE_SIZE_OFFSET		16
-#if (defined(CONFIG_MX6) || defined(CONFIG_MX7))
+#if defined(CONFIG_MX6)
 #define	BCH_FLASHLAYOUT1_ECCN_MASK			(0x1f << 11)
 #define	BCH_FLASHLAYOUT1_ECCN_OFFSET			11
 #else
@@ -179,7 +191,6 @@ struct mxs_bch_regs {
 #define	BCH_FLASHLAYOUT1_ECCN_ECC30			(0xf << 12)
 #define	BCH_FLASHLAYOUT1_ECCN_ECC32			(0x10 << 12)
 #define	BCH_FLASHLAYOUT1_GF13_0_GF14_1			(1 << 10)
-#define	BCH_FLASHLAYOUT1_GF13_0_GF14_1_OFFSET		10
 #define	BCH_FLASHLAYOUT1_DATAN_SIZE_MASK		0xfff
 #define	BCH_FLASHLAYOUT1_DATAN_SIZE_OFFSET		0
 

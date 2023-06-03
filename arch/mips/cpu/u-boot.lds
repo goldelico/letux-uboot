@@ -2,7 +2,23 @@
  * (C) Copyright 2003
  * Wolfgang Denk Engineering, <wd@denx.de>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #if defined(CONFIG_64BIT)
@@ -19,9 +35,7 @@ SECTIONS
 
 	. = ALIGN(4);
 	.text : {
-		__text_start = .;
 		*(.text*)
-		__text_end = .;
 	}
 
 	. = ALIGN(4);
@@ -55,7 +69,6 @@ SECTIONS
 
 	. = ALIGN(4);
 	__image_copy_end = .;
-	__init_end = .;
 
 	.rel.dyn : {
 		__rel_dyn_start = .;
@@ -63,7 +76,7 @@ SECTIONS
 		__rel_dyn_end = .;
 	}
 
-	.padding : {
+	.deadcode : {
 		/*
 		 * Workaround for a binutils feature (or bug?).
 		 *
@@ -78,53 +91,31 @@ SECTIONS
 		 *
 		 * Create a small section here to avoid that.
 		 */
-		LONG(0xFFFFFFFF)
+		LONG(0xffffffff);
 	}
 
-	_end = .;
+	.dynsym : {
+		*(.dynsym)
+	}
 
 	.bss __rel_dyn_start (OVERLAY) : {
 		__bss_start = .;
-		*(.sbss.*)
-		*(.bss.*)
+		*(.sbss*)
+		*(.bss*)
 		*(COMMON)
 		. = ALIGN(4);
 		__bss_end = .;
 	}
 
-	.dynsym _end : {
-		*(.dynsym)
-	}
-
-	.dynbss : {
+	/DISCARD/ : {
 		*(.dynbss)
-	}
-
-	.dynstr : {
 		*(.dynstr)
-	}
-
-	.dynamic : {
 		*(.dynamic)
-	}
-
-	.plt : {
-		*(.plt)
-	}
-
-	.interp : {
 		*(.interp)
-	}
-
-	.gnu : {
-		*(.gnu*)
-	}
-
-	.MIPS.stubs : {
-		*(.MIPS.stubs)
-	}
-
-	.hash : {
 		*(.hash)
+		*(.gnu.*)
+		*(.plt)
+		*(.got.plt)
+		*(.rel.plt)
 	}
 }

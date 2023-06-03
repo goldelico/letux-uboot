@@ -2,28 +2,50 @@
 # (C) Copyright 2000-2006
 # Wolfgang Denk, DENX Software Engineering, wd@denx.de.
 #
-# SPDX-License-Identifier:	GPL-2.0+
+# See file CREDITS for list of people who contributed to this
+# project.
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307 USA
 #
 
-obj-y	:= board.o
+include $(TOPDIR)/config.mk
 
-hw-platform-y :=$(shell echo $(CONFIG_DEFAULT_DEVICE_TREE))
+LIB	= $(obj)lib$(BOARD).o
 
-init-objs := $(if $(wildcard $(srctree)/$(src)/$(hw-platform-y)/ps7_init_gpl.c),\
-	$(hw-platform-y)/ps7_init_gpl.o)
+COBJS-y	:= board.o
 
-ifeq ($(init-objs),)
-ifneq ($(wildcard $(srctree)/$(src)/ps7_init_gpl.c),)
-init-objs := ps7_init_gpl.o
-$(if $(CONFIG_SPL_BUILD),\
-$(warning Put custom ps7_init_gpl.c/h to board/xilinx/zynq/custom_hw_platform/))
-endif
-endif
+COBJS	:= $(sort $(COBJS-y))
 
-obj-$(CONFIG_SPL_BUILD) += $(init-objs)
+SRCS	:= $(COBJS:.o=.c)
+OBJS	:= $(addprefix $(obj),$(COBJS))
 
-# Suppress "warning: function declaration isn't a prototype"
-CFLAGS_REMOVE_ps7_init_gpl.o := -Wstrict-prototypes
+$(LIB):	$(obj).depend $(OBJS)
+	$(call cmd_link_o_target, $(OBJS))
 
-# To include xil_io.h
-CFLAGS_ps7_init_gpl.o := -I$(srctree)/$(src)
+clean:
+	rm -f $(OBJS)
+
+distclean:	clean
+	rm -f $(LIB) core *.bak $(obj).depend
+
+#########################################################################
+
+# defines $(obj).depend target
+include $(SRCTREE)/rules.mk
+
+sinclude $(obj).depend
+
+#########################################################################

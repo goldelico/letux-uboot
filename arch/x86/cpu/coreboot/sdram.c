@@ -3,21 +3,42 @@
  * (C) Copyright 2010,2011
  * Graeme Russ, <graeme.russ@gmail.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but without any warranty; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
+#include <malloc.h>
 #include <asm/e820.h>
+#include <asm/u-boot-x86.h>
+#include <asm/global_data.h>
+#include <asm/processor.h>
+#include <asm/sections.h>
 #include <asm/arch/sysinfo.h>
+#include <asm/arch/tables.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
 unsigned install_e820_map(unsigned max_entries, struct e820entry *entries)
 {
-	unsigned num_entries;
 	int i;
 
-	num_entries = min((unsigned)lib_sysinfo.n_memranges, max_entries);
+	unsigned num_entries = min(lib_sysinfo.n_memranges, max_entries);
 	if (num_entries < lib_sysinfo.n_memranges) {
 		printf("Warning: Limiting e820 map to %d entries.\n",
 			num_entries);
@@ -27,18 +48,8 @@ unsigned install_e820_map(unsigned max_entries, struct e820entry *entries)
 
 		entries[i].addr = memrange->base;
 		entries[i].size = memrange->size;
-
-		/*
-		 * coreboot has some extensions (type 6 & 16) to the E820 types.
-		 * When we detect this, mark it as E820_RESERVED.
-		 */
-		if (memrange->type == CB_MEM_VENDOR_RSVD ||
-		    memrange->type == CB_MEM_TABLE)
-			entries[i].type = E820_RESERVED;
-		else
-			entries[i].type = memrange->type;
+		entries[i].type = memrange->type;
 	}
-
 	return num_entries;
 }
 
@@ -84,7 +95,7 @@ ulong board_get_usable_ram_top(ulong total_size)
 	return (ulong)dest_addr;
 }
 
-int dram_init(void)
+int dram_init_f(void)
 {
 	int i;
 	phys_size_t ram_size = 0;
@@ -94,17 +105,15 @@ int dram_init(void)
 		unsigned long long end = memrange->base + memrange->size;
 
 		if (memrange->type == CB_MEM_RAM && end > ram_size)
-			ram_size += memrange->size;
+			ram_size = end;
 	}
-
 	gd->ram_size = ram_size;
 	if (ram_size == 0)
 		return -1;
-
 	return 0;
 }
 
-void dram_init_banksize(void)
+int dram_init_banksize(void)
 {
 	int i, j;
 
@@ -121,4 +130,10 @@ void dram_init_banksize(void)
 			}
 		}
 	}
+	return 0;
+}
+
+int dram_init(void)
+{
+	return dram_init_banksize();
 }

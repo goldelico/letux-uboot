@@ -9,7 +9,22 @@
  *	Richard Woodruff <r-woodruff2@ti.com>
  *	Syed Mohammed Khasim <x0khasim@ti.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc.
  */
 
 #include <common.h>
@@ -19,12 +34,12 @@
 #include <i2c.h>
 #include <usb.h>
 #include <mmc.h>
-#include <splash.h>
+#include <nand.h>
 #include <twl4030.h>
+#include <bmp_layout.h>
 #include <linux/compiler.h>
 
 #include <asm/io.h>
-#include <linux/errno.h>
 #include <asm/arch/mem.h>
 #include <asm/arch/mux.h>
 #include <asm/arch/mmc_host_def.h>
@@ -33,8 +48,7 @@
 #include <asm/ehci-omap.h>
 #include <asm/gpio.h>
 
-#include "../common/common.h"
-#include "../common/eeprom.h"
+#include "eeprom.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -44,36 +58,86 @@ const omap3_sysinfo sysinfo = {
 	"NAND",
 };
 
-#ifdef CONFIG_SPL_BUILD
-/*
- * Routine: get_board_mem_timings
- * Description: If we use SPL then there is no x-loader nor config header
- * so we have to setup the DDR timings ourself on both banks.
- */
-void get_board_mem_timings(struct board_sdrc_timings *timings)
-{
-	timings->mr = MICRON_V_MR_165;
-	timings->mcfg = MICRON_V_MCFG_200(256 << 20); /* raswidth 14 needed */
-	timings->ctrla = MICRON_V_ACTIMA_165;
-	timings->ctrlb = MICRON_V_ACTIMB_165;
-	timings->rfr_ctrl = SDP_3430_SDRC_RFR_CTRL_165MHz;
-}
-#endif
-
-struct splash_location splash_locations[] = {
-	{
-		.name = "nand",
-		.storage = SPLASH_STORAGE_NAND,
-		.flags = SPLASH_STORAGE_RAW,
-		.offset = 0x100000,
-	},
+static u32 gpmc_net_config[GPMC_MAX_REG] = {
+	NET_GPMC_CONFIG1,
+	NET_GPMC_CONFIG2,
+	NET_GPMC_CONFIG3,
+	NET_GPMC_CONFIG4,
+	NET_GPMC_CONFIG5,
+	NET_GPMC_CONFIG6,
+	0
 };
+
+static u32 gpmc_nand_config[GPMC_MAX_REG] = {
+	SMNAND_GPMC_CONFIG1,
+	SMNAND_GPMC_CONFIG2,
+	SMNAND_GPMC_CONFIG3,
+	SMNAND_GPMC_CONFIG4,
+	SMNAND_GPMC_CONFIG5,
+	SMNAND_GPMC_CONFIG6,
+	0,
+};
+
+#ifdef CONFIG_LCD
+#ifdef CONFIG_CMD_NAND
+static int splash_load_from_nand(u32 bmp_load_addr)
+{
+	struct bmp_header *bmp_hdr;
+	int res, splash_screen_nand_offset = 0x100000;
+	size_t bmp_size, bmp_header_size = sizeof(struct bmp_header);
+
+	if (bmp_load_addr + bmp_header_size >= gd->start_addr_sp)
+		goto splash_address_too_high;
+
+	res = nand_read_skip_bad(&nand_info[nand_curr_device],
+			splash_screen_nand_offset, &bmp_header_size,
+			NULL, nand_info[nand_curr_device].size,
+			(u_char *)bmp_load_addr);
+	if (res < 0)
+		return res;
+
+	bmp_hdr = (struct bmp_header *)bmp_load_addr;
+	bmp_size = le32_to_cpu(bmp_hdr->file_size);
+
+	if (bmp_load_addr + bmp_size >= gd->start_addr_sp)
+		goto splash_address_too_high;
+
+	return nand_read_skip_bad(&nand_info[nand_curr_device],
+			splash_screen_nand_offset, &bmp_size,
+			NULL, nand_info[nand_curr_device].size,
+			(u_char *)bmp_load_addr);
+
+splash_address_too_high:
+	printf("Error: splashimage address too high. Data overwrites U-Boot "
+		"and/or placed beyond DRAM boundaries.\n");
+
+	return -1;
+}
+#else
+static inline int splash_load_from_nand(void)
+{
+	return -1;
+}
+#endif /* CONFIG_CMD_NAND */
 
 int splash_screen_prepare(void)
 {
-	return splash_source_load(splash_locations,
-				  ARRAY_SIZE(splash_locations));
+	char *env_splashimage_value;
+	u32 bmp_load_addr;
+
+	env_splashimage_value = getenv("splashimage");
+	if (env_splashimage_value == NULL)
+		return -1;
+
+	bmp_load_addr = simple_strtoul(env_splashimage_value, 0, 16);
+	if (bmp_load_addr == 0) {
+		printf("Error: bad splashimage address specified\n");
+		return -1;
+	}
+
+	return splash_load_from_nand(bmp_load_addr);
 }
+#endif /* CONFIG_LCD */
 
 /*
  * Routine: board_init
@@ -82,6 +146,9 @@ int splash_screen_prepare(void)
 int board_init(void)
 {
 	gpmc_init(); /* in SRAM or SDRAM, finish GPMC */
+
+	enable_gpmc_cs_config(gpmc_nand_config, &gpmc_cfg->cs[0],
+			      CONFIG_SYS_NAND_BASE, GPMC_SIZE_16M);
 
 	/* board id for Linux */
 	if (get_cpu_family() == CPU_OMAP34XX)
@@ -99,19 +166,35 @@ int board_init(void)
 	return 0;
 }
 
+static u32 cm_t3x_rev;
+
 /*
  * Routine: get_board_rev
  * Description: read system revision
  */
 u32 get_board_rev(void)
 {
-	return cl_eeprom_get_board_rev(CONFIG_SYS_I2C_EEPROM_BUS);
+	if (!cm_t3x_rev)
+		cm_t3x_rev = cm_t3x_eeprom_get_board_rev();
+
+	return cm_t3x_rev;
 };
 
+/*
+ * Routine: misc_init_r
+ * Description: display die ID
+ */
 int misc_init_r(void)
 {
-	cl_print_pcb_info();
-	omap_die_id_display();
+	u32 board_rev = get_board_rev();
+	u32 rev_major = board_rev / 100;
+	u32 rev_minor = board_rev - (rev_major * 100);
+
+	if ((rev_minor / 10) * 10 == rev_minor)
+		rev_minor = rev_minor / 10;
+
+	printf("PCB:   %u.%u\n", rev_major, rev_minor);
+	dieid_num_r();
 
 	return 0;
 }
@@ -199,9 +282,6 @@ static void cm_t3x_set_common_muxconf(void)
 
 	/* DVI enable */
 	MUX_VAL(CP(GPMC_NCS3),		(IDIS  | PTU | DIS  | M4));/*GPMC_nCS3*/
-
-	/* DataImage backlight */
-	MUX_VAL(CP(GPMC_NCS7),		(IDIS  | PTU | DIS  | M4));/*GPIO_58*/
 
 	/* CM-T3x Ethernet */
 	MUX_VAL(CP(GPMC_NCS5),		(IDIS | PTU | DIS | M0)); /*GPMC_nCS5*/
@@ -297,7 +377,7 @@ static void cm_t3x_set_common_muxconf(void)
 	MUX_VAL(CP(SYS_OFF_MODE),	(IEN  | PTD | DIS | M0)); /*OFF_MODE*/
 	MUX_VAL(CP(SYS_CLKOUT1),	(IEN  | PTD | DIS | M0)); /*CLKOUT1*/
 	MUX_VAL(CP(SYS_CLKOUT2),	(IDIS | PTU | DIS | M4)); /*green LED*/
-	MUX_VAL(CP(JTAG_NTRST),		(IEN  | PTD | DIS | M0)); /*JTAG_NTRST*/
+	MUX_VAL(CP(JTAG_nTRST),		(IEN  | PTD | DIS | M0)); /*JTAG_nTRST*/
 	MUX_VAL(CP(JTAG_TCK),		(IEN  | PTD | DIS | M0)); /*JTAG_TCK*/
 	MUX_VAL(CP(JTAG_TMS),		(IEN  | PTD | DIS | M0)); /*JTAG_TMS*/
 	MUX_VAL(CP(JTAG_TDI),		(IEN  | PTD | DIS | M0)); /*JTAG_TDI*/
@@ -309,15 +389,6 @@ static void cm_t3x_set_common_muxconf(void)
 	MUX_VAL(CP(MMC1_DAT1),		(IEN  | PTU | EN  | M0)); /*MMC1_DAT1*/
 	MUX_VAL(CP(MMC1_DAT2),		(IEN  | PTU | EN  | M0)); /*MMC1_DAT2*/
 	MUX_VAL(CP(MMC1_DAT3),		(IEN  | PTU | EN  | M0)); /*MMC1_DAT3*/
-
-	/* SPI */
-	MUX_VAL(CP(MCBSP1_CLKR),	(IEN | PTD | DIS | M1)); /*MCSPI4_CLK*/
-	MUX_VAL(CP(MCBSP1_DX),		(IEN | PTD | DIS | M1)); /*MCSPI4_SIMO*/
-	MUX_VAL(CP(MCBSP1_DR),		(IEN | PTD | DIS | M1)); /*MCSPI4_SOMI*/
-	MUX_VAL(CP(MCBSP1_FSX),		(IEN | PTU | EN  | M1)); /*MCSPI4_CS0*/
-
-	/* display controls */
-	MUX_VAL(CP(MCBSP1_FSR),		(IDIS | PTU | DIS | M4)); /*GPIO_157*/
 }
 
 static void cm_t35_set_muxconf(void)
@@ -372,9 +443,7 @@ void set_muxconf_regs(void)
 		cm_t3730_set_muxconf();
 }
 
-#if defined(CONFIG_GENERIC_MMC) && !defined(CONFIG_SPL_BUILD)
-#define SB_T35_WP_GPIO 59
-
+#ifdef CONFIG_GENERIC_MMC
 int board_mmc_getcd(struct mmc *mmc)
 {
 	u8 val;
@@ -387,23 +456,41 @@ int board_mmc_getcd(struct mmc *mmc)
 
 int board_mmc_init(bd_t *bis)
 {
-	return omap_mmc_init(0, 0, 0, -1, SB_T35_WP_GPIO);
+	return omap_mmc_init(0, 0, 0, -1, 59);
 }
 #endif
 
-#if defined(CONFIG_GENERIC_MMC)
-void board_mmc_power_init(void)
+/*
+ * Routine: setup_net_chip_gmpc
+ * Description: Setting up the configuration GPMC registers specific to the
+ *		Ethernet hardware.
+ */
+static void setup_net_chip_gmpc(void)
 {
-	twl4030_power_mmc_init(0);
-}
-#endif
+	struct ctrl *ctrl_base = (struct ctrl *)OMAP34XX_CTRL_BASE;
 
-#ifdef CONFIG_SYS_I2C_OMAP34XX
+	enable_gpmc_cs_config(gpmc_net_config, &gpmc_cfg->cs[5],
+			      CM_T3X_SMC911X_BASE, GPMC_SIZE_16M);
+	enable_gpmc_cs_config(gpmc_net_config, &gpmc_cfg->cs[4],
+			      SB_T35_SMC911X_BASE, GPMC_SIZE_16M);
+
+	/* Enable off mode for NWE in PADCONF_GPMC_NWE register */
+	writew(readw(&ctrl_base->gpmc_nwe) | 0x0E00, &ctrl_base->gpmc_nwe);
+
+	/* Enable off mode for NOE in PADCONF_GPMC_NADV_ALE register */
+	writew(readw(&ctrl_base->gpmc_noe) | 0x0E00, &ctrl_base->gpmc_noe);
+
+	/* Enable off mode for ALE in PADCONF_GPMC_NADV_ALE register */
+	writew(readw(&ctrl_base->gpmc_nadv_ale) | 0x0E00,
+		&ctrl_base->gpmc_nadv_ale);
+}
+
+#ifdef CONFIG_DRIVER_OMAP34XX_I2C
 /*
  * Routine: reset_net_chip
  * Description: reset the Ethernet controller via TPS65930 GPIO
  */
-static int cm_t3x_reset_net_chip(int gpio)
+static void reset_net_chip(void)
 {
 	/* Set GPIO1 of TPS65930 as output */
 	twl4030_i2c_write_u8(TWL4030_CHIP_GPIO, TWL4030_BASEADD_GPIO + 0x03,
@@ -418,10 +505,9 @@ static int cm_t3x_reset_net_chip(int gpio)
 	twl4030_i2c_write_u8(TWL4030_CHIP_GPIO, TWL4030_BASEADD_GPIO + 0x0C,
 			     0x02);
 	mdelay(1);
-	return 0;
 }
 #else
-static inline int cm_t3x_reset_net_chip(int gpio) { return 0; }
+static inline void reset_net_chip(void) {}
 #endif
 
 #ifdef CONFIG_SMC911X
@@ -438,15 +524,16 @@ static int handle_mac_address(void)
 	if (rc)
 		return 0;
 
-	rc = cl_eeprom_read_mac_addr(enetaddr, CONFIG_SYS_I2C_EEPROM_BUS);
+	rc = cm_t3x_eeprom_read_mac_addr(enetaddr);
 	if (rc)
 		return rc;
 
-	if (!is_valid_ethaddr(enetaddr))
+	if (!is_valid_ether_addr(enetaddr))
 		return -1;
 
 	return eth_setenv_enetaddr("ethaddr", enetaddr);
 }
+
 
 /*
  * Routine: board_eth_init
@@ -456,22 +543,34 @@ int board_eth_init(bd_t *bis)
 {
 	int rc = 0, rc1 = 0;
 
+	setup_net_chip_gmpc();
+	reset_net_chip();
+
 	rc1 = handle_mac_address();
 	if (rc1)
 		printf("No MAC address found! ");
 
-	rc1 = cl_omap3_smc911x_init(0, 5, CM_T3X_SMC911X_BASE,
-				    cm_t3x_reset_net_chip, -EINVAL);
+	rc1 = smc911x_initialize(0, CM_T3X_SMC911X_BASE);
 	if (rc1 > 0)
 		rc++;
 
-	rc1 = cl_omap3_smc911x_init(1, 4, SB_T35_SMC911X_BASE, NULL, -EINVAL);
+	rc1 = smc911x_initialize(1, SB_T35_SMC911X_BASE);
 	if (rc1 > 0)
 		rc++;
 
 	return rc;
 }
 #endif
+
+void __weak get_board_serial(struct tag_serialnr *serialnr)
+{
+	/*
+	 * This corresponds to what happens when we can communicate with the
+	 * eeprom but don't get a valid board serial value.
+	 */
+	serialnr->low = 0;
+	serialnr->high = 0;
+};
 
 #ifdef CONFIG_USB_EHCI_OMAP
 struct omap_usbhs_board_data usbhs_bdata = {
@@ -481,13 +580,21 @@ struct omap_usbhs_board_data usbhs_bdata = {
 };
 
 #define SB_T35_USB_HUB_RESET_GPIO	167
-int ehci_hcd_init(int index, enum usb_init_type init,
-		  struct ehci_hccr **hccr, struct ehci_hcor **hcor)
+int ehci_hcd_init(int index, struct ehci_hccr **hccr, struct ehci_hcor **hcor)
 {
 	u8 val;
 	int offset;
 
-	cl_usb_hub_init(SB_T35_USB_HUB_RESET_GPIO, "sb-t35 hub rst");
+	if (gpio_request(SB_T35_USB_HUB_RESET_GPIO, "SB-T35 usb hub reset")) {
+		printf("Error: can't obtain GPIO %d for SB-T35 usb hub reset",
+				SB_T35_USB_HUB_RESET_GPIO);
+		return -1;
+	}
+
+	gpio_direction_output(SB_T35_USB_HUB_RESET_GPIO, 0);
+	udelay(10);
+	gpio_set_value(SB_T35_USB_HUB_RESET_GPIO, 1);
+	udelay(1000);
 
 	offset = TWL4030_BASEADD_GPIO + TWL4030_GPIO_GPIODATADIR1;
 	twl4030_i2c_read_u8(TWL4030_CHIP_GPIO, offset, &val);
@@ -499,12 +606,12 @@ int ehci_hcd_init(int index, enum usb_init_type init,
 	twl4030_i2c_write_u8(TWL4030_CHIP_GPIO, offset, 0xC0);
 	udelay(1);
 
-	return omap_ehci_hcd_init(index, &usbhs_bdata, hccr, hcor);
+	return omap_ehci_hcd_init(&usbhs_bdata, hccr, hcor);
 }
 
 int ehci_hcd_stop(void)
 {
-	cl_usb_hub_deinit(SB_T35_USB_HUB_RESET_GPIO);
 	return omap_ehci_hcd_stop();
 }
+
 #endif /* CONFIG_USB_EHCI_OMAP */

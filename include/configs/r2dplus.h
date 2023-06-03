@@ -3,6 +3,8 @@
 
 #undef DEBUG
 
+#define CONFIG_SH		1
+#define CONFIG_SH4		1
 #define CONFIG_CPU_SH7751	1
 #define CONFIG_CPU_SH_TYPE_R	1
 #define CONFIG_R2DPLUS		1
@@ -11,8 +13,15 @@
 /*
  * Command line configuration.
  */
+#include <config_cmd_default.h>
+
+#define CONFIG_CMD_CACHE
+#define CONFIG_CMD_FLASH
 #define CONFIG_CMD_PCI
+#define CONFIG_CMD_NET
+#define CONFIG_CMD_PING
 #define CONFIG_CMD_IDE
+#define CONFIG_CMD_EXT2
 #define CONFIG_DOS_PARTITION
 #define CONFIG_CMD_SH_ZIMAGEBOOT
 
@@ -22,6 +31,7 @@
 #define CONFIG_CONS_SCIF1	1
 #define CONFIG_BOARD_LATE_INIT
 
+#define CONFIG_BOOTDELAY	-1
 #define CONFIG_BOOTARGS		"console=ttySC0,115200"
 #define CONFIG_ENV_OVERWRITE	1
 
@@ -31,6 +41,7 @@
 
 #define CONFIG_SYS_TEXT_BASE	0x0FFC0000
 #define CONFIG_SYS_LONGHELP
+#define CONFIG_SYS_PROMPT		"=> "
 #define CONFIG_SYS_CBSIZE		256
 #define CONFIG_SYS_PBSIZE		256
 #define CONFIG_SYS_MAXARGS		16
@@ -66,9 +77,8 @@
  * SuperH Clock setting
  */
 #define CONFIG_SYS_CLK_FREQ	60000000
-#define CONFIG_SH_TMU_CLK_FREQ CONFIG_SYS_CLK_FREQ
-#define CONFIG_SH_SCIF_CLK_FREQ CONFIG_SYS_CLK_FREQ
 #define CONFIG_SYS_TMU_CLK_DIV		4
+#define CONFIG_SYS_HZ		1000
 #define	CONFIG_SYS_PLL_SETTLING_TIME	100/* in us */
 
 /*
@@ -88,8 +98,10 @@
 /*
  * SuperH PCI Bridge Configration
  */
+#define CONFIG_PCI
 #define CONFIG_SH4_PCI
 #define CONFIG_SH7751_PCI
+#define CONFIG_PCI_PNP
 #define CONFIG_PCI_SCAN_SHOW	1
 #define __io
 #define __mem_pci
@@ -103,5 +115,10 @@
 #define CONFIG_PCI_SYS_BUS	(CONFIG_SYS_SDRAM_BASE & 0x1fffffff)
 #define CONFIG_PCI_SYS_PHYS	(CONFIG_SYS_SDRAM_BASE & 0x1fffffff)
 #define CONFIG_PCI_SYS_SIZE	CONFIG_SYS_SDRAM_SIZE
+
+/*
+ * Network device (RTL8139) support
+ */
+#define CONFIG_RTL8139
 
 #endif /* __CONFIG_H */

@@ -2,13 +2,31 @@
  * (C) Copyright 2007-2008
  * Dirk Eibach,  Guntermann & Drunck GmbH, eibach@gdsys.de
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	 See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+
 #define CONFIG_405EP		1	/* this is a PPC405 CPU */
+#define CONFIG_4xx		1	/*  member of PPC4xx family */
 #define CONFIG_NEO	        1	/*  on a Neo board */
 
 #define	CONFIG_SYS_TEXT_BASE	0xFFFC0000
@@ -17,6 +35,7 @@
  * Include common defines/options for all AMCC eval boards
  */
 #define CONFIG_HOSTNAME		neo
+#define CONFIG_IDENT_STRING	" neo 0.01"
 #include "amcc-common.h"
 
 #define CONFIG_BOARD_EARLY_INIT_F
@@ -33,7 +52,8 @@
 #define PLLMR1_DEFAULT PLLMR1_266_133_66_33
 
 /* new uImage format support */
-#define CONFIG_FIT_DISABLE_SHA256
+#define CONFIG_FIT
+#define CONFIG_FIT_VERBOSE	/* enable fit_format_{error,warning}() */
 
 #define CONFIG_ENV_IS_IN_FLASH	/* use FLASH for environment vars */
 
@@ -58,10 +78,10 @@
 /*
  * Commands additional to the ones defined in amcc-common.h
  */
+#define CONFIG_CMD_CACHE
+#define CONFIG_CMD_DATE
 #define CONFIG_CMD_DTT
-#undef CONFIG_CMD_DIAG
 #undef CONFIG_CMD_EEPROM
-#undef CONFIG_CMD_IRQ
 
 /*
  * SDRAM configuration (please see cpu/ppc/sdram.[ch])
@@ -85,6 +105,7 @@
  * set Linux BASE_BAUD to 403200.
  */
 #define CONFIG_CONS_INDEX	1	/* Use UART0			*/
+#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		get_serial_clock()
@@ -96,7 +117,7 @@
 /*
  * I2C stuff
  */
-#define CONFIG_SYS_I2C_PPC4XX_SPEED_0		100000
+#define CONFIG_SYS_I2C_SPEED		100000	/* I2C speed and slave address	*/
 
 /* RTC */
 #define CONFIG_RTC_DS1337
@@ -125,6 +146,7 @@
 #define CONFIG_SYS_FLASH_WRITE_TOUT	500	/* Timeout for Flash Write (in ms)	*/
 
 #define CONFIG_SYS_FLASH_USE_BUFFER_WRITE 1	/* use buffered writes (20x faster)	*/
+#define CONFIG_SYS_FLASH_PROTECTION	1	/* use hardware flash protection	*/
 
 #define CONFIG_SYS_FLASH_EMPTY_INFO		/* print 'E' for empty sector on flinfo */
 #define CONFIG_SYS_FLASH_QUIET_TEST	1	/* don't warn upon unknown flash	*/
@@ -215,11 +237,6 @@
 #define CONFIG_SYS_FPGA_BASE(k)		CONFIG_SYS_FPGA0_BASE
 
 #define CONFIG_SYS_FPGA_COUNT		1
-
-#define CONFIG_SYS_FPGA_PTR \
-	{ (struct ihs_fpga *)CONFIG_SYS_FPGA0_BASE }
-
-#define CONFIG_SYS_FPGA_COMMON
 
 /* Memory Bank 3 (Latches) initialization                      */
 #define CONFIG_SYS_LATCH_BASE		0x7f200000

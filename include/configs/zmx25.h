@@ -4,20 +4,32 @@
  *
  * Configuation settings for the zmx25 board
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#include <asm/arch/imx-regs.h>
-
+#define CONFIG_ARM926EJS			/* arm926ejs CPU core */
 #define CONFIG_MX25
+#define CONFIG_SYS_HZ			1000
 #define CONFIG_SYS_TEXT_BASE		0xA0000000
-
-#define CONFIG_SYS_TIMER_RATE		32768
-#define CONFIG_SYS_TIMER_COUNTER	\
-	(&((struct gpt_regs *)IMX_GPT1_BASE)->counter)
 
 #define CONFIG_MACH_TYPE	MACH_TYPE_ZMX25
 /*
@@ -75,10 +87,20 @@
 /*
  * Command line configuration.
  */
+#include <config_cmd_default.h>
+#define CONFIG_CMD_NET
+#define CONFIG_CMD_CACHE
 
 /*
  * Additional command
  */
+#define CONFIG_CMD_DHCP
+#define CONFIG_CMD_PING
+#define CONFIG_CMD_ELF
+#define CONFIG_CMD_FAT
+#define CONFIG_CMD_USB
+
+#define CONFIG_SYS_HUSH_PARSER
 
 /*
  * USB
@@ -91,6 +113,7 @@
 #define CONFIG_MXC_USB_PORTSC	MXC_EHCI_MODE_SERIAL
 #define CONFIG_MXC_USB_FLAGS	(MXC_EHCI_INTERNAL_PHY | MXC_EHCI_IPPUE_DOWN)
 #define CONFIG_EHCI_IS_TDI
+#define CONFIG_USB_STORAGE
 #define CONFIG_DOS_PARTITION
 #define CONFIG_SUPPORT_VFAT
 #endif /* CONFIG_CMD_USB */
@@ -127,6 +150,7 @@
 #define CONFIG_SYS_MEMTEST_START	(PHYS_SDRAM + (512*1024))
 #define CONFIG_SYS_MEMTEST_END		(PHYS_SDRAM + PHYS_SDRAM_SIZE)
 
+#define CONFIG_SYS_PROMPT	"zmx25> "
 #define CONFIG_SYS_CBSIZE	256
 #define CONFIG_SYS_MAXARGS	16
 #define CONFIG_SYS_PBSIZE	(CONFIG_SYS_CBSIZE + \
@@ -136,6 +160,11 @@
 
 #define CONFIG_PREBOOT  ""
 
+#define CONFIG_BOOTDELAY	5
+#define CONFIG_AUTOBOOT_KEYED
+#define CONFIG_AUTOBOOT_PROMPT "boot in %d s\n", bootdelay
+#define CONFIG_AUTOBOOT_DELAY_STR	"delaygs"
+#define CONFIG_AUTOBOOT_STOP_STR	"stopgs"
 
 /*
  * Size of malloc() pool

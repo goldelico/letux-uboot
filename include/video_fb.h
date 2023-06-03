@@ -2,7 +2,23 @@
  * (C) Copyright 1997-2002 ELTEC Elektronik AG
  * Frank Gottschling <fgottschling@eltec.de>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 /*
@@ -18,6 +34,9 @@
 #ifndef _VIDEO_FB_H_
 #define _VIDEO_FB_H_
 
+#define CONSOLE_BG_COL            0x00
+#define CONSOLE_FG_COL            0xa0
+
 /*
  * Graphic Data Format (GDF) bits for VIDEO_DATA_FORMAT
  */
@@ -32,7 +51,7 @@
 /* Export Graphic Driver Control                                              */
 /******************************************************************************/
 
-typedef struct graphic_device {
+typedef struct {
     unsigned int isaBase;
     unsigned int pciBase;
     unsigned int dprBase;
@@ -88,5 +107,9 @@ void video_set_lut (
     unsigned char g,              /* green */
     unsigned char b               /* blue */
     );
+#ifdef CONFIG_VIDEO_HW_CURSOR
+void video_set_hw_cursor(int x, int y); /* x y in pixel */
+void video_init_hw_cursor(int font_width, int font_height);
+#endif
 
 #endif /*_VIDEO_FB_H_ */

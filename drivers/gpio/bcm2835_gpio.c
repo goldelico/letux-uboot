@@ -2,127 +2,88 @@
  * Copyright (C) 2012 Vikram Narayananan
  * <vikram186@gmail.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  */
 
 #include <common.h>
-#include <dm.h>
-#include <errno.h>
 #include <asm/gpio.h>
 #include <asm/io.h>
 
-struct bcm2835_gpios {
-	struct bcm2835_gpio_regs *reg;
-};
-
-static int bcm2835_gpio_direction_input(struct udevice *dev, unsigned gpio)
+inline int gpio_is_valid(unsigned gpio)
 {
-	struct bcm2835_gpios *gpios = dev_get_priv(dev);
+	return (gpio < BCM2835_GPIO_COUNT);
+}
+
+int gpio_request(unsigned gpio, const char *label)
+{
+	return !gpio_is_valid(gpio);
+}
+
+int gpio_free(unsigned gpio)
+{
+	return 0;
+}
+
+int gpio_direction_input(unsigned gpio)
+{
+	struct bcm2835_gpio_regs *reg =
+		(struct bcm2835_gpio_regs *)BCM2835_GPIO_BASE;
 	unsigned val;
 
-	val = readl(&gpios->reg->gpfsel[BCM2835_GPIO_FSEL_BANK(gpio)]);
+	val = readl(&reg->gpfsel[BCM2835_GPIO_FSEL_BANK(gpio)]);
 	val &= ~(BCM2835_GPIO_FSEL_MASK << BCM2835_GPIO_FSEL_SHIFT(gpio));
 	val |= (BCM2835_GPIO_INPUT << BCM2835_GPIO_FSEL_SHIFT(gpio));
-	writel(val, &gpios->reg->gpfsel[BCM2835_GPIO_FSEL_BANK(gpio)]);
+	writel(val, &reg->gpfsel[BCM2835_GPIO_FSEL_BANK(gpio)]);
 
 	return 0;
 }
 
-static int bcm2835_gpio_direction_output(struct udevice *dev, unsigned gpio,
-					 int value)
+int gpio_direction_output(unsigned gpio, int value)
 {
-	struct bcm2835_gpios *gpios = dev_get_priv(dev);
+	struct bcm2835_gpio_regs *reg =
+		(struct bcm2835_gpio_regs *)BCM2835_GPIO_BASE;
 	unsigned val;
 
 	gpio_set_value(gpio, value);
 
-	val = readl(&gpios->reg->gpfsel[BCM2835_GPIO_FSEL_BANK(gpio)]);
+	val = readl(&reg->gpfsel[BCM2835_GPIO_FSEL_BANK(gpio)]);
 	val &= ~(BCM2835_GPIO_FSEL_MASK << BCM2835_GPIO_FSEL_SHIFT(gpio));
 	val |= (BCM2835_GPIO_OUTPUT << BCM2835_GPIO_FSEL_SHIFT(gpio));
-	writel(val, &gpios->reg->gpfsel[BCM2835_GPIO_FSEL_BANK(gpio)]);
+	writel(val, &reg->gpfsel[BCM2835_GPIO_FSEL_BANK(gpio)]);
 
 	return 0;
 }
 
-static int bcm2835_get_value(const struct bcm2835_gpios *gpios, unsigned gpio)
+int gpio_get_value(unsigned gpio)
 {
+	struct bcm2835_gpio_regs *reg =
+		(struct bcm2835_gpio_regs *)BCM2835_GPIO_BASE;
 	unsigned val;
 
-	val = readl(&gpios->reg->gplev[BCM2835_GPIO_COMMON_BANK(gpio)]);
+	val = readl(&reg->gplev[BCM2835_GPIO_COMMON_BANK(gpio)]);
 
 	return (val >> BCM2835_GPIO_COMMON_SHIFT(gpio)) & 0x1;
 }
 
-static int bcm2835_gpio_get_value(struct udevice *dev, unsigned gpio)
+int gpio_set_value(unsigned gpio, int value)
 {
-	const struct bcm2835_gpios *gpios = dev_get_priv(dev);
-
-	return bcm2835_get_value(gpios, gpio);
-}
-
-static int bcm2835_gpio_set_value(struct udevice *dev, unsigned gpio,
-				  int value)
-{
-	struct bcm2835_gpios *gpios = dev_get_priv(dev);
-	u32 *output_reg = value ? gpios->reg->gpset : gpios->reg->gpclr;
+	struct bcm2835_gpio_regs *reg =
+		(struct bcm2835_gpio_regs *)BCM2835_GPIO_BASE;
+	u32 *output_reg = value ? reg->gpset : reg->gpclr;
 
 	writel(1 << BCM2835_GPIO_COMMON_SHIFT(gpio),
 				&output_reg[BCM2835_GPIO_COMMON_BANK(gpio)]);
 
 	return 0;
 }
-
-int bcm2835_gpio_get_func_id(struct udevice *dev, unsigned gpio)
-{
-	struct bcm2835_gpios *gpios = dev_get_priv(dev);
-	u32 val;
-
-	val = readl(&gpios->reg->gpfsel[BCM2835_GPIO_FSEL_BANK(gpio)]);
-
-	return (val >> BCM2835_GPIO_FSEL_SHIFT(gpio) & BCM2835_GPIO_FSEL_MASK);
-}
-
-static int bcm2835_gpio_get_function(struct udevice *dev, unsigned offset)
-{
-	int funcid = bcm2835_gpio_get_func_id(dev, offset);
-
-	switch (funcid) {
-	case BCM2835_GPIO_OUTPUT:
-		return GPIOF_OUTPUT;
-	case BCM2835_GPIO_INPUT:
-		return GPIOF_INPUT;
-	default:
-		return GPIOF_FUNC;
-	}
-}
-
-
-static const struct dm_gpio_ops gpio_bcm2835_ops = {
-	.direction_input	= bcm2835_gpio_direction_input,
-	.direction_output	= bcm2835_gpio_direction_output,
-	.get_value		= bcm2835_gpio_get_value,
-	.set_value		= bcm2835_gpio_set_value,
-	.get_function		= bcm2835_gpio_get_function,
-};
-
-static int bcm2835_gpio_probe(struct udevice *dev)
-{
-	struct bcm2835_gpios *gpios = dev_get_priv(dev);
-	struct bcm2835_gpio_platdata *plat = dev_get_platdata(dev);
-	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
-
-	uc_priv->bank_name = "GPIO";
-	uc_priv->gpio_count = BCM2835_GPIO_COUNT;
-	gpios->reg = (struct bcm2835_gpio_regs *)plat->base;
-
-	return 0;
-}
-
-U_BOOT_DRIVER(gpio_bcm2835) = {
-	.name	= "gpio_bcm2835",
-	.id	= UCLASS_GPIO,
-	.ops	= &gpio_bcm2835_ops,
-	.probe	= bcm2835_gpio_probe,
-	.flags	= DM_FLAG_PRE_RELOC,
-	.priv_auto_alloc_size = sizeof(struct bcm2835_gpios),
-};

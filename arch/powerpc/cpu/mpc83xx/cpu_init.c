@@ -1,7 +1,23 @@
 /*
  * Copyright (C) 2004-2009 Freescale Semiconductor, Inc.
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
@@ -9,7 +25,7 @@
 #include <ioports.h>
 #include <asm/io.h>
 #ifdef CONFIG_USB_EHCI_FSL
-#include <usb/ehci-ci.h>
+#include <usb/ehci-fsl.h>
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -315,7 +331,7 @@ void cpu_init_f (volatile immap_t * im)
 #endif
 #if defined(CONFIG_USB_EHCI_FSL) && defined(CONFIG_MPC831x)
 	uint32_t temp;
-	struct usb_ehci *ehci = (struct usb_ehci *)CONFIG_SYS_FSL_USB1_ADDR;
+	struct usb_ehci *ehci = (struct usb_ehci *)CONFIG_SYS_FSL_USB_ADDR;
 
 	/* Configure interface. */
 	setbits_be32(&ehci->control, REFSEL_16MHZ | UTMI_PHY_EN);
@@ -425,15 +441,15 @@ static int print_83xx_arb_event(int force)
 	};
 
 	int etype = (gd->arch.arbiter_event_attributes & AEATR_EVENT)
-		    >> AEATR_EVENT_SHIFT;
+	            >> AEATR_EVENT_SHIFT;
 	int mstr_id = (gd->arch.arbiter_event_attributes & AEATR_MSTR_ID)
-		      >> AEATR_MSTR_ID_SHIFT;
+	              >> AEATR_MSTR_ID_SHIFT;
 	int tbst = (gd->arch.arbiter_event_attributes & AEATR_TBST)
-		   >> AEATR_TBST_SHIFT;
+	           >> AEATR_TBST_SHIFT;
 	int tsize = (gd->arch.arbiter_event_attributes & AEATR_TSIZE)
-		    >> AEATR_TSIZE_SHIFT;
+	            >> AEATR_TSIZE_SHIFT;
 	int ttype = (gd->arch.arbiter_event_attributes & AEATR_TTYPE)
-		    >> AEATR_TTYPE_SHIFT;
+	            >> AEATR_TTYPE_SHIFT;
 
 	if (!force && !gd->arch.arbiter_event_address)
 		return 0;
@@ -484,7 +500,7 @@ int prt_83xx_rsr(void)
 		RSR_SRS,  "External/Internal Soft"}, {
 		RSR_HRS,  "External/Internal Hard"}
 	};
-	static int n = ARRAY_SIZE(bits);
+	static int n = sizeof bits / sizeof bits[0];
 	ulong rsr = gd->arch.reset_status;
 	int i;
 	char *sep;

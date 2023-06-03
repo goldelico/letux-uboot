@@ -20,7 +20,7 @@
 #include <linux/mtd/onenand.h>
 #include <malloc.h>
 
-#include <linux/errno.h>
+#include <asm/errno.h>
 
 /**
  * check_short_pattern - [GENERIC] check if a pattern is in the buffer
@@ -140,6 +140,7 @@ static inline int onenand_memory_bbt(struct mtd_info *mtd,
 {
 	unsigned char data_buf[MAX_ONENAND_PAGESIZE];
 
+	bd->options &= ~NAND_BBT_SCANEMPTY;
 	return create_bbt(mtd, data_buf, bd, -1);
 }
 

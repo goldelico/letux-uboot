@@ -12,53 +12,41 @@
  *
  * Copyright (C) 2001  Erik Mouw (J.A.K.Mouw@its.tudelft.nl)
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
  */
 
 #include <common.h>
 #include <fdt_support.h>
-#ifdef CONFIG_ARMV7_NONSEC
-#include <asm/armv7.h>
-#endif
-#include <asm/psci.h>
-#include <asm/spin_table.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-#ifdef CONFIG_ARCH_FIXUP_FDT
-int arch_fixup_fdt(void *blob)
+int arch_fixup_memory_node(void *blob)
 {
 	bd_t *bd = gd->bd;
-	int bank, ret;
+	int bank;
 	u64 start[CONFIG_NR_DRAM_BANKS];
 	u64 size[CONFIG_NR_DRAM_BANKS];
 
 	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
 		start[bank] = bd->bi_dram[bank].start;
 		size[bank] = bd->bi_dram[bank].size;
-#ifdef CONFIG_ARMV7_NONSEC
-		ret = armv7_apply_memory_carveout(&start[bank], &size[bank]);
-		if (ret)
-			return ret;
-#endif
 	}
 
-	ret = fdt_fixup_memory_banks(blob, start, size, CONFIG_NR_DRAM_BANKS);
-	if (ret)
-		return ret;
-
-#ifdef CONFIG_ARMV8_SPIN_TABLE
-	ret = spin_table_update_dt(blob);
-	if (ret)
-		return ret;
-#endif
-
-#if defined(CONFIG_ARMV7_NONSEC) || defined(CONFIG_ARMV8_PSCI)
-	ret = psci_update_dt(blob);
-	if (ret)
-		return ret;
-#endif
-
-	return 0;
+	return fdt_fixup_memory_banks(blob, start, size, CONFIG_NR_DRAM_BANKS);
 }
-#endif

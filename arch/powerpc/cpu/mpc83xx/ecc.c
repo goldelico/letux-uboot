@@ -4,7 +4,13 @@
  * Dave Liu <daveliu@freescale.com>
  * based on the contribution of Marian Balakowicz <m8@semihalf.com>
  *
- * SPDX-License-Identifier:	GPL-2.0+
+ * See file CREDITS for list of people who contributed to this
+ * project.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
  */
 
 #include <common.h>
@@ -15,8 +21,8 @@
 void ecc_print_status(void)
 {
 	immap_t *immap = (immap_t *) CONFIG_SYS_IMMR;
-#ifdef CONFIG_SYS_FSL_DDR2
-	struct ccsr_ddr __iomem *ddr = &immap->ddr;
+#ifdef CONFIG_FSL_DDR2
+	ccsr_ddr_t *ddr = &immap->ddr;
 #else
 	ddr83xx_t *ddr = &immap->ddr;
 #endif
@@ -37,7 +43,7 @@ void ecc_print_status(void)
 	printf("Memory Error Disable:\n");
 	printf("  Multiple-Bit Error Disable: %d\n",
 	       (ddr->err_disable & ECC_ERROR_DISABLE_MBED) ? 1 : 0);
-	printf("  Single-Bit Error Disable: %d\n",
+	printf("  Sinle-Bit Error Disable: %d\n",
 	       (ddr->err_disable & ECC_ERROR_DISABLE_SBED) ? 1 : 0);
 	printf("  Memory Select Error Disable: %d\n\n",
 	       (ddr->err_disable & ECC_ERROR_DISABLE_MSED) ? 1 : 0);
@@ -99,8 +105,8 @@ void ecc_print_status(void)
 int do_ecc(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	immap_t *immap = (immap_t *) CONFIG_SYS_IMMR;
-#ifdef CONFIG_SYS_FSL_DDR2
-	struct ccsr_ddr __iomem *ddr = &immap->ddr;
+#ifdef CONFIG_FSL_DDR2
+	ccsr_ddr_t *ddr = &immap->ddr;
 #else
 	ddr83xx_t *ddr = &immap->ddr;
 #endif
@@ -273,7 +279,7 @@ int do_ecc(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 			count = simple_strtoul(argv[3], NULL, 16);
 
 			if ((u32) addr % 8) {
-				printf("Address not aligned on "
+				printf("Address not alligned on "
 				       "double word boundary\n");
 				return 1;
 			}
@@ -312,7 +318,7 @@ int do_ecc(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 			count = simple_strtoul(argv[3], NULL, 16);
 
 			if ((u32) addr % 8) {
-				printf("Address not aligned on "
+				printf("Address not alligned on "
 				       "double word boundary\n");
 				return 1;
 			}
