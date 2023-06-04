@@ -8,6 +8,10 @@
 #ifndef _ASM_BYTEORDER_H
 #define _ASM_BYTEORDER_H
 
+#ifndef __MIPSEL__
+#define __MIPSEL__ 1
+#endif
+
 #include <asm/types.h>
 
 #ifdef __GNUC__
