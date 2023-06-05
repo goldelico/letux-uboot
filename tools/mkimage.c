@@ -12,6 +12,11 @@
 #include <image.h>
 #include <version.h>
 
+#if defined(__MACH__)
+#include <mach-o/getsect.h>
+struct image_type_params **__start_image_type, **__stop_image_type;
+#endif
+
 static void copy_file(int, const char *, int);
 
 /* parameters initialized by core will be used by the image type code */

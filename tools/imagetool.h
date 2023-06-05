@@ -253,7 +253,7 @@ void pbl_load_uboot(int fd, struct image_tool_params *mparams);
 	} while (0)
 #define SECTION(name)   __attribute__((section("__TEXT, " #name)))
 
-struct image_type_params **__start_image_type, **__stop_image_type;
+extern struct image_type_params **__start_image_type, **__stop_image_type;
 #else
 #define INIT_SECTION(name) /* no-op for ELF */
 #define SECTION(name)   __attribute__((section(#name)))
