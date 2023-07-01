@@ -21,16 +21,22 @@ static void pll_set(unsigned int reg)
 	case CPM_CPAPCR:
 		val = (APLL_EN_VALUE << 0)  | (APLL_M_VALUE << 20) | (APLL_N_VALUE << 14) |
 			(APLL_OD1_VALUE << 11) | (APLL_OD0_VALUE << 8) | (1 << 7) | (1 << 6);
+printf("calculated CPM_CPAPCR:%x\n",val);
+val=0x02e049cd;
 		cpm_outl(val,CPM_CPAPCR);
 		break;
 	case CPM_CPMPCR:
 		val = (MPLL_EN_VALUE << 0)  | (MPLL_M_VALUE << 20) | (MPLL_N_VALUE << 14) |
 			(MPLL_OD1_VALUE << 11) | (MPLL_OD0_VALUE << 8) | (1 << 7) | (1 << 6);
+printf("calculated CPM_CPMPCR:%x\n",val);
+val=0x0af0c9cd;
 		cpm_outl(val,CPM_CPMPCR);
 		break;
 	case CPM_CPEPCR:
 		val = (EPLL_EN_VALUE << 0)  | (EPLL_M_VALUE << 20) | (EPLL_N_VALUE << 14) |
 			(EPLL_OD1_VALUE << 11) | (EPLL_OD0_VALUE << 8) | (1 << 7) | (1 << 6);
+printf("calculated CPM_CPEPCR:%x\n",val);
+val=0x019059cd;
 		cpm_outl(val,CPM_CPEPCR);
 		break;
 	default:
@@ -82,6 +88,8 @@ static void cpccr_sets(void)
 		(H0DIV_REG_VALUE <<  8) |
 		(H2DIV_REG_VALUE << 12) |
 		(PDIV_REG_VALUE <<  16);
+printf("calculated CPM_CPCCR:%x\n",val);
+val=0x9a094410;
 	cpm_outl(val,CPM_CPCCR);
 	while((cpm_inl(CPM_CPCSR) & 0xf0000000) != 0xf0000000);
 	printf("CPM_CPCCR:%x\n",cpm_inl(CPM_CPCCR));
