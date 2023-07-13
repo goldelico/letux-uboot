@@ -106,13 +106,12 @@
 #define CONFIG_BOOTDELAY 1
 
 #if defined(CONFIG_JZ_MMC_MSC0)
-	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk0p7 rootdelay=3 rw"
+	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk0p1 rootdelay=3 rw"
 #elif defined(CONFIG_JZ_MMC_MSC1)
-	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk1p7 rootdelay=3 rw"
+	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk1p1 rootdelay=3 rw"
 #endif
 
 #if defined(CONFIG_SPL_JZMMC_SUPPORT) || defined(CONFIG_SPL_MMC_SUPPORT)
-	#define CONFIG_BOOTARGS BOOTARGS_COMMON MSC_BOOTARGS
 #elif defined(CONFIG_SPL_NOR_SUPPORT)
 	#define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.207:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.4.13:/home/nfsroot/fpga/user/pzqi/rootfs-tst rw"
 #elif defined(CONFIG_SPL_SFC_NOR)
@@ -232,11 +231,11 @@
 	     #define CONFIG_SPL_BOOTARGS	BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=2 root=ubi0:rootfs ubi.mtd=3 rootfstype=ubifs rw flashtype=nand"
     #else
 		#if defined(CONFIG_JZ_MMC_MSC0)
-			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk0p7 rootdelay=3 rw"
+			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk0p1 rootdelay=3 rw"
 		#elif defined(CONFIG_JZ_MMC_MSC1)
-			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk1p7 rootdelay=3 rw"
+			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk1p1 rootdelay=3 rw"
 		#elif defined(CONFIG_JZ_MMC_MSC2)
-			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk2p7 rootdelay=3 rw"
+			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk2p1 rootdelay=3 rw"
 		#endif
     #endif
     #ifdef CONFIG_OTA_VERSION30
