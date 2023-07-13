@@ -363,6 +363,13 @@
 #define CONFIG_CMD_LOADB	/* loadb			*/
 #define CONFIG_CMD_LOADS	/* loads			*/
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
+#if 1
+#define CONFIG_LOOPW
+#define CONFIG_CMD_MEMTEST
+#endif
+#if 0
+#define CONFIG_SYS_ALT_MEMTEST
+#endif
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/
 #define CONFIG_CMD_NET		/* networking support			*/
@@ -439,7 +446,7 @@
 #define CONFIG_SYS_INIT_SP_OFFSET	0x400000
 #define CONFIG_SYS_LOAD_ADDR		0x80010000
 #define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		0x88000000
+#define CONFIG_SYS_MEMTEST_END		0x82000000
 
 #define CONFIG_SYS_TEXT_BASE		0x80100000
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
