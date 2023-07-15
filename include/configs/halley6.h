@@ -143,7 +143,7 @@
 #define CONFIG_BOOTDELAY 1
 
 #if defined(CONFIG_SPL_JZMMC_SUPPORT) || defined(CONFIG_SPL_MMC_SUPPORT)
-	#define CONFIG_BOOTARGS BOOTARGS_COMMON " rootfstype=ext4 root=/dev/mmcblk0p1 rootdelay=3 rw"
+	#define CONFIG_BOOTARGS BOOTARGS_COMMON " rootfstype=ext4 root=/dev/mmcblk0p2 rw"
 #elif defined(CONFIG_SPL_NOR_SUPPORT)
 	#define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.207:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.4.13:/home/nfsroot/fpga/user/pzqi/rootfs-tst rw"
 #elif defined(CONFIG_SPL_SFC_NOR)
@@ -158,7 +158,7 @@
 	#define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 user/pzqi/uImage; bootm 0x80600000"
 /*#define CONFIG_BOOTCOMMAND "loady 0x80600000; bootm 0x80600000"*/
 #elif defined(CONFIG_SPL_JZMMC_SUPPORT) || defined(CONFIG_SPL_MMC_SUPPORT)
-	#define CONFIG_BOOTCOMMAND "mmc dev 0; mmc read 0x80a00000 0x1800 0x3000; bootm 0x80a00000"
+	#define CONFIG_BOOTCOMMAND "fatload mmc 0 0x80a00000 /uImage; bootm 0x80a00000"
 #elif defined(CONFIG_SPL_SFC_NOR)
 	#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x600000 0x80a00000 ;bootm 0x80a00000"
 #elif defined(CONFIG_SPL_SFC_NAND)
