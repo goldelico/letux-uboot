@@ -92,7 +92,7 @@ static void boot_prep_linux(bootm_headers_t *images)
 
 static void linux_cmdline_set(const char *value, size_t len)
 {
-	if(linux_argc >= LINUX_MAX_ARGS) {
+	if(linux_argc >= LINUX_MAX_ARGS - 1) {
 		printf("Too many linux_args: %d, max: %d\n", linux_argc, LINUX_MAX_ARGS);
 		return;
 	}
@@ -102,7 +102,7 @@ static void linux_cmdline_set(const char *value, size_t len)
 	argp[len] = 0;
 
 	argp += len + 1;
-	linux_argc++;
+	linux_argv[++linux_argc] = NULL;
 }
 
 
