@@ -92,14 +92,11 @@ static void boot_prep_linux(bootm_headers_t *images)
 
 static void linux_cmdline_set(const char *value, size_t len)
 {
-	unsigned char *linux_argp;
-	linux_argp = argp;
-	linux_argv[linux_argc] = linux_argp;
-	memcpy(linux_argp, value, len);
-	linux_argp[len] = 0;
-
-	linux_argp += len + 1;
-	linux_argc++;
+	linux_argv[linux_argc] = argp;
+	memcpy(argp, value, len);
+	argp[len] = 0;
+	argp += len + 1;
+	linux_argv[++linux_argc] = NULL;
 }
 
 
@@ -117,35 +114,6 @@ static void boot_jump_linux(bootm_headers_t *images)
 
 	/* we assume that the kernel is in place */
 	printf("\nStarting kernel ...\n\n");
-#if (CONFIG_BOOTARGS_AUTO_MODIFY == 1)
-	/*default environment*/
-#include <env_default.h>
-	unsigned long ram_size = (ulong)gd->ram_size >> 20;
-	if(gd->flags & GD_FLG_ENV_DEFAULT) {
-		/* 64M size ddr*/
-		if(ram_size == 64) {
-#ifdef CONFIG_BOOTARGS_MEM_64M
-			linux_cmdline_set(CONFIG_BOOTARGS_MEM_64M, strlen(CONFIG_BOOTARGS_MEM_64M));
-#endif
-		} else if(ram_size == 128) {
-#ifdef CONFIG_BOOTARGS_MEM_128M
-			linux_cmdline_set(CONFIG_BOOTARGS_MEM_128M, strlen(CONFIG_BOOTARGS_MEM_128M));
-#endif
-		} else if(ram_size == 256) {
-#ifdef CONFIG_BOOTARGS_MEM_256M
-			linux_cmdline_set(CONFIG_BOOTARGS_MEM_256M, strlen(CONFIG_BOOTARGS_MEM_256M));
-#endif
-		} else if(ram_size == 512) {
-#ifdef CONFIG_BOOTARGS_MEM_512M
-			linux_cmdline_set(CONFIG_BOOTARGS_MEM_512M, strlen(CONFIG_BOOTARGS_MEM_512M));
-#endif
-		} else if(ram_size == 32) {
-#ifdef CONFIG_BOOTARGS_MEM_32M
-			linux_cmdline_set(CONFIG_BOOTARGS_MEM_32M, strlen(CONFIG_BOOTARGS_MEM_32M));
-#endif
-		}
-	}
-#endif
 	if (IMAGE_ENABLE_OF_LIBFDT && images->ft_len)
 		theKernel(-2, (ulong)images->ft_addr, 0, 0);
 	else
@@ -218,6 +186,35 @@ static void linux_params_init(ulong start, char *line)
 		line = next;
 	}
 
+#if (CONFIG_BOOTARGS_AUTO_MODIFY == 1)
+	/*default environment*/
+#include <env_default.h>
+	unsigned long ram_size = (ulong)gd->ram_size >> 20;
+	if(gd->flags & GD_FLG_ENV_DEFAULT) {
+		/* 64M size ddr*/
+		if(ram_size == 64) {
+#ifdef CONFIG_BOOTARGS_MEM_64M
+			linux_cmdline_set(CONFIG_BOOTARGS_MEM_64M, strlen(CONFIG_BOOTARGS_MEM_64M));
+#endif
+		} else if(ram_size == 128) {
+#ifdef CONFIG_BOOTARGS_MEM_128M
+			linux_cmdline_set(CONFIG_BOOTARGS_MEM_128M, strlen(CONFIG_BOOTARGS_MEM_128M));
+#endif
+		} else if(ram_size == 256) {
+#ifdef CONFIG_BOOTARGS_MEM_256M
+			linux_cmdline_set(CONFIG_BOOTARGS_MEM_256M, strlen(CONFIG_BOOTARGS_MEM_256M));
+#endif
+		} else if(ram_size == 512) {
+#ifdef CONFIG_BOOTARGS_MEM_512M
+			linux_cmdline_set(CONFIG_BOOTARGS_MEM_512M, strlen(CONFIG_BOOTARGS_MEM_512M));
+#endif
+		} else if(ram_size == 32) {
+#ifdef CONFIG_BOOTARGS_MEM_32M
+			linux_cmdline_set(CONFIG_BOOTARGS_MEM_32M, strlen(CONFIG_BOOTARGS_MEM_32M));
+#endif
+		}
+	}
+#endif
 	linux_env = (char **) (((ulong) argp + 15) & ~15);
 	linux_env[0] = 0;
 	linux_env_p = (char *) (linux_env + LINUX_MAX_ENVS);
