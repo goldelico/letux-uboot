@@ -65,7 +65,7 @@ void spl_onenand_load_image(void);
 void spl_nor_load_image(void);
 
 /* MMC SPL functions */
-void spl_mmc_load_image(void);
+char *spl_mmc_load_image(void);
 
 /* YMODEM SPL functions */
 void spl_ymodem_load_image(void);

@@ -35,6 +35,9 @@
 #ifdef CONFIG_USB_STORAGE
 static int usb_stor_curr_dev = -1; /* current device */
 #endif
+#ifdef CONFIG_USB_UVC
+static int usb_video_curr_dev = -1;	/* current video device */
+#endif
 #ifdef CONFIG_USB_HOST_ETHER
 static int usb_ether_curr_dev = -1; /* current ethernet device */
 #endif
@@ -448,6 +451,16 @@ static int do_usbboot(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #endif /* CONFIG_USB_STORAGE */
 
 
+#ifdef CONFIG_USB_UVC
+extern int uvc_test(void);
+static int do_uvctest(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+{
+	uvc_test();
+	return 0;
+}
+#endif /* CONFIG_USB_UVC */
+
+
 /******************************************************************************
  * usb command intepreter
  */
@@ -473,6 +486,9 @@ static int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #ifdef CONFIG_USB_STORAGE
 			/* try to recognize storage devices immediately */
 			usb_stor_curr_dev = usb_stor_scan(1);
+#endif
+#ifdef CONFIG_USB_UVC
+			usb_video_curr_dev = usb_video_scan(1);
 #endif
 #ifdef CONFIG_USB_HOST_ETHER
 			/* try to recognize ethernet devices immediately */
@@ -694,3 +710,11 @@ U_BOOT_CMD(
 	"loadAddr dev:part"
 );
 #endif /* CONFIG_USB_STORAGE */
+
+#ifdef CONFIG_USB_UVC
+U_BOOT_CMD(
+	uvctest,	3,	1,	do_uvctest,
+	"uvc camera test. capture usb camera data to fatfs, default [mmc 0]",
+	"uvctest"
+);
+#endif /* CONFIG_USB_UVC */

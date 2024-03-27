@@ -30,6 +30,7 @@
 
 #define isdigit(c)      ('0' <= (c) && (c) <= '9')
 
+#define MANY_ENDPOINTS  //cli add
 /* we must assign addresses for configurable endpoints (like net2280) */
 static unsigned epnum;
 

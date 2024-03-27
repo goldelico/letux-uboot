@@ -66,6 +66,7 @@ LIBS-$(CONFIG_SPL_FRAMEWORK) += common/spl/libspl.o
 LIBS-$(CONFIG_SPL_LIBCOMMON_SUPPORT) += common/libcommon.o
 LIBS-$(CONFIG_SPL_LIBDISK_SUPPORT) += disk/libdisk.o
 LIBS-$(CONFIG_SPL_I2C_SUPPORT) += drivers/i2c/libi2c.o
+LIBS-$(CONFIG_SPL_REGULATOR_SUPPORT) += drivers/regulator/libregulator.o
 LIBS-$(CONFIG_SPL_GPIO_SUPPORT) += drivers/gpio/libgpio.o
 LIBS-$(CONFIG_SPL_MMC_SUPPORT) += drivers/mmc/libmmc.o
 LIBS-$(CONFIG_SPL_SERIAL_SUPPORT) += drivers/serial/libserial.o
@@ -75,6 +76,7 @@ LIBS-$(CONFIG_SPL_FAT_SUPPORT) += fs/fat/libfat.o
 LIBS-$(CONFIG_SPL_LIBGENERIC_SUPPORT) += lib/libgeneric.o
 LIBS-$(CONFIG_SPL_POWER_SUPPORT) += drivers/power/libpower.o
 LIBS-$(CONFIG_SPL_NAND_SUPPORT) += drivers/mtd/nand/libnand.o
+LIBS-$(CONFIG_JZ_NAND_MGR) += drivers/nand/libnand.o
 LIBS-$(CONFIG_SPL_ONENAND_SUPPORT) += drivers/mtd/onenand/libonenand.o
 LIBS-$(CONFIG_SPL_DMA_SUPPORT) += drivers/dma/libdma.o
 LIBS-$(CONFIG_SPL_POST_MEM_SUPPORT) += post/drivers/memory.o
@@ -83,6 +85,23 @@ LIBS-$(CONFIG_SPL_ETH_SUPPORT) += drivers/net/libnet.o
 LIBS-$(CONFIG_SPL_ETH_SUPPORT) += drivers/net/phy/libphy.o
 LIBS-$(CONFIG_SPL_MUSB_NEW_SUPPORT) += drivers/usb/musb-new/libusb_musb-new.o
 LIBS-$(CONFIG_SPL_USBETH_SUPPORT) += drivers/usb/gadget/libusb_gadget.o
+LIBS-$(CONFIG_JZ_WATCHDOG) += drivers/watchdog/jz_wdt.o
+
+ifdef CONFIG_JZ_SCBOOT
+ifdef CONFIG_X1600
+LIBS-y += drivers/scboot/jz_sec_v3/libscboot.o
+else
+ifdef CONFIG_X2000_V12
+LIBS-y += drivers/scboot/jz_sec_v2/libscboot.o
+else
+LIBS-y += drivers/scboot/jz_sec_v1/libscboot.o
+endif
+endif
+endif
+
+ifdef CONFIG_SPL_SCBOOT
+LIBS-y += drivers/scboot/jz_sec_boot/libsplscboot.o
+endif
 
 ifneq ($(CONFIG_AM33XX)$(CONFIG_OMAP34XX)$(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX)$(CONFIG_TI814X),)
 LIBS-y += $(CPUDIR)/omap-common/libomap-common.o
@@ -105,6 +124,7 @@ endif
 ifeq ($(SOC),exynos)
 LIBS-y += $(CPUDIR)/s5p-common/libs5p-common.o
 endif
+
 
 # Add GCC lib
 ifeq ("$(USE_PRIVATE_LIBGCC)", "yes")
@@ -172,8 +192,69 @@ $(obj)$(BOARD)-spl.bin: $(obj)u-boot-spl.bin
 		$(obj)u-boot-spl.bin $(obj)$(BOARD)-spl.bin
 endif
 
+ifdef CONFIG_SPI_SPL_CHECK
+ifdef CONFIG_SPL_PARAMS_FIXER
+ifdef CONFIG_SPL_PAD_TO_BLOCK
 $(obj)u-boot-spl.bin:	$(obj)u-boot-spl
 	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+	$(OBJTREE)/tools/ingenic-tools/spl_pad_to_block $@
+	$(OBJTREE)/tools/ingenic-tools/spl_params_fixer $@ $@ 256 256
+	$(OBJTREE)/tools/ingenic-tools/spi_checksum $@
+else
+$(obj)u-boot-spl.bin:	$(obj)u-boot-spl
+	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+	$(OBJTREE)/tools/ingenic-tools/spl_params_fixer $@ $@ 256 256
+	$(OBJTREE)/tools/ingenic-tools/spi_checksum $@
+endif
+else
+ifdef CONFIG_SPL_PAD_TO_BLOCK
+$(obj)u-boot-spl.bin:	$(obj)u-boot-spl
+	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+	$(OBJTREE)/tools/ingenic-tools/spl_pad_to_block $@
+	$(OBJTREE)/tools/ingenic-tools/spi_checksum $@
+else
+$(obj)u-boot-spl.bin:	$(obj)u-boot-spl
+	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+	$(OBJTREE)/tools/ingenic-tools/spi_checksum $@
+endif
+endif
+else
+ifdef CONFIG_SPL_PARAMS_FIXER
+ifdef CONFIG_SPL_PAD_TO_BLOCK
+$(obj)u-boot-spl.bin:	$(obj)u-boot-spl
+	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+	$(OBJTREE)/tools/ingenic-tools/spl_pad_to_block $@
+	$(OBJTREE)/tools/ingenic-tools/spl_params_fixer $@ $@ 256 256
+else
+$(obj)u-boot-spl.bin:	$(obj)u-boot-spl
+	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+	$(OBJTREE)/tools/ingenic-tools/spl_params_fixer $@ $@ 256 256
+endif
+else
+ifdef CONFIG_SPL_PAD_TO_BLOCK
+$(obj)u-boot-spl.bin:	$(obj)u-boot-spl
+	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+	$(OBJTREE)/tools/ingenic-tools/spl_pad_to_block $@
+else
+$(obj)u-boot-spl.bin:	$(obj)u-boot-spl
+	$(OBJCOPY) $(OBJCFLAGS) -O binary $< $@
+endif
+endif
+endif
+
+
+ifdef CONFIG_MMC_SPL_PARAMS
+	$(OBJTREE)/tools/ingenic-tools/mmc_params $@
+endif
+
+ifdef CONFIG_NOR_BUILTIN_PARAMS
+	$(OBJTREE)/tools/ingenic-tools/sfc_nor_builtin_params $@ $@ $(CONFIG_SPIFLASH_PART_OFFSET)
+endif
+
+ifdef CONFIG_NAND_BUILTIN_PARAMS
+	$(OBJTREE)/tools/ingenic-tools/sfc_nand_builtin_params $@ $@ $(CONFIG_SPIFLASH_PART_OFFSET)
+endif
+
 
 GEN_UBOOT = \
 	cd $(obj) && $(LD) $(LDFLAGS) $(LDFLAGS_$(@F)) $(__START) \

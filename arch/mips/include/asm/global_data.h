@@ -25,16 +25,20 @@
 #define __ASM_GBL_DATA_H
 
 #include <asm/regdef.h>
+#include <asm/global_info.h>
 
 /* Architecture-specific global data */
 struct arch_global_data {
-#ifdef CONFIG_JZSOC
+#ifdef CONFIG_JZ4740
 	/* There are other clocks in the jz4740 */
 	unsigned long per_clk;	/* Peripheral bus clock */
 	unsigned long dev_clk;	/* Device clock */
 	unsigned long sys_clk;
 	unsigned long tbl;
 	unsigned long lastinc;
+#endif
+#if defined(CONFIG_CPU_XBURST) || defined(CONFIG_CPU_XBURST2)
+	struct global_info *gi;
 #endif
 };
 

@@ -1,0 +1,9 @@
+board=sama5d2_xplained
+bootargs=console=ttyS0,115200 root=/dev/mmcblk1p2 rw rootfstype=ext4 rootwait atmel.pm_modes=standby,ulp1 8250.nr_uarts=0
+bootcmd=fatload mmc 1:1 0x22000000 zImage; fatload mmc 1:1 0x21000000 at91-$board.dtb; echo booting LetuxOS from SD; bootz 0x22000000 - 0x21000000
+bootdelay=1
+ethact=gmac0
+ethaddr=fc:c2:3d:02:eb:38
+stderr=serial@f8020000
+stdin=serial@f8020000
+stdout=serial@f8020000

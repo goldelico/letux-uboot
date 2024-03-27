@@ -112,6 +112,44 @@ char *getenv_default(const char *name)
 	gd->flags = real_gd_flags;
 	return ret_val;
 }
+#ifdef CONFIG_JZ_SLT
+void slt_uart_mode(void) {
+#if defined(GPIO_UART_RX) && defined(GPIO_UART_TX)
+	int test_uart_as_gpio = 0;
+	int start = 0;
+	char *env = NULL;
+	int size;
+	gpio_direction_output(GPIO_UART_TX , 1);
+	gpio_direction_input(GPIO_UART_RX);
+	if (gpio_get_value(GPIO_UART_RX)) {
+		gpio_direction_output(GPIO_UART_TX , 0);
+		if (!gpio_get_value(GPIO_UART_RX)) {
+			test_uart_as_gpio = 1;
+		}
+	}
+	gpio_set_func(gpio_port_gp(GPIO_UART_RX), GPIO_UART_RX_FUNC,
+			(1 << gpio_pin(GPIO_UART_RX)));
+	gpio_set_func(gpio_port_gp(GPIO_UART_TX), GPIO_UART_TX_FUNC,
+			(1 << gpio_pin(GPIO_UART_TX)));
+
+	if (test_uart_as_gpio) {
+		for (env = default_environment, size = sizeof(default_environment);
+				start < size;
+				start += (strlen(env) + 1), env += (strlen(env) + 1)) {
+			if (!!strstr(env, "bootargs")) {
+				if (!!(env = strstr(env, "console"))) {
+					for (;*env !=  ' ' && *env != '\0'; env++) {
+						*env = ' ';
+					}
+				}
+				break;
+			}
+		}
+	}
+	return;
+#endif
+}
+#endif
 
 void set_default_env(const char *s)
 {
@@ -121,6 +159,10 @@ void set_default_env(const char *s)
 		puts("*** Error - default environment is too large\n\n");
 		return;
 	}
+
+#ifdef CONFIG_JZ_SLT
+	slt_uart_mode();
+#endif
 
 	if (s) {
 		if (*s == '!') {
@@ -140,7 +182,7 @@ void set_default_env(const char *s)
 			0, NULL) == 0)
 		error("Environment import failed: errno = %d\n", errno);
 
-	gd->flags |= GD_FLG_ENV_READY;
+	gd->flags |= GD_FLG_ENV_READY | GD_FLG_ENV_DEFAULT;
 }
 
 

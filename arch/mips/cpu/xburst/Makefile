@@ -26,9 +26,30 @@ LIB	= $(obj)lib$(CPU).o
 
 START	= start.o
 SOBJS-y	=
-COBJS-y	= cpu.o timer.o jz_serial.o
+COBJS-y	= jz_serial.o
+ifdef CONFIG_SPL_BUILD
+COBJS-y	+= spl_cpu.o
+ifdef CONFIG_X1600
+COBJS-y += ./x1600/timer.o
+else
+COBJS-y += spl_timer.o
+endif
+else
+COBJS-y	+= cpu.o
+ifdef CONFIG_X1600
+COBJS-y	+= ./x1600/timer.o
+else
+COBJS-y	+= timer.o
+endif
+endif
+COBJS-$(CONFIG_XBURST_TRAPS) += traps.o
+COBJS-$(CONFIG_SPL_OS_BOOT) += os_boot.o
 
-COBJS-$(CONFIG_JZ4740) += jz4740.o
+ifdef	CONFIG_SPL_BUILD
+ifdef	CONFIG_SPL_NO_CPU_SUPPORT_CODE
+START	:=
+endif
+endif
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(SOBJS-y) $(COBJS-y))

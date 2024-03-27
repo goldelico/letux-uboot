@@ -48,6 +48,11 @@ COBJS-$(CONFIG_MXS_SPI) += mxs_spi.o
 COBJS-$(CONFIG_OC_TINY_SPI) += oc_tiny_spi.o
 COBJS-$(CONFIG_OMAP3_SPI) += omap3_spi.o
 COBJS-$(CONFIG_SOFT_SPI) += soft_spi.o
+COBJS-$(CONFIG_INGENIC_SOFT_SPI) += ingenic_soft_spi.o
+ifdef CONFIG_BURNER
+COBJS-$(CONFIG_JZ_SFC) += jz_sf_params.o
+endif
+COBJS-$(CONFIG_JZ_SPI) += jz_spi.o
 COBJS-$(CONFIG_SH_SPI) += sh_spi.o
 COBJS-$(CONFIG_FSL_ESPI) += fsl_espi.o
 COBJS-$(CONFIG_FDT_SPI) += fdt_spi.o

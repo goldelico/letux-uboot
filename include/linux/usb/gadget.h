@@ -482,6 +482,12 @@ static inline void *get_gadget_data(struct usb_gadget *gadget)
 	return gadget->dev.driver_data;
 }
 
+
+#define container_of(ptr, type, member) ({			\
+const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
+(type *)( (char *)__mptr - offsetof(type,member) );})
+
+
 static inline struct usb_gadget *dev_to_usb_gadget(struct device *dev)
 {
 	return container_of(dev, struct usb_gadget, dev);

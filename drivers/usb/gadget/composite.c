@@ -836,6 +836,9 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 		break;
 	default:
 unknown:
+#ifdef CONFIG_BURNER		/*burner vendor reguest use 'index' for other purposes, so intf != (wIndex & 0ff), it's always 0*/
+		intf = 0;
+#endif
 		debug("non-core control req%02x.%02x v%04x i%04x l%d\n",
 			ctrl->bRequestType, ctrl->bRequest,
 			w_value, w_index, w_length);
@@ -875,8 +878,9 @@ unknown:
 		case USB_RECIP_DEVICE:
 			debug("cdev->config->next_interface_id: %d intf: %d\n",
 			       cdev->config->next_interface_id, intf);
-			if (cdev->config->next_interface_id == 1)
+			if (cdev->config->next_interface_id == 1) {
 				f = cdev->config->interface[intf];
+			}
 			break;
 		}
 

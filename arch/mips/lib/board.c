@@ -32,6 +32,7 @@
 #include <nand.h>
 #include <onenand_uboot.h>
 #include <spi.h>
+#include <mmc.h>
 
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
@@ -57,6 +58,8 @@ int __board_early_init_f(void)
 	return 0;
 }
 int board_early_init_f(void)
+	__attribute__((weak, alias("__board_early_init_f")));
+int board_early_init_r(void)
 	__attribute__((weak, alias("__board_early_init_f")));
 
 static int init_func_ram(void)
@@ -129,7 +132,9 @@ init_fnc_t *init_sequence[] = {
 	incaip_set_cpuclk,	/* set cpu clock according to env. variable */
 #endif
 	init_baudrate,		/* initialize baudrate settings */
+#ifndef CONFIG_BURNER
 	serial_init,		/* serial communications setup */
+#endif
 	console_init_f,
 	display_banner,		/* say that we are here */
 	checkboard,
@@ -144,6 +149,7 @@ void board_init_f(ulong bootflag)
 	bd_t *bd;
 	init_fnc_t **init_fnc_ptr;
 	ulong addr, addr_sp, len;
+	ulong addr_param;
 	ulong *s;
 
 	/* Pointer is writable since we allocated a register for it.
@@ -164,6 +170,9 @@ void board_init_f(ulong bootflag)
 	 * relocate the code and continue running from DRAM.
 	 */
 	addr = CONFIG_SYS_SDRAM_BASE + gd->ram_size;
+#ifdef CONFIG_SYS_SDRAM_MAX_TOP
+	addr = MIN(addr, CONFIG_SYS_SDRAM_MAX_TOP);
+#endif
 
 	/* We can reserve some RAM "on top" here.
 	 */
@@ -171,7 +180,17 @@ void board_init_f(ulong bootflag)
 	/* round down to next 4 kB limit.
 	 */
 	addr &= ~(4096 - 1);
-	debug("Top of RAM usable for U-Boot at: %08lx\n", addr);
+	printf("Top of RAM usable for U-Boot at: %08lx\n", addr);
+#ifdef CONFIG_LCD
+#ifdef CONFIG_FB_ADDR
+	gd->fb_base = CONFIG_FB_ADDR;
+#else
+	/* reserve memory for LCD display (always full pages) */
+	addr = lcd_setmem(addr);
+	printf("Reserving %ldk for LCDC at: %08lx\n", len >> 10, addr);
+	gd->fb_base = addr;
+#endif /* CONFIG_FB_ADDR */
+#endif /* CONFIG_LCD */
 
 	/* Reserve memory for U-Boot code, data & bss
 	 * round down to next 16 kB limit
@@ -180,12 +199,15 @@ void board_init_f(ulong bootflag)
 	addr -= len;
 	addr &= ~(16 * 1024 - 1);
 
-	debug("Reserving %ldk for U-Boot at: %08lx\n", len >> 10, addr);
+	printf("Reserving %ldk for U-Boot at: %08lx\n", len >> 10, addr);
 
+	/* Reserve memory for boot params.
+	 */
+	addr_param = addr - CONFIG_SYS_BOOTPARAMS_LEN;
 	 /* Reserve memory for malloc() arena.
 	 */
-	addr_sp = addr - TOTAL_MALLOC_LEN;
-	debug("Reserving %dk for malloc() at: %08lx\n",
+	addr_sp = addr_param - TOTAL_MALLOC_LEN;
+	printf("Reserving %dk for malloc() at: %08lx\n",
 			TOTAL_MALLOC_LEN >> 10, addr_sp);
 
 	/*
@@ -195,20 +217,17 @@ void board_init_f(ulong bootflag)
 	addr_sp -= sizeof(bd_t);
 	bd = (bd_t *)addr_sp;
 	gd->bd = bd;
-	debug("Reserving %zu Bytes for Board Info at: %08lx\n",
+	printf("Reserving %zu Bytes for Board Info at: %08lx\n",
 			sizeof(bd_t), addr_sp);
+
+	bd->bi_boot_params = addr_param;
+	printf("Reserving %dk for boot params() at: %08lx\n",
+			CONFIG_SYS_BOOTPARAMS_LEN >> 10, addr_param);
 
 	addr_sp -= sizeof(gd_t);
 	id = (gd_t *)addr_sp;
-	debug("Reserving %zu Bytes for Global Data at: %08lx\n",
+	printf("Reserving %zu Bytes for Global Data at: %08lx\n",
 			sizeof(gd_t), addr_sp);
-
-	/* Reserve memory for boot params.
-	 */
-	addr_sp -= CONFIG_SYS_BOOTPARAMS_LEN;
-	bd->bi_boot_params = addr_sp;
-	debug("Reserving %dk for boot params() at: %08lx\n",
-			CONFIG_SYS_BOOTPARAMS_LEN >> 10, addr_sp);
 
 	/*
 	 * Finally, we set up a new (bigger) stack.
@@ -222,7 +241,7 @@ void board_init_f(ulong bootflag)
 	*s-- = 0;
 	*s-- = 0;
 	addr_sp = (ulong)s;
-	debug("Stack Pointer at: %08lx\n", addr_sp);
+	printf("Stack Pointer at: %08lx\n", addr_sp);
 
 	/*
 	 * Save local variables to board info struct
@@ -244,7 +263,6 @@ void board_init_f(ulong bootflag)
  * data can be written, BSS has been cleared, the stack size in not
  * that critical any more, etc.
  */
-
 void board_init_r(gd_t *id, ulong dest_addr)
 {
 #ifndef CONFIG_SYS_NO_FLASH
@@ -255,11 +273,17 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	gd = id;
 	gd->flags |= GD_FLG_RELOC;	/* tell others: relocation done */
 
-	debug("Now running in RAM - U-Boot at: %08lx\n", dest_addr);
+	printf("Now running in RAM - U-Boot at: %08lx\n", dest_addr);
 
+#ifdef CONFIG_XBURST_TRAPS
+	traps_init();
+#endif
+	gd->relocaddr = dest_addr;
 	gd->reloc_off = dest_addr - CONFIG_SYS_MONITOR_BASE;
 
 	monitor_flash_len = image_copy_end() - dest_addr;
+
+	board_early_init_r();
 
 	serial_initialize();
 
@@ -287,13 +311,32 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	bd->bi_flashoffset = 0;
 #endif
 
+#if defined(CONFIG_CMD_SFCNAND) && !defined(CONFIG_BURNER)
+	sfc_nand_init();
+#endif
 #ifdef CONFIG_CMD_NAND
 	puts("NAND:  ");
 	nand_init();		/* go init the NAND */
 #endif
+#ifdef CONFIG_CMD_SPINAND
+	spi_nand_init();
+#endif
+
+#ifdef CONFIG_CMD_SFC_NOR
+	sfc_nor_flash_init();
+#endif
+#ifdef CONFIG_CMD_ZM_NAND
+	puts("NAND_ZM:	");
+	nand_zm_init();
+#endif
 
 #if defined(CONFIG_CMD_ONENAND)
 	onenand_init();
+#endif
+
+#ifdef CONFIG_GENERIC_MMC
+	puts("MMC:   ");
+	mmc_initialize(bd);
 #endif
 
 	/* relocate environment function pointers etc. */
@@ -325,6 +368,11 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	puts("ready\n");
 #endif
 
+#ifdef CONFIG_USB_GADGET
+extern void board_usb_init(void);
+	board_usb_init();
+#endif
+
 #if defined(CONFIG_MISC_INIT_R)
 	/* miscellaneous platform dependent initialisations */
 	misc_init_r();
@@ -337,10 +385,13 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	puts("Net:   ");
 	eth_initialize(gd->bd);
 #endif
+#if defined(CONFIG_JZ_SECURE_SUPPORT) && defined(CONFIG_JZ_CKEYAES)
+	/* ckey aes */
+	ckey_aes();
+#endif
 
 	/* main_loop() can return to retry autoboot, if so just run it again. */
 	for (;;)
 		main_loop();
-
 	/* NOTREACHED - no way out of command loop except booting */
 }

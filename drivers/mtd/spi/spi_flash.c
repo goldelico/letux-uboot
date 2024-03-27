@@ -160,7 +160,12 @@ int spi_flash_cmd_erase(struct spi_flash *flash, u32 offset, size_t len)
 	u8 cmd[4];
 	int ret = -1;
 
+#ifdef CONFIG_BURNER
+	erase_size = len;
+#else
 	erase_size = flash->sector_size;
+#endif
+
 	if (offset % erase_size || len % erase_size) {
 		debug("SF: Erase offset/length not multiple of erase size\n");
 		return -1;
@@ -452,6 +457,16 @@ static const struct {
 	struct spi_flash *(*probe) (struct spi_slave *spi, u8 *idcode);
 } flashes[] = {
 	/* Keep it sorted by define name */
+#ifdef CONFIG_SPI_FLASH_INGENIC
+#ifdef CONFIG_SPI_FLASH_INGENIC_NAND
+	{ 0, 0xc8, spi_flash_probe_ingenic_nand, },
+#endif
+	{ 0, 0xe0, spi_flash_probe_ingenic, },
+	{ 0, 0xc2, spi_flash_probe_ingenic, },
+#ifndef CONFIG_SPI_FLASH_INGENIC_NAND
+	{ 0, 0xc8, spi_flash_probe_ingenic, },
+#endif
+#endif
 #ifdef CONFIG_SPI_FLASH_ATMEL
 	{ 0, 0x1f, spi_flash_probe_atmel, },
 #endif
@@ -511,11 +526,20 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 		goto err_claim_bus;
 	}
 
+#ifndef CONFIG_SPI_FLASH_INGENIC_NAND
 	/* Read the ID codes */
 	ret = spi_flash_cmd(spi, CMD_READ_ID, idcode, sizeof(idcode));
 	if (ret)
 		goto err_read_id;
-
+#endif
+#ifdef CONFIG_SPI_FLASH_INGENIC_NAND
+	int cmd[2];
+	cmd[0] = CMD_READ_ID;
+	cmd[1] = 0;
+	ret = spi_flash_cmd_read(spi, &cmd, 2, idcode, sizeof(idcode));
+	if (ret)
+		goto err_read_id;
+#endif
 #ifdef DEBUG
 	printf("SF: Got idcodes\n");
 	print_buffer(0, idcode, 1, sizeof(idcode), 0);
@@ -527,6 +551,13 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 	     ++shift, ++idp)
 		continue;
 
+#ifdef CONFIG_BURNER
+	flash = flashes[0].probe(spi, idp);
+	if (!flash){
+		printf("the flash malloc error\n");
+	}
+
+#else
 	/* search the table for matches in shift and id */
 	for (i = 0; i < ARRAY_SIZE(flashes); ++i)
 		if (flashes[i].shift == shift && flashes[i].idcode == *idp) {
@@ -535,10 +566,13 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 			if (flash)
 				break;
 		}
+#endif
 
 	if (!flash) {
 		printf("SF: Unsupported manufacturer %02x\n", *idp);
 		goto err_manufacturer_probe;
+	}else{
+		printf("the manufacturer %02x\n", *idp);
 	}
 
 #ifdef CONFIG_SPI_FLASH_BAR
@@ -554,9 +588,17 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 		goto err_manufacturer_probe;
 	}
 #endif
+
+
+#ifndef CONFIG_BURNER
+	printf("SF: Detected %s\n", flash->name);
+#endif
+
+#ifdef DEBUG
 	printf("SF: Detected %s with page size ", flash->name);
 	print_size(flash->sector_size, ", total ");
 	print_size(flash->size, "");
+#endif
 	if (flash->memory_map)
 		printf(", mapped at %p", flash->memory_map);
 	puts("\n");

@@ -56,12 +56,49 @@ COBJS-$(CONFIG_VIDEO_SM501) += sm501.o
 COBJS-$(CONFIG_VIDEO_SMI_LYNXEM) += smiLynxEM.o videomodes.o
 COBJS-$(CONFIG_VIDEO_TEGRA) += tegra.o
 COBJS-$(CONFIG_VIDEO_VCXK) += bus_vcxk.o
+COBJS-$(CONFIG_VIDEO_BYD_BM8766U) += jz_lcd/lcd_panel/byd_bm8766u.o
+COBJS-$(CONFIG_VIDEO_BM347WV_F_8991FTGF) += jz_lcd/lcd_panel/byd_8991.o \
+	jz_lcd/lcd_panel/byd_8991_init.o
+COBJS-$(CONFIG_VIDEO_ILI_6122) += jz_lcd/lcd_panel/ili_6122.o
+
+COBJS-$(CONFIG_VIDEO_X163) += jz_lcd/lcd_panel/auo_x163.o \
+				jz_lcd/lcd_panel/write_command_auo_x163.o
+
+COBJS-$(CONFIG_VIDEO_ET017QG1) += jz_epd/epd_panel/ET017QG1/lcd-ET017QG1.o \
+								  jz_epd/epd_panel/ET017QG1/PVI_ET017QC1.o \
+								  jz_epd/epd_panel/ET017QG1/V220_C157_17_WNA331_ET017QC1_CTC.o
+
+COBJS-$(CONFIG_VIDEO_ED060XD1) += jz4775_epd/epd_panel/ED060XD1/lcd-ED060XD1.o  \
+								  jz4775_epd/epd_panel/ED060XD1/PVI_ED060XD1.o  \
+								  jz4775_epd/epd_panel/ED060XD1/PVI110_B114_ED060SC4.o
+COBJS-$(CONFIG_VIDEO_KFM701A_21_1A) += jz_lcd/lcd_panel/kfm701a_21_1a.o
+COBJS-$(CONFIG_VIDEO_BYD_9177AA) += jz_lcd/lcd_panel/byd_9177aa.o
+COBJS-$(CONFIG_VIDEO_TRULY_TFT240240_2_E) += jz_lcd/lcd_panel/truly_tft240240_2_e.o
+COBJS-$(CONFIG_VIDEO_LCD_Y88249) += jz_lcd/lcd_panel/lcd_y88249.o
+COBJS-$(CONFIG_VIDEO_NHD_160128UGC3) += jz_lcd/lcd_panel/nhd_160128ugc.o
+COBJS-$(CONFIG_VIDEO_BOE_TFT320320) += jz_lcd/lcd_panel/boe_tft320320.o
+COBJS-$(CONFIG_VIDEO_EDO_E1392AM1) += jz_lcd/lcd_panel/edo_e1392am1.o
+COBJS-$(CONFIG_VIDEO_LH155) += jz_lcd/lcd_panel/lh155.o
+COBJS-$(CONFIG_VIDEO_SPILCD_RRJ_R108103_GC9203_128x220) += jz_lcd/lcd_panel/spilcd_gc9203.o
+COBJS-$(CONFIG_VIDEO_MA0060) += jz_lcd/lcd_panel/lcd_ma0060.o
+COBJS-$(CONFIG_VIDEO_FW050) += jz_lcd/lcd_panel/lcd_fw050.o
+COBJS-$(CONFIG_VIDEO_ST7789V) += jz_lcd/lcd_panel/lcd_st7798v.o
+COBJS-$(CONFIG_JZ_MIPI_DSI) += jz_lcd/jz_mipi_dsi/jz_mipi_dsi.o jz_lcd/jz_mipi_dsi/jz_mipi_dsi_lowlevel.o jz_lcd/jz_mipi_dsi/jz_mipi_dsih_hal.o \
+				jz_lcd/jz_mipi_dsi/write_command_to_mipi.o
+COBJS-$(CONFIG_VIDEO_JZ4775) += jz_lcd/backlight_pwm.o jz_lcd/jz4775_lcd.o
+COBJS-$(CONFIG_VIDEO_JZ4780) += jz_lcd/backlight_pwm.o jz_lcd/jz4780_lcd.o
+COBJS-$(CONFIG_JZ_LCD_V12) += jz_lcd/backlight_pwm.o jz_lcd/jz_lcd_v12.o
+COBJS-$(CONFIG_JZ_LCD_V13) += jz_lcd/backlight_pwm.o jz_lcd/jz_lcd_v13.o
+COBJS-$(CONFIG_JZ_LCD_V14) += jz_lcd/backlight_pwm.o jz_lcd/jz_lcd_v14.o
+COBJS-$(CONFIG_JZ47xx_EPD) += jz4775_epd/jz4775_epd.o
+COBJS-$(CONFIG_JZ_EPD) += jz_epd/jz_epd_v12.o
 
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 
 all:	$(LIB)
+
 
 $(LIB):	$(obj).depend $(OBJS)
 	$(call cmd_link_o_target, $(OBJS))

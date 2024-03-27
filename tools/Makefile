@@ -21,7 +21,7 @@
 # MA 02111-1307 USA
 #
 
-TOOLSUBDIRS = kernel-doc
+TOOLSUBDIRS = kernel-doc ingenic-tools
 
 #
 # Include this after HOSTOS HOSTARCH check
@@ -130,26 +130,43 @@ RSA_OBJ_FILES-$(CONFIG_FIT_SIGNATURE) += rsa-sign.o
 
 # Generated LCD/video logo
 LOGO_H = $(OBJTREE)/include/bmp_logo.h
+ifndef CONFIG_BATTERYDET_LED
+CHARGE_LOGO_H = $(OBJTREE)/include/charge_logo.h
+endif
 LOGO_DATA_H = $(OBJTREE)/include/bmp_logo_data.h
 LOGO-$(CONFIG_LCD_LOGO) += $(LOGO_H)
+ifndef CONFIG_BATTERYDET_LED
+LOGO-$(CONFIG_CMD_BATTERYDET) += $(CHARGE_LOGO_H)
+endif
 LOGO-$(CONFIG_LCD_LOGO) += $(LOGO_DATA_H)
 LOGO-$(CONFIG_VIDEO_LOGO) += $(LOGO_H)
 LOGO-$(CONFIG_VIDEO_LOGO) += $(LOGO_DATA_H)
 
 # Generic logo
 ifeq ($(LOGO_BMP),)
-LOGO_BMP= logos/denx.bmp
 
 # Use board logo and fallback to vendor
+ifneq ($(wildcard $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).bmp),)
+LOGO_BMP ?= $(TOPDIR)/board/$(BOARDDIR)/logo/$(BOARD).bmp
+endif
 ifneq ($(wildcard logos/$(BOARD).bmp),)
-LOGO_BMP= logos/$(BOARD).bmp
+LOGO_BMP ?= logos/$(BOARD).bmp
 else
 ifneq ($(wildcard logos/$(VENDOR).bmp),)
-LOGO_BMP= logos/$(VENDOR).bmp
+LOGO_BMP ?= logos/$(VENDOR).bmp
 endif
+LOGO_BMP ?= logos/ingenic.bmp
 endif
 
 endif # !LOGO_BMP
+ifeq ($(CHARGE_LOGO_BMP),)
+CHARGE_LOGO_BMP= charge_logo/1.bmp \
+		charge_logo/2.bmp \
+		charge_logo/3.bmp \
+		charge_logo/4.bmp \
+		charge_logo/5.bmp \
+		charge_logo/6.bmp
+endif
 
 # now $(obj) is defined
 HOSTSRCS += $(addprefix $(SRCTREE)/,$(EXT_OBJ_FILES-y:.o=.c))
@@ -292,6 +309,10 @@ $(LOGO_H):	$(obj)bmp_logo $(LOGO_BMP)
 $(LOGO_DATA_H):	$(obj)bmp_logo $(LOGO_BMP)
 	$(obj)./bmp_logo --gen-data $(LOGO_BMP) > $@
 
+ifndef CONFIG_BATTERYDET_LED
+$(CHARGE_LOGO_H) : $(obj)bmp_logo $(CHARGE_LOGO_BMP)
+	$(obj)./bmp_logo  $(CHARGE_LOGO_BMP) > $@
+endif
 #########################################################################
 
 # defines $(obj).depend target

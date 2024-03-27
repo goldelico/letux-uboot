@@ -30,43 +30,33 @@
 #include <asm/cacheops.h>
 #include <asm/reboot.h>
 #include <asm/io.h>
-#include <asm/jz4740.h>
+#include <asm/arch/wdt.h>
 
-#define cache_op(op, addr)		\
-	__asm__ __volatile__(		\
-		".set	push\n"		\
-		".set	noreorder\n"	\
-		".set	mips3\n"	\
-		"cache	%0, %1\n"	\
-		".set	pop\n"		\
-		:			\
-		: "i" (op), "R" (*(unsigned char *)(addr)))
+#include <asm/jz_cache.h>
 
 void __attribute__((weak)) _machine_restart(void)
 {
-	struct jz4740_wdt *wdt = (struct jz4740_wdt *)JZ4740_WDT_BASE;
-	struct jz4740_tcu *tcu = (struct jz4740_tcu *)JZ4740_TCU_BASE;
-	u16 tmp;
+	int time = RTC_FREQ / WDT_DIV * RESET_DELAY_MS / 1000;
 
-	/* wdt_select_extalclk() */
-	tmp = readw(&wdt->tcsr);
-	tmp &= ~(WDT_TCSR_EXT_EN | WDT_TCSR_RTC_EN | WDT_TCSR_PCK_EN);
-	tmp |= WDT_TCSR_EXT_EN;
-	writew(tmp, &wdt->tcsr);
+	if(time > 65535)
+		time = 65535;
 
-	/* wdt_select_clk_div64() */
-	tmp = readw(&wdt->tcsr);
-	tmp &= ~WDT_TCSR_PRESCALE_MASK;
-	tmp |= WDT_TCSR_PRESCALE64,
-	writew(tmp, &wdt->tcsr);
+	writel(TSCR_WDTSC, TCU_BASE + TCU_TSCR);
 
-	writew(100, &wdt->tdr); /* wdt_set_data(100) */
-	writew(0, &wdt->tcnt); /* wdt_set_count(0); */
-	writel(TCU_TSSR_WDTSC, &tcu->tscr); /* tcu_start_wdt_clock */
-	writeb(readb(&wdt->tcer) | WDT_TCER_TCEN, &wdt->tcer); /* wdt start */
+#if (defined(CONFIG_X1600))
+	writel(0, WDT_BASE + WDT_TCNT);
+#endif
+	writel(time, WDT_BASE + WDT_TDR);
+	writel(TCSR_PRESCALE | TCSR_RTC_EN
+#if (defined(CONFIG_X1600))
+			| TCSR_CLRZ
+#endif
+			, WDT_BASE + WDT_TCSR);
+	writel(0,WDT_BASE + WDT_TCER);
 
-	while (1)
-		;
+	printf("reset in %dms", RESET_DELAY_MS);
+	writel(TCER_TCEN,WDT_BASE + WDT_TCER);
+	mdelay(1000);
 }
 
 int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -79,74 +69,35 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 
 void flush_cache(ulong start_addr, ulong size)
 {
-	unsigned long lsize = CONFIG_SYS_CACHELINE_SIZE;
-	unsigned long addr = start_addr & ~(lsize - 1);
-	unsigned long aend = (start_addr + size - 1) & ~(lsize - 1);
-
-	for (; addr <= aend; addr += lsize) {
-		cache_op(HIT_WRITEBACK_INV_D, addr);
-		cache_op(HIT_INVALIDATE_I, addr);
-	}
-}
-
-void flush_dcache_range(ulong start_addr, ulong stop)
-{
-	unsigned long lsize = CONFIG_SYS_CACHELINE_SIZE;
-	unsigned long addr = start_addr & ~(lsize - 1);
-	unsigned long aend = (stop - 1) & ~(lsize - 1);
-
-	for (; addr <= aend; addr += lsize)
-		cache_op(HIT_WRITEBACK_INV_D, addr);
-}
-
-void invalidate_dcache_range(ulong start_addr, ulong stop)
-{
-	unsigned long lsize = CONFIG_SYS_CACHELINE_SIZE;
-	unsigned long addr = start_addr & ~(lsize - 1);
-	unsigned long aend = (stop - 1) & ~(lsize - 1);
-
-	for (; addr <= aend; addr += lsize)
-		cache_op(HIT_INVALIDATE_D, addr);
-}
-
-void flush_icache_all(void)
-{
-	u32 addr, t = 0;
-
-	__asm__ __volatile__("mtc0 $0, $28"); /* Clear Taglo */
-	__asm__ __volatile__("mtc0 $0, $29"); /* Clear TagHi */
-
-	for (addr = CKSEG0; addr < CKSEG0 + CONFIG_SYS_ICACHE_SIZE;
-	     addr += CONFIG_SYS_CACHELINE_SIZE) {
-		cache_op(INDEX_STORE_TAG_I, addr);
+	if(size == 0) {
+		return;
 	}
 
-	/* invalidate btb */
-	__asm__ __volatile__(
-		".set mips32\n\t"
-		"mfc0 %0, $16, 7\n\t"
-		"nop\n\t"
-		"ori %0,2\n\t"
-		"mtc0 %0, $16, 7\n\t"
-		".set mips2\n\t"
-		:
-		: "r" (t));
-}
+	flush_dcache_range(start_addr, start_addr + size);
+	flush_scache_range(start_addr, start_addr + size);
 
-void flush_dcache_all(void)
-{
-	u32 addr;
-
-	for (addr = CKSEG0; addr < CKSEG0 + CONFIG_SYS_DCACHE_SIZE;
-	     addr += CONFIG_SYS_CACHELINE_SIZE) {
-		cache_op(INDEX_WRITEBACK_INV_D, addr);
-	}
-
-	__asm__ __volatile__("sync");
+	flush_icache_range(start_addr, start_addr + size);
 }
 
 void flush_cache_all(void)
 {
-	flush_dcache_all();
-	flush_icache_all();
+	flush_icache_all(); /* invalid icache */
+
+	flush_dcache_all(); /* writeback invalid dcache,  */
+	__asm__ volatile(
+		".set push     \n\t"
+		".set mips32r2 \n\t"
+		"sync          \n\t"
+		".set pop      \n\t"
+		);
+
+
+	flush_scache_all(); /* writeback invalid scache */
+	__asm__ volatile(
+		".set push     \n\t"
+		".set mips32r2 \n\t"
+		"lw $0,0(%0)   \n\t"
+		".set pop      \n\t"
+		::"r" (0xa0000000));
 }
+

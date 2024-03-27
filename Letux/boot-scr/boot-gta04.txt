@@ -1,0 +1,518 @@
+#
+# boot.scr
+#
+# please convert this source into a boot.scr:
+# mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n 'Boot Script' -d boot-gta04.txt boot.scr
+#
+# Boot script for Beagle Hybrid / Panda Hybrid / GTA04 / Neo900
+# Requires 2016.11 or later U-Boot / MLO
+#
+# Author: H. Nikolaus Schaller
+# Copyright Golden Delicious Computers 2010-2017
+# licensed under GPL 2.0
+#
+#
+# NAND Flash addresses (@ 256 MByte/2 GBit)
+#
+# 0x0000 0000	0x0007 ffff	08 0000		512 KB	X-Loader (flash image) - note that the loader must fit into 64k SRAM!
+# 0x0008 0000	0x001a ffff	13 0000		1.3 MB	U-Boot (flash image)
+# 0x001b 0000	0x001b ffff	01 0000		64 KB	boot.scr (written together with u-boot)
+# 0x001c 0000	0x001f ffff	04 0000		256 KB	splash.rgb16z
+# 0x0020 0000	0x0023 ffff	04 0000		256 KB	menu.rgb16z
+# 0x0024 0000	0x0027 ffff	04 0000		256 KB	U-Boot parameters written by saveenv
+# 0x0028 0000	0x0083 ffff	5c 0000		5.7 MB	Kernel (flash image loaded by nandboot)
+# 0x0084 0000	0x0087 ffff	04 0000		256 KB	DTB (flash image loaded by nandboot)
+# 0x0088 0000	0xXfff ffff			>250 MB	file system (e.g. ubifs)
+#
+# This script automatically reflashes if it detects a different version
+# To manually trigger self-flash into NAND from command line:
+#
+# 1. break into U-Boot command line
+# 2.   flash=yes
+# 3.   run bootcmd
+#
+# booting tries to load:
+#    boot script		/boot.scr (FAT) from partition 1, then /boot/boot.scr (EXT) from partition 1, then NAND
+#    splash images		/image.rgb16 (FAT) from partition 1, then /boot/image.rgb16 (EXT) partition 1, then NAND
+#    kernel			on up to 4 partitions /boot/uImage (EXT) or /uImage (FAT) or if none found then NAND
+#    bootargs.scr		on the same paritions /boot/bootargs.scr (EXT) or /bootargs.scr (FAT) -- default is initialized to NAND or SD (if kernel is found)
+#
+
+VERSION=0123456789	# incremented by build script so that we re-initialize the boot environment or reflash x-loader and u-boot
+
+# enable charging so that we can flash and boot with almost empty battery until Linux driver takes over
+charge auto
+
+echo "*** if you boot from NAND don-t worry about error messages when U-Boot tries to read a non-existing MMC ***"
+
+i2c dev 0
+status init
+status set 8	# give fast feedback that U-Boot did start (red power led)
+
+# we have to add an "x" because the test command treats empty string as equal to anything
+
+if test "x${scriptversion}" != "x${VERSION}" || test "x${flash}" = "xyes"
+	then
+
+	# set up default environment
+
+	FDTFILE=${fdtfile}	# save
+	env default -a
+	setenv fdtfile ${FDTFILE}	# restore for later use
+
+	# this setting boots from MMC if available and falls back to NAND
+	# (except for MLO/X-Loader which is located depending on the AUX button)
+	# NOTE: it contains a lot of stuff to stay compatible with older kernels
+
+	echo *** initializing GTA04 environment ***
+
+	setenv mmc		0		# MMC number where this boot.scr is found
+	setenv kernelmmc	0		# MMC number where the rootfs is found by the kernel
+	setenv bootdelay	1
+	setenv imgtempaddr	0x80800000	# address where we load compressed splash image
+	setenv scriptaddr 	0x81800000	# address where we load the boot script
+	setenv fdt_addr_r	0x81c00000	# address where we load the flattened device tree
+	setenv kernel_addr_r	0x82000000	# address where we load the kernel
+	setenv ramdisk_addr_r	0x90000000	# address where we load the initramfs
+	# setenv console	ttyS2,115200n8
+	# for newer kernels with OMAP console (unfortunately U-Boot can't find out)
+	setenv console		ttyO2,115200n8
+	setenv defaultdisplay	lcd
+	setenv bootorder	"1 2 3 4"
+	setenv nand		4		# mtd4: rootfs partition number in nand
+	setenv vram		12M
+	setenv omapfbvram	0:8M,1:4M
+
+	# load boot script from mmc (first FAT partition only) or nand wherever we find it
+	setenv loadbootscript '
+i2c dev 0
+mmc rescan
+if load mmc ${mmc} ${scriptaddr} boot.scr
+then
+  echo did load bootscript from mmc;
+elif ${nand_cmd} read ${scriptaddr} 1b0000 40000
+then
+  echo did load bootscript from nand
+fi'
+
+	# load zipped/uncompressed image from mmc (first FAT partition only) or nand wherever we find it
+	setenv loadimg '
+i2c dev 0
+mmc rescan
+if load mmc ${mmc} ${imgaddr} ${imgfile}.rgb16
+then
+  ;
+elif load mmc ${mmc} ${imgtempaddr} ${imgfile}.rgb16z
+then
+  unzip ${imgtempaddr} ${imgaddr}
+elif ${nand_cmd} read ${imgtempaddr} ${imgnandaddr} 40000
+then
+  unzip ${imgtempaddr} ${imgaddr}
+fi'
+	setenv showimg 'run loadimg; lcm fb ${imgaddr};'
+
+	# predefine default boot arguments (unless overwritten by bootargs.scr)
+	setenv mmcargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${mmcroot} rootfstype=${mmcrootfstype}; echo did set bootargs for mmc'
+	setenv mmcroot "/dev/mmcblk${kernelmmc}p2 rw"
+	setenv mmcrootfstype "ext4,ext3,btrfs rootwait"
+
+	setenv nandargs 'setenv bootargs console=${console} mpurate=${mpurate} mux=${mux} vram=${vram} omapfb.vram=${omapfbvram} omapfb.mode=dvi:${dvimode} omapfb.debug=y omapdss.def_disp=${defaultdisplay} ubi.mtd=${nand} root=${nandroot} rootfstype=${nandrootfstype}; echo did set bootargs for ${nand_cmd}'
+	setenv nandroot "ubi0:gta04-rootfs"
+	setenv nandrootfstype "ubifs"
+
+	# load kernel and boot script from mmc (any of 4 partitions FAT or ext) or nand wherever we find it
+
+	setenv kernelloading 'status set 18'	# orange
+	setenv kernelloaded 'status set 10'	# green
+
+	setenv loadkernel '
+run kernelloading
+i2c dev 0
+mmc rescan
+DONE=0;KERNEL=0;FDT=0
+run nandargs
+echo trying partitions $bootorder
+for p in $bootorder
+do
+  if itest $DONE == 0
+  then
+    if load mmc ${mmc}:${p} ${kernel_addr_r} uImage
+    then
+      echo found kernel /uImage on partition $p
+      setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
+      run mmcargs
+      KERNEL=1;DONE=1
+    elif load mmc ${mmc}:${p} ${kernel_addr_r} /boot/uImage
+    then
+      echo found kernel /boot/uImage on EXT partition $p
+      setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
+      run mmcargs
+      KERNEL=1;DONE=1
+    fi
+    if load mmc ${mmc}:${p} ${imgtempaddr} bootargs.scr
+    then
+      setenv PARTITION $p
+      setenv PARTITIONTYPE FAT
+      source ${imgtempaddr}
+      DONE=1
+    elif load mmc ${mmc}:${p} ${imgtempaddr} /boot/bootargs.scr
+    then
+      setenv PARTITION $p
+      setenv PARTITIONTYPE EXT
+      # set distro-boot expected dynamic variables
+      setenv devtype mmc
+      setenv devnum ${mmc}
+      setenv prefix boot/
+      setenv distro_bootpart $p
+      # fix bootargs - especially root= - before launching bootargs.scr
+      setenv mmcroot "/dev/mmcblk${kernelmmc}p${p}"
+      setenv mmcrootfstype "ext4,ext3,btrfs rootwait"
+      run mmcargs
+      source ${imgtempaddr}
+      DONE=1
+    fi
+    if load mmc ${mmc}:${p} ${fdt_addr_r} ${fdtfile}
+    then
+      FDT=1
+    elif load mmc ${mmc}:${p} ${fdt_addr_r} /boot/${fdtfile}
+    then
+      FDT=1
+    fi
+  fi
+done
+if itest $KERNEL == 0
+then
+  echo fallback to NAND kernel
+  if ${nand_cmd} read ${kernel_addr_r} 280000 5c0000
+  then
+    echo NAND kernel found
+    if ${nand_cmd} read ${fdt_addr_r} 840000 40000
+    then
+      echo NAND DTB found
+      FDT=1
+    else
+      FDT=0
+    fi
+  else
+    status blink
+  fi
+fi
+run kernelloaded'
+
+	# boot with kernel/rootfs from specified source
+	setenv boot '
+if itest $FDT == 1
+then
+  bootm ${kernel_addr_r} - ${fdt_addr_r}
+else
+  bootm ${kernel_addr_r}
+fi'
+	setenv mmcboot '
+if run loadkernel
+then
+  run boot
+fi'
+	setenv nandboot '
+run kernelloading
+if ${nand_cmd} read ${kernel_addr_r} 280000 600000
+then
+  run nandargs
+  run kernelloaded
+  bootm ${kernel_addr_r}
+fi'
+
+	# run the boot script - and fall back to direct kernel boot
+	setenv bootcmd '
+if run loadbootscript
+then
+  run bootscript
+else
+  run mmcboot
+fi'
+	setenv bootscript 'echo Running bootscript ...; source ${scriptaddr}'
+
+# optionally update the boot order if AUX button is pressed after choosing a touch menu entry
+	setenv persistbootorder '
+if status check 1
+then
+  saveenv
+fi'
+
+	# check if we can really flash and determine flash type
+	if nand read ${kernel_addr_r} 280000 4
+	then
+		# we have some nand that can be flashed
+		setenv nand_cmd nand	# nand - command for read/erase/write
+		flash=yes	# trigger flashing
+	elif onenand read ${kernel_addr_r} 280000 4
+	then
+		# we have some onenand that can be flashed
+		setenv nand_cmd onenand	# onenand - command for read/erase/write
+		flash=yes	# trigger flashing
+	else
+		setenv nand_cmd false	# can't flash read/erase/write
+		flash=no
+		echo "can not flash - must always boot from SD card"
+	fi
+
+	# write new script version number permanently
+	setenv scriptversion "${VERSION}"
+
+fi	# test "x${scriptversion}" != "x${VERSION}"
+
+echo *** initializing LCM ***
+if lcm start || test "x${flash}" = "xyes"
+then
+
+	if test "x${flash}" = "xyes"
+	then
+		lcm color ff0000	# will flash - turn screen red
+	else
+		echo *** loading splash from MMC ***
+		setenv imgaddr 80400000
+		setenv imgfile splash
+		setenv imgnandaddr 1c0000
+		run showimg
+	fi
+
+	if test "x${flash}" = "xyes" || test "x${forcemenu}" = "xyes" || status check 1	# we want to flash or AUX button is (still) pressed
+	then
+		if test "x${forcemenu}" = "xyes"	# set forcemenu from user space and it is activated after reboot
+		then	# reset
+			setenv forcemenu
+			saveenv
+		fi
+		echo *** initializing TSC for boot menu ***
+		tsc init # tsc selection will be 0
+		while true
+		do
+			if test "x${flash}" != "xyes"
+			then
+				echo *** loading boot menu image ***
+				setenv imgaddr 80600000
+				setenv imgfile menu
+				setenv imgnandaddr 200000
+				run showimg
+
+				tsc choose 3 3	# 3 columns 3 rows -> value 1 .. 9
+				
+				# restore boot image
+				# setenv imgaddr 80400000
+				# setenv imgfile splash
+				# setenv imgnandaddr 1c0000
+				# run showimg
+			fi
+			
+			if tsc selection 7
+			then
+				lcm color 00ff00	# turn screen green (feedback to touch press)
+				lcm fb 0
+				echo *** LED mirror ***
+				status mirror
+			elif tsc selection 8
+			then
+				lcm color 0000ff	# turn screen blue
+				lcm fb 0
+				echo *** LED blink ***
+				# systest all
+				status blink
+			elif tsc selection 9
+			then
+				echo *** TSC test ***
+				tsc gloop
+			elif tsc selection 99
+			then 
+				lcm color 00ff00	# turn screen green (feedback to touch press)
+				lcm fb 0
+				echo *** LCD boot ***
+				setenv defaultdisplay lcd
+				run mmcboot
+			elif tsc selection 5
+			then
+				lcm color 00ff00	# turn screen green (feedback to touch press)
+				lcm fb 0
+				setenv bootorder ""
+				echo *** NAND boot ***
+				setenv defaultdisplay lcd
+				saveenv
+				run mmcboot
+			elif tsc selection 6
+			then
+				lcm color 555555	# turn screen grey (feedback to touch press)
+				lcm fb 0
+				sleep 1
+				poweroff
+# OLD
+				echo *** DVI boot ***
+				if run loadkernel
+				then
+					setenv bootdelay 10
+					setenv defaultdisplay dvi	# this is not made persistent!
+					setenv dvimode 1024x768MR-16@60
+					lcm backlight 0
+					lcm off
+					lcm power 0
+					run boot
+				fi
+			elif tsc selection 1
+			then 
+				lcm color 00ff00	# turn screen green (feedback to touch press)
+				lcm fb 0
+				echo *** MMC boot partition 1***
+				setenv bootorder "1 2 3 4"
+				echo new boot order $bootorder
+				setenv defaultdisplay lcd
+				run persistbootorder
+				run mmcboot
+			elif tsc selection 2
+			then 
+				lcm color 55ff00	# turn screen yellow (feedback to touch press)
+				lcm fb 0
+				echo *** MMC boot partition 1***
+				setenv bootorder "2 3 4 1"
+				echo new boot order $bootorder
+				setenv defaultdisplay lcd
+				run persistbootorder
+				run mmcboot
+			elif tsc selection 3
+			then 
+				lcm color 00ff55	# turn screen magenta (feedback to touch press)
+				lcm fb 0
+				echo *** MMC boot partition 1***
+				setenv bootorder "3 4 1 2"
+				echo new boot order $bootorder
+				setenv defaultdisplay lcd
+				run persistbootorder
+				run mmcboot
+			elif tsc selection 4
+			then 
+				lcm color 55ff55	# turn screen green (feedback to touch press)
+				lcm fb 0
+				echo *** MMC boot partition 1***
+				setenv bootorder "4 1 2 3"
+				echo new boot order $bootorder
+				setenv defaultdisplay lcd
+				run persistbootorder
+				run mmcboot
+			elif test "x${flash}" = "xyes" || tsc selection 99
+			then 
+				echo *** flashing NAND (${nand_cmd}) ***
+
+				i2c dev 0
+				status set 10
+				mw.b 0x80200000 0xff 0x80000
+				if fatload mmc ${mmc} 0x80200000 MLO.flash
+				then
+					status set 18
+					echo *** flashing Xloader ***
+					# make copies
+					cp.l 0x80200000 0x80220000 20000
+					cp.l 0x80200000 0x80240000 20000
+					cp.l 0x80200000 0x80260000 20000
+#					nand unlock
+#					nandecc hw
+					${nand_cmd} erase 0 80000
+					${nand_cmd} write 0x80200000 0 80000
+					echo *** Xloader flashed ***
+				fi
+				
+				status set 10
+				# the complete u-boot partition goes from 0x80000 to 0x23ffff i.e. 2.3 MByte
+				mw.b 0x80280000 0xff 0x1c0000
+				if fatload mmc ${mmc} 0x80280000 u-boot.img.flash
+				then
+					echo *** flashing U-Boot ***
+					status set 18
+
+					# read&write compressed splash image to nand
+					# share with u-boot partition (ca. 1.25 MByte)
+					# since u-boot is approx 380 kByte
+					# there is room for 614 kByte
+
+					if fatload mmc ${mmc} 0x803b0000 boot.scr
+					then
+						echo *** adding boot.scr ***
+					fi
+
+					if fatload mmc ${mmc} 0x803c0000 splash.rgb16z
+					then
+						echo *** adding splash image ***
+					fi
+
+					if fatload mmc ${mmc} 0x80400000 menu.rgb16z
+					then
+						echo *** adding menu image ***
+					fi
+
+					status set 10
+#					nandecc sw
+					# erase and write full u-boot + splash etc. area
+					${nand_cmd} erase 80000 1c0000
+					${nand_cmd} write 0x80280000 80000 1c0000
+					status set 18
+
+					echo *** write our new environment ***
+					saveenv
+					echo *** U-Boot flashed ***
+				fi
+
+				if test "x$FASTBOOT" = "xyes"
+				then
+					echo "flashing kernel for fast boot (falcon mode)"
+					if run loadkernel
+					then
+						# fixme: adjust parameters
+						spl export bootm ${kernel_addr_r} - ${fdt_addr_r}
+						# somehow get address and size of image
+						# write to nand
+					fi
+
+				else
+					echo please flash kernel and rootfs from Linux
+				fi
+
+				status set 8
+				flash=no	# don't flash again
+				
+				echo
+				echo *********************************
+				echo *** Flashing Done             ***
+				echo *** Device will reboot        ***
+				echo *********************************
+				echo
+				run mmcboot
+				# reset	# resets CPU only but not BootROM boot order!
+				# we simply show the menu
+			else
+				printenv
+				echo *** Could not decode ***
+				status blink
+			fi
+		done
+	else	# default boot w/o menu
+		echo *** booting Linux ***
+		if run loadkernel
+		then 
+#			lcm backlight 0	# switch off before booting (?)
+#			printenv
+			lcm power 0
+			lcm off	# avoid wash-out
+			run boot
+		fi
+	fi
+else	# LCM did not init (e.g. we run without display)
+	echo *** DVI boot ***
+	if run loadkernel
+	then
+		setenv bootdelay 10
+		setenv defaultdisplay dvi
+		setenv dvimode 1024x768MR-16@60
+		run boot
+	fi
+fi
+
+printenv
+echo *** Could not boot ***
+lcm color ff0000
+lcm fb 0
+status blink

@@ -28,7 +28,7 @@
 
 #ifndef _LCD_H_
 #define _LCD_H_
-
+#include <linux/types.h>
 extern char lcd_is_enabled;
 
 extern int lcd_line_length;
@@ -37,6 +37,7 @@ extern struct vidinfo panel_info;
 
 void lcd_ctrl_init(void *lcdbase);
 void lcd_enable(void);
+void lcd_dma_sync(void);
 
 /* setcolreg used in 8bpp/16bpp; initcolregs used in monochrome */
 void lcd_setcolreg(ushort regno, ushort red, ushort green, ushort blue);
@@ -280,6 +281,7 @@ void	lcd_putc(const char c);
 void	lcd_puts(const char *s);
 void	lcd_printf(const char *fmt, ...);
 void	lcd_clear(void);
+void	lcd_clear_black(void);
 int	lcd_display_bitmap(ulong bmp_image, int x, int y);
 
 /**
@@ -348,6 +350,7 @@ int lcd_dt_simplefb_enable_existing_node(void *blob);
 #define LCD_COLOR4	2
 #define LCD_COLOR8	3
 #define LCD_COLOR16	4
+#define LCD_COLOR32	5
 
 /*----------------------------------------------------------------------*/
 #if defined(CONFIG_LCD_INFO_BELOW_LOGO)
@@ -399,13 +402,22 @@ int lcd_dt_simplefb_enable_existing_node(void *blob);
 # define CONSOLE_COLOR_GREY	14
 # define CONSOLE_COLOR_WHITE	15	/* Must remain last / highest	*/
 
-#else
+#elif LCD_BPP == LCD_COLOR16
 
 /*
  * 16bpp color definitions
  */
 # define CONSOLE_COLOR_BLACK	0x0000
 # define CONSOLE_COLOR_WHITE	0xffff	/* Must remain last / highest	*/
+
+#elif LCD_BPP == LCD_COLOR32
+
+/*
+ * 32BPP color definitions
+ */
+# define CONSOLE_COLOR_BLACK	0x00000000
+# define CONSOLE_COLOR_WHITE	0x00ffffff	/* Must remain last / highest	*/
+
 
 #endif /* color definitions */
 

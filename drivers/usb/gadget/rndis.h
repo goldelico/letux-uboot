@@ -25,6 +25,10 @@
  * Usually you do not need to define it. Mostly usable for debugging.
  */
 
+#ifdef CONFIG_USB_ETH_HALT
+#define RNDIS_COMPLETE_SIGNAL_DISCONNECT
+#endif
+
 #define RNDIS_MAXIMUM_FRAME_SIZE	1518
 #define RNDIS_MAX_TOTAL_SIZE		1558
 

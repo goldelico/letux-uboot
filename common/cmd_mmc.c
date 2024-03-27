@@ -25,6 +25,8 @@
 #include <command.h>
 #include <mmc.h>
 
+#define _DEBUG	0
+
 static int curr_device = -1;
 #ifndef CONFIG_GENERIC_MMC
 int do_mmc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -383,7 +385,7 @@ static int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			return 1;
 		}
 
-		printf("\nMMC %s: dev # %d, block # %d, count %d ... ",
+		debug("\nMMC %s: dev # %d, block # %d, count %d ... ",
 				argv[1], curr_device, blk, cnt);
 
 		mmc_init(mmc);
@@ -413,8 +415,9 @@ static int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			BUG();
 		}
 
-		printf("%d blocks %s: %s\n",
+		debug("%d blocks %s: %s\n",
 				n, argv[1], (n == cnt) ? "OK" : "ERROR");
+
 		return (n == cnt) ? 0 : 1;
 	}
 

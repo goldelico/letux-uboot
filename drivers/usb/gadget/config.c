@@ -28,7 +28,7 @@
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
-
+#include <linux/usb/composite.h>
 
 /**
  * usb_descriptor_fillbuf - fill buffer with descriptors
@@ -116,3 +116,57 @@ int usb_gadget_config_buf(
 	cp->bmAttributes |= USB_CONFIG_ATT_ONE;
 	return len;
 }
+
+
+
+struct usb_descriptor_header **
+usb_copy_descriptors(struct usb_descriptor_header **src)
+{
+	struct usb_descriptor_header **tmp;
+	unsigned bytes;
+	unsigned n_desc;
+	void *mem;
+	struct usb_descriptor_header **ret;
+
+	/* count descriptors and their sizes; then add vector size */
+	for (bytes = 0, n_desc = 0, tmp = src; *tmp; tmp++, n_desc++)
+		bytes += (*tmp)->bLength;
+	bytes += (n_desc + 1) * sizeof(*tmp);
+
+	mem = malloc(bytes);
+	if (!mem)
+		return NULL;
+
+	/* fill in pointers starting at "tmp",
+	 * to descriptors copied starting at "mem";
+	 * and return "ret"
+	 */
+	tmp = mem;
+	ret = mem;
+	mem += (n_desc + 1) * sizeof(*tmp);
+	while (*src) {
+		memcpy(mem, *src, (*src)->bLength);
+		*tmp = mem;
+		tmp++;
+		mem += (*src)->bLength;
+		src++;
+	}
+	*tmp = NULL;
+
+	return ret;
+}
+
+int usb_assign_descriptors(struct usb_function *f,
+		struct usb_descriptor_header **fs,
+		struct usb_descriptor_header **hs,
+		struct usb_descriptor_header **ss)
+{
+	struct usb_gadget *g = f->config->cdev->gadget;
+
+	if (hs && gadget_is_dualspeed(g)) {
+		f->hs_descriptors = usb_copy_descriptors(hs);
+	}
+	return 0;
+}
+
+

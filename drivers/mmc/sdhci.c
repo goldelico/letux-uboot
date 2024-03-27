@@ -28,6 +28,10 @@
 #include <malloc.h>
 #include <mmc.h>
 #include <sdhci.h>
+#ifdef CONFIG_SPL_BUILD
+struct mmc jz_mmc_dev[1];
+void* memalign(size_t alignment, size_t bytes) {}
+#endif
 
 void *aligned_buffer;
 
@@ -84,19 +88,19 @@ static int sdhci_transfer_data(struct sdhci_host *host, struct mmc_data *data,
 	unsigned int stat, rdy, mask, timeout, block = 0;
 #ifdef CONFIG_MMC_SDMA
 	unsigned char ctrl;
-	ctrl = sdhci_readl(host, SDHCI_HOST_CONTROL);
+	ctrl = sdhci_readb(host, SDHCI_HOST_CONTROL);
 	ctrl &= ~SDHCI_CTRL_DMA_MASK;
 	ctrl |= SDHCI_CTRL_SDMA;
-	sdhci_writel(host, ctrl, SDHCI_HOST_CONTROL);
+	sdhci_writeb(host, ctrl, SDHCI_HOST_CONTROL);
 #endif
 
-	timeout = 1000000;
+	timeout = 0xffffffff;
 	rdy = SDHCI_INT_SPACE_AVAIL | SDHCI_INT_DATA_AVAIL;
 	mask = SDHCI_DATA_AVAILABLE | SDHCI_SPACE_AVAILABLE;
 	do {
 		stat = sdhci_readl(host, SDHCI_INT_STATUS);
 		if (stat & SDHCI_INT_ERROR) {
-			printf("Error detected in status(0x%X)!\n", stat);
+			printf("[DATA]: Error detected in status(0x%X)!\n", stat);
 			return -1;
 		}
 		if (stat & rdy) {
@@ -113,11 +117,11 @@ static int sdhci_transfer_data(struct sdhci_host *host, struct mmc_data *data,
 			sdhci_writel(host, SDHCI_INT_DMA_END, SDHCI_INT_STATUS);
 			start_addr &= ~(SDHCI_DEFAULT_BOUNDARY_SIZE - 1);
 			start_addr += SDHCI_DEFAULT_BOUNDARY_SIZE;
-			sdhci_writel(host, start_addr, SDHCI_DMA_ADDRESS);
+			sdhci_writel(host, virt_to_phys(start_addr), SDHCI_DMA_ADDRESS);
 		}
 #endif
 		if (timeout-- > 0)
-			udelay(10);
+			udelay(500);
 		else {
 			printf("Transfer data timeout\n");
 			return -1;
@@ -138,7 +142,7 @@ int sdhci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 	unsigned int retry = 10000;
 
 	/* Wait max 10 ms */
-	timeout = 10;
+	timeout = 0xffffffff;
 
 	sdhci_writel(host, SDHCI_INT_ALL_MASK, SDHCI_INT_STATUS);
 	mask = SDHCI_CMD_INHIBIT | SDHCI_DATA_INHIBIT;
@@ -199,7 +203,10 @@ int sdhci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 				memcpy(aligned_buffer, data->src, trans_bytes);
 		}
 
-		sdhci_writel(host, start_addr, SDHCI_DMA_ADDRESS);
+#ifdef CONFIG_SDHCI_TRACE
+		printf("SDMA Transfer addr: 0x%x\n", virt_to_phys(start_addr));
+#endif
+		sdhci_writel(host, virt_to_phys(start_addr), SDHCI_DMA_ADDRESS);
 		mode |= SDHCI_TRNS_DMA;
 #endif
 		sdhci_writew(host, SDHCI_MAKE_BLKSZ(SDHCI_DEFAULT_BOUNDARY_ARG,
@@ -211,15 +218,19 @@ int sdhci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 
 	sdhci_writel(host, cmd->cmdarg, SDHCI_ARGUMENT);
 #ifdef CONFIG_MMC_SDMA
-	flush_cache(start_addr, trans_bytes);
+	if(data != 0)
+		flush_cache(start_addr, trans_bytes);
 #endif
 	sdhci_writew(host, SDHCI_MAKE_CMD(cmd->cmdidx, flags), SDHCI_COMMAND);
 	do {
 		stat = sdhci_readl(host, SDHCI_INT_STATUS);
-		if (stat & SDHCI_INT_ERROR)
+		if (stat & SDHCI_INT_ERROR) {
+			printf("[CMD%d]: Error detected in status(0x%X)!\n", cmd->cmdidx, stat);
 			break;
+		}
 		if (--retry == 0)
 			break;
+		udelay(10);
 	} while ((stat & mask) != mask);
 
 	if (retry == 0) {
@@ -244,6 +255,16 @@ int sdhci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 		udelay(1000);
 
 	stat = sdhci_readl(host, SDHCI_INT_STATUS);
+#ifdef CONFIG_SDHCI_TRACE
+	if(data) {
+		printf("DATA Transfer finish after stat: 0x%x\n", stat);
+		printf("SDHCI_TRANSFER_MODE : 0x%x\n", sdhci_readw(host, SDHCI_TRANSFER_MODE));
+		printf("SDHCI_BLOCK_COUNT   : 0x%x\n", sdhci_readw(host, SDHCI_BLOCK_COUNT));
+		printf("SDHCI_BLOCK_SIZE    : 0x%x\n", sdhci_readw(host, SDHCI_BLOCK_SIZE));
+		printf("SDHCI_CLOCK_CONTROL : 0x%x\n", sdhci_readw(host, SDHCI_CLOCK_CONTROL));
+		printf("SDHCI_HOST_CONTROL1 : 0x%x\n", sdhci_readw(host, SDHCI_HOST_CONTROL));
+	}
+#endif
 	sdhci_writel(host, SDHCI_INT_ALL_MASK, SDHCI_INT_STATUS);
 	if (!ret) {
 		if ((host->quirks & SDHCI_QUIRK_32BIT_DMA_ADDR) &&
@@ -252,8 +273,8 @@ int sdhci_send_command(struct mmc *mmc, struct mmc_cmd *cmd,
 		return 0;
 	}
 
-	sdhci_reset(host, SDHCI_RESET_CMD);
 	sdhci_reset(host, SDHCI_RESET_DATA);
+	sdhci_reset(host, SDHCI_RESET_CMD);
 	if (stat & SDHCI_INT_TIMEOUT)
 		return TIMEOUT;
 	else
@@ -289,8 +310,6 @@ static int sdhci_set_clock(struct mmc *mmc, unsigned int clock)
 	}
 	div >>= 1;
 
-	if (host->set_clock)
-		host->set_clock(host->index, div);
 
 	clk = (div & SDHCI_DIV_MASK) << SDHCI_DIVIDER_SHIFT;
 	clk |= ((div & SDHCI_DIV_HI_MASK) >> SDHCI_DIV_MASK_LEN)
@@ -312,12 +331,17 @@ static int sdhci_set_clock(struct mmc *mmc, unsigned int clock)
 
 	clk |= SDHCI_CLOCK_CARD_EN;
 	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
+
+	if (host->set_clock)
+		host->set_clock(host->index, clock);
+
 	return 0;
 }
 
 static void sdhci_set_power(struct sdhci_host *host, unsigned short power)
 {
 	u8 pwr = 0;
+	int val;
 
 	if (power != (unsigned short)-1) {
 		switch (1 << power) {
@@ -346,6 +370,8 @@ static void sdhci_set_power(struct sdhci_host *host, unsigned short power)
 	pwr |= SDHCI_POWER_ON;
 
 	sdhci_writeb(host, pwr, SDHCI_POWER_CONTROL);
+	if(host->set_voltage)
+		host->set_voltage(host,pwr);
 }
 
 void sdhci_set_ios(struct mmc *mmc)
@@ -425,8 +451,11 @@ int add_sdhci(struct sdhci_host *host, u32 max_clk, u32 min_clk)
 {
 	struct mmc *mmc;
 	unsigned int caps;
-
+#ifdef CONFIG_SPL_BUILD
+	mmc = &jz_mmc_dev;
+#else
 	mmc = malloc(sizeof(struct mmc));
+#endif
 	if (!mmc) {
 		printf("mmc malloc fail!\n");
 		return -1;
@@ -487,8 +516,10 @@ int add_sdhci(struct sdhci_host *host, u32 max_clk, u32 min_clk)
 
 	mmc->host_caps = MMC_MODE_HS | MMC_MODE_HS_52MHz | MMC_MODE_4BIT;
 	if ((host->version & SDHCI_SPEC_VER_MASK) >= SDHCI_SPEC_300) {
+#ifdef CONFIG_SDHCI_CARD_BUSWIDTH_8BIT
 		if (caps & SDHCI_CAN_DO_8BIT)
 			mmc->host_caps |= MMC_MODE_8BIT;
+#endif
 	}
 	if (host->host_caps)
 		mmc->host_caps |= host->host_caps;

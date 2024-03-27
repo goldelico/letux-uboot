@@ -930,6 +930,21 @@ static const void *boot_get_kernel(cmd_tbl_t *cmdtp, int flag, int argc,
 
 	bootstage_mark(BOOTSTAGE_ID_CHECK_MAGIC);
 
+#ifdef CONFIG_JZ_SECURE_SUPPORT
+#ifdef CONFIG_X2000_V12
+#define SC_OFFSET 2048
+	int ret = secure_scboot(img_addr, img_addr + SC_OFFSET);
+	img_addr += SC_OFFSET;
+	if (ret) {
+		printf("Error uboot secure load kernel.\n");
+		hang();
+	}
+#else
+	/* security boot */
+	secure_scboot(img_addr, img_addr);
+#endif
+#endif
+
 	/* copy from dataflash if needed */
 	img_addr = genimg_get_image(img_addr);
 

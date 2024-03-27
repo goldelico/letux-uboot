@@ -11,6 +11,7 @@
 *.a
 *.o
 *.su
+*.exe
 *~
 *.swp
 *.patch
@@ -52,6 +53,17 @@
 #
 # Generated files
 #
+
+/include/charge_logo.h
+/tools/logos/ingenic.rle
+/include/rle_boot_logo.h
+/tools/charge_logo/charg*
+/include/rle_charge_logo.h
+/common/rle_logo.c
+/tools/logos/ingenic.jpg.rle
+common/spl/spl_gpt_tab_data.h
+tools/ingenic-tools/mmc_params
+tools/ingenic-tools/spl_pad_to_block
 
 *.depend*
 /LOG

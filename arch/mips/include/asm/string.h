@@ -10,6 +10,8 @@
 #ifndef _ASM_STRING_H
 #define _ASM_STRING_H
 
+#include <config.h>
+
 /*
  * We don't do inline string functions, since the
  * optimised inline asm versions are not small.
@@ -27,10 +29,14 @@ extern int strcmp(__const__ char *__cs, __const__ char *__ct);
 #undef __HAVE_ARCH_STRNCMP
 extern int strncmp(__const__ char *__cs, __const__ char *__ct, __kernel_size_t __count);
 
-#undef __HAVE_ARCH_MEMSET
+#ifdef CONFIG_USE_ARCH_MEMSET
+#define __HAVE_ARCH_MEMSET
+#endif
 extern void *memset(void *__s, int __c, __kernel_size_t __count);
 
-#undef __HAVE_ARCH_MEMCPY
+#ifdef CONFIG_USE_ARCH_MEMCPY
+#define __HAVE_ARCH_MEMCPY
+#endif
 extern void *memcpy(void *__to, __const__ void *__from, __kernel_size_t __n);
 
 #undef __HAVE_ARCH_MEMMOVE

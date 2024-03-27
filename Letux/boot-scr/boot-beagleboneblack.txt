@@ -1,0 +1,61 @@
+# please convert this source into a boot.scr:
+# mkimage -A arm -O linux -T script -C none -a 0 -e 0 -n 'Boot Script' -d boot-beagleboneblack.txt boot.scr
+
+# assume we have the EXP43 connected
+setenv devicetree am335x-boneblack+letux
+setenv defaultdisplay   lcd
+
+setenv mmc none		# mmc number as seen by u-boot where it looks for kernel
+# we should have some mechanism so that u-boot and kernel use the same mmc numbering scheme or we have problems specifying the right rootfs
+setenv kernelmmc 1	# mmc number as seen by kernel
+setenv PARTITION none	# partition where kernel is found (simulates the partition selection mechanism of the GTA04)
+setenv PARTITIONTYPE FAT
+
+# set default
+#setenv console 'ttyO0,115200n8'
+#setenv mmcargs 'setenv bootargs console=${console} root=/dev/mmcblk${kernelmmc}p2 rootfstype=${mmcrootfstype}'
+
+DONE=0
+for m in 0 1 # scan uSD and eMMC
+do
+	mmc rescan # ${m}
+	for p in 1 2 3 4 # scan all partitions
+	do
+		if itest $DONE == 0
+		then  # try to load device tree and kernel binary
+			echo try mmc ${m}:${p} for kernel + DT
+			if fatload mmc ${m}:${p} 0x80300000 uImage
+			then
+				echo found kernel /uImage on mmc ${m}:${p}
+		#	setenv mmcroot "/dev/mmcblk${kernelmmc}p${p} rw"
+				setenv mmc ${m}
+				setenv PARTITION ${p}
+				fatload mmc ${m}:${p} 0x825f0000 ${devicetree}.dtb
+				DONE=1
+			fi
+		fi
+	done
+done
+
+#run mmcargs
+
+# allow to overwrite boot args (incl. kernelmmc)
+if fatload mmc ${mmc}:${PARTITION} 0x81300000 bootargs.scr
+then
+	source 0x81300000
+fi
+
+# take next partition as rootfs
+if   itest ${PARTITION} == 1; then setenv ROOTPARTITION 2;
+elif itest ${PARTITION} == 2; then setenv ROOTPARTITION 3;
+elif itest ${PARTITION} == 3; then setenv ROOTPARTITION 4;
+elif itest ${PARTITION} == 4; then setenv ROOTPARTITION 5;
+fi
+
+part uuid mmc ${mmc}:${ROOTPARTITION} uuid
+setenv mmcroot PARTUUID=${uuid}
+
+setenv bootargs "console=${console} root=${mmcroot} rootfstype=${mmcrootfstype}"
+
+setenv fdt_high 0x84000000
+bootm 0x80300000 - 0x825f0000

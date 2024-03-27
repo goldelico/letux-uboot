@@ -1,6 +1,8 @@
 /*
- *  Copyright (c) 2006
- *  Ingenic Semiconductor, <jlwei@ingenic.cn>
+ * Timer for JZ4775, JZ4780
+ *
+ * Copyright (c) 2013 Imagination Technologies
+ * Author: Paul Burton <paul.burton@imgtec.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -20,142 +22,115 @@
 
 #include <config.h>
 #include <common.h>
+#include <div64.h>
 #include <asm/io.h>
-
-#include <asm/jz4740.h>
-
-#define TIMER_CHAN  0
-#define TIMER_FDATA 0xffff  /* Timer full data value */
+#include <asm/mipsregs.h>
+#include <asm/arch/ost.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static struct jz4740_tcu *tcu = (struct jz4740_tcu *)JZ4740_TCU_BASE;
+unsigned int multiple __attribute__ ((section(".data")));
 
-void reset_timer_masked(void)
+#ifdef CONFIG_X1000
+static inline uint32_t ost_readl(uint32_t off)
 {
-	/* reset time */
-	gd->arch.lastinc = readl(&tcu->tcnt0);
-	gd->arch.tbl = 0;
+	return readl((void __iomem *)OST_BASE + off);
 }
 
-ulong get_timer_masked(void)
+static inline void ost_writel(uint32_t val, uint32_t off)
 {
-	ulong now = readl(&tcu->tcnt0);
-
-	if (gd->arch.lastinc <= now)
-		gd->arch.tbl += now - gd->arch.lastinc; /* normal mode */
-	else {
-		/* we have an overflow ... */
-		gd->arch.tbl += TIMER_FDATA + now - gd->arch.lastinc;
-	}
-
-	gd->arch.lastinc = now;
-
-	return gd->arch.tbl;
+	writel(val, (void __iomem *)OST_BASE + off);
 }
 
-void udelay_masked(unsigned long usec)
-{
-	ulong tmo;
-	ulong endtime;
-	signed long diff;
-
-	/* normalize */
-	if (usec >= 1000) {
-		tmo = usec / 1000;
-		tmo *= CONFIG_SYS_HZ;
-		tmo /= 1000;
-	} else {
-		if (usec > 1) {
-			tmo = usec * CONFIG_SYS_HZ;
-			tmo /= 1000*1000;
-		} else
-			tmo = 1;
-	}
-
-	endtime = get_timer_masked() + tmo;
-
-	do {
-		ulong now = get_timer_masked();
-		diff = endtime - now;
-	} while (diff >= 0);
-}
-
+#define USEC_IN_1SEC 1000000
 int timer_init(void)
 {
-	writel(TCU_TCSR_PRESCALE256 | TCU_TCSR_EXT_EN, &tcu->tcsr0);
+	multiple = CONFIG_SYS_EXTAL / USEC_IN_1SEC / OST_DIV_16;
 
-	writel(0, &tcu->tcnt0);
-	writel(0, &tcu->tdhr0);
-	writel(TIMER_FDATA, &tcu->tdfr0);
+	reset_timer();
 
-	/* mask irqs */
-	writel((1 << TIMER_CHAN) | (1 << (TIMER_CHAN + 16)), &tcu->tmsr);
-	writel(1 << TIMER_CHAN, &tcu->tscr); /* enable timer clock */
-	writeb(1 << TIMER_CHAN, &tcu->tesr); /* start counting up */
+	ost_writel(OSTCSR_PRESCALE(OST_DIV_16, OSTCSR_PRESCALE2), OSTCCR);
+	ost_writel(OST2CLR, OSTCR);
+	ost_writel(OST2ENS, OSTESR);
+	return 0;
+}
 
-	gd->arch.lastinc = 0;
-	gd->arch.tbl = 0;
+void reset_timer(void)
+{
+	ost_writel(0, OST2CNTH);
+	ost_writel(0, OST2CNTL);
+}
+
+static uint64_t get_timer64(void)
+{
+	uint32_t low = ost_readl(OST2CNTL);
+	uint32_t high = ost_readl(OSTCNT2HBUF);
+	return ((uint64_t)high << 32) | low;
+}
+#else
+static uint32_t tcu_readl(uint32_t off)
+{
+	return readl((void __iomem *)TCU_BASE + off);
+}
+
+static void tcu_writew(uint16_t val, uint32_t off)
+{
+	writew(val, (void __iomem *)TCU_BASE + off);
+}
+
+static void tcu_writel(uint32_t val, uint32_t off)
+{
+	writel(val, (void __iomem *)TCU_BASE + off);
+}
+
+#define USEC_IN_1SEC 1000000
+int timer_init(void)
+{
+#ifdef CONFIG_BURNER
+	multiple = gd->arch.gi->extal / USEC_IN_1SEC / OST_DIV;
+#else
+	multiple = CONFIG_SYS_EXTAL / USEC_IN_1SEC / OST_DIV;
+#endif
+
+	reset_timer();
+	tcu_writel(OSTCSR_CNT_MD | OSTCSR_PRESCALE | OSTCSR_EXT_EN, TCU_OSTCSR);
+	tcu_writew(TER_OSTEN, TCU_TESR);
 
 	return 0;
 }
 
 void reset_timer(void)
 {
-	reset_timer_masked();
+	tcu_writel(0, TCU_OSTCNTH);
+	tcu_writel(0, TCU_OSTCNTL);
+	tcu_writel(0, TCU_OSTDR);
+}
+
+static uint64_t get_timer64(void)
+{
+	uint32_t low = tcu_readl(TCU_OSTCNTL);
+	uint32_t high = tcu_readl(TCU_OSTCNTHBUF);
+	return ((uint64_t)high << 32) | low;
+}
+#endif
+
+void __udelay(unsigned long usec)
+{
+	/* OST count increments at 3MHz */
+	uint64_t end = get_timer64() + ((uint64_t)usec * multiple);
+	while (get_timer64() < end);
 }
 
 ulong get_timer(ulong base)
 {
-	return get_timer_masked() - base;
+	return lldiv(get_timer64(), (USEC_IN_1SEC/CONFIG_SYS_HZ) * multiple) - base;
 }
 
-void set_timer(ulong t)
-{
-	gd->arch.tbl = t;
-}
-
-void __udelay(unsigned long usec)
-{
-	ulong tmo, tmp;
-
-	/* normalize */
-	if (usec >= 1000) {
-		tmo = usec / 1000;
-		tmo *= CONFIG_SYS_HZ;
-		tmo /= 1000;
-	} else {
-		if (usec >= 1) {
-			tmo = usec * CONFIG_SYS_HZ;
-			tmo /= 1000 * 1000;
-		} else
-			tmo = 1;
-	}
-
-	/* check for rollover during this delay */
-	tmp = get_timer(0);
-	if ((tmp + tmo) < tmp)
-		reset_timer_masked();  /* timer would roll over */
-	else
-		tmo += tmp;
-
-	while (get_timer_masked() < tmo)
-		;
-}
-
-/*
- * This function is derived from PowerPC code (read timebase as long long).
- * On MIPS it just returns the timer value.
- */
 unsigned long long get_ticks(void)
 {
-	return get_timer(0);
+	return get_timer64();
 }
 
-/*
- * This function is derived from PowerPC code (timebase clock frequency).
- * On MIPS it returns the number of timer ticks per second.
- */
 ulong get_tbclk(void)
 {
 	return CONFIG_SYS_HZ;

@@ -156,6 +156,12 @@
 #define gadget_is_fotg210(g)        0
 #endif
 
+#if defined(CONFIG_USB_JZ_DWC2_UDC) || defined(CONFIG_USB_JZ_DWC2_UDC_V1_1)
+#define gadget_is_jz_dwc2(g)	(!strcmp("jz_dwc2_udc_v1.1", (g)->name) || !strcmp("jz_dwc2_udc", (g)->name))
+#else
+#define gadget_is_jz_dwc2(g)	0
+#endif
+
 /*
  * CONFIG_USB_GADGET_SX2
  * CONFIG_USB_GADGET_AU1X00
@@ -223,5 +229,7 @@ static inline int usb_gadget_controller_number(struct usb_gadget *gadget)
 		return 0x21;
 	else if (gadget_is_fotg210(gadget))
 		return 0x22;
+	else if (gadget_is_jz_dwc2(gadget))
+		return 0x23;
 	return -ENOENT;
 }

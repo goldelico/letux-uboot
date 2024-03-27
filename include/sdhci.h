@@ -256,10 +256,11 @@ struct sdhci_host {
 	struct mmc *mmc;
 	const struct sdhci_ops *ops;
 	int index;
-
+	void (*set_voltage)(struct sdhci_host *host,int pwr);
 	void (*set_control_reg)(struct sdhci_host *host);
 	void (*set_clock)(int dev_index, unsigned int div);
 	uint	voltages;
+	unsigned int sdr_pin;
 };
 
 #ifdef CONFIG_MMC_SDHCI_IO_ACCESSORS

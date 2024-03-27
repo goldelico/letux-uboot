@@ -53,6 +53,11 @@ $(obj).depend:	$(src)Makefile $(TOPDIR)/config.mk $(DEPS) $(OTHER_SRCS) \
 MAKE_DEPEND = $(CC) -M $(CPPFLAGS) $(EXTRA_CPPFLAGS_DEP) \
 		-MQ $(addsuffix .o,$(obj)$(basename $<)) $< >$@
 
+ifneq ($(OBJTREE),$(SRCTREE))
+# mkdir for COBJS-y += dir/file.o
+_dummy := $(patsubst %/,%,$(dir $(OBJS)))
+_dummy := $(foreach d,$(_dummy), $(shell [ -d $(d) ] || mkdir -p $(d)))
+endif
 
 $(obj).depend.%:	%.c
 	$(MAKE_DEPEND)

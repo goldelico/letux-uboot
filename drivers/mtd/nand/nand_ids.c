@@ -23,7 +23,9 @@
 *	512	512 Byte page size
 */
 const struct nand_flash_dev nand_flash_ids[] = {
-
+#ifdef CONFIG_JZ_SPI_NANDFLASH
+	{"SPI-NAND 256MiB 3,3V 8-bit",	0xf2, 2048, 256, 0x20000, 0},
+#endif
 #ifdef CONFIG_MTD_NAND_MUSEUM_IDS
 	{"NAND 1MiB 5V 8-bit",		0x6e, 256, 1, 0x1000, 0},
 	{"NAND 2MiB 5V 8-bit",		0x64, 256, 2, 0x1000, 0},
@@ -160,6 +162,7 @@ const struct nand_flash_dev nand_flash_ids[] = {
 	{"AND 128MiB 3,3V 8-bit",	0x01, 2048, 128, 0x4000,
 	 NAND_IS_AND | NAND_4PAGE_ARRAY | BBT_AUTO_REFRESH},
 
+	{"NAND 128MiB 3,3V 8-bit",	0xF8, 2048, 64, 0, LP_OPTIONS16},
 	{NULL,}
 };
 
@@ -178,6 +181,10 @@ const struct nand_manufacturers nand_manuf_ids[] = {
 	{NAND_MFR_AMD, "AMD/Spansion"},
 	{NAND_MFR_MACRONIX, "Macronix"},
 	{NAND_MFR_EON, "Eon"},
+	{NAND_MFR_DOSILICON, "Dosilicon"},
+#ifdef CONFIG_JZ_SPI_NANDFLASH
+	{NAND_SPI_GIGA, "spi-nand-giga"},
+#endif
 	{0x0, "Unknown"}
 };
 

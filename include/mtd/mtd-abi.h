@@ -154,7 +154,8 @@ struct nand_oobfree {
 	uint32_t offset;
 	uint32_t length;
 };
-
+#if 1
+#define MTD_MAX_ECCPOS_ENTRIES	640
 #define MTD_MAX_OOBFREE_ENTRIES	8
 /*
  * ECC layout control structure. Exported to userspace for
@@ -162,11 +163,12 @@ struct nand_oobfree {
  */
 struct nand_ecclayout {
 	uint32_t eccbytes;
-	uint32_t eccpos[128];
+	uint32_t eccpos[MTD_MAX_ECCPOS_ENTRIES];
+	//uint32_t eccpos[128];
 	uint32_t oobavail;
 	struct nand_oobfree oobfree[MTD_MAX_OOBFREE_ENTRIES];
 };
-
+#endif
 /**
  * struct mtd_ecc_stats - error correction stats
  *

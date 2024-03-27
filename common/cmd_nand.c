@@ -446,8 +446,26 @@ static void adjust_size_for_badblocks(loff_t *size, loff_t offset, int dev)
 	if (badblocks) {
 		*size -= badblocks * nand->erasesize;
 		printf("size adjusted to 0x%llx (%d bad blocks)\n",
-		       (unsigned long long)*size, badblocks);
+				(unsigned long long)*size, badblocks);
 	}
+}
+
+static void adjust_off_for_badblocks(loff_t *off, int dev)
+{
+	nand_info_t *nand = &nand_info[dev];
+	loff_t off_align = *off & (~((1ULL << (ffs(nand->erasesize) - 1)) - 1ULL));
+	loff_t start = ((8*128*nand->writesize) + nand->erasesize - 1) / nand->erasesize;
+	asm volatile ("nop\n\t");
+	start *= nand->erasesize;
+	for (; start < off_align; start += nand->erasesize) {
+		if (nand_block_isbad(nand, start)) {
+			printf("0x%llx is bad block\n", start);
+			*off += nand->erasesize;
+			off_align += nand->erasesize;
+		}
+	}
+	printf("off adjust to 0x%llx\n", *off);
+	return;
 }
 
 static int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -667,6 +685,8 @@ static int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 						&off, &size, &maxsize) != 0)
 				return 1;
 
+			if (s && !strcmp(s, ".skip"))
+				adjust_off_for_badblocks(&off, dev);
 			/* size is unspecified */
 			if (argc < 5)
 				adjust_size_for_badblocks(&size, off, dev);
@@ -674,7 +694,7 @@ static int do_nand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		}
 
 		if (!s || !strcmp(s, ".jffs2") ||
-		    !strcmp(s, ".e") || !strcmp(s, ".i")) {
+		    !strcmp(s, ".e") || !strcmp(s, ".i") || !strcmp(s, ".skip")) {
 			if (read)
 				ret = nand_read_skip_bad(nand, off, &rwsize,
 							 NULL, maxsize,

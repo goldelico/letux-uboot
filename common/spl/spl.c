@@ -32,6 +32,8 @@
 #include <image.h>
 #include <malloc.h>
 #include <linux/compiler.h>
+#include <regulator.h>
+#include "spl_rtos_argument.h"
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -77,6 +79,13 @@ __weak void spl_board_prepare_for_linux(void)
 	/* Nothing to do! */
 }
 
+__weak char* spl_board_process_bootargs(char *arg)
+{
+	return arg;
+}
+
+extern char* spl_board_process_mem_bootargs(char *arg);
+
 void spl_parse_image_header(const struct image_header *header)
 {
 	u32 header_size = sizeof(struct image_header);
@@ -92,9 +101,9 @@ void spl_parse_image_header(const struct image_header *header)
 			spl_image.entry_point = image_get_ep(header);
 			spl_image.size = image_get_data_size(header);
 		} else {
-			spl_image.entry_point = image_get_load(header);
+			spl_image.entry_point = image_get_ep(header);
 			/* Load including the header */
-			spl_image.load_addr = spl_image.entry_point -
+			spl_image.load_addr = image_get_load(header) -
 				header_size;
 			spl_image.size = image_get_data_size(header) +
 				header_size;
@@ -144,9 +153,13 @@ static void spl_ram_load_image(void)
 }
 #endif
 
+extern char* spl_sfc_nand_load_image(void);
+extern char* spl_sfc_nor_load_image(void);
+
 void board_init_r(gd_t *dummy1, ulong dummy2)
 {
 	u32 boot_device;
+	char *cmdargs = NULL;
 	debug(">>spl:board_init_r()\n");
 
 #ifdef CONFIG_SYS_SPL_MALLOC_START
@@ -165,23 +178,25 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 #ifdef CONFIG_SPL_BOARD_INIT
 	spl_board_init();
 #endif
-
 	boot_device = spl_boot_device();
 	debug("boot device - %d\n", boot_device);
+#ifdef CONFIG_PALLADIUM
+	spl_board_prepare_for_linux();
+#endif
 	switch (boot_device) {
 #ifdef CONFIG_SPL_RAM_DEVICE
 	case BOOT_DEVICE_RAM:
 		spl_ram_load_image();
 		break;
 #endif
-#ifdef CONFIG_SPL_MMC_SUPPORT
+#if defined(CONFIG_SPL_MMC_SUPPORT) || defined(CONFIG_SPL_JZMMC_SUPPORT)
 	case BOOT_DEVICE_MMC1:
 	case BOOT_DEVICE_MMC2:
 	case BOOT_DEVICE_MMC2_2:
-		spl_mmc_load_image();
+		cmdargs = spl_mmc_load_image();
 		break;
 #endif
-#ifdef CONFIG_SPL_NAND_SUPPORT
+#if defined(CONFIG_SPL_NAND_SUPPORT) || defined(CONFIG_JZ_NAND_MGR)
 	case BOOT_DEVICE_NAND:
 		spl_nand_load_image();
 		break;
@@ -206,6 +221,24 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		spl_spi_load_image();
 		break;
 #endif
+
+#ifdef CONFIG_SPL_SPI_NAND
+	case BOOT_DEVICE_SPI_NAND:
+		spl_spi_nand_load_image();
+		break;
+#endif
+#ifdef CONFIG_SPL_SFC_NOR
+	case BOOT_DEVICE_SFC_NOR:
+		cmdargs = spl_sfc_nor_load_image();
+		break;
+#endif
+
+#ifdef CONFIG_SPL_SFC_NAND
+	case BOOT_DEVICE_SFC_NAND:
+		cmdargs = spl_sfc_nand_load_image();
+		break;
+#endif
+
 #ifdef CONFIG_SPL_ETH_SUPPORT
 	case BOOT_DEVICE_CPGMAC:
 #ifdef CONFIG_SPL_ETH_DEVICE
@@ -225,6 +258,13 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		hang();
 	}
 
+#ifdef CONFIG_SPL_RTOS_BOOT
+	/* RTOS只完成引导,但没有启动 */
+	if (spl_rtos_get_spl_image_info()) {
+		memcpy(&spl_image, spl_rtos_get_spl_image_info(), sizeof(struct rtos_boot_os_args) );
+	}
+#endif
+
 	switch (spl_image.os) {
 	case IH_OS_U_BOOT:
 		debug("Jumping to U-Boot\n");
@@ -233,11 +273,19 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	case IH_OS_LINUX:
 		debug("Jumping to Linux\n");
 		spl_board_prepare_for_linux();
-		jump_to_image_linux((void *)CONFIG_SYS_SPL_ARGS_ADDR);
+
+		cmdargs = cmdargs ? cmdargs : CONFIG_SYS_SPL_ARGS_ADDR;
+		cmdargs = spl_board_process_bootargs(cmdargs);
+#ifdef CONFIG_SPL_AUTO_PROBE_ARGS_MEM
+		cmdargs = spl_board_process_mem_bootargs(cmdargs);
+#endif
+		debug("get cmdargs: %s.\n", cmdargs);
+		jump_to_image_linux((void *)cmdargs);
 #endif
 	default:
 		debug("Unsupported OS image.. Jumping nevertheless..\n");
 	}
+
 	jump_to_image_no_args(&spl_image);
 }
 
@@ -248,8 +296,14 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 void preloader_console_init(void)
 {
 	gd->bd = &bdata;
+#ifndef CONFIG_BURNER
 	gd->baudrate = CONFIG_BAUDRATE;
-
+#else
+	gd->baudrate = gd->arch.gi->baud_rate;
+#endif
+#ifdef CONFIG_PALLADIUM
+	gd->baudrate = 3750000;
+#endif
 	serial_init();		/* serial communications setup */
 
 	gd->have_console = 1;
@@ -258,5 +312,18 @@ void preloader_console_init(void)
 			U_BOOT_TIME ")\n");
 #ifdef CONFIG_SPL_DISPLAY_PRINT
 	spl_display_print();
+#endif
+}
+
+void spl_regulator_set(void)
+{
+#ifdef CONFIG_SPL_CORE_VOLTAGE
+	spl_regulator_init();
+	debug("Set core voltage:%dmv\n", CONFIG_SPL_CORE_VOLTAGE);
+	spl_regulator_set_voltage(REGULATOR_CORE, CONFIG_SPL_CORE_VOLTAGE);
+#endif
+#ifdef CONFIG_SPL_MEM_VOLTAGE
+	debug("Set mem voltage:%dmv\n", CONFIG_SPL_MEM_VOLTAGE);
+	spl_regulator_set_voltage(REGULATOR_MEM, CONFIG_SPL_MEM_VOLTAGE);
 #endif
 }

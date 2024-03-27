@@ -44,6 +44,7 @@
  *
  * For each transfer (except "Interrupt") we wait for completion.
  */
+
 #include <common.h>
 #include <command.h>
 #include <asm/processor.h>
@@ -52,12 +53,14 @@
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>
 
+#include <malloc.h>
+
 #include <usb.h>
 #ifdef CONFIG_4xx
 #include <asm/4xx_pci.h>
 #endif
 
-#define USB_BUFSIZ	512
+#define USB_BUFSIZ	1024
 
 static struct usb_device usb_dev[USB_MAX_DEVICE];
 static int dev_index;
@@ -178,6 +181,12 @@ int usb_submit_int_msg(struct usb_device *dev, unsigned long pipe,
 	return submit_int_msg(dev, pipe, buffer, transfer_len, interval);
 }
 
+int usb_submit_isoc_msg(struct usb_device *dev, unsigned long pipe,
+			void *buffer, int transfer_len, int interval)
+{
+	return submit_isoc_msg(dev, pipe, buffer, transfer_len, interval);
+}
+
 /*
  * submits a control message and waits for comletion (at least timeout * 1ms)
  * If timeout is 0, we don't wait for completion (used as example to set and
@@ -275,6 +284,43 @@ int usb_maxpacket(struct usb_device *dev, unsigned long pipe)
 		return dev->epmaxpacketin[((pipe>>15) & 0xf)];
 }
 
+void usb_set_maxpacket_ep_2(struct usb_device *dev, int ifnum, struct usb_host_endpoint *endpoint)
+{
+	int b;
+	struct usb_endpoint_descriptor *ep;
+	u16 ep_wMaxPacketSize;
+
+	ep = &endpoint->desc;
+	b = ep->bEndpointAddress & USB_ENDPOINT_NUMBER_MASK;
+	ep_wMaxPacketSize = get_unaligned(&ep->wMaxPacketSize);
+
+	if ((ep->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+						USB_ENDPOINT_XFER_CONTROL) {
+		/* Control => bidirectional */
+		dev->epmaxpacketout[b] = ep_wMaxPacketSize;
+		dev->epmaxpacketin[b] = ep_wMaxPacketSize;
+		debug("##Control EP epmaxpacketout/in[%d] = %d\n",
+		      b, dev->epmaxpacketin[b]);
+	} else {
+		if ((ep->bEndpointAddress & 0x80) == 0) {
+			/* OUT Endpoint */
+			if (ep_wMaxPacketSize > dev->epmaxpacketout[b]) {
+				dev->epmaxpacketout[b] = ep_wMaxPacketSize;
+				debug("##EP epmaxpacketout[%d] = %d\n",
+				      b, dev->epmaxpacketout[b]);
+			}
+		} else {
+			/* IN Endpoint */
+			if (ep_wMaxPacketSize > dev->epmaxpacketin[b]) {
+				dev->epmaxpacketin[b] = ep_wMaxPacketSize;
+				debug("##EP epmaxpacketin[%d] = %d\n",
+				      b, dev->epmaxpacketin[b]);
+			}
+		} /* if out */
+	} /* if control */
+
+}
+
 /*
  * The routine usb_set_maxpacket_ep() is extracted from the loop of routine
  * usb_set_maxpacket(), because the optimizer of GCC 4.x chokes on this routine
@@ -346,13 +392,14 @@ static int usb_parse_config(struct usb_device *dev,
 			unsigned char *buffer, int cfgno)
 {
 	struct usb_descriptor_header *head;
-	int index, ifno, epno, curr_if_num;
+	int index, ifno, epno, curr_if_num, iad_num;
 	u16 ep_wMaxPacketSize;
 	struct usb_interface *if_desc = NULL;
 
 	ifno = -1;
 	epno = -1;
 	curr_if_num = -1;
+	iad_num = 0;
 
 	dev->configno = cfgno;
 	head = (struct usb_descriptor_header *) &buffer[0];
@@ -366,8 +413,7 @@ static int usb_parse_config(struct usb_device *dev,
 	dev->config.no_of_if = 0;
 
 	index = dev->config.desc.bLength;
-	/* Ok the first entry must be a configuration entry,
-	 * now process the others */
+
 	head = (struct usb_descriptor_header *) &buffer[index];
 	while (index + 1 < dev->config.desc.wTotalLength) {
 		switch (head->bDescriptorType) {
@@ -391,6 +437,16 @@ static int usb_parse_config(struct usb_device *dev,
 				}
 			}
 			break;
+
+		case USB_DT_INTERFACE_ASSOCIATION:
+			{
+			struct usb_interface_assoc_descriptor *d = NULL;
+			d = &dev->config.if_assoc[iad_num];
+			memcpy(d, &buffer[index], buffer[index]);
+			iad_num ++;
+			}
+			break;
+
 		case USB_DT_ENDPOINT:
 			epno = dev->config.if_desc[ifno].no_of_ep;
 			if_desc = &dev->config.if_desc[ifno];
@@ -414,6 +470,7 @@ static int usb_parse_config(struct usb_device *dev,
 			memcpy(&if_desc->ss_ep_comp_desc[epno],
 				&buffer[index], buffer[index]);
 			break;
+
 		default:
 			if (head->bLength == 0)
 				return 1;
@@ -436,6 +493,327 @@ static int usb_parse_config(struct usb_device *dev,
 		index += head->bLength;
 		head = (struct usb_descriptor_header *)&buffer[index];
 	}
+
+	return 1;
+}
+
+static void dump_device_descriptor(struct usb_device_descriptor *d, int l)
+{
+	debug("usb device descriptor \n");
+	debug("\tbLength %2.2x\n", d->bLength);
+	debug("\tbDescriptorType %2.2x\n", d->bDescriptorType);
+	debug("\tbcdUSB %4.4x\n", d->bcdUSB);
+	debug("\tbDeviceClass %2.2x\n", d->bDeviceClass);
+	debug("\tbDeviceSubClass %2.2x\n", d->bDeviceSubClass);
+	debug("\tbDeviceProtocol %2.2x\n", d->bDeviceProtocol);
+	debug("\tbMaxPacketSize0 %2.2x\n", d->bMaxPacketSize0);
+	debug("\tidVendor %4.4x\n", d->idVendor);
+	debug("\tidProduct %4.4x\n", d->idProduct);
+	debug("\tbcdDevice %4.4x\n", d->bcdDevice);
+	debug("\tiManufacturer %2.2x\n", d->iManufacturer);
+	debug("\tiProduct %2.2x\n", d->iProduct);
+	debug("\tiSerialNumber %2.2x\n", d->iSerialNumber);
+	debug("\tbNumConfigurations %2.2x\n", d->bNumConfigurations);
+
+}
+
+static void dump_config_descriptor(struct usb_config_descriptor *d, int l)
+{
+	char level[4] = {'\0', '\0', '\0', '\0'};
+	int i;
+	for(i = 0; i < l; i++) {
+		level[i] = '\t';
+	}
+
+	debug("========\n");
+	debug("%susb config descriptor \n", level);
+	debug("%s\tbLength %d\n", level, d->bLength);
+	debug("%s\tbDescriptorType %d\n", level, d->bDescriptorType);
+	debug("%s\twTotalLength %d\n", level, d->wTotalLength);
+	debug("%s\tbNumInterfaces %d\n", level, d->bNumInterfaces);
+	/*TODO: add more.*/
+}
+
+static void dump_interface_descriptor(struct usb_interface_descriptor *d, int l)
+{
+	char level[4] = {'\0', '\0', '\0', '\0'};
+	int i;
+	for(i = 0; i < l; i++) {
+		level[i] = '\t';
+	}
+
+	debug("========\n");
+	debug("%susb interface descriptor \n", level);
+	debug("%s\tbLength %d\n", level, d->bLength);
+	debug("%s\tbDescriptorType %d\n", level, d->bDescriptorType);
+
+	debug("%s\tbInterfaceNumber %d\n", level, d->bInterfaceNumber);
+	debug("%s\tbAlternateSetting %d\n", level, d->bAlternateSetting);
+
+	debug("%s\tbNumEndpoints %d\n", level, d->bNumEndpoints);
+}
+
+static void dump_endpoint_descriptor(struct usb_endpoint_descriptor *d, int l)
+{
+	char level[4] = {'\0', '\0', '\0', '\0'};
+	int i;
+	for(i = 0; i < l; i++) {
+		level[i] = '\t';
+	}
+
+	debug("========\n");
+	debug("%susb endpoint descriptor \n", level);
+	debug("%s\tbLength %d\n", level, d->bLength);
+	debug("%s\tbDescriptorType %d\n", level, d->bDescriptorType);
+	debug("%s\tbEndpointAddress %d\n", level, d->bEndpointAddress);
+
+	debug("%s\tbInterval %d\n", level, d->bInterval);
+}
+
+static void dump_descriptors(struct usb_device *dev)
+{
+	struct usb_config *config = &dev->config;
+	struct usb_interface_2 *ifce;
+	int i,j,k,m;
+	debug("==>config0: no_of_if: %d\n", config->no_of_if);
+	for(i = 0; i < config->no_of_if; i++) {
+		ifce = &config->if_desc2[i];
+		for(j = 0; j < ifce->num_altsetting; j++) {
+			debug("\t\t if %d num_altsetting %d num_ep %d\n", i, ifce->num_altsetting, ifce->alts[j].num_ep);
+		}
+	}
+
+	struct usb_device_descriptor *dd;
+	struct usb_config_descriptor *cd;
+	struct usb_interface_descriptor *id;
+	struct usb_endpoint_descriptor *ed;
+
+	dd = &dev->descriptor;
+	dump_device_descriptor(dd, 0);
+	for(i = 0; i < dd->bNumConfigurations; i++) {
+
+		cd = &dev->config.desc;
+		dump_config_descriptor(cd, 1);
+		for(j = 0; j < cd->bNumInterfaces; j++) {
+			ifce = &dev->config.if_desc2[j];
+			for(k = 0; k < ifce->num_altsetting; k++) {
+				id = &ifce->alts[k].desc;
+				dump_interface_descriptor(id, 2);
+				for(m = 0; m < id->bNumEndpoints; m++) {
+					ed = &ifce->alts[k].endpoint[m].desc;
+					dump_endpoint_descriptor(ed, 3);
+				}
+			}
+		}
+	}
+
+
+}
+
+static int find_next_descriptor(unsigned char *buffer, int size,
+		int dt1, int dt2, int *num_skipped)
+{
+	struct usb_descriptor_header *h;
+	int n = 0;
+	unsigned char *buffer0 = buffer;
+
+	/* Find the next descriptor of type dt1 or dt2 */
+	while (size > 0) {
+		h = (struct usb_descriptor_header *) buffer;
+		if (h->bDescriptorType == dt1 || h->bDescriptorType == dt2)
+			break;
+		buffer += h->bLength;
+		size -= h->bLength;
+		++n;
+	}
+
+	/* Store the number of descriptors skipped and return the
+	 * number of bytes skipped */
+	if (num_skipped)
+		*num_skipped = n;
+	return buffer - buffer0;
+}
+
+static int usb_parse_endpoint(struct usb_device *dev, struct usb_host_interface *ifp, unsigned char *buffer, unsigned int size, int cfgno)
+{
+	unsigned char *buffer0 = buffer;
+	struct usb_endpoint_descriptor *d;
+
+	struct usb_host_endpoint *endpoint;
+	int i, n, ret;
+
+	d = (struct usb_endpoint_descriptor *)buffer;
+	buffer += d->bLength;
+	size -= d->bLength;
+
+	/* TODO: add checks and audio workaround. */
+	/* TODO: add invalid endpoint checks.*/
+
+
+	endpoint = &ifp->endpoint[ifp->num_ep];
+	ifp->num_ep ++;
+
+	memcpy(&endpoint->desc, d, d->bLength);
+
+
+
+	/* Skip over any Class Specific or Vendor Specific descriptors;
+	 * find the next endpoint or interface descriptor */
+	//endpoint->extra = buffer;
+	i = find_next_descriptor(buffer, size, USB_DT_ENDPOINT,
+			USB_DT_INTERFACE, &n);
+	endpoint->extralen = i;
+	if(endpoint->extralen)
+		memcpy(endpoint->extra, buffer, endpoint->extralen);
+
+	ret = buffer - buffer0 + i;
+	if (n > 0)
+		debug("skipped %d descriptors after %s, extralen: %d\n",
+				n, "endpoint", endpoint->extralen);
+	return ret;
+}
+
+static int usb_parse_interface(struct usb_device *dev, unsigned char *buffer, unsigned int size, int cfgno)
+{
+
+	unsigned char *buffer0 = buffer;
+	struct usb_interface_descriptor *d;
+	struct usb_config *config = &dev->config;
+	struct usb_host_interface *alt;
+	int inum, ialt;
+	int i,n, ret;
+
+	/* First, Parse interface desc */
+	d = (struct usb_interface_descriptor *)buffer;
+	buffer += d->bLength;
+	size -= d->bLength;
+
+
+	inum = d->bInterfaceNumber;
+	if(config->curr_if_num != inum) {
+		/* New Interface */
+		config->curr_if_num = inum;
+		config->if_desc2[inum].num_altsetting = 1;
+		config->no_of_if ++;
+	} else {
+		/* inum's altsettings */
+		config->if_desc2[inum].num_altsetting ++;
+	}
+	ialt = config->if_desc2[inum].num_altsetting - 1;
+	memcpy(&config->if_desc2[inum].alts[ialt], d, d->bLength);
+
+
+	alt = &config->if_desc2[inum].alts[ialt];
+	/* Skip over any Class Specific or Vendor Specific descriptors;
+	 * find the first endpoint or interface descriptor */
+	//alt->extra = buffer;
+	i = find_next_descriptor(buffer, size, USB_DT_ENDPOINT,
+			USB_DT_INTERFACE, &n);
+	alt->extralen = i;
+	if(alt->extralen) {
+		unsigned char *p = malloc(alt->extralen);
+		memcpy(p, buffer, alt->extralen);
+		alt->extra = p;
+	}
+	if (n > 0)
+		debug("skipped %d descriptors after %s, extralen:%d\n",
+				n, "interface", alt->extralen);
+	buffer += i;
+	size -= i;
+
+	/* Third, parse  All the endpoint descriptors */
+
+	alt->num_ep = 0;
+	n = 0;
+	while(size > 0) {
+		/* Next descriptor is USB_DT_INTERFACE, do parse_interface_again.*/
+		if(((struct usb_descriptor_header *)buffer)->bDescriptorType
+
+				== USB_DT_INTERFACE)
+			break;
+		ret = usb_parse_endpoint(dev, alt, buffer, size, cfgno);
+		if(ret < 0)
+			return ret;
+
+		buffer += ret;
+		size -= ret;
+		n++;
+	}
+
+	if(n != alt->desc.bNumEndpoints) {
+		debug("Warning ... config %d interface %d altsetting %d has endpoint descriptors %d, different from the interface descriptor's value: %d\n",
+		cfgno, inum, ialt, n, alt->desc.bNumEndpoints);
+	}
+
+	return buffer - buffer0;
+}
+
+/*******************************************************************************
+ * Parse the config, located in buffer, and fills the dev->config structure.
+ * Note that all little/big endian swapping are done automatically.
+ */
+static int usb_parse_config_2(struct usb_device *dev,
+			unsigned char *buffer, int cfgno)
+{
+	struct usb_descriptor_header *head;
+	struct usb_config *config = &dev->config;
+	unsigned int size;
+	int i, n, ret;
+
+	config->curr_if_num = -1;
+	config->no_of_if = 0;
+
+	/* First, parse config desc */
+	dev->configno = cfgno;
+	head = (struct usb_descriptor_header *) &buffer[0];
+	if (head->bDescriptorType != USB_DT_CONFIG) {
+		printf(" ERROR: NOT USB_CONFIG_DESC %x\n",
+			head->bDescriptorType);
+		return -1;
+	}
+	memcpy(&config->desc, buffer, buffer[0]);
+	le16_to_cpus(&(config->desc.wTotalLength));
+
+	size = config->desc.wTotalLength;
+
+	buffer += config->desc.bLength;
+	size -= config->desc.bLength;
+
+#if 0
+	/* Go through the descriptors, checking their length and counting the
+ * number of altsettings for each interface */
+	for(buffer2 = buffer, size2 = size;
+	    size2 > 0;
+	    (buffer2 += header->bLength, size2 -= header->bLength)) {
+
+	}
+#endif
+
+	/* Skip over any Class Specific or Vendor Specific descriptors;
+ * find the first interface descriptor */
+	//config->extra = buffer;
+	i = find_next_descriptor(buffer, size, USB_DT_INTERFACE, USB_DT_INTERFACE, &n);
+	config->extralen = i;
+	if(config->extralen)
+		memcpy(config->extra, buffer, config->extralen);
+
+	if(n > 0)
+		debug("Skip config extra Descripotr, extra:%p, extralen: %d\n", config->extra, config->extralen);
+
+	buffer += i;
+	size -= i;
+
+	while(size > 0) {
+		ret = usb_parse_interface(dev, buffer, size, cfgno);
+		if(ret < 0)
+			return ret;
+
+		buffer += ret;
+		size -= ret;
+	}
+
+	dump_descriptors(dev);
+
 	return 1;
 }
 
@@ -817,6 +1195,7 @@ void usb_free_device(void)
 	usb_dev[dev_index].devnum = -1;
 }
 
+
 /*
  * By the time we get here, the device has gotten a new device ID
  * and is in the default state. We need to identify the thing and
@@ -970,6 +1349,7 @@ int usb_new_device(struct usb_device *dev)
 		return -1;
 	}
 	usb_parse_config(dev, tmpbuf, 0);
+	usb_parse_config_2(dev, tmpbuf, 0);
 	usb_set_maxpacket(dev);
 	/* we set the default configuration here */
 	if (usb_set_configuration(dev, dev->config.desc.bConfigurationValue)) {
@@ -999,5 +1379,69 @@ int usb_new_device(struct usb_device *dev)
 	usb_hub_probe(dev, 0);
 	return 0;
 }
+
+bool usb_device_has_child_on_port(struct usb_device *parent, int port)
+{
+#ifdef CONFIG_DM_USB
+	return false;
+#else
+	return parent->children[port] != NULL;
+#endif
+}
+
+#ifdef CONFIG_DM_USB
+void usb_find_usb2_hub_address_port(struct usb_device *udev,
+			       uint8_t *hub_address, uint8_t *hub_port)
+{
+	struct udevice *parent;
+	struct usb_device *uparent, *ttdev;
+
+	/*
+	 * When called from usb-uclass.c: usb_scan_device() udev->dev points
+	 * to the parent udevice, not the actual udevice belonging to the
+	 * udev as the device is not instantiated yet. So when searching
+	 * for the first usb-2 parent start with udev->dev not
+	 * udev->dev->parent .
+	 */
+	ttdev = udev;
+	parent = udev->dev;
+	uparent = dev_get_parent_priv(parent);
+
+	while (uparent->speed != USB_SPEED_HIGH) {
+		struct udevice *dev = parent;
+
+		if (device_get_uclass_id(dev->parent) != UCLASS_USB_HUB) {
+			printf("Error: Cannot find high speed parent of usb-1 device\n");
+			*hub_address = 0;
+			*hub_port = 0;
+			return;
+		}
+
+		ttdev = dev_get_parent_priv(dev);
+		parent = dev->parent;
+		uparent = dev_get_parent_priv(parent);
+	}
+	*hub_address = uparent->devnum;
+	*hub_port = ttdev->portnr;
+}
+#else
+void usb_find_usb2_hub_address_port(struct usb_device *udev,
+			       uint8_t *hub_address, uint8_t *hub_port)
+{
+	/* Find out the nearest parent which is high speed */
+	while (udev->parent->parent != NULL)
+		if (udev->parent->speed != USB_SPEED_HIGH) {
+			udev = udev->parent;
+		} else {
+			*hub_address = udev->parent->devnum;
+			*hub_port = udev->portnr;
+			return;
+		}
+
+	printf("Error: Cannot find high speed parent of usb-1 device\n");
+	*hub_address = 0;
+	*hub_port = 0;
+}
+#endif
 
 /* EOF */

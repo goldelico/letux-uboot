@@ -27,6 +27,8 @@ LIB	:= $(obj)libnand.o
 
 ifdef CONFIG_CMD_NAND
 
+$(shell mkdir -p $(SPLTREE)/drivers/mtd/nand/ingenic)
+
 ifdef CONFIG_SPL_BUILD
 
 ifdef CONFIG_SPL_NAND_DRIVERS
@@ -35,7 +37,11 @@ endif
 
 COBJS-$(CONFIG_SPL_NAND_AM33XX_BCH) += am335x_spl_bch.o
 COBJS-$(CONFIG_SPL_NAND_DOCG4) += docg4_spl.o
+ifdef CONFIG_MTD_NAND_JZ_AUTO_PARAMS
+COBJS-$(CONFIG_SPL_NAND_SIMPLE) += ingenic/nand_spl_simple.o
+else
 COBJS-$(CONFIG_SPL_NAND_SIMPLE) += nand_spl_simple.o
+endif
 COBJS-$(CONFIG_SPL_NAND_LOAD) += nand_spl_load.o
 COBJS-$(CONFIG_SPL_NAND_ECC) += nand_ecc.o
 COBJS-$(CONFIG_SPL_NAND_BASE) += nand_base.o
@@ -55,8 +61,15 @@ endif # not spl
 
 ifdef NORMAL_DRIVERS
 
+ifdef CONFIG_MTD_NAND_JZ
+COBJS-$(CONFIG_MTD_NAND_JZ_BCH)	+= ingenic/bch.o
+COBJS-$(CONFIG_MTD_NAND_JZ_NEMC) += ingenic/nemc.o
+COBJS-$(CONFIG_MTD_NAND_JZ_NFI) += ingenic/nfi.o
+COBJS-y += ingenic/nand_driver.o
+COBJS-$(CONFIG_MTD_NAND_JZ_AUTO_PARAMS) += ingenic/nand_auto_driver.o
+COBJS-$(CONFIG_BURNER)	+= ingenic/nand_burn_driver.o
+endif
 COBJS-$(CONFIG_NAND_ECC_BCH) += nand_bch.o
-
 COBJS-$(CONFIG_NAND_ATMEL) += atmel_nand.o
 COBJS-$(CONFIG_DRIVER_NAND_BFIN) += bfin_nand.o
 COBJS-$(CONFIG_NAND_DAVINCI) += davinci_nand.o
@@ -79,7 +92,7 @@ COBJS-$(CONFIG_TEGRA_NAND) += tegra_nand.o
 COBJS-$(CONFIG_NAND_OMAP_GPMC) += omap_gpmc.o
 COBJS-$(CONFIG_NAND_PLAT) += nand_plat.o
 COBJS-$(CONFIG_NAND_DOCG4) += docg4.o
-
+COBJS-$(CONFIG_MTD_SPINAND) += jz_spinand.o
 else  # minimal SPL drivers
 
 COBJS-$(CONFIG_NAND_FSL_ELBC) += fsl_elbc_spl.o

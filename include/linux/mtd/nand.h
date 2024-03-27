@@ -531,6 +531,7 @@ struct nand_chip {
 	uint64_t chipsize;
 	int pagemask;
 	int pagebuf;
+	unsigned int pagebuf_bitflips;
 	int subpagesize;
 	uint8_t cellinfo;
 	int badblockpos;
@@ -574,6 +575,10 @@ struct nand_chip {
 #define NAND_MFR_AMD		0x01
 #define NAND_MFR_MACRONIX	0xc2
 #define NAND_MFR_EON		0x92
+#define NAND_MFR_DOSILICON	0xf8	// Dosilicon
+#ifdef CONFIG_JZ_SPI_NANDFLASH
+#define NAND_SPI_GIGA		0xc8
+#endif
 
 /**
  * struct nand_flash_dev - NAND Flash Device ID Structure

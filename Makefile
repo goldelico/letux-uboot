@@ -283,13 +283,26 @@ LIBS-y += drivers/crypto/libcrypto.o
 LIBS-y += drivers/dma/libdma.o
 LIBS-y += drivers/fpga/libfpga.o
 LIBS-y += drivers/gpio/libgpio.o
+ifdef CONFIG_JZ_SCBOOT
+ifdef CONFIG_X1600
+LIBS-y += drivers/scboot/jz_sec_v3/libscboot.o
+else
+ifdef CONFIG_X2000_V12
+LIBS-y += drivers/scboot/jz_sec_v2/libscboot.o
+else
+LIBS-y += drivers/scboot/jz_sec_v1/libscboot.o
+endif
+endif
+endif
 LIBS-y += drivers/hwmon/libhwmon.o
 LIBS-y += drivers/i2c/libi2c.o
+LIBS-y += drivers/pwm/libpwm.o
 LIBS-y += drivers/input/libinput.o
 LIBS-y += drivers/misc/libmisc.o
 LIBS-y += drivers/mmc/libmmc.o
 LIBS-y += drivers/mtd/libmtd.o
 LIBS-y += drivers/mtd/nand/libnand.o
+LIBS-$(CONFIG_JZ_NAND_MGR) += drivers/nand/libnand.o
 LIBS-y += drivers/mtd/onenand/libonenand.o
 LIBS-y += drivers/mtd/ubi/libubi.o
 LIBS-y += drivers/mtd/spi/libspi_flash.o
@@ -301,6 +314,14 @@ LIBS-y += drivers/power/libpower.o \
 	drivers/power/fuel_gauge/libfuel_gauge.o \
 	drivers/power/pmic/libpmic.o \
 	drivers/power/battery/libbattery.o
+LIBS-y += drivers/regulator/libregulator.o
+
+ifndef CONFIG_SFC_V20
+LIBS-$(CONFIG_JZ_SFC) += drivers/mtd/devices/jz_sfc/libsfc.o
+else
+LIBS-$(CONFIG_JZ_SFC) += drivers/mtd/devices/jz_sfc_v2/libsfc.o
+endif
+
 LIBS-y += drivers/spi/libspi.o
 LIBS-y += drivers/dfu/libdfu.o
 ifeq ($(CPU),mpc83xx)
@@ -337,6 +358,7 @@ LIBS-y += lib/libfdt/libfdt.o
 LIBS-y += api/libapi.o
 LIBS-y += post/libpost.o
 LIBS-y += test/libtest.o
+LIBS-$(CONFIG_PRINTER_TEST_X2000) += test/printer_x2000/libprintertest.o
 
 ifneq ($(CONFIG_AM33XX)$(CONFIG_OMAP34XX)$(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX)$(CONFIG_TI814X),)
 LIBS-y += $(CPUDIR)/omap-common/libomap-common.o
@@ -427,6 +449,18 @@ ALL-y += $(obj)u-boot-nodtb-tegra.bin
 endif
 endif
 
+ifeq ($(CONFIG_MBR_CREATOR),y)
+ALL-y += $(obj)u-boot-with-spl-mbr.bin
+else
+ALL-y += $(obj)u-boot-with-spl.bin
+endif
+
+ifeq ($(CONFIG_GPT_CREATOR),y)
+ALL-y += $(obj)u-boot-with-spl-mbr-gpt.bin
+else
+ALL-y += $(obj)u-boot-with-spl.bin
+endif
+
 all:		$(ALL-y) $(SUBDIR_EXAMPLES)
 
 $(obj)u-boot.dtb:	$(obj)u-boot
@@ -497,7 +531,7 @@ $(obj)u-boot-with-spl.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.bin
 		$(OBJCOPY) ${OBJCFLAGS} --pad-to=$(CONFIG_SPL_PAD_TO) \
 			-I binary -O binary $< $(obj)spl/u-boot-spl-pad.bin
 		cat $(obj)spl/u-boot-spl-pad.bin $(obj)u-boot.bin > $@
-		rm $(obj)spl/u-boot-spl-pad.bin
+		#rm $(obj)spl/u-boot-spl-pad.bin
 
 $(obj)u-boot-with-spl.imx: $(obj)spl/u-boot-spl.bin $(obj)u-boot.bin
 		$(MAKE) -C $(SRCTREE)/arch/arm/imx-common \
@@ -569,6 +603,24 @@ $(obj)u-boot-img-spl-at-end.bin: $(obj)spl/u-boot-spl.bin $(obj)u-boot.img
 		dd if=$(obj)u-boot.img of=$(obj)u-boot-pad.img \
 			conv=notrunc 2>/dev/null
 		cat $(obj)u-boot-pad.img $(obj)spl/u-boot-spl.bin > $@
+
+$(obj)u-boot-with-spl-mbr.bin: $(obj)u-boot-with-spl.bin
+		cat $(obj)tools/ingenic-tools/mbr.bin $(obj)u-boot-with-spl.bin > $@
+
+ifeq ($(CONFIG_SPL_PARAMS_FIXER),y)
+$(obj)u-boot-with-spl-mbr-gpt.bin: $(obj)u-boot-with-spl.bin
+		cat $(obj)tools/ingenic-tools/mbr-gpt.bin $(obj)u-boot-with-spl.bin > $@
+		$(obj)tools/ingenic-tools/spl_params_fixer $@ $(obj)spl/u-boot-spl.bin 0 256 > /dev/null
+else
+$(obj)u-boot-with-spl-mbr-gpt.bin: $(obj)u-boot-with-spl.bin
+ifneq ($(CONFIG_GPT_AT_TAIL),y)
+		cat $(obj)tools/ingenic-tools/mbr-gpt.bin $(obj)u-boot-with-spl.bin > $@
+else
+		@chmod +x $(obj)tools/ingenic-tools/mk-gpt-xboot.sh
+		$(obj)tools/ingenic-tools/mk-gpt-xboot.sh $(obj)tools/ingenic-tools/mbr-of-gpt.bin \
+		$(obj)u-boot-with-spl.bin $(obj)tools/ingenic-tools/gpt.bin $(CONFIG_GPT_TABLE_PATH)/partitions.tab $@
+endif
+endif
 
 ifeq ($(CONFIG_SANDBOX),y)
 GEN_UBOOT = \
@@ -842,11 +894,13 @@ clean:
 	       $(obj)arch/blackfin/cpu/init.{lds,elf}
 	@rm -f $(obj)include/bmp_logo.h
 	@rm -f $(obj)include/bmp_logo_data.h
+	@rm -f $(obj)include/charge_logo.h
 	@rm -f $(obj)lib/asm-offsets.s
 	@rm -f $(obj)include/generated/asm-offsets.h
 	@rm -f $(obj)$(CPUDIR)/$(SOC)/asm-offsets.s
 	@rm -f $(TIMESTAMP_FILE) $(VERSION_FILE)
 	@$(MAKE) -s -C doc/DocBook/ cleandocs
+	@$(MAKE) -s -C $(TOPTREE)tools/ingenic-tools/ clean
 	@find $(OBJTREE) -type f \
 		\( -name 'core' -o -name '*.bak' -o -name '*~' -o -name '*.su' \
 		-o -name '*.o'	-o -name '*.a' -o -name '*.exe' \

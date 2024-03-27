@@ -26,6 +26,7 @@ include $(TOPDIR)/config.mk
 LIB	:= $(obj)libfuel_gauge.o
 
 COBJS-$(CONFIG_POWER_FG_MAX17042) += fg_max17042.o
+COBJS-$(CONFIG_PMU_SM5007) += sm5007_fuelgauge.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

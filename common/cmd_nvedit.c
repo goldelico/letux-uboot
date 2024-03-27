@@ -58,14 +58,19 @@ DECLARE_GLOBAL_DATA_PTR;
 	!defined(CONFIG_ENV_IS_IN_MMC)		&& \
 	!defined(CONFIG_ENV_IS_IN_FAT)		&& \
 	!defined(CONFIG_ENV_IS_IN_NAND)		&& \
+	!defined(CONFIG_ENV_IS_IN_SFC_NAND)	&& \
+	!defined(CONFIG_ENV_IS_IN_SPI_NAND)		&& \
+	!defined(CONFIG_ENV_IS_IN_NAND_ZM)		&& \
 	!defined(CONFIG_ENV_IS_IN_NVRAM)	&& \
 	!defined(CONFIG_ENV_IS_IN_ONENAND)	&& \
 	!defined(CONFIG_ENV_IS_IN_SPI_FLASH)	&& \
 	!defined(CONFIG_ENV_IS_IN_REMOTE)	&& \
 	!defined(CONFIG_ENV_IS_IN_UBI)		&& \
+	!defined(CONFIG_ENV_IS_IN_SFC)          && \
+	!defined(CONFIG_ENV_IS_IN_NAND_JZMTD)	&& \
 	!defined(CONFIG_ENV_IS_NOWHERE)
 # error Define one of CONFIG_ENV_IS_IN_{EEPROM|FLASH|DATAFLASH|ONENAND|\
-SPI_FLASH|NVRAM|MMC|FAT|REMOTE|UBI} or CONFIG_ENV_IS_NOWHERE
+SPI_FLASH|NVRAM|MMC|FAT|REMOTE|UBI|SFC|NAND_JZMTD} or CONFIG_ENV_IS_NOWHERE
 #endif
 
 /*
@@ -705,8 +710,6 @@ ulong getenv_ulong(const char *name, int base, ulong default_val)
 static int do_env_save(cmd_tbl_t *cmdtp, int flag, int argc,
 		       char * const argv[])
 {
-	printf("Saving Environment to %s...\n", env_name_spec);
-
 	return saveenv() ? 1 : 0;
 }
 

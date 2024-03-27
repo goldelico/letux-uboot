@@ -601,11 +601,19 @@ static int sync_erase(struct ubi_device *ubi, struct ubi_wl_entry *e, int tortur
 	ec_hdr = kzalloc(ubi->ec_hdr_alsize, GFP_NOFS);
 	if (!ec_hdr)
 		return -ENOMEM;
-
+#ifdef CONFIG_BURNER
+	/*burner will erase the flash first, so we need not erase again here*/
+	err = 1;
+	if (e->ec != 0) {
+		err = ubi_io_sync_erase(ubi, e->pnum, torture);
+		if (err < 0)
+			goto out_free;
+	}
+#else
 	err = ubi_io_sync_erase(ubi, e->pnum, torture);
 	if (err < 0)
 		goto out_free;
-
+#endif
 	ec += err;
 	if (ec > UBI_MAX_ERASECOUNTER) {
 		/*

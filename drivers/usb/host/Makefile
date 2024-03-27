@@ -58,6 +58,9 @@ COBJS-$(CONFIG_USB_EHCI_SPEAR) += ehci-spear.o
 COBJS-$(CONFIG_USB_EHCI_TEGRA) += ehci-tegra.o
 COBJS-$(CONFIG_USB_EHCI_VCT) += ehci-vct.o
 
+COBJS-$(CONFIG_USB_DWC2) += dwc2.o
+
+
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))

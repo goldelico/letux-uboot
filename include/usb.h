@@ -41,12 +41,13 @@
 
 /* Everything is aribtrary */
 #define USB_ALTSETTINGALLOC		4
-#define USB_MAXALTSETTING		128	/* Hard limit */
+#define USB_MAXALTSETTING		10 /*128*/	/* Hard limit */
 
-#define USB_MAX_DEVICE			32
+#define USB_MAX_DEVICE			8
 #define USB_MAXCONFIG			8
-#define USB_MAXINTERFACES		8
-#define USB_MAXENDPOINTS		16
+#define USB_MAXINTERFACES		2
+#define USB_MAXIADS			(USB_MAXINTERFACES / 2)
+#define USB_MAXENDPOINTS		2 /*16*/
 #define USB_MAXCHILDREN			8	/* This is arbitrary */
 #define USB_MAX_HUB			16
 
@@ -67,6 +68,7 @@ struct devrequest {
 	unsigned short	length;
 } __attribute__ ((packed));
 
+
 /* Interface */
 struct usb_interface {
 	struct usb_interface_descriptor desc;
@@ -84,12 +86,51 @@ struct usb_interface {
 	struct usb_ss_ep_comp_descriptor ss_ep_comp_desc[USB_MAXENDPOINTS];
 } __attribute__ ((packed));
 
+
+struct usb_host_endpoint {
+	struct usb_endpoint_descriptor desc;
+
+#define MAX_ENDPOINT_EXTRA_LEN	64
+	int extralen;
+	unsigned char extra[MAX_ENDPOINT_EXTRA_LEN];
+};
+
+struct usb_host_interface {
+	struct usb_interface_descriptor desc;
+
+	struct usb_host_endpoint endpoint[USB_MAXENDPOINTS];
+
+	int num_ep;
+
+	int extralen;
+	unsigned char *extra;	/*Extra descriptors*/
+};
+
+struct usb_interface_2 {
+	struct usb_host_interface alts[USB_MAXALTSETTING];	/*MAX Altsettings*/
+	unsigned int num_altsetting;
+	unsigned int act_altsetting;	/* current altsettings */
+};
+
+
 /* Configuration information.. */
 struct usb_config {
 	struct usb_config_descriptor desc;
 
 	unsigned char	no_of_if;	/* number of interfaces */
 	struct usb_interface if_desc[USB_MAXINTERFACES];
+
+	int curr_if_num;	/* tmp var using by parse if. */
+	struct usb_interface_2 if_desc2[USB_MAXINTERFACES];
+
+	/* List of any Interface Association Descriptors in this
+	 * configuration. */
+	unsigned char no_of_iad;
+	struct usb_interface_assoc_descriptor if_assoc[USB_MAXIADS];
+
+#define MAX_CONFIG_EXTRA_LEN	128
+	unsigned char extra[MAX_CONFIG_EXTRA_LEN];   /* Extra descriptors */
+	int extralen;
 } __attribute__ ((packed));
 
 enum {
@@ -155,7 +196,7 @@ struct usb_device {
 	defined(CONFIG_USB_OMAP3) || defined(CONFIG_USB_DA8XX) || \
 	defined(CONFIG_USB_BLACKFIN) || defined(CONFIG_USB_AM35X) || \
 	defined(CONFIG_USB_MUSB_DSPS) || defined(CONFIG_USB_MUSB_AM35X) || \
-	defined(CONFIG_USB_MUSB_OMAP2PLUS)
+	defined(CONFIG_USB_MUSB_OMAP2PLUS) || defined(CONFIG_USB_DWC2)
 
 int usb_lowlevel_init(int index, void **controller);
 int usb_lowlevel_stop(int index);
@@ -166,6 +207,11 @@ int submit_control_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 			int transfer_len, struct devrequest *setup);
 int submit_int_msg(struct usb_device *dev, unsigned long pipe, void *buffer,
 			int transfer_len, int interval);
+
+int submit_isoc_msg(struct usb_device *dev, unsigned long pipe,
+			void *buffer, int transfer_len, int interval);
+
+void usb_set_maxpacket_ep_2(struct usb_device *dev, int ifnum, struct usb_host_endpoint *endpoint);
 
 /* Defines */
 #define USB_UHCI_VEND_ID	0x8086
@@ -193,6 +239,10 @@ block_dev_desc_t *usb_stor_get_dev(int index);
 int usb_stor_scan(int mode);
 int usb_stor_info(void);
 
+#endif
+
+#ifdef CONFIG_USB_UVC
+int usb_video_scan(int mode);
 #endif
 
 #ifdef CONFIG_USB_HOST_ETHER
@@ -224,6 +274,8 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe,
 int usb_bulk_msg(struct usb_device *dev, unsigned int pipe,
 			void *data, int len, int *actual_length, int timeout);
 int usb_submit_int_msg(struct usb_device *dev, unsigned long pipe,
+			void *buffer, int transfer_len, int interval);
+int usb_submit_isoc_msg(struct usb_device *dev, unsigned long pipe,
 			void *buffer, int transfer_len, int interval);
 int usb_disable_asynch(int disable);
 int usb_maxpacket(struct usb_device *dev, unsigned long pipe);
