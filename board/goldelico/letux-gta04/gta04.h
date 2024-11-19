@@ -299,10 +299,6 @@ MUX_VAL(CP(SYS_CLKOUT2),	(IEN  | PTU | EN  | M4)) /*GPIO_186*/\
 /* should be removed or initialized correctly from the beginning since it may result in a glitch on these pins that we use as GPIOs */\
 MUX_VAL(CP(ETK_CLK_ES2),	(IDIS | PTU | EN  | M3)) /*HSUSB1_STP*/\
 MUX_VAL(CP(ETK_CTL_ES2),	(IDIS | PTU | DIS | M3)) /*HSUSB1_CLK*/\
-MUX_VAL(CP(ETK_D0_ES2),		(IEN  | PTU | DIS | M1)) /*MCSPI3_SIMO*/\
-MUX_VAL(CP(ETK_D1_ES2),		(IEN  | PTU | DIS | M1)) /*MCSPI3_SOMI*/\
-MUX_VAL(CP(ETK_D2_ES2),		(IEN  | PTU | DIS | M1)) /*MCSPI3_CS0*/\
-MUX_VAL(CP(ETK_D3_ES2),		(IEN  | PTU | DIS | M1)) /*MCSPI3_CLK*/\
 MUX_VAL(CP(ETK_D4_ES2),		(IEN  | PTU | DIS | M3)) /*HSUSB1_DATA4*/\
 MUX_VAL(CP(ETK_D5_ES2),		(IEN  | PTU | DIS | M3)) /*HSUSB1_DATA5*/\
 MUX_VAL(CP(ETK_D6_ES2),		(IEN  | PTU | DIS | M3)) /*HSUSB1_DATA6*/\
