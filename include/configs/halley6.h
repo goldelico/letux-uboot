@@ -372,6 +372,11 @@
 #endif
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/
+#if 1
+#define CONFIG_OF_LIBFDT	/* fdt				*/
+#define CONFIG_LMB		/* image_setup_linux() support	*/
+
+#endif
 #define CONFIG_CMD_NET		/* networking support			*/
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
