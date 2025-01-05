@@ -17,19 +17,19 @@
 #
 # The uboot must support the booti and generic filesystem load commands.
 
-echo "NOTE: this script is NOT executed byPetitBoot. It seems to extract some setenv definitions through /usr/bin/uboot-parser."
-exit
+echo "NOTE: this script is NOT executed by PetitBoot. PetitBoot seems to extract some setenv definitions through /usr/bin/uboot-parser."
 
 setenv board odroid${variant}
 
-setenv bootargs " ${bootargs} root=/dev/mmcblk2p2 splash plymouth.ignore-serial-consoles"
+#setenv bootargs " ${bootargs} root=/dev/mmcblk2p2 ignore_loglevel splash plymouth.ignore-serial-consoles"
+setenv bootargs " ${bootargs} root=/dev/mmcblk2p2 ignore_loglevel"
 setenv overlay_resize 8192
 
 setenv bootlabel "LetuxOS"
 
 # Default serial console
-# setenv console "ttyFIQ0"
-setenv console "ttyAML0,115200n8"
+setenv console "ttyFIQ0"
+# setenv console "ttyAML0,115200n8"
 
 # Default TTY console
 setenv bootargs "${bootargs} earlycon=uart8250,mmio32,0xfe660000 console=tty1"
@@ -40,6 +40,8 @@ setenv bootargs "${bootargs} quiet"
 setenv bootargs "${bootargs} pci=nomsi"
 setenv bootargs "${bootargs} fsck.mode=force fsck.repair=yes"
 setenv bootargs "${bootargs} mtdparts=sfc_nor:0x20000@0xe0000(env),0x200000@0x100000(uboot),0x100000@0x300000(splash),0xc00000@0x400000(firmware)"
+
+exit
 
 
 load ${devtype} ${devno}:${partition} ${loadaddr} ${prefix}config.ini \
