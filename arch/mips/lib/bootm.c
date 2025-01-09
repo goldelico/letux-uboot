@@ -113,11 +113,18 @@ static void boot_jump_linux(bootm_headers_t *images)
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 
 	/* we assume that the kernel is in place */
-	printf("\nStarting kernel ...\n\n");
+	printf("\nStarting kernel @%08x...\n\n", theKernel);
+	printf("IMAGE_ENABLE_OF_LIBFDT=%d images->ft_len=%d\n", IMAGE_ENABLE_OF_LIBFDT, images->ft_len);
 	if (IMAGE_ENABLE_OF_LIBFDT && images->ft_len)
+{
+	printf("\nStarting FDT kernel %08x(%d, %08x, %08x, %d);...\n\n", theKernel, -2, (ulong)images->ft_addr, 0, 0);
 		theKernel(-2, (ulong)images->ft_addr, 0, 0);
+}
 	else
+{
+	printf("\nStarting kernel %08x(%d, %08x, %08x, %d);...\n\n", theKernel, linux_argc, linux_argv, linux_env, 0);
 		theKernel(linux_argc, linux_argv, linux_env, 0);
+}
 }
 
 int do_bootm_linux(int flag, int argc, char * const argv[],
