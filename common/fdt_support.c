@@ -218,6 +218,8 @@ int fdt_chosen(void *fdt, int force)
 	char  *str;		/* used to set string properties */
 	const char *path;
 
+printf("fdt_chosen: called\n");
+
 	err = fdt_check_header(fdt);
 	if (err < 0) {
 		printf("fdt_chosen: %s\n", fdt_strerror(err));
@@ -250,8 +252,10 @@ int fdt_chosen(void *fdt, int force)
 	 * is true.
 	 */
 	str = getenv("bootargs");
+printf("fdt_chosen: bootargs = %s\n", str);
 	if (str != NULL) {
 		path = fdt_getprop(fdt, nodeoffset, "bootargs", NULL);
+printf("fdt_chosen: path = %s\n", path);
 		if ((path == NULL) || force) {
 			err = fdt_setprop(fdt, nodeoffset,
 				"bootargs", str, strlen(str)+1);
@@ -399,6 +403,8 @@ int fdt_fixup_memory_banks(void *blob, u64 start[], u64 size[], int banks)
 	u8 tmp[MEMORY_BANKS_MAX * 16]; /* Up to 64-bit address + 64-bit size */
 	int bank;
 
+printf("%s\n", __func__);
+
 	if (banks > MEMORY_BANKS_MAX) {
 		printf("%s: num banks %d exceeds hardcoded limit %d."
 		       " Recompile with higher MEMORY_BANKS_MAX?\n",
@@ -446,6 +452,7 @@ int fdt_fixup_memory_banks(void *blob, u64 start[], u64 size[], int banks)
 				"reg", fdt_strerror(err));
 		return err;
 	}
+printf("%s done\n", __func__);
 	return 0;
 }
 

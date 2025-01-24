@@ -473,6 +473,8 @@ int image_setup_libfdt(bootm_headers_t *images, void *blob,
 	ulong *initrd_end = &images->initrd_end;
 	int ret;
 
+printf("%s\n", __func__);
+
 	if (fdt_chosen(blob, 0) < 0) {
 		puts("ERROR: /chosen node create failed");
 		puts(" - must RESET the board to recover.\n");
