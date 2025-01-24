@@ -44,6 +44,20 @@ static int linux_env_idx;
 static void linux_params_init(ulong start, char *commandline);
 static void linux_env_set(char *env_name, char *env_val);
 
+#if IMAGE_ENABLE_OF_LIBFDT
+#include <fdt_support.h>
+
+int arch_fixup_memory_node(void *blob)
+{
+	u64 start[1] = { 0x0} ;
+	u64 size[1] = { (ulong) gd->ram_size };
+
+printf("%s\n", __func__);
+
+	return fdt_fixup_memory_banks(blob, start, size, sizeof(size)/sizeof(size[0]));
+}
+#endif
+
 static void boot_prep_linux(bootm_headers_t *images)
 {
 	char *commandline = getenv("bootargs");
@@ -113,18 +127,13 @@ static void boot_jump_linux(bootm_headers_t *images)
 	bootstage_mark(BOOTSTAGE_ID_RUN_OS);
 
 	/* we assume that the kernel is in place */
-	printf("\nStarting kernel @%08x...\n\n", theKernel);
-	printf("IMAGE_ENABLE_OF_LIBFDT=%d images->ft_len=%d\n", IMAGE_ENABLE_OF_LIBFDT, images->ft_len);
-	if (IMAGE_ENABLE_OF_LIBFDT && images->ft_len)
-{
-	printf("\nStarting FDT kernel %08x(%d, %08x, %08x, %d);...\n\n", theKernel, -2, (ulong)images->ft_addr, 0, 0);
+	if (IMAGE_ENABLE_OF_LIBFDT && images->ft_len) {
+	printf("\nStarting FDT kernel %08x(%d, %08x, %08x, %d);...\n\n", (unsigned long) theKernel, -2, (ulong)images->ft_addr, 0, 0);
 		theKernel(-2, (ulong)images->ft_addr, 0, 0);
-}
-	else
-{
-	printf("\nStarting kernel %08x(%d, %08x, %08x, %d);...\n\n", theKernel, linux_argc, linux_argv, linux_env, 0);
+	} else {
+	printf("\nStarting kernel %08x(%d, %08x, %08x, %d);...\n\n", (unsigned long) theKernel, linux_argc, linux_argv, linux_env, 0);
 		theKernel(linux_argc, linux_argv, linux_env, 0);
-}
+	}
 }
 
 int do_bootm_linux(int flag, int argc, char * const argv[],
