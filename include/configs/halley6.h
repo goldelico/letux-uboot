@@ -158,7 +158,13 @@
 	#define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 user/pzqi/uImage; bootm 0x80600000"
 /*#define CONFIG_BOOTCOMMAND "loady 0x80600000; bootm 0x80600000"*/
 #elif defined(CONFIG_SPL_JZMMC_SUPPORT) || defined(CONFIG_SPL_MMC_SUPPORT)
-	#define CONFIG_BOOTCOMMAND "fatload mmc 0 0x81f00000 /ingenic/lx16.dtb; fatload mmc 0 0x80a00000 /uImage; bootm 0x80a00000 - 0x81f00000"
+	#define	CONFIG_SYS_HUSH_PARSER		1
+	#define CONFIG_EXTRA_ENV_SETTINGS \
+		"bootfile="	"/uImage"		"\0" \
+		"bootaddr="	"0x80a00000"		"\0" \
+		"fdtfile="	"/ingenic/lx16.dtb"	"\0" \
+		"fdt_addr="	"0x81f00000"		"\0"
+	#define CONFIG_BOOTCOMMAND "fatload mmc 0 ${bootaddr} ${bootfile}; if fatload mmc 0 ${fdt_addr} ${fdtfile}; then bootm ${bootaddr} - ${fdt_addr}; else bootm ${bootaddr}; fi"
 #elif defined(CONFIG_SPL_SFC_NOR)
 	#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x600000 0x80a00000 ;bootm 0x80a00000"
 #elif defined(CONFIG_SPL_SFC_NAND)
