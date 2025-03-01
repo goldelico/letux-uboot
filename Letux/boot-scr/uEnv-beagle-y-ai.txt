@@ -1,0 +1,17 @@
+bootdir=/
+bootfile=Image.gz
+kernel_comp_addr_r=0x84000000
+kernel_comp_size=0x1ffffff
+fdtfile=ti/k3-am67a-beagley-ai.dtb
+
+# we know that we boot from partition 1 on mmc1
+bootpart=1:1
+get_fdt_mmc=load mmc ${bootpart} ${fdtaddr} ${bootdir}/${name_fdt}
+mmcloados=if test ${boot_fdt} = yes || test ${boot_fdt} = try; then if run get_fdt_mmc; then booti ${loadaddr} - ${fdtaddr}; else if test ${boot_fdt} = try; then booti; else echo WARN: Cannot load the DT; fi; fi; else booti; fi;
+
+uenvcmd=run mmcboot
+
+args_mmc=run finduuid;setenv bootargs console=${console} ${optargs} root=PARTUUID=${uuid} rw rootfstype=${mmcrootfstype} earlycon
+
+earlycon=ns16550a,mmio32,0x02800000
+console=ttyO2,115200n8
