@@ -117,7 +117,7 @@ int spl_start_uboot(void)
 /* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: halley5 (Ingenic XBurst2 X2000-V12 SoC)\n");
+	puts("Board: Letux X20 (Ingenic XBurst2 X2000-V12 SoC)\n");
 	return 0;
 }
 
