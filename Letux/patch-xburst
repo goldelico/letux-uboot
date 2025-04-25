@@ -1,0 +1,43 @@
+#!/bin/bash
+# patch xburst u-boot for RAM_ID
+#
+# usage: patch-xburst u-boot-with-spl-mbr-gpt.bin RAM_ID
+
+set -e
+
+patchbyte()
+{ # patch binary file
+	local _file="$1"
+	local _address="$(($2))"	# should have 0x prefix
+	local _byte="$3"	# should have 0x prefix
+	# echo printf "%x: %02x" $((_address)) $(($_byte)) | xxd -r - "$_file"
+	perl -e 'print pack("c",('$_byte'))' | dd conv=notrunc of="$_file" bs=1 seek="$_address" 2>/dev/null
+}
+
+dumpbytes()
+{ # binary dump block of file
+	local _file="$1"
+	local _address="$(($2))"	# should have 0x prefix
+	local _len="$3"
+	[ "$_len" ] || _len=1
+	xxd -p -l $_len -s "$_address" "$_file"
+}
+
+[ "$RAM_ID" ] || exit 0	# none given
+
+echo "patching RAM_ID $2 into $1"
+# 0x1b for x1600
+# 0x0a for x1600e
+# 0x41 for x1600hn
+# 0x41 for x2000
+# 0x00 for x2000e	?
+# 0x54 for x2000h	?
+# this will appear at offset 0x1080 in SPL code
+dumpbytes "$1" 0x4480 4	# before
+patchbyte "$1" 0x4480 "$2"
+patchbyte "$1" 0x4482 "$2"
+dumpbytes "$1" 0x4480 4	# after
+
+echo "splitting $1 into parts"
+dd if="$1" of=$(dirname "$1")/MBR bs=1 count=446
+dd if="$1" of=$(dirname "$1")/u-boot-with-spl.bin bs=512 skip=1
