@@ -112,7 +112,7 @@ void board_nand_init(void)
 /* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: fpga-X1600 (Ingenic XBurst X1600  SoC)\n");
+	puts("Board: Letux X16 (Ingenic XBurst X1600 SoC)\n");
 	return 0;
 }
 #ifdef CONFIG_SPL_NOR_SUPPORT
