@@ -178,9 +178,9 @@
 
 
 #if defined(CONFIG_JZ_MMC_MSC0)
-	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk0p7 rootdelay=3 rw"
+	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk0p2 rw"
 #elif defined(CONFIG_JZ_MMC_MSC2)
-	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk2p7 rootdelay=3 rw"
+	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk0p2 rw"
 #endif
 
 #ifdef CONFIG_BOOT_ANDROID
@@ -232,7 +232,14 @@
     #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 user/pzqi/uImage; bootm 0x80600000"
     /*#define CONFIG_BOOTCOMMAND "loady 0x80600000; bootm 0x80600000"*/
   #elif defined(CONFIG_SPL_JZMMC_SUPPORT) || defined(CONFIG_SPL_MMC_SUPPORT)
-    #define CONFIG_BOOTCOMMAND "mmc dev 0; mmc read 0x80a00000 0x1800 0x3000; bootm 0x80a00000"
+    /*#define CONFIG_BOOTCOMMAND "mmc dev 0; mmc read 0x80a00000 0x1800 0x3000; bootm 0x80a00000" */
+	#define CONFIG_SYS_HUSH_PARSER          1
+	#define CONFIG_EXTRA_ENV_SETTINGS \
+		"bootfile="     "/uImage"               "\0" \
+		"bootaddr="     "0x80a00000"            "\0" \
+		"fdtfile="      "/ingenic/lx20.dtb"     "\0" \
+		"fdt_addr="     "0x83000000"            "\0"
+	#define CONFIG_BOOTCOMMAND "fatload mmc 0 ${bootaddr} ${bootfile}; if fatload mmc 0 ${fdt_addr} ${fdtfile}; then saveenv; bootm ${bootaddr} - ${fdt_addr}; else bootm ${bootaddr}; fi"
     /*#define CONFIG_BOOTCOMMAND "set dtb 0x83000000; set uImage 0x80600000; mmc dev 0;mmc read ${uImage} 0x1800 0x2800; mmc read ${dtb} 0x5800 0x100; bootm ${uImage} - ${dtb}"*/ /*dtb support*/
   #elif defined(CONFIG_SPL_SFC_NOR)
 	#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x600000 0x80a00000 ;bootm 0x80a00000"
