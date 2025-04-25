@@ -367,6 +367,10 @@
 /*#define CONFIG_SDHCI_TRACE	// only for DEBUG*/
 #endif
 
+#if 1
+#define CONFIG_OF_LIBFDT       /* fdt                          */
+#define CONFIG_LMB             /* image_setup_linux() support  */
+#endif
 
 /* SFC */
 #define CONFIG_SFC_V20
