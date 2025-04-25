@@ -325,7 +325,7 @@
 #define GMAC_PHY_RMII   2//4
 #define CONFIG_SYS_RX_ETH_BUFFER 64
 
-#define CONFIG_NET_X1600
+/*#define CONFIG_NET_X1600*/
 #ifdef CONFIG_NET_X1600
 #define CONFIG_MAC_AHB_BUS
 
