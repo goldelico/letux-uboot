@@ -81,7 +81,7 @@
 #define CONFIG_SYS_SCACHE_WAYS		(16)
 
 
-#define CONFIG_SYS_UART_INDEX		3
+#define CONFIG_SYS_UART_INDEX		2
 #define CONFIG_BAUDRATE			115200
 
 /*
@@ -160,7 +160,7 @@
  * Boot arguments definitions.
  */
 #define LINUX_LOGLEVEL "loglevel=7"
-/* #define BOOTARGS_COMMON "console=ttyS3,115200 mem=96M@0x0 rmem=32M@0x6000000"*/
+/* #define BOOTARGS_COMMON "console=ttyS2,115200 mem=96M@0x0 rmem=32M@0x6000000"*/
 /*#define CONFIG_BOOTARGS_MEM_INDEX	2*/	/*start from 1, position of the args mem=xxx@0x0*/
 #define CONFIG_BOOTARGS_AUTO_MODIFY	1	/*auto detect memory size, and modify bootargs for kernel.*/
 #define CONFIG_BOOTARGS_MEM_64M			"mem=64M@0x0"	/* customize bootargs for default env.*/
@@ -171,9 +171,9 @@
 
 
 #if (CONFIG_BOOTARGS_AUTO_MODIFY == 1)
-	#define BOOTARGS_COMMON LINUX_LOGLEVEL " console=ttyS3,115200 "
+	#define BOOTARGS_COMMON LINUX_LOGLEVEL " console=ttyS2,115200 "
 #else
-	#define BOOTARGS_COMMON LINUX_LOGLEVEL " console=ttyS3,115200 mem=128M@0x0 "
+	#define BOOTARGS_COMMON LINUX_LOGLEVEL " console=ttyS2,115200 mem=128M@0x0 "
 #endif
 
 
