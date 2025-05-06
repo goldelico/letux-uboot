@@ -367,7 +367,7 @@
 
 #define CONFIG_JZ_MMC_MSC2_PE   //set gpio
 
-#define CONFIG_SDHCI_SDR_PIN	GPIO_PC(0)
+/* #define CONFIG_SDHCI_SDR_PIN	GPIO_PC(0) */
 
 
 /*#define CONFIG_MMC_TRACE		// only for DEBUG*/
