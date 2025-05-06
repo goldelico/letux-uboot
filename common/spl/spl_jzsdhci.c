@@ -143,6 +143,8 @@ static void msc_clk_switch(int high_frq)
 #define MSC_INIT_CLK    200000
 #endif
 
+#define MSC_WORKING_CLK 24000000
+
 #ifndef MSC_WORKING_CLK
 #define MSC_WORKING_CLK 50000000
 #endif
