@@ -56,7 +56,7 @@
 #define CONFIG_SYS_ICACHE_WAYS		(8)
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
-#define CONFIG_SYS_UART_INDEX		0
+#define CONFIG_SYS_UART_INDEX		4	/* UART4 (separate header on board) */
 #define CONFIG_BAUDRATE			115200
 
 #define CONFIG_DDR_PARAMS_CREATOR
