@@ -137,13 +137,13 @@
 /**
  * Drivers configuration.
  */
-#define CONFIG_LCD
+/*#define CONFIG_LCD*/
 #ifdef CONFIG_LCD
 #define LCD_BPP				5
 #define CONFIG_GPIO_LCD_PWM	 	        GPIO_PE(0)
 #define CONFIG_GPIO_LCD_POWERON                GPIO_PE(9)/*(32*4 + 9)*/
-#define CONFIG_LCD_LOGO
-#define CONFIG_RLE_LCD_LOGO
+/*#define CONFIG_LCD_LOGO*/
+/*#define CONFIG_RLE_LCD_LOGO*/
 /*#define CONFIG_LCD_INFO_BELOW_LOGO*/      /*display the console info on lcd panel for debugg */
 #define CONFIG_SYS_WHITE_ON_BLACK
 #define CONFIG_SYS_PCLK_FREQ		33260000
