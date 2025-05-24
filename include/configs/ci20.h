@@ -57,7 +57,7 @@
 #define CONFIG_SYS_CACHELINE_SIZE	32
 
 #define CONFIG_SYS_UART_INDEX		4	/* UART4 (separate header on board) */
-#define CONFIG_BAUDRATE			115200
+#define CONFIG_BAUDRATE			(115200/2)
 
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
