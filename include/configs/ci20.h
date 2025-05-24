@@ -88,7 +88,7 @@
 #define CONFIG_BOOTARGS \
 	BOOTARGS_COMMON " root=/dev/mmcblk0p1"
 #define CONFIG_BOOTCOMMAND \
-	"run ethargs; ext4load mmc 0:1 0x88000000 /boot/uImage; bootm 0x88000000"
+	"run ethargs; if ext4load mmc 0:1 0x87800000 /boot/ingenic/ci20.dtb; then ext4load mmc 0:1 0x88000000 /boot/uImage; bootm 0x88000000 - 0x87800000; else ext4load mmc 0:1 0x88000000 /boot/uImage; bootm 0x88000000; fi"
 
 #else /* !CONFIG_SPL_MMC_SUPPORT */
 
