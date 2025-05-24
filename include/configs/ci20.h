@@ -79,6 +79,10 @@
 
 #ifdef CONFIG_SPL_MMC_SUPPORT
 
+/* FDT support */
+#define CONFIG_OF_LIBFDT       /* fdt                          */
+#define CONFIG_LMB             /* image_setup_linux() support  */
+
 /* SD/MMC card defaults */
 
 #define CONFIG_BOOTARGS \
