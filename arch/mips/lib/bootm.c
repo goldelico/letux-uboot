@@ -162,6 +162,12 @@ static void boot_prep_linux(bootm_headers_t *images)
 	const char *cp;
 	ulong rd_start, rd_size;
 
+	if (IMAGE_ENABLE_OF_LIBFDT && images->ft_len) {
+		if (image_setup_linux(images)) {
+			printf("FDT Creating Failed:hanging ...\n");
+		}
+	}
+
 #ifdef CONFIG_MEMSIZE_IN_BYTES
 	sprintf(env_buf, "%lu", (ulong)gd->ram_size);
 	debug("## Giving linux memsize in bytes, %lu\n", (ulong)gd->ram_size);
