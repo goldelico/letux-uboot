@@ -67,7 +67,7 @@ static void linux_cmdline_set(const char *value, size_t len)
 	linux_argp[len] = 0;
 
 	linux_argp += len + 1;
-	linux_argc++;
+	linux_argv[++linux_argc] = NULL;
 }
 
 static void linux_cmdline_dump(void)
