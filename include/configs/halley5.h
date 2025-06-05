@@ -171,9 +171,9 @@
 
 
 #if (CONFIG_BOOTARGS_AUTO_MODIFY == 1)
-	#define BOOTARGS_COMMON LINUX_LOGLEVEL " console=ttyS2,115200 "
+	#define BOOTARGS_COMMON LINUX_LOGLEVEL " ieee754=emulated console=ttyS2,115200 "
 #else
-	#define BOOTARGS_COMMON LINUX_LOGLEVEL " console=ttyS2,115200 mem=128M@0x0 "
+	#define BOOTARGS_COMMON LINUX_LOGLEVEL " ieee754=emulated console=ttyS2,115200 mem=128M@0x0 "
 #endif
 
 
