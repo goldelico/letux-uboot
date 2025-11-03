@@ -465,7 +465,7 @@ DEPMOD		= /sbin/depmod
 PERL		= perl
 PYTHON		= python
 PYTHON2		= python2
-PYTHON3		= python3
+PYTHON3		= python3.11
 
 # The devicetree compiler and pylibfdt are automatically built unless DTC is
 # provided. If DTC is provided, it is assumed the pylibfdt is available too.
