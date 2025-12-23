@@ -8,6 +8,10 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define __NO_LONG_DOUBLE_MATH
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "mkimage.h"
 #include <bootm.h>
 #include <fdt_region.h>

@@ -9,6 +9,12 @@
 #include <stdbool.h>
 
 #ifdef USE_HOSTCC
+#undef __APPLE__
+typedef __SIZE_TYPE__ size_t;
+typedef int wchar_t;
+typedef signed long int __int64_t;
+typedef long long __int64_t;
+#define NULL ((void *)0)
 
 #if defined(__BEOS__)	 || \
     defined(__NetBSD__)  || \
