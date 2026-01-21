@@ -9,6 +9,10 @@
 
 #include <image.h>
 
+#if defined(__MACH__)
+struct image_type_params **__start_image_type, **__stop_image_type;
+#endif
+
 struct image_type_params *imagetool_get_type(int type)
 {
 	struct image_type_params **curr;
