@@ -9,12 +9,14 @@
 #include <stdbool.h>
 
 #ifdef USE_HOSTCC
-#undef __APPLE__
+#ifdef __LETUX__
 typedef __SIZE_TYPE__ size_t;
 typedef int wchar_t;
-typedef signed long int __int64_t;
-typedef long long __int64_t;
+typedef long long int __int64_t;
+typedef long long unsigned int __uint64_t;
 #define NULL ((void *)0)
+#define _ERRNO_H 1	// prevent include of RISCV <errno.h>
+#endif
 
 #if defined(__BEOS__)	 || \
     defined(__NetBSD__)  || \
