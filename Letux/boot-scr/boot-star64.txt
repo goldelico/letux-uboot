@@ -1,0 +1,20 @@
+echo "booting LetuxOS from µSD on Star64 (with U-Boot in eMMC)"
+
+setenv bootpart "1:1"
+setenv fdtfile "starfive/jh7110-starfive-visionfive-2-v1.3b.dtb"
+setenv kernelfile "Image.gz"
+
+load mmc ${bootpart} ${fdt_addr_r} ${bootdir}/${fdtfile}
+# fdt addr ${fdt_addr_r} # if we want to update the fdt...
+
+load mmc ${bootpart} ${kernel_addr_r} ${bootdir}/${kernelfile}
+
+part uuid mmc ${bootpart} uuid
+setenv mmcroot PARTUUID=${uuid}
+mmcrootfstype="ext4,ext3,btrfs rootwait"
+
+setenv bootargs "console=ttyS0,115200 debug rootwait earlycon=sbi root=${mmcroot} rw rootfstype=${mmcrootfstype}"
+
+setenv kernel_comp_addr_r 0x41000000
+setenv kernel_comp_size   0x08000000	# 32 MB
+booti ${kernel_addr_r} - ${fdt_addr_r}
