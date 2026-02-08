@@ -1,12 +1,15 @@
-echo "booting LetuxOS from µSD on Star64 (with U-Boot in eMMC)"
+echo "booting LetuxOS from µSD on Pine64-Star64 (with U-Boot in eMMC)"
 
 setenv bootpart "1:1"
-setenv fdtfile "starfive/jh7110-starfive-visionfive-2-v1.3b.dtb"
+setenv fdtfile "starfive/jh7110-pine64-star64.dtb"
 setenv kernelfile "Image.gz"
 
+echo loading ${bootdir}/${fdtfile}
 load mmc ${bootpart} ${fdt_addr_r} ${bootdir}/${fdtfile}
-# fdt addr ${fdt_addr_r} # if we want to update the fdt...
+fdt addr ${fdt_addr_r} # if we want to update the fdt...
+# do we need to patch the FDT for board variations? e.g. memory size 4GB vs. 8GB?
 
+echo loading ${bootdir}/${kernelfile}
 load mmc ${bootpart} ${kernel_addr_r} ${bootdir}/${kernelfile}
 
 part uuid mmc ${bootpart} uuid
@@ -17,4 +20,5 @@ setenv bootargs "console=ttyS0,115200 debug rootwait earlycon=sbi root=${mmcroot
 
 setenv kernel_comp_addr_r 0x41000000
 setenv kernel_comp_size   0x08000000	# 32 MB
+echo starting
 booti ${kernel_addr_r} - ${fdt_addr_r}
