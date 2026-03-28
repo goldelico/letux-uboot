@@ -26,17 +26,19 @@ dumpbytes()
 [ "$RAM_ID" ] || exit 0	# none given
 
 echo "patching RAM_ID $2 into $1"
-# 0x1b for x1600
-# 0x0a for x1600e
-# 0x41 for x1600hn
-# 0x41 for x2000
-# 0x00 for x2000e	?
-# 0x54 for x2000h	?
+# 0x1b00 for x1600
+# 0x0a00 for x1600e
+# 0x4100 for x1600hn
+# 0x0000 for x2000	?
+# 0x0001 for x2000e	?
+# 0x0004 for x2000h	?
 # this will appear at offset 0x1080 in SPL code
-dumpbytes "$1" 0x4480 4	# before
-patchbyte "$1" 0x4480 "$2"
-patchbyte "$1" 0x4482 "$2"
-dumpbytes "$1" 0x4480 4	# after
+dumpbytes "$1" 0x4480 4	# before patch
+patchbyte "$1" 0x4480 "$(($2 / 256))"
+patchbyte "$1" 0x4481 "$(($2 & 255))"
+patchbyte "$1" 0x4482 "$(($2 / 256))"
+patchbyte "$1" 0x4483 "$(($2 & 255))"
+dumpbytes "$1" 0x4480 4	# after patch
 
 echo "splitting $1 into parts"
 dd if="$1" of=$(dirname "$1")/MBR bs=1 count=446
