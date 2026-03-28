@@ -120,9 +120,12 @@ static int sdhci_transfer_data(struct sdhci_host *host, struct mmc_data *data,
 			sdhci_writel(host, virt_to_phys(start_addr), SDHCI_DMA_ADDRESS);
 		}
 #endif
-		if (timeout-- > 0)
-			udelay(500);
-		else {
+		if (timeout-- > 0) {
+			if (data->blocks < 6)
+				udelay(100);
+			else
+				udelay(10);
+		} else {
 			printf("Transfer data timeout\n");
 			return -1;
 		}

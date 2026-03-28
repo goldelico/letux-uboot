@@ -1,7 +1,7 @@
 /*
- * Ingenic x1830 setup code
+ * Ingenic burner setup code
  *
- * Copyright (c) 2017 Ingenic Semiconductor Co.,Ltd
+ * Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
  * Author: Zoro <ykli@ingenic.cn>
  *
  * This program is free software; you can redistribute it and/or
@@ -27,14 +27,16 @@
 #include <asm/gpio.h>
 #include <asm/arch/cpm.h>
 #include <asm/arch/mmc.h>
-#include <asm/jz_uart.h>
 #include <asm/arch/clk.h>
+#include <asm/jz_uart.h>
 
-#ifndef CONFIG_SPL_BUILD
 DECLARE_GLOBAL_DATA_PTR;
 struct global_info ginfo __attribute__ ((section(".data")));
 extern struct jz_uart *uart;
-#endif
+
+extern void burner_param_info(void);
+extern int jz_udc_probe(void);
+extern void jz_mmc_init(void);
 
 struct cgu_clk_src cgu_clk_src[] = {
 	{MSC, MPLL},
@@ -42,50 +44,37 @@ struct cgu_clk_src cgu_clk_src[] = {
 	{SRC_EOF,SRC_EOF}
 };
 
-#ifdef CONFIG_SYS_NAND_SELF_INIT
-void board_nand_init(void)
-{
-	    return 0;
-}
-#endif
-
 int board_early_init_f(void)
 {
-#ifndef CONFIG_SPL_BUILD
 	burner_param_info();
 	uart = (struct jz_uart *)(UART0_BASE + gd->arch.gi->uart_idx * 0x1000);
-#endif
 	return 0;
 }
 
-#ifdef CONFIG_USB_GADGET
-int jz_udc_probe(void);
+int misc_init_r(void)
+{
+       return 0;
+}
+
 void board_usb_init(void)
 {
-	printf("USB_udc_probe\n");
 	jz_udc_probe();
 }
-#endif /* CONFIG_USB_GADGET */
 
-#ifdef CONFIG_MMC
 int board_mmc_init(bd_t *bd)
 {
 	jz_mmc_init();
 	return 0;
 }
+
+#ifdef CONFIG_SYS_NAND_SELF_INIT
+void board_nand_init(void)
+{
+}
 #endif
 
-/* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: burner_x1830 (Ingenic XBurst T30 SoC)\n");
 	return 0;
 }
 
-#ifdef CONFIG_SPL_BUILD
-
-void spl_board_init(void)
-{
-}
-
-#endif /* CONFIG_SPL_BUILD */

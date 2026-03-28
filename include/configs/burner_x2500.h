@@ -30,6 +30,7 @@
 #define CONFIG_X2500	/* x2500 SoC */
 
 
+
 #define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		800000000	/*If MPLL not use mast be set 0*/
 #define CONFIG_SYS_VPLL_FREQ            300000000       /*If VPLL not use mast be set 0*/
@@ -158,14 +159,18 @@
 #define CONFIG_MTD_DEVICE
 #define MTDIDS_DEFAULT                  "nand0=nand"
 
+#define CONFIG_MTD_UBI_BEB_LIMIT    20
 
 /*
  *  SPINAND MAC SN : the product of customer add partition of sequence code.
  */
 #define CONFIG_JZ_SPINAND_MAC
-#define CONFIG_MAC_SIZE	    (1 * 1024 * 1024)
+#define CONFIG_MAC_SIZE	                 (1 * 1024 * 1024)
 #define CONFIG_JZ_SPINAND_SN
-#define CONFIG_SN_SIZE	    (1 * 1024 * 1024)
+#define CONFIG_SN_SIZE	                 (1 * 1024 * 1024)
+#define CONFIG_JZ_SPINAND_LICENSE
+#define CONFIG_LICENSE_SIZE              (1 * 1024 * 1024)
+
 
 #endif
 
@@ -176,12 +181,12 @@
 #define CONFIG_CMD_BURN
 #ifdef CONFIG_CMD_BURN
 #define CONFIG_USB_GADGET_DUALSPEED
+#define CONFIG_SOFT_BURNER_V2
 #define CONFIG_BURNER
-/*#define CONFIG_JZ_SCBOOT*/
 #define CONFIG_USB_GADGET
 #define CONFIG_USB_JZ_BURNER_GADGET
-#define CONFIG_JZ_VERDOR_BURN_EXTPOL
-/*#define CONFIG_JZ_VERDOR_BURN_EP_TEST*/
+/*#define CONFIG_JZ_VERDOR_BURN_EXTPOL
+#define CONFIG_JZ_VERDOR_BURN_EP_TEST*/
 #define CONFIG_JZ_VERDOR_BURN_FUNCTION
 #define CONFIG_USB_JZ_DWC2_UDC_V1_1
 #define CONFIG_USB_SELF_POLLING
@@ -223,6 +228,9 @@
 
 #define CONFIG_CMD_DDR_TEST	/* DDR Test Command */
 
+#define	CONFIG_JZ_EFUSE
+#define CONFIG_CMD_EFUSE
+
 /**
  * Serial download configuration
  */
@@ -247,7 +255,7 @@
 
 #define CONFIG_SYS_MAXARGS 16
 #define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "# "
+#define CONFIG_SYS_PROMPT "burner# "
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 

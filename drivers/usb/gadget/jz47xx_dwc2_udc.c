@@ -19,7 +19,7 @@
  * MA 02111-1307 USA
  */
 
-//#define DWC2_DEBUG	0
+//#define DWC2_DEBUG
 #define DEBUG_RXFIFO	0x0	//0 : off 1 : epnum 0 2: epnum 1 3:ep_num 0,1
 
 #include <common.h>
@@ -131,7 +131,7 @@ static void dwc2_otg_flush_tx_fifo(unsigned char txf_num)
 void handle_rxfifo_nempty(struct dwc2_udc *dwc, int flush_fifo);
 void dwc2_otg_flush_rx_fifo(void)
 {
-	printf("dwc flush rx fifo\n");
+	pr_info("dwc flush rx fifo\n");
 	pr_warn_start();
 	udc_set_reg(0, DCTL_SET_GONAK,OTG_DCTL);
 	while(!(udc_read_reg(GINT_STS) & GINTSTS_GOUTNAK_EFF)) {
@@ -174,7 +174,7 @@ static void dwc_otg_device_init(void)
 	/* dma disable ,High speed , stall no zero handshack*/
 	udc_write_reg(DCFG_HANDSHAKE_STALL_ERR_STATUS, OTG_DCFG);
 	/* Soft Disconnect connect*/
-	udc_set_reg(0, DCTL_NAK_ON_BBLE, OTG_DCTL);
+	udc_set_reg(DCTL_SOFT_DISCONN, DCTL_NAK_ON_BBLE, OTG_DCTL);
 	/* Unmask suspend earlysuspend reset enumdone sof intr*/
 	udc_set_reg(0, GINTSTS_USB_SUSPEND|GINTSTS_USB_RESET|
 			GINTSTS_ENUM_DONE|GINTSTS_USB_EARLYSUSPEND,
@@ -577,6 +577,7 @@ static int jz_queue(struct usb_ep *ep, struct usb_request *req, gfp_t gfp_flags)
 		return -ESHUTDOWN;
 	}
 
+	INIT_LIST_HEAD(&dep->urb_list);
 	transfer_idle = list_empty(&dep->urb_list);
 
 	req->status = -EINPROGRESS;
@@ -717,6 +718,7 @@ int jz_udc_probe(void)
 			"jz_dwc2_udc_v1.1");
 	printf("jz_dwc2_udc_v1.1\n");
 	the_controller->gadget.is_dualspeed = 1;
+	the_controller->gadget.speed = USB_SPEED_HIGH;
 	the_controller->gadget.ops = &jz_udc_ops;
 	the_controller->gadget.name = the_controller->name;
 	dwc2_init_endpoint(the_controller, 0);
@@ -1113,6 +1115,7 @@ void handle_inep_intr(struct dwc2_udc *dev)
 			if ((udc_read_reg(DIEP_EMPMSK) & (1 << epnum))) {
 				int status = 0;
 				dwc2_fill_tx_fifo(dep);
+#if 0
 				status  = in_xfer_timeout_detect(dep);
 				if (status) {
 					printf("%s in xfer timeout\n", dep->name);
@@ -1124,6 +1127,7 @@ void handle_inep_intr(struct dwc2_udc *dev)
 						inep0_transfer_complete(dep);
 
 				}
+#endif
 
 			}
 			udc_write_reg(DEP_TXFIFO_EMPTY, DIEP_INT(epnum));
@@ -1304,6 +1308,7 @@ int usb_gadget_unregister_driver(struct usb_gadget_driver *driver)
 	struct dwc2_udc *dev = the_controller;
 
 	printf("usb_gadget_unregister_driver %p\n",&driver->unbind);
+	jz_dwc_pullup(&dev->gadget, false);
 	if (driver->disconnect)
 		driver->disconnect(&dev->gadget);
 	if (driver->unbind)

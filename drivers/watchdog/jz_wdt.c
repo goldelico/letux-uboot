@@ -117,8 +117,8 @@ static int wdt_settimeout(unsigned int timeout) /* timeout: ms */
 
 #ifdef DEBUG
         debug("WDT CLK IN is  %dHZ\n" , base_freq);
-        debug("REAL FREQ is   %dHZ\n" , base_freq / wdt_div_table[i].div);
-        debug("The timeout is %dms\n" , tdr * 1000 * wdt_div_table[i].div / base_freq);
+        debug("REAL FREQ is   %dHZ\n" , base_freq / wdt_div_table[wdt_div_num].div);
+        debug("The timeout is %dms\n" , tdr * 1000 * wdt_div_table[wdt_div_num].div / base_freq);
         debug("WDT_TDR:       0x%x\n" , wdt_read(WDT_TDR));
         debug("WDT_TCSR:      0x%x\n" , wdt_read(WDT_TCSR));
 #endif

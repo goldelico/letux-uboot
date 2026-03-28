@@ -1,6 +1,7 @@
 #ifndef  __NOR_DEVICE_H
 #define  __NOR_DEVICE_H
 
+#include <asm/arch/sfc.h>
 #include <asm/arch/spinor.h>
 
 typedef struct private_params {

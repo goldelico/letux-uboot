@@ -117,6 +117,7 @@
 #define CONFIG_SFC_NAND_RATE            100000000
 #define CONFIG_SPL_VERSION_OFFSET	16
 #define CONFIG_SPIFLASH_PART_OFFSET	(0x6800)
+#define CONFIG_MTD_UBI_BEB_LIMIT    20
 
 /* MMC */
 #define CONFIG_GENERIC_MMC		1
@@ -146,8 +147,8 @@
 
 #define CONFIG_SYS_MAXARGS              16
 #define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "# "
-#define CONFIG_SYS_CBSIZE               1024 /* Console I/O Buffer Size */
+#define CONFIG_SYS_PROMPT "burner# "
+#define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
 #define CONFIG_SYS_MONITOR_LEN		(1024 * 1024)

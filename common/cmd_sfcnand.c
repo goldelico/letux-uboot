@@ -19,29 +19,32 @@ static int do_sfcnand(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 	char command[X_COMMAND_LENGTH];
 	int ret;
 
-	cmd = argv[1];
+	if(!strcmp(argv[1],"read")){
 
-	if(argc != 5)
-	{
-		printf("ERROR: argv error,please check the param of cmd !!!\n");
-		return CMD_RET_USAGE;
+		cmd = argv[1];
+
+		if(argc != 5)
+		{
+			printf("ERROR: argv error,please check the param of cmd !!!\n");
+			return CMD_RET_USAGE;
+		}
+
+		offset = (unsigned int)simple_strtoul(argv[2], NULL, 16);
+		len = (unsigned int)simple_strtoul(argv[3], NULL, 16);
+		dst_addr = (unsigned int)simple_strtoul(argv[4], NULL, 16);
+
+		memset(command,0,X_COMMAND_LENGTH);
+		sprintf(command,"nand %s.jffs2 0x%x 0x%x 0x%x",cmd,dst_addr,offset,len);
+
+		ret = run_command(command,0);
+		if(ret)
+			printf("do sfcnand read error ! please check your param !!\n");
 	}
-
-	offset = (unsigned int)simple_strtoul(argv[2], NULL, 16);
-	len = (unsigned int)simple_strtoul(argv[3], NULL, 16);
-	dst_addr = (unsigned int)simple_strtoul(argv[4], NULL, 16);
-
-	memset(command,0,X_COMMAND_LENGTH);
-	sprintf(command,"nand %s.jffs2 0x%x 0x%x 0x%x",cmd,dst_addr,offset,len);
-
-	ret = run_command(command,0);
-	if(ret)
-		printf("do sfcnand read error ! please check your param !!\n");
 
 	return CMD_RET_SUCCESS;
 }
 
-extern int32_t jz_sfc_nand_init(uint32_t sfc_quad_mode,uint32_t sfc_frequency,struct jz_sfcnand_burner_param *param);
+extern int32_t jz_sfc_nand_init();
 void sfc_nand_init(void)
 {
 	struct nand_chip *chip;
@@ -49,7 +52,7 @@ void sfc_nand_init(void)
 	mtd = &nand_info[0];
 	int ret = 0;
 
-	ret = jz_sfc_nand_init(0,0,NULL);
+	ret = jz_sfc_nand_init();
 	if(ret < 0) {
 		printf("sfc nand init failed!\n");
 		return;

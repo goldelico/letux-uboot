@@ -35,4 +35,5 @@ void nand_set_feature(struct sfc_transfer *transfer, uint8_t addr, uint32_t *val
 
 void nand_get_feature(struct sfc_transfer *transfer, uint8_t addr, uint8_t *val);
 
+int32_t nand_get_ecc_conf(struct sfc_flash *flash, uint8_t addr);
 #endif

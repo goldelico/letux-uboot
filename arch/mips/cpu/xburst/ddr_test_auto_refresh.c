@@ -29,7 +29,7 @@ void ddr_test_refresh(unsigned int start_addr, unsigned int end_addr)
 			num++;
 #ifndef CONFIG_FASTBOOT
 			if (num % 30 == 0)
-				printf("this program cs0 is alive, pd num is %d\n", num);
+				serial_debug("this program cs0 is alive, pd num is %d\n", num);
 #endif
 		}
 	}
@@ -45,7 +45,7 @@ void ddr_test_refresh(unsigned int start_addr, unsigned int end_addr)
 			count = 0;
 			num++;
 			if (num % 30 == 0)
-				printf("this program cs1 is alive, pd num is %d\n", num);
+				serial_debug("this program cs1 is alive, pd num is %d\n", num);
 		}
 	}
 #endif
@@ -53,14 +53,14 @@ void ddr_test_refresh(unsigned int start_addr, unsigned int end_addr)
 	{
 		run++;
 #ifndef CONFIG_FASTBOOT
-		printf("now run is %d\n", run);
+		serial_debug("now run is %d\n", run);
 #endif
 #ifdef DDR_CS0
 		count = 0;
 		num = 0;
 		for (i = start_addr_cs0; i < end_addr_cs0; i += cxtan){
 			if (*(volatile unsigned int *)i != i){
-				printf("ddr cs0 error address is %x, error data is %x, right data is %x\n",i, *(volatile unsigned int *)i, i);
+				serial_debug("ddr cs0 error address is %x, error data is %x, right data is %x\n",i, *(volatile unsigned int *)i, i);
 			}
 			count++;
 			if (count == 30000){
@@ -69,7 +69,7 @@ void ddr_test_refresh(unsigned int start_addr, unsigned int end_addr)
 				num++;
 #ifndef CONFIG_FASTBOOT
 				if (num % 30 == 0)
-					printf("this cs0 program is alive ps num is %d\n", num);
+					serial_debug("this cs0 program is alive ps num is %d\n", num);
 #endif
 			}
 		}
@@ -79,7 +79,7 @@ void ddr_test_refresh(unsigned int start_addr, unsigned int end_addr)
 		num = 0;
 		for (i = start_addr_cs1; i <= end_addr_cs1; i += cxtan){
 			if (*(volatile unsigned int *)i != i){
-				printf("ddr cs1 error address is %x, error data is %x, right data is %x\n", i, *(volatile unsigned int *)i, i);
+				serial_debug("ddr cs1 error address is %x, error data is %x, right data is %x\n", i, *(volatile unsigned int *)i, i);
 			}
 			count++;
 			if (count == 15000){
@@ -87,7 +87,7 @@ void ddr_test_refresh(unsigned int start_addr, unsigned int end_addr)
 				count = 0;
 				num++;
 				if (num % 30 == 0)
-					printf("this cs1 program is alive ps num is %d\n", num);
+					serial_debug("this cs1 program is alive ps num is %d\n", num);
 			}
 		}
 #endif

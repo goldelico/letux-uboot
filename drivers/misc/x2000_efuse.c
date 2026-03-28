@@ -13,6 +13,7 @@
 #include <efuse.h>
 #include "hamming.h"
 
+static int efuse_debug = 0;
 static int efuse_gpio = -1;
 static int efuse_en_active = 0;
 
@@ -471,6 +472,7 @@ static int jz_efuse_write(struct seg_info *info, uint32_t *buf)
 				printf("double verify failed!\n");
 				return -1;
 			}
+			memcpy(((char *)val + info->begin_align), (char *)buf, byte_num);
 			break;
 		case NONE:
 		default:
@@ -479,7 +481,7 @@ static int jz_efuse_write(struct seg_info *info, uint32_t *buf)
 	}
 	printf("efuse write data:\n");
 	for(n = 0; n < info->word_num; n++) {
-		printf("%08x\n", buf[n]);
+		printf("%08x\n", val[n]);
 		efuse_writel(val[n], EFUSE_DATA(n));
 	}
 	otp_w(info->word_address, info->word_num);
@@ -556,6 +558,43 @@ static int adjust_efuse()
 	return 0;
 }
 
+int efuse_read(void *buf, int length, off_t offset)
+{
+        int i = 0;
+	int ret = -EPERM;
+	uint32_t seg_id = 0;
+	uint32_t seg_length = 0;
+	char *last = NULL;
+	uint32_t val[8] = {0};
+
+	seg_length = sizeof(seg_info_array) / sizeof(seg_info_array[0]);
+
+	if(offset < seg_info_array[0].word_address || offset >= seg_info_array[seg_length-1].word_address+seg_info_array[seg_length-1].word_num) {
+	    printf("ERROR:offset is error\n");
+	    return -EPERM;
+	}
+
+	for(i=0; i < seg_length; i++) {
+	    if (offset >= seg_info_array[i].word_address && offset < seg_info_array[i].word_address + seg_info_array[i].word_num) {
+		seg_id = i;
+		break;
+	    }
+	}
+
+	info = seg_info_array[seg_id];
+	last = (char *)val + info.bit_num / 8 - 1;
+	ret = jz_efuse_read(&info,val);
+	if(ret < 0) {
+	        printf("efuse_read_id: read id error\n");
+		return ret;
+	}
+
+        for(i = 0; i < info.bit_num / 8; i++)
+		snprintf((char *)buf + (i * 2), 3, "%02x", *((uint8_t *)last - i));
+	strcat(buf, "\n");
+	printf("read efuse data: %s\n",buf);
+	return 0;
+}
 
 int efuse_read_id(void *buf, int length, int seg_id)
 {
@@ -646,4 +685,9 @@ int efuse_init(int gpio_pin, int active)
 	if(adjust_efuse() < 0)
 		return -1;
 	return 0;
+}
+void efuse_debug_enable(int enable)
+{
+	efuse_debug = !!enable;
+	return;
 }

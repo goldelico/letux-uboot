@@ -1,22 +1,18 @@
 #include <stdio.h>
 #include "nand_common.h"
 
-#define YHY_C9_MID              0XC9
 
-#define YHY_C9_NAND_DEVICD_COUNT	    2
+static unsigned char yhy_c9_errstat_2[] = {0x02,0x03};
 
-
-static unsigned char yhy_c9_xaw[] = {0x02,0x03};
-
-static struct device_struct device[YHY_C9_NAND_DEVICD_COUNT] = {
-        DEVICE_STRUCT(0x21, 2048, 2, 4, 2, 2, yhy_c9_xaw),
-        DEVICE_STRUCT(0x52, 2048, 2, 4, 2, 2, yhy_c9_xaw),
+static struct device_struct device[] = {
+        DEVICE_STRUCT(0x21, 2048, 2, 4, 2, 1, yhy_c9_errstat_2, 0),
+        DEVICE_STRUCT(0x52, 2048, 2, 4, 2, 1, yhy_c9_errstat_2, 0),
+        DEVICE_STRUCT(0xD4, 4096, 2, 4, 2, 1, yhy_c9_errstat_2, 0),
  };
 
-
 static struct nand_desc yhy_c9_nand = {
-	.id_manufactory = YHY_C9_MID,
-	.device_counts  = YHY_C9_NAND_DEVICD_COUNT,
+	.id_manufactory = 0xC9,
+	.device_counts  = ARRAY_SIZE(device),
 	.device = device,
 };
 

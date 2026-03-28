@@ -878,7 +878,7 @@ static void tran_old_burnway(struct nand_param_from_burner **param)
         (*param)->partition=jz_mtd_spinand_partition;
 }
 #define IDCODE_LEN (IDCODE_CONT_LEN + IDCODE_PART_LEN)
-int jz_spi_nand_init(struct nand_param_from_burner *param)
+int jz_spi_nand_init()
 {
 	u8 idcode[IDCODE_LEN + 1];
 	struct nand_chip *chip;
@@ -886,6 +886,7 @@ int jz_spi_nand_init(struct nand_param_from_burner *param)
 	struct jz_spi_support_from_burner *spi_flash;
 	int using_way;
 	mtd = &nand_info[0];
+	struct nand_param_from_burner *param = &nand_param_from_burner;
 
 	spi_init();
 	//printf("------->> idcode0 = %02x idcode1 = %02x idcode2 = %02x idcode3 = %02x\n",idcode[0],idcode[1],idcode[2],idcode[3]);
@@ -935,6 +936,8 @@ int jz_spi_nand_init(struct nand_param_from_burner *param)
 	nand_register(0);
 	return 0;
 }
+
+#ifdef CONFIG_BURNER
 static int mtd_spinand_partition_analysis(unsigned int blk_sz,int partcount,struct jz_spinand_partition *jz_mtd_spinand_partition)
 {
 	char mtdparts_env[X_ENV_LENGTH];
@@ -989,17 +992,18 @@ struct jz_spinand_partition *get_partion_index(u32 startaddr,u32 length,int *pt_
 void get_info_to_spl(databuf){
 
 }
-int mtd_spinand_probe_burner(int *erase_mode,struct  nand_param_from_burner *param)
+int mtd_spinand_probe_burner()
 {
 	int ret;
 	struct mtd_info *mtd;
 	mtd = &nand_info[0];
 	struct nand_chip *chip;
 	//int wppin = pinfo->gpio_wp;
+	struct nand_param_from_burner *param = &nand_param_from_burner;
 
-	ret = jz_spi_nand_init(param);
+	ret = jz_spi_nand_init();
 	/*0: none 1, force-erase*/
-	if (*erase_mode == 1)
+	if (spi_args->spi_erase == 1)
 		ret = run_command("nand erase.chip -y", 0);
 
 	chip = mtd->priv;
@@ -1008,3 +1012,4 @@ int mtd_spinand_probe_burner(int *erase_mode,struct  nand_param_from_burner *par
 	mtd_spinand_partition_analysis(mtd->erasesize,param->partition_num,param->partition);
 	return 0;
 }
+#endif

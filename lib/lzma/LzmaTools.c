@@ -130,4 +130,103 @@ int lzmaBuffToBuffDecompress (unsigned char *outStream, SizeT *uncompressedSize,
     return res;
 }
 
+#include <common.h>
+#include <config.h>
+#include <spl.h>
+#include <spi.h>
+#include <asm/io.h>
+#include <asm/arch/clk.h>
+#define LZMA_START_ADDRESS(index) (0xb32c0000 + index*0x20000)
+//#define LZMA_START_ADDRESS(index) (0x132c0000 + index*0x20000)
+
+#define LZMA_CTRL	0x00
+#define LZMA_BS_BASE	0x04
+#define LZMA_BS_SIZE	0x08
+#define LZMA_DST_BASE	0x0C
+#define LZMA_TIMEOUT	0x10
+#define LZMA_FINAL_SIZE 0x14
+
+#define REG32(x) *(volatile unsigned int *)(x)
+
+#if 1
+void dump_lzma_reg(unsigned int index)
+{
+	//zrt_ts("\nDUMP CPM LZMA REG : \n");
+	//zrt_ts("CPM_BSCCDR	= 0x%x \n", REG32(CPM_BASE + CPM_BSCCDR));
+	//zrt_ts("CPM_CLKGR0	= 0x%x \n", REG32(CPM_BASE + CPM_CLKGR0));
+	unsigned int lzma_base = LZMA_START_ADDRESS(index);
+
+	printf("DUMP LZMA REG :  \n");
+	printf("LZMA_CTRL     = 0x%x \n", REG32(lzma_base + LZMA_CTRL));
+	printf("LZMA_BS_BASE  = 0x%x \n", REG32(lzma_base + LZMA_BS_BASE));
+	printf("LZMA_BS_SIZE  = 0x%x \n", REG32(lzma_base + LZMA_BS_SIZE));
+	printf("LZMA_DST_BASE = 0x%x \n", REG32(lzma_base + LZMA_DST_BASE));
+	printf("LZMA_FINAL	  = 0x%x \n", REG32(lzma_base + LZMA_FINAL_SIZE));
+}
+#endif
+
+int jz_lzma_decompress(unsigned char *src, size_t size, unsigned char *dst, unsigned int index)
+{
+	unsigned int value = 0, outlen = 0;
+	unsigned int lzma_base;
+	unsigned int clk_val = 0, clk_gate = 0;
+
+	/* open clk gate */
+	//printf("lzma config clk\n");
+	/* config clk */
+#ifdef CONFIG_X2580
+	clk_set_rate(ISPA, 600000000);
+#endif
+	lzma_base = LZMA_START_ADDRESS(index);
+
+	//printf("ingenic lzma%d base:0x%x decompress(0x%x:0x%x)\n",index, lzma_base, (unsigned int)src, (unsigned int)dst);
+	//set lzma mode
+	while(!( ( readl(lzma_base+LZMA_CTRL) >> 31) & 0x1 ) ){
+		//printf("LZMA start error\n");
+		writel(0x1<<31, lzma_base+LZMA_CTRL);
+	}
+	//printf("reset lzma start\n");
+	//reset lzma module
+	writel(0x1<<1, lzma_base+LZMA_CTRL);
+	while ((readl(lzma_base+LZMA_CTRL) >> 1) & 0x1);
+
+	//printf("config lzma bs dst start\n");
+	/* config */
+	writel(src - 0x80000000 , lzma_base + LZMA_BS_BASE);
+	writel(size, lzma_base + LZMA_BS_SIZE);
+	writel(dst - 0x80000000 , lzma_base + LZMA_DST_BASE);
+	//flush_cache_all();
+	//printf("lzma decoder start\n");
+	/* close intr and start lzma*/
+	writel((1 << 0), lzma_base + LZMA_CTRL);
+
+	//printf("waite decode\n");
+	/* wait end */
+	//writel(0xf0000000, lzma_base+LZMA_TIMEOUT);
+	while(readl(lzma_base+LZMA_CTRL) & 0x01){
+#if 0
+		if(readl(lzma_base+LZMA_TIMEOUT) <= 0xfff5f000){
+			break;
+		}
+#endif
+	}
+	//printf("lzma decoder finish\n");
+#if 0
+	if( 0x80004008 != readl(lzma_base+LZMA_CTRL) ){
+		printf("lzma hardware error CTRL register value : 0x%08x\n", readl(lzma_base+LZMA_CTRL));
+		outlen = -1;
+		goto quit;
+	}
+#endif
+	outlen = readl(lzma_base + LZMA_FINAL_SIZE);
+	//dump_lzma_reg(index);
+quit:
+	//set to bscaler
+    if( ( (readl(lzma_base+LZMA_CTRL) >> 31) & 0x1 ) == 1 ){
+		writel(0x1<<31, lzma_base+LZMA_CTRL);
+	}
+
+	return outlen;
+}
+
 #endif

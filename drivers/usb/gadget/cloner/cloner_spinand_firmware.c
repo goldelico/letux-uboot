@@ -3,7 +3,8 @@
 #include <linux/types.h>
 #include <linux/mtd/mtd.h>
 #include <cloner/cloner.h>
-#include <errno.h>
+#include "cloner_moudle.h"
+#include "cloner_log.h"
 
 #define FMW_SIZE_MAX	512
 
@@ -149,22 +150,34 @@ int32_t spinand_license_program(struct cloner *cloner) {
 		.crc_val = cloner->cmd->write.crc,
 	};
 	int32_t ret = 0;
-	void *buf = calloc(sizeof(license) + license.license_len, sizeof(uint8_t));
-	if(!buf) {
-		printf("alloc mem failed!\n");
-		return -ENOMEM;
+
+	if (!spi_args->reserve_space) {
+		printf("reserved space is disabled!\n");
+		return -EACCES;
 	}
 
-	memcpy(buf, &license, sizeof(license));
-	memcpy(buf + sizeof(license), (void *)cloner->write_req->buf, license.license_len);
-
-	if(spinand_firmware_write(mtd, mtd->size + CONFIG_MAC_SIZE + CONFIG_SN_SIZE, CONFIG_LICENSE_SIZE,
-		    buf, sizeof(license) + license.license_len)) {
-		printf("#########burner license firware failed!\n");
-		ret = -EIO;
+	if (spi_args->reserve_space_protect) {
+		ret = spinand_license_read(cloner) ? 0 : -EACCES;
 	}
 
-	free(buf);
+	if (!ret) {
+		void *buf = calloc(sizeof(license) + license.license_len, sizeof(uint8_t));
+		if(!buf) {
+			printf("alloc mem failed!\n");
+			return -ENOMEM;
+		}
+
+		memcpy(buf, &license, sizeof(license));
+		memcpy(buf + sizeof(license), (void *)cloner->write_req->buf, license.license_len);
+
+		ret = spinand_firmware_write(mtd, mtd->size + CONFIG_MAC_SIZE + CONFIG_SN_SIZE, CONFIG_LICENSE_SIZE,
+					buf, sizeof(license) + license.license_len);
+		if (!ret)
+			printf("#########burner license firmware successful!\n");
+		else
+			printf("#########burner license firmware failed!\n");
+		free(buf);
+	}
 	return ret;
 }
 
@@ -230,22 +243,34 @@ int32_t spinand_sn_program(struct cloner *cloner) {
 		.crc_val = cloner->cmd->write.crc,
 	};
 	int32_t ret = 0;
-	void *buf = calloc(sizeof(sn) + sn.sn_len, sizeof(uint8_t));
-	if(!buf) {
-		printf("alloc mem failed!\n");
-		return -ENOMEM;
+
+	if (!spi_args->reserve_space) {
+		printf("reserved space is disabled!\n");
+		return -EACCES;
 	}
 
-	memcpy(buf, &sn, sizeof(sn));
-	memcpy(buf + sizeof(sn), (void *)cloner->write_req->buf, sn.sn_len);
-
-	if(spinand_firmware_write(mtd, mtd->size + CONFIG_MAC_SIZE, CONFIG_SN_SIZE,
-		    buf, sizeof(sn) + sn.sn_len)) {
-		printf("#########burner sn firware failed!\n");
-		ret = -EIO;
+	if (spi_args->reserve_space_protect) {
+		ret = spinand_sn_read(cloner) ? 0 : -EACCES;
 	}
 
-	free(buf);
+	if (!ret) {
+		void *buf = calloc(sizeof(sn) + sn.sn_len, sizeof(uint8_t));
+		if(!buf) {
+			printf("alloc mem failed!\n");
+			return -ENOMEM;
+		}
+
+		memcpy(buf, &sn, sizeof(sn));
+		memcpy(buf + sizeof(sn), (void *)cloner->write_req->buf, sn.sn_len);
+
+		ret = spinand_firmware_write(mtd, mtd->size + CONFIG_MAC_SIZE, CONFIG_SN_SIZE,
+					buf, sizeof(sn) + sn.sn_len);
+		if (!ret)
+			printf("#########burner sn firmware successful!\n");
+		else
+			printf("#########burner sn firmware failed!\n");
+		free(buf);
+	}
 	return ret;
 }
 
@@ -310,21 +335,34 @@ int32_t spinand_mac_program(struct cloner *cloner) {
 		.crc_val = cloner->cmd->write.crc,
 	};
 	int32_t ret = 0;
-	void *buf = calloc(sizeof(mac) + mac.mac_len, sizeof(uint8_t));
-	if(!buf) {
-		printf("alloc mem failed!\n");
-		return -ENOMEM;
+
+	if (!spi_args->reserve_space) {
+		printf("reserved space is disabled!\n");
+		return -EACCES;
 	}
 
-	memcpy(buf, &mac, sizeof(mac));
-	memcpy(buf + sizeof(mac), (void *)cloner->write_req->buf, mac.mac_len);
-
-	if(spinand_firmware_write(mtd, mtd->size, CONFIG_MAC_SIZE,
-				buf, sizeof(mac) + mac.mac_len)) {
-		printf("#########burner mac firmware failed!\n");
-		ret = -EIO;
+	if (spi_args->reserve_space_protect) {
+		ret = spinand_mac_read(cloner) ? 0 : -EACCES;
 	}
-	free(buf);
+
+	if (!ret) {
+		void *buf = calloc(sizeof(mac) + mac.mac_len, sizeof(uint8_t));
+		if(!buf) {
+			printf("alloc mem failed!\n");
+			return -ENOMEM;
+		}
+
+		memcpy(buf, &mac, sizeof(mac));
+		memcpy(buf + sizeof(mac), (void *)cloner->write_req->buf, mac.mac_len);
+
+		ret = spinand_firmware_write(mtd, mtd->size, CONFIG_MAC_SIZE,
+					buf, sizeof(mac) + mac.mac_len);
+		if (!ret)
+			printf("#########burner mac firmware successful!\n");
+		else
+			printf("#########burner mac firmware failed!\n");
+		free(buf);
+	}
 	return ret;
 }
 int32_t spinand_mac_read(struct cloner *cloner) {

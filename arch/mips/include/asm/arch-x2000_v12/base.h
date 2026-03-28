@@ -52,12 +52,14 @@
 
 /* AHB2 BUS Devices Base */
 #define OTG_BASE	0xb3500000
+#define OTGPHY_BASE	0xb0078000
 
 #define G_OST_BASE	0xb2000000
 
 #define DDRC_APB_BASE   0xb3012000
 
 
+#define PWM_IOBASE      0xb34c0000
 #define MSC0_BASE	0xb3450000
 #define MSC1_BASE	0xb3460000
 #define MSC2_BASE	0xb3490000

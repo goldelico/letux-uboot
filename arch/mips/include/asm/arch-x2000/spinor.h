@@ -15,6 +15,26 @@
 #define NORFLASH_PART_WO	1
 #define NORFLASH_PART_RO	2
 
+#define MTD_MODE                0x0     //use mtd mode, erase partition when write
+#define MTD_D_MODE              0x2     //use mtd dynamic mode, erase block_size when write
+#define UBI_MANAGER             0x1
+
+
+#define NOR_CMD_TYPE_1        0x00010001
+#define NOR_CMD_TYPE_2        0x00020002
+#define NOR_CMD_TYPE_3        0x00030003
+
+struct nor_id {
+        char name[32];
+        unsigned int id;
+};
+
+struct nor_id_info {
+        unsigned int cmd_type;
+        unsigned int id_count;
+        struct nor_id *id_list;
+};
+
 
 struct spi_nor_cmd_info {
 	unsigned short cmd;

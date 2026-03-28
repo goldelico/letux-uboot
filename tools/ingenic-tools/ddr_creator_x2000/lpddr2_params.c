@@ -49,12 +49,13 @@ static int find_ddr_lattency(struct ddr_latency_table *table,int size,unsigned i
 	return table[0].latency;
 }
 
-static void fill_mr_params_lpddr2(struct ddr_params *p)
+static void fill_mr_params_lpddr2(struct ddr_params *p, struct kgd_config *kgd_cfg)
 {
 	int tmp;
 	int rl = 0,wl = 0;
 	int  count = 0;
 	struct lpddr2_params *params = &p->private_params.lpddr2_params;
+        struct lpddr2_mr_config *mr_cfg = &kgd_cfg->mr_config;
 
 	/**
 	 * MR1 registers
@@ -147,12 +148,12 @@ static void fill_mr_params_lpddr2(struct ddr_params *p)
 	  * 0111b: 120 ohm typical
 	  * All others: Reserved
 	 */
-#ifdef CONFIG_DDR_DRIVER_STRENGTH
-	p->mr3.lpddr2.DS = CONFIG_DDR_DRIVER_STRENGTH;
-#else
-	p->mr3.lpddr2.DS = 2;
-	out_warn("Warnning: Please set ddr driver strength.");
-#endif
+        if (kgd_cfg->use_kgd_config) {
+                p->mr3.lpddr2.DS = mr_cfg->kgd_mr3_ds & 0xf;
+        } else {
+                p->mr3.lpddr2.DS = 2;
+                out_warn("Warnning: Please set ddr driver strength.");
+        }
 
 	/**
 	 * MR10 Calibration registers
@@ -197,7 +198,10 @@ static void fill_in_params_lpddr2(struct ddr_params *ddr_params, struct ddr_chip
 			assert(1);
 		}
 		params->RL = tmp * __ps_per_tck;
+	}else{
+		params->RL *= __ps_per_tck;
 	}
+
 	if(params->WL == -1)
 	{
 		tmp = find_ddr_lattency(wl_LPDDR2,sizeof(wl_LPDDR2),ddr_params->freq);
@@ -207,9 +211,11 @@ static void fill_in_params_lpddr2(struct ddr_params *ddr_params, struct ddr_chip
 			assert(1);
 		}
 		params->WL = tmp * __ps_per_tck;
+	}else{
+		params->WL *= __ps_per_tck;
 	}
 
-	fill_mr_params_lpddr2(ddr_params);
+	fill_mr_params_lpddr2(ddr_params, &chip->kgd_config);
 }
 
 static void ddrc_params_creator_lpddr2(struct ddrc_reg *ddrc, struct ddr_params *p)

@@ -35,8 +35,11 @@ static int do_softburn(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]
 #define SLPC_SW_USB_BOOT        (0x2 << 0)
 
 	unsigned int val = SLPC_SW_MAGIC << 8 | SLPC_SW_USB_BOOT;
+#ifdef CONFIG_SOFT_BURNER_V2
+	cpm_outl(val, CPM_SOFT_APPR);
+#else
 	cpm_outl(val, CPM_SLPC);
-
+#endif
 	do_reset(NULL, 0, 0, NULL);
 
 	return CMD_RET_SUCCESS;

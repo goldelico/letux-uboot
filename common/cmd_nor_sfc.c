@@ -17,7 +17,13 @@ static int do_sfcnor(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		dst_addr = simple_strtoul(argv[4],NULL,16);
 		printf("sfcnor read Image from 0x%x to  0x%x size is 0x%x ...\n",src_addr,dst_addr,count);
 
-#if defined(CONFIG_JZ_SECURE_SUPPORT) && !defined(CONFIG_X2000_V12) && !defined(CONFIG_X1600)
+#if defined(CONFIG_JZ_SECURE_SUPPORT) \
+		&& !defined(CONFIG_X2000_V12) \
+		&& !defined(CONFIG_X2100) \
+		&& !defined(CONFIG_M300) \
+		&& !defined(CONFIG_X1600) \
+		&& !defined(CONFIG_X2600) \
+		&& !defined(CONFIG_AD100)
 		{
 			int ret;
 
@@ -51,7 +57,6 @@ static int do_sfcnor(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		sfc_nor_erase(src_addr,count);
 		printf("sfcnor erase ok!\n");
 		return 0;
-
 	}else
 		return CMD_RET_USAGE;
 

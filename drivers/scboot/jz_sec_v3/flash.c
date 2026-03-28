@@ -66,7 +66,7 @@ static int jz_mmc_write(const int dev, const unsigned int addr, const unsigned i
 
 	struct mmc *mmc = find_mmc_device(dev);
 	if (mmc == NULL) {
-		printf("%s %s %d init_mmc err\n", __FILE__, __func__, __LINE__);
+		serial_debug("%s %s %d init_mmc err\n", __FILE__, __func__, __LINE__);
 		return -1;
 	}
 
@@ -172,7 +172,7 @@ int read_flash(unsigned int from, unsigned int len, unsigned char *buf)
 		break;
 	default:
 
-		printf("## ERROR ## Ckey aes only support sfc_nor ##\n");
+		serial_debug("## ERROR ## Ckey aes only support sfc_nor ##\n");
 		hang();
 	}
 
@@ -192,7 +192,7 @@ int write_flash(unsigned int from, unsigned int len, unsigned char *buf)
 #ifdef CONFIG_MTD_SFCNOR
 	case BOOT_DEVICE_SFC_NOR:
 		if (sfc_nor_erase(from, len)) {
-			printf("sfcnor erase err!\n");
+			serial_debug("sfcnor erase err!\n");
 			_machine_restart();
 		}
 
@@ -216,7 +216,7 @@ int write_flash(unsigned int from, unsigned int len, unsigned char *buf)
 		break;
 
 	default:
-		printf("## ERROR ## Ckey aes only support sfc_nor ##\n");
+		serial_debug("## ERROR ## Ckey aes only support sfc_nor ##\n");
 		hang();
 	}
 

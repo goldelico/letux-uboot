@@ -125,8 +125,8 @@ int rtc_read_time(void)
 void burner_set_reset_tag(void)
 {
 	do {
-		jzrtc_writel(RTC_HSPR, 0XA55A);
-	} while (jzrtc_readl(RTC_HSPR) != 0xA55A);
+		jzrtc_writel(RTC_WENR, 0XA55A);
+	} while (jzrtc_readl(RTC_WENR) != 0xA55A);
 }
 
 int is_burner_reset(void)

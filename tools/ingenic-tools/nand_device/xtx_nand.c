@@ -1,21 +1,19 @@
 #include <stdio.h>
 #include "nand_common.h"
 
-#define XTX_MID			    0xA1
-#define XTX_NAND_DEVICD_COUNT	    3
 
-static unsigned char xtx_xaw[] = {0x2};
+static unsigned char xtx_errstat_2[] = {0x2, 0x3};
 
 static struct device_struct device[] = {
-	DEVICE_STRUCT(0xE1, 2048, 2, 4, 2, 1, xtx_xaw),
-	DEVICE_STRUCT(0xE2, 2048, 2, 4, 2, 1, xtx_xaw),
-	DEVICE_STRUCT(0xC1, 2048, 2, 4, 2, 1, xtx_xaw),
+	DEVICE_STRUCT(0xE1, 2048, 2, 4, 2, 1, xtx_errstat_2, 0),
+	DEVICE_STRUCT(0xE2, 2048, 2, 4, 2, 1, xtx_errstat_2, 0),
+	DEVICE_STRUCT(0xC1, 2048, 2, 4, 2, 1, xtx_errstat_2, 0),
 };
 
 static struct nand_desc xtx_nand = {
 
-	.id_manufactory = XTX_MID,
-	.device_counts = XTX_NAND_DEVICD_COUNT,
+	.id_manufactory = 0xA1,
+	.device_counts = ARRAY_SIZE(device),
 	.device = device,
 };
 

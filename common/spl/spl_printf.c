@@ -98,6 +98,14 @@ int spl_vsprintf(char *str,const char *fmt,va_list ap)
 }
 #endif
 
+#ifdef CONFIG_GPIO_SPI_TO_UART
+extern void gpio_spi_to_uart_puts(char *s);
+#endif
+
+#ifdef CONFIG_GPIO_SPI_TO_UART2
+extern void gpio_spi_to_uart_puts2(char *s);
+#endif
+
 int printf(const char *fmt,...)
 {
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
@@ -108,7 +116,13 @@ int printf(const char *fmt,...)
 	spl_vsprintf(buf, fmt, args);
 	va_end(args);
 
+#if defined(CONFIG_GPIO_SPI_TO_UART)
+	gpio_spi_to_uart_puts(p);
+#elif defined(CONFIG_GPIO_SPI_TO_UART2)
+	gpio_spi_to_uart_puts2(p);
+#else
 	serial_puts(p);
+#endif
 #endif
 	return 0;
 }
@@ -116,6 +130,26 @@ int printf(const char *fmt,...)
 void puts(const char *s)
 {
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
+#if defined(CONFIG_GPIO_SPI_TO_UART)
+	gpio_spi_to_uart_puts(s);
+#elif defined(CONFIG_GPIO_SPI_TO_UART2)
+	gpio_spi_to_uart_puts2(s);
+#else
 	serial_puts(s);
+#endif
+#endif
+}
+
+int getchar(void)
+{
+#ifdef CONFIG_SPL_SERIAL_SUPPORT
+	return serial_getc();
+#endif
+}
+
+void putchar(const char c)
+{
+#ifdef CONFIG_SPL_SERIAL_SUPPORT
+	serial_putc(c);
 #endif
 }

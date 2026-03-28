@@ -37,7 +37,7 @@ COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/ato_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/gd_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/mxic_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/nand_common.o
-#COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/winbond_nand.o
+COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/winbond_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/xtx_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/xtx_mid0b_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/xtx_mid2c_nand.o
@@ -46,11 +46,18 @@ COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/zetta_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/dosilicon_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/fm_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/yhy_nand.o
-COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/toshiba_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/issi_nand.o
 COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/xcsp_nand.o
-endif
+COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/tc_nand.o
+COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/zb_nand.o
+COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/kowin_mid01_nand.o
+COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/kowin_midc9_nand.o
+COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/gsto_nand.o
+COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/hik_nand.o
+COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/etron_nand.o
+COBJS-$(CONFIG_MTD_SFCNAND) +=nand_device/unim_nand.o
 
+endif
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

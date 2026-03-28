@@ -62,6 +62,8 @@
 		 ddrp->dtpr##n.b.name = tmp;				\
 	 }while(0)
 
+#define DDR_PARAMS_FILL(params,name) params->name = DDR_##name
+
 struct ddr_creator_ops{
 	int type;
 	void (*fill_in_params)(struct ddr_params *ddr_params, struct ddr_chip_info *chip);
@@ -78,6 +80,8 @@ int ps2cycle_ceil(int ps,int div_tck);
 void register_ddr_creator(struct ddr_creator_ops *ops);
 void lpddr2_creator_init(void);
 void lpddr3_creator_init(void);
+void ddr3_creator_init(void);
+void ddr2_creator_init(void);
 int init_supported_ddr(void);
 void dump_supported_ddr(void);
 void create_supported_ddr_params(struct ddr_reg_value *generated_reg_values);

@@ -81,7 +81,7 @@ void ckey_aes(void)
 
 	if (((spl_kencrypt == -1) || (spl_cencrypt == -1) ||
 		(uboot_kencrypt == -1) || (uboot_cencrypt == -1))) {
-		printf("memory read failed!!\n");
+		serial_debug("memory read failed!!\n");
 		hang();
 	}
 
@@ -153,10 +153,10 @@ void ckey_aes(void)
 	read_buf = NULL;
 
 	if ((spl_cencrypt == 1) && (spl_kencrypt == 1)) {
-		printf("Spl chipkey aes success\n");
+		serial_debug("Spl chipkey aes success\n");
 		_machine_restart();
 	}else {
-		printf("## ERROR ## ckey aes failed!! ##\n");
+		serial_debug("## ERROR ## ckey aes failed!! ##\n");
 		hang();
 	}
 

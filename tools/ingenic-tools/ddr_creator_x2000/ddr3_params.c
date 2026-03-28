@@ -9,9 +9,10 @@ static struct ddr_out_impedance odt_out_impedance[]={
 	{40,8},
 };
 
-static void fill_mr_params_ddr3(struct ddr_params *p)
+static void fill_mr_params_ddr3(struct ddr_params *p, struct kgd_config *kgd_cfg)
 {
-	int tmp;
+        struct ddr3_mr_config *mr_cfg = &kgd_cfg->mr_config;
+        int tmp;
 
 	/* MRn registers */
 	p->mr0.ddr3.BA = 0;
@@ -30,13 +31,27 @@ static void fill_mr_params_ddr3(struct ddr_params *p)
 	}
 	p->mr0.ddr3.BL = (8 - p->bl) / 2;
 
-	BETWEEN(p->cl,5,13);
-	p->mr0.ddr3.CL_4_6 = (p->cl % 11) - 4;
-	p->mr0.ddr3.CL_2 = p->cl / 11;
-
-
-
-	p->mr0.ddr3.DR = 1; //dll reset
+	BETWEEN(p->cl,5,14);
+	if(p->cl < 11) {
+		p->mr0.ddr3.CL_4_6 = (p->cl % 11) - 4;
+		p->mr0.ddr3.CL_2 = p->cl / 11;
+	}
+	else if(p->cl == 11) {
+		p->mr0.ddr3.CL_4_6 = 7;
+		p->mr0.ddr3.CL_2 = 0;
+	}
+	else if(p->cl == 12) {
+		p->mr0.ddr3.CL_4_6 = 0;
+		p->mr0.ddr3.CL_2 = 1;
+	}
+	else if(p->cl == 13) {
+		p->mr0.ddr3.CL_4_6 = 1;
+		p->mr0.ddr3.CL_2 = 1;
+	}
+	else if(p->cl == 14) {
+		p->mr0.ddr3.CL_4_6 = 2;
+		p->mr0.ddr3.CL_2 = 1;
+	}
 
 	tmp = ps2cycle_ceil(p->private_params.ddr3_params.tWR, 1);
 	switch(tmp)
@@ -47,75 +62,88 @@ static void fill_mr_params_ddr3(struct ddr_params *p)
 	case 9 ... 12:
 		p->mr0.ddr3.WR = (tmp + 1) / 2;
 		break;
+	case 14:
+		p->mr0.ddr3.WR = tmp / 2;
+		break;
+	case 15 ... 16:
+		p->mr0.ddr3.WR = 0;
+		break;
+#ifdef CONFIG_AD_SLT
+	case 17 ... 22:
+		p->mr0.ddr3.WR = 0;
+		break;
+#endif
 	default:
 		out_error("tWR(%d) is error, valid value is between from 5 to 12.\n",
 		       p->private_params.ddr3_params.tWR);
 		assert(1);
 	}
 
-#ifdef CONFIG_DDR_DLL_OFF
-	p->mr0.ddr3.PD = 0;
-#else
-	p->mr0.ddr3.PD = 1;
-#endif
+	if (kgd_cfg->use_kgd_config) {
+		p->mr0.ddr3.DR = mr_cfg->kgd_mr0_dll_rst & 1;
+                p->mr0.ddr3.PD = mr_cfg->kgd_mr0_pd & 1;
+                p->mr1.ddr3.DE = mr_cfg->kgd_mr1_dll_en & 1;
 
-	/* MR1 register. */
-#ifdef CONFIG_DDR_DLL_OFF
-	p->mr1.ddr3.DE = 1; /* DLL disable. */
-#else
-	p->mr1.ddr3.DE = 0; /* DLL enable. */
-#endif
+                p->mr1.ddr3.DIC5 = (mr_cfg->kgd_mr1_dic & (1 << 1)) >> 1;
+		BETWEEN(p->mr1.ddr3.DIC5,0,1);
+                p->mr1.ddr3.DIC1 = mr_cfg->kgd_mr1_dic & 1;
+		BETWEEN(p->mr1.ddr3.DIC1,0,1);
 
-#ifdef CONFIG_DDR_DRIVER_OUT_STRENGTH
-	/**********************
-      	DIC5   DIC1
-	 * 0     0 - RZQ/6.   *
-	 * 0     1 - RZQ/7.   *
-	 * 1     0 - RZQ/3.   *
-	 * 1     1 - RZQ/4.   *
-	 **********************/
-	p->mr1.ddr3.DIC5 = CONFIG_DDR_DRIVER_OUT_STRENGTH_1;
-	BETWEEN(p->mr1.ddr3.DIC5,0,1);
+                p->mr1.ddr3.RTT9 = (mr_cfg->kgd_mr1_rtt_nom & (1 << 2)) >> 2;
+                BETWEEN(p->mr1.ddr3.RTT9,0,1);
+                p->mr1.ddr3.RTT6 = (mr_cfg->kgd_mr1_rtt_nom & (1 << 1)) >> 1;
+                BETWEEN(p->mr1.ddr3.RTT6,0,1);
+                p->mr1.ddr3.RTT2 = mr_cfg->kgd_mr1_rtt_nom & 1;
+                BETWEEN(p->mr1.ddr3.RTT2,0,1);
 
-    	p->mr1.ddr3.DIC1 = CONFIG_DDR_DRIVER_OUT_STRENGTH_0;
-	BETWEEN(p->mr1.ddr3.DIC1,0,1);
-#else
-	p->mr1.ddr3.DIC1 = 1; /* Impedance=RZQ/7 */
-#endif
+                p->mr2.ddr3.RTTWR = mr_cfg->kgd_mr2_rtt_wr & 3;
+                BETWEEN(p->mr2.ddr3.RTTWR,0,3);
+	} else {
+		p->mr0.ddr3.DR = 1;
+                p->mr0.ddr3.PD = 1;
 
-#ifdef CONFIG_DDR_CHIP_ODT_VAL
-	/**********************
-	 * 000 - ODT disable. *
-	 * 001 - RZQ/4.       *
-	 * 010 - RZQ/2.       *
-	 * 011 - RZQ/6.       *
-	 * 100 - RZQ/12.      *
-	 * 101 - RZQ/8.       *
-	 **********************/
-	p->mr1.ddr3.RTT9 = CONFIG_DDR_CHIP_ODT_VAL_RTT_NOM_9; /* Effective resistance of ODT RZQ/4 */
-	BETWEEN(p->mr1.ddr3.RTT9,0,1);
+                /* DLL 0:enable, 1:disable. */
+                p->mr1.ddr3.DE = 0;
 
-    	p->mr1.ddr3.RTT6 = CONFIG_DDR_CHIP_ODT_VAL_RTT_NOM_6; /* Effective resistance of ODT RZQ/4 */
-	BETWEEN(p->mr1.ddr3.RTT6,0,1);
+                /**********************
+                  DIC5   DIC1
+                 * 0     0 - RZQ/6.   *
+                 * 0     1 - RZQ/7.   * default
+                 * 1     0 - RZQ/3.   *
+                 * 1     1 - RZQ/4.   *
+                 **********************/
+                p->mr1.ddr3.DIC5 = 0;
+                p->mr1.ddr3.DIC1 = 1;
 
-	p->mr1.ddr3.RTT2 = CONFIG_DDR_CHIP_ODT_VAL_RTT_NOM_2; /* Effective resistance of ODT RZQ/4 */
-	BETWEEN(p->mr1.ddr3.RTT2,0,1);
+                /**********************
+                 * 000 - ODT disable. * default
+                 * 001 - RZQ/4.       *
+                 * 010 - RZQ/2.       *
+                 * 011 - RZQ/6.       *
+                 * 100 - RZQ/12.      *
+                 * 101 - RZQ/8.       *
+                 **********************/
+                p->mr1.ddr3.RTT9 = 0;
+                p->mr1.ddr3.RTT6 = 0;
+                p->mr1.ddr3.RTT2 = 0;
 
-    	/* RTT_WR */
-    	/*****************************
-    	A10    A9
-    	* 0     0 - rtt_wr disable. *
-    	* 0     1 - RZQ/4.          *
-    	* 1     0 - RZQ/2.          *
-    	* 1     1 - reserved.       *
-    	*****************************/
-    	p->mr2.ddr3.RTTWR = CONFIG_DDR_CHIP_ODT_VAL_RTT_WR; /* Effective resistance of ODT RZQ/4 */
-    	BETWEEN(p->mr2.ddr3.RTTWR,0,3);
-#endif
+                /*****************************
+                  A10    A9
+                 * 0     0 - rtt_wr disable. * default
+                 * 0     1 - RZQ/4.          *
+                 * 1     0 - RZQ/2.          *
+                 * 1     1 - reserved.       *
+                 *****************************/
+                p->mr2.ddr3.RTTWR = 0;
+	}
 
 	tmp = -1;
 	tmp = ps2cycle_ceil(p->private_params.ddr3_params.WL,1);
+#ifdef CONFIG_AD_SLT
+	if(tmp < 5 || tmp > 10)
+#else
 	if(tmp < 5 || tmp > 9)
+#endif
 	{
 		out_error("ddr frequancy too fast. %d\n",tmp);
 		out_error(". %d\n",__ps_per_tck);
@@ -142,7 +170,7 @@ static void fill_in_params_ddr3(struct ddr_params *ddr_params, struct ddr_chip_i
 	params->tCCD 	= chip->DDR_tCCD;
 	params->tFAW 	= chip->DDR_tFAW;
 
-	fill_mr_params_ddr3(ddr_params);
+	fill_mr_params_ddr3(ddr_params, &chip->kgd_config);
 }
 
 static void ddrc_params_creator_ddr3(struct ddrc_reg *ddrc, struct ddr_params *p)

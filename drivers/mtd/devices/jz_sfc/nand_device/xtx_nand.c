@@ -5,7 +5,6 @@
 #include "../jz_sfc_common.h"
 #include "nand_common.h"
 
-#define XTX_DEVICES_NUM         3
 #define TSETUP		5
 #define THOLD		5
 #define	TSHSL_R		20
@@ -15,7 +14,7 @@
 #define TPP		1400
 #define TBE		10
 
-static struct jz_sfcnand_base_param xtx_param[XTX_DEVICES_NUM] = {
+static struct jz_sfcnand_base_param xtx_param[] = {
 
 	[0] = {
 		/*PN26G01AW*/
@@ -73,12 +72,11 @@ static struct jz_sfcnand_base_param xtx_param[XTX_DEVICES_NUM] = {
 
 		.ecc_max = 0x8,
 		.need_quad = 1,
-
 	},
 
 };
 
-static struct device_id_struct device_id[XTX_DEVICES_NUM] = {
+static struct device_id_struct device_id[] = {
 	DEVICE_ID_STRUCT(0xE1, "PN26G01AW", &xtx_param[0]),
 	DEVICE_ID_STRUCT(0xE2, "PN26G02AW", &xtx_param[1]),
 	DEVICE_ID_STRUCT(0xC1, "PN26Q01AW", &xtx_param[2]),
@@ -89,7 +87,7 @@ static int32_t xtx_get_read_feature(struct flash_operation_message *op_info) {
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
 	struct sfc_transfer transfer;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint8_t ecc_status = 0;
 	int32_t ret = 0;
 
@@ -121,25 +119,27 @@ retry:
 		goto retry;
 
 	switch(device_id) {
-		case 0xE1 ... 0xE2:
+		case 0xE1:
+		case 0xE2:
 		case 0xC1:
 			switch((ecc_status >> 4) & 0x3) {
-			    case 0x02:
-				    ret = -EBADMSG;
-				    break;
-			    case 0x03:
-				    ret = 0x8;
-				    break;
-			    default:
-				    ret = 0;
+				case 0x0:
+				case 0x1:
+					return 0;
+				case 0x2:
+					return -EBADMSG;
+				case 0x3:
+					return 8;
+				default:
+					break;
 			}
 			break;
 		default:
 			printf("device_id err, it maybe don`t support this device, check your device id: device_id = 0x%02x\n", device_id);
-			ret = -EIO;   //notice!!!
+			break;
 
 	}
-	return ret;
+	return -EINVAL;
 }
 
 static int xtx_nand_init(void) {
@@ -152,7 +152,7 @@ static int xtx_nand_init(void) {
 
 	xtx_nand->id_manufactory = 0xA1;
 	xtx_nand->id_device_list = device_id;
-	xtx_nand->id_device_count = XTX_DEVICES_NUM;
+	xtx_nand->id_device_count = ARRAY_SIZE(xtx_param);
 
 	xtx_nand->ops.nand_read_ops.get_feature = xtx_get_read_feature;
 	return jz_sfcnand_register(xtx_nand);

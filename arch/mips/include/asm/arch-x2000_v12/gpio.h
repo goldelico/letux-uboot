@@ -54,6 +54,23 @@ enum gpio_port {
 	GPIO_NR_PORTS,
 };
 
+/* TYPEC and TYPED are not supported in setting driver strength */
+enum gpio_driver_strength {
+	GPIO_DS_LEVEL_INVALID = -1,
+
+	/* TYPEA,TYPEB and TYPEE set valid */
+	GPIO_DS_LEVEL_0 = 0x0,
+	GPIO_DS_LEVEL_1 = 0x1,
+	GPIO_DS_LEVEL_2 = 0x2,
+	GPIO_DS_LEVEL_3 = 0x3,
+
+	/* TYPEA and TYPEB set valid */
+	GPIO_DS_LEVEL_4 = 0x4,
+	GPIO_DS_LEVEL_5 = 0x5,
+	GPIO_DS_LEVEL_6 = 0x6,
+	GPIO_DS_LEVEL_7 = 0x7,
+};
+
 struct jz_gpio_func_def {
 	int port;
 	int func;
@@ -102,6 +119,16 @@ struct jz_gpio_func_def {
 #define PXSMTS		0xE4   /* Port Schmitt Trigger Set Register */
 #define PXSMTC		0xE8   /* Port Schmitt Trigger Clear Register */
 
+#define PXDS0	   0xA0   /* PORT Drive Strength State Register0*/
+#define PXDS0S	   0xA4   /* PORT Drive Strength State set Register0*/
+#define PXDS0C	   0xA8   /* PORT Drive Strength State clear Register0*/
+#define PXDS1	   0xB0   /* PORT Drive Strength State Register1*/
+#define PXDS1S	   0xB4   /* PORT Drive Strength State set Register1*/
+#define PXDS1C	   0xB8   /* PORT Drive Strength State clear Register1*/
+#define PXDS2	   0xC0   /* PORT Drive Strength State Register2, only TYPEA and TYPEB valid*/
+#define PXDS2S	   0xC4   /* PORT Drive Strength State set Register2*/
+#define PXDS2C	   0xC8   /* PORT Drive Strength State clear Register2*/
+
 #define GPIO_PXPIN(n)	(GPIO_BASE + (PXPIN + (n)*0x100)) /* PIN Level Register */
 #define GPIO_PXINT(n)	(GPIO_BASE + (PXINT + (n)*0x100)) /* Port Interrupt Register */
 #define GPIO_PXINTS(n)	(GPIO_BASE + (PXINTS + (n)*0x100)) /* Port Interrupt Set Register */
@@ -132,6 +159,9 @@ struct jz_gpio_func_def {
 #define GPIO_PXDS1(n)	(GPIO_BASE + (PXDS1  + (n)*0x100))/* Port Drive Strength Register1 */
 #define GPIO_PXDS1S(n)	(GPIO_BASE + (PXDS1S + (n)*0x100))/* Port Drive Strength Set Register1 */
 #define GPIO_PXDS1C(n)	(GPIO_BASE + (PXDS1C + (n)*0x100))/* Port Drive Strength Clear Register1 */
+#define GPIO_PXDS2(n)	(GPIO_BASE + (PXDS2 + (n)*0x100))  /* PORT Drive Strength State Register2, only TYPEA and TYPEB valid*/
+#define GPIO_PXDS2S(n)	(GPIO_BASE + (PXDS2S + (n)*0x100)) /* PORT Drive Strength State set Register2*/
+#define GPIO_PXDS2C(n)	(GPIO_BASE + (PXDS2C + (n)*0x100)) /* PORT Drive Strength State clear Register2*/
 #define GPIO_PXSR(n)	(GPIO_BASE + (PXSR   + (n)*0x100))/* Port Slew Rate Register */
 #define GPIO_PXSRS(n)	(GPIO_BASE + (PXSRS  + (n)*0x100))/* Port Slew Rate Set Register */
 #define GPIO_PXSRC(n)	(GPIO_BASE + (PXSRC  + (n)*0x100))/* Port PORTA Slew Rate Clear Register */
@@ -153,5 +183,6 @@ void gpio_as_irq_fall_edge(unsigned gpio);
 void gpio_ack_irq(unsigned gpio);
 int gpio_clear_flag(unsigned gpio);
 int gpio_get_flag(unsigned int gpio);
+void gpio_set_driver_strength(enum gpio_port gpio, int value, unsigned int pins);
 
 #endif /* __GPIO_H__ */

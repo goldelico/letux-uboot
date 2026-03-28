@@ -1,6 +1,98 @@
 #ifndef __DDR_CHIP_INFO_H__
 #define __DDR_CHIP_INFO_H__
 
+struct ddr_mr_config {
+        unsigned char kgd_mr1_ds;
+};
+
+struct ddr2_mr_config {
+        unsigned char kgd_mr0_dll_rst;
+        unsigned char kgd_mr0_pd;
+        unsigned char kgd_mr1_dll_en;
+        unsigned char kgd_mr1_dic;
+        unsigned char kgd_mr1_rtt_nom;
+        unsigned char kgd_mr1_ocd;
+        unsigned char kgd_mr2_dcc_en;
+};
+
+struct ddr3_mr_config {
+        unsigned char kgd_mr0_dll_rst;
+        unsigned char kgd_mr0_pd;
+        unsigned char kgd_mr1_dll_en;
+        unsigned char kgd_mr1_dic;
+        unsigned char kgd_mr1_rtt_nom;
+        unsigned char kgd_mr2_rtt_wr;
+};
+
+struct lpddr_mr_config {
+        unsigned char kgd_mr2_ds;
+};
+
+struct lpddr2_mr_config {
+        unsigned char kgd_mr3_ds;
+};
+
+struct lpddr3_mr_config {
+        unsigned char kgd_mr3_ds;
+        unsigned char kgd_mr11_odt;
+};
+
+/* KGD DLL & ODT & Drive Strength Tuning */
+union kgd_mr_config {
+        struct ddr_mr_config    ddr_config;
+        struct ddr2_mr_config   ddr2_config;
+        struct ddr3_mr_config   ddr3_config;
+        struct lpddr_mr_config  lpddr_config;
+        struct lpddr2_mr_config lpddr2_config;
+        struct lpddr3_mr_config lpddr3_config;
+};
+
+struct kgd_config {
+        unsigned char use_kgd_config;
+        union kgd_mr_config mr_config;
+};
+
+/* PHY ODT & Drive Strength & SKEW Tuning */
+struct phy_drvodt_config {
+
+        unsigned char use_drvodt_config;
+
+        unsigned char phy_pu_drv_cmd;
+        unsigned char phy_pd_drv_cmd;
+        unsigned char phy_pu_drv_ck;
+        unsigned char phy_pd_drv_ck;
+        unsigned char phy_pu_drv_dq7_0;
+        unsigned char phy_pd_drv_dq7_0;
+        unsigned char phy_pu_drv_dq15_8;
+        unsigned char phy_pd_drv_dq15_8;
+
+        unsigned char phy_pu_odt_dq7_0;
+        unsigned char phy_pd_odt_dq7_0;
+        unsigned char phy_pu_odt_dq15_8;
+        unsigned char phy_pd_odt_dq15_8;
+};
+
+struct phy_deskew_config {
+
+        unsigned char use_deskew_config;
+	/* Per-bit de-skew of command signal are not defined in detail. */
+        unsigned char phy_deskew_cmd;
+
+        unsigned char phy_deskew_rx_dm0;
+        unsigned char phy_deskew_tx_dm0;
+        unsigned char phy_deskew_rx_dq7_0;
+        unsigned char phy_deskew_tx_dq7_0;
+        unsigned char phy_deskew_rx_dqs0;
+        unsigned char phy_deskew_tx_dqs0;
+
+        unsigned char phy_deskew_rx_dm1;
+        unsigned char phy_deskew_tx_dm1;
+        unsigned char phy_deskew_rx_dq15_8;
+        unsigned char phy_deskew_tx_dq15_8;
+        unsigned char phy_deskew_rx_dqs1;
+        unsigned char phy_deskew_tx_dqs1;
+};
+
 struct ddr_chip_info {
 	char name[32];
 	unsigned int id;
@@ -63,6 +155,10 @@ struct ddr_chip_info {
 	unsigned int DDR_tXARD;
 	unsigned int DDR_tXARDS;
 	unsigned int DDR_AL;
+
+        struct kgd_config        kgd_config;
+        struct phy_drvodt_config phy_drvodt;
+        struct phy_deskew_config phy_deskew;
 };
 
 enum {
@@ -100,7 +196,5 @@ enum {
 #define DDR_CHIP_ID(vendor, type, capacity)	(type << 6 | vendor << 3 | capacity)
 
 #include <asm/ddr_innophy.h>
-
-
 
 #endif

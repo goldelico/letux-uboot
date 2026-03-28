@@ -26,7 +26,18 @@ LIB	= $(obj)lib$(CPU).o
 
 START	= start.o
 SOBJS-y	=
-COBJS-y	= jz_serial.o
+has_jz_serial = y
+ifdef CONFIG_GPIO_SPI_TO_UART
+has_jz_serial = n
+endif
+ifdef CONFIG_GPIO_SPI_TO_UART2
+has_jz_serial = n
+endif
+
+COBJS-$(CONFIG_GPIO_SPI_TO_UART) = gpio_spi_to_uart.o
+COBJS-$(CONFIG_GPIO_SPI_TO_UART2) = gpio_spi_to_uart2.o
+COBJS-$(has_jz_serial)	= jz_serial.o
+
 ifdef CONFIG_SPL_BUILD
 COBJS-y	+= spl_cpu.o
 ifdef CONFIG_X1600

@@ -7,6 +7,25 @@
 #include "spinor.h"
 
 
+enum {
+        PART_ERASE = 0,         /* partition erasure excluding read-only partitions and bad blocks */
+        CHIP_ERASE,             /* chip erasure excluding read-only partitions and bad blocks */
+        FORCE_ERASE,            /* force erasure including read-only partitions and bad blocks */
+        FACTORY_ERASE,          /* factory erasure with read-only partitions and without bad blocks */
+};
+
+enum {
+        MTD_MODE = 0,           /* use mtd mode, erase partition when write */
+        UBI_MANAGER,
+        MTD_D_MODE,             /* use mtd dynamic mode, erase block_size when write */
+};
+
+enum {
+        PART_RW = 0,
+        PART_RO,
+};
+
+
 struct data_config {
 
 	uint32_t datalen;
@@ -292,7 +311,7 @@ struct spi_nor_flash_ops {
 struct spl_nand_param {
 		unsigned int pagesize:16;
 		unsigned int id_manufactory:8;
-		unsigned int device_id:8;
+		unsigned int device_id:16;
 
 		unsigned int addrlen:2;
 		unsigned int ecc_bit:3;
@@ -300,6 +319,7 @@ struct spl_nand_param {
 
 		unsigned char eccstat_count;
 		unsigned char eccerrstatus[2];
+		unsigned char plane_select;
 } __attribute__((aligned(4)));
 
 struct cmd_info {

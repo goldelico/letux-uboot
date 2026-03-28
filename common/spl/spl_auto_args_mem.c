@@ -70,7 +70,7 @@ static char* process_mem_bootargs(char *cmdargs, int ram_size)
 	if (ram_size >= 256)
 		ram_size = 256;
 
-	ram_size = ram_size - CONFIG_RMEM_MB - CONFIG_RTOS_SIZE_MB;
+	ram_size = ram_size - CONFIG_NMEM_MB - CONFIG_RMEM_MB - CONFIG_RTOS_SIZE_MB - CONFIG_LCD_MEM_MB;
 
 	/* mem=xxxM@0x0*/
 	args_mem = add_mem(args_mem, "mem=", 0, ram_size);
@@ -78,10 +78,16 @@ static char* process_mem_bootargs(char *cmdargs, int ram_size)
 	if (CONFIG_RMEM_MB)
 		args_mem = add_mem(args_mem, "rmem=", ram_size, CONFIG_RMEM_MB);
 
-	if (CONFIG_RTOS_SIZE_MB)
-		args_mem = add_mem(args_mem, "rtos_size=", ram_size+CONFIG_RMEM_MB, CONFIG_RTOS_SIZE_MB);
+	if (CONFIG_NMEM_MB)
+		args_mem = add_mem(args_mem, "nmem=", ram_size+CONFIG_RMEM_MB, CONFIG_NMEM_MB);
 
-	if (real_size >= 256)
+	if (CONFIG_RTOS_SIZE_MB)
+		args_mem = add_mem(args_mem, "rtos_size=", ram_size+CONFIG_NMEM_MB+CONFIG_RMEM_MB, CONFIG_RTOS_SIZE_MB);
+
+	if (CONFIG_LCD_MEM_MB)
+		args_mem = add_mem(args_mem, "lcd_mem=", ram_size+CONFIG_NMEM_MB+CONFIG_RMEM_MB+CONFIG_RTOS_SIZE_MB, CONFIG_LCD_MEM_MB);
+
+	if (real_size > 256)
 		args_mem = add_mem(args_mem, "mem=", 768, real_size-256);
 
 	memmove(args_mem, args_mem_end, strlen(args_mem_end) + 1);

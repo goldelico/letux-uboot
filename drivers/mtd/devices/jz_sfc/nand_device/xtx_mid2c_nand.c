@@ -5,7 +5,6 @@
 #include "../jz_sfc_common.h"
 #include "nand_common.h"
 
-#define XTX_MID2C_DEVICES_NUM         1
 #define TSETUP		4
 #define THOLD		4
 #define	TSHSL_R		30
@@ -15,19 +14,18 @@
 #define TPP		600
 #define TBE		10
 
-static struct jz_sfcnand_device *xtx_mid2c_nand;
-
-static struct jz_sfcnand_base_param xtx_mid2c_param[XTX_MID2C_DEVICES_NUM] = {
+static struct jz_sfcnand_base_param xtx_mid2c_param[] = {
 
 	[0] = {
 		/*XT26G02E */
+		/*NM5A02G01A*/
 		.pagesize = 2 * 1024,
 		.blocksize = 2 * 1024 * 64,
 		.oobsize = 64,
 		.flashsize = 2 * 1024 * 64 * 2048,
 
-		.tHOLD   = THOLD,
 		.tSETUP  = TSETUP,
+		.tHOLD   = THOLD,
 		.tSHSL_R = TSHSL_R,
 		.tSHSL_W = TSHSL_W,
 
@@ -41,7 +39,7 @@ static struct jz_sfcnand_base_param xtx_mid2c_param[XTX_MID2C_DEVICES_NUM] = {
 
 };
 
-static struct device_id_struct device_id[XTX_MID2C_DEVICES_NUM] = {
+static struct device_id_struct device_id[] = {
 	DEVICE_ID_STRUCT(0x24, "XT26G02E ", &xtx_mid2c_param[0]),
 };
 
@@ -67,7 +65,7 @@ static int32_t xtx_mid2c_get_read_feature(struct flash_operation_message *op_inf
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
 	struct sfc_transfer transfer;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint8_t ecc_status = 0;
 	int32_t ret = 0;
 
@@ -100,37 +98,31 @@ retry:
 
 	switch(device_id) {
 		case 0x24:
-			switch((ecc_status >> 0x4) & 0x7) {
-			    case 0x5:
-				    ret = 8;
-				    break;
-			    case 0x3:
-				    ret = 6;
-				    break;
-			    case 0x2:
-				    ret = -EBADMSG;
-				    break;
-			    case 0x1:
-				    ret = 3;
-				    break;
-			    default:
-				    ret = 0;
-				    break;
+			switch((ecc_status >> 4) & 0x7) {
+				case 0x0:
+				case 0x1:
+					return 0;
+				case 0x2:
+					return -EBADMSG;
+				case 0x3:
+				case 0x5:
+					return 8;
+				default:
+					break;
 			}
 			break;
-
 		default:
 			printf("device_id err, it maybe don`t support this device, check your device id: device_id = 0x%02x\n", device_id);
-			ret = -EIO;
+			break;
 	}
-	return ret;
+	return -EINVAL;
 }
 
 static void xtx_mid2c_single_read(struct sfc_transfer *transfer, struct flash_operation_message *op_info) {
 
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint32_t columnaddr = op_info->columnaddr;
 	int plane_flag = 0;
 
@@ -164,7 +156,7 @@ static void xtx_mid2c_quad_read(struct sfc_transfer *transfer, struct flash_oper
 
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint32_t columnaddr = op_info->columnaddr;
 	int plane_flag = 0;
 
@@ -198,7 +190,7 @@ static void xtx_mid2c_single_load(struct sfc_transfer *transfer, struct flash_op
 
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint32_t columnaddr = op_info->columnaddr;
 	int plane_flag = 0;
 
@@ -231,7 +223,7 @@ static void xtx_mid2c_quad_load(struct sfc_transfer *transfer, struct flash_oper
 
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint32_t columnaddr = op_info->columnaddr;
 	int plane_flag = 0;
 
@@ -286,7 +278,7 @@ static int xtx_mid2c_nand_init(void) {
 
 	xtx_mid2c_nand->id_manufactory = 0x2C;
 	xtx_mid2c_nand->id_device_list = device_id;
-	xtx_mid2c_nand->id_device_count = XTX_MID2C_DEVICES_NUM;
+	xtx_mid2c_nand->id_device_count = ARRAY_SIZE(xtx_mid2c_param);
 
 	xtx_mid2c_nand->ops.nand_read_ops.pageread_to_cache = xtx_mid2c_pageread_to_cache;
 	xtx_mid2c_nand->ops.nand_read_ops.get_feature = xtx_mid2c_get_read_feature;

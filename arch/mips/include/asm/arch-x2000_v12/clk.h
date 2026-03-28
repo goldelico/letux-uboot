@@ -72,5 +72,4 @@ enum otg_mode_t {
 	DEVICE_ONLY_MODE,
 	HOST_ONLY_MODE,
 };
-void otg_phy_init(enum otg_mode_t mode,unsigned extclk);
 #endif /* __CLK_H__ */

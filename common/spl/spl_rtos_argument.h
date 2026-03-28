@@ -3,12 +3,7 @@
 
 #include <common.h>
 
-typedef enum {
-    SPL_RTOS_TYPE_LOAD_OS       = 1,
-    SPL_RTOS_TYPE_BOOT_OS       = 2,  /* 暂未实现RTOS引导OS的参数传递 */
-} spl_rtos_boot_type;
-
-/* 与RTOS中的结构体保持一致 */
+/* SPL与RTOS中的结构体保持一致, mmc 专用 */
 struct card_info_params {
     unsigned char ext_csd[512]; /* 64字节 cache line对齐读取速度更块 */
     unsigned int magic;         /* "RTOS" */
@@ -30,18 +25,17 @@ struct card_info_params {
  * SPL传递参数到RTOS， 可在RTOS中load OS镜像
  */
 struct rtos_boot_os_args {
-    unsigned int magic;         /* "ARGS" */
-    char boot_type;             /* =0:RTOS只加载镜像不引导, =1:RTOS完成加载和引导OS功能 */
-    char is_loading;            /* =0:OS镜像加载中, =1:OS镜像加载完成 */
-    char *command_line;
-    unsigned int offset_sector;/* OS 偏移地址 单位:Sector 512Byte */
-    unsigned int size_sector;  /* OS 偏移地址 单位:Sector 512Byte */
-    void *spl_image_info;      /* RTOS 传递信息回SPL(OS image entery) RTOS中给该变量赋值 */
+    unsigned int magic; /* "ARGS" */
+    unsigned int load_addr;
+    unsigned int offset; /* OS 偏移地址 单位:Byte */
+    unsigned int size; /* OS 大小 单位:Byte */
+    unsigned int entry_point;
+    char *cmdargs;
 };
 
 struct spl_rtos_argument {
-    struct card_info_params *card_params;
     struct rtos_boot_os_args *os_boot_args;
+    struct card_info_params *card_params;
 };
 
 #endif /* _SPL_RTOS_ARGUMENT_H_ */

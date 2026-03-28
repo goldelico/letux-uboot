@@ -5,10 +5,6 @@
 #include <linux/types.h>
 #include <linker_lists.h>
 
-#define MTD_MODE                0x0     //use mtd mode, erase partition when write
-#define MTD_D_MODE              0x2     //use mtd dynamic mode, erase block_size when write
-#define UBI_MANAGER             0x1
-
 #define SPINAND_MAGIC_NUM	0x646e616e   //ascii "nand"
 
 struct jz_sfcnand_partition {
@@ -62,7 +58,7 @@ struct jz_sfcnand_base_param {
 };
 
 struct device_id_struct {
-	uint8_t id_device;
+	uint16_t id_device;
 	char *name;
 	struct jz_sfcnand_base_param *param;
 };
@@ -102,8 +98,8 @@ struct jz_sfcnand_cdt_params {
 typedef struct jz_sfcnand_cdt_params cdt_params_t;
 
 struct jz_sfcnand_ops {
-	cdt_params_t *(*get_cdt_params)(struct sfc_flash *, uint8_t);
-	int (*deal_ecc_status)(struct sfc_flash *, uint8_t, uint8_t);
+	cdt_params_t *(*get_cdt_params)(struct sfc_flash *, uint16_t);
+	int (*deal_ecc_status)(struct sfc_flash *, uint16_t, uint8_t);
 	int32_t (*get_feature)(struct sfc_flash *, uint8_t);
 };
 
@@ -120,7 +116,7 @@ struct jz_sfcnand_device {
 
 struct jz_sfcnand_flashinfo {
 	uint8_t id_manufactory;
-	uint8_t id_device;
+	uint16_t id_device;
 
 	struct jz_sfcnand_base_param param;
 	struct jz_sfcnand_partition_param partition;
@@ -131,8 +127,6 @@ struct jz_sfcnand_flashinfo {
 #define X_ENV_LENGTH		1024
 #define X_COMMAND_LENGTH	128
 
-#define MTD_MODE	0x0
-#define UBI_MANAGER     0x1
 
 
 int jz_sfcnand_register(struct jz_sfcnand_device *flash);
@@ -146,8 +140,6 @@ typedef int32_t (*spinand_regcall_t)(void);
 #define SPINAND_MOUDLE_INIT(fn)      \
 	ingenic_entry_declare(spinand_regcall_t, _1##fn, flash) = fn
 
-/* SFC CDT Maximum INDEX number */
-#define INDEX_MAX_NUM 32
 
 /* SFC CDT INDEX */
 enum {

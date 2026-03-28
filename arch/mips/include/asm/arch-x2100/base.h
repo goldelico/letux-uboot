@@ -28,6 +28,7 @@
 
 /*DSI Base*/
 #define DSI_BASE (0xb0075000)
+#define DSI_PHY_BASE (0xb0077000)
 
 /* AHB0 BUS Devices Base */
 #define DDRC_BASE	0xb34f0000
@@ -51,6 +52,7 @@
 
 /* AHB2 BUS Devices Base */
 #define OTG_BASE	0xb3500000
+#define OTGPHY_BASE	0xb0078000
 
 #define G_OST_BASE	0xb2000000
 

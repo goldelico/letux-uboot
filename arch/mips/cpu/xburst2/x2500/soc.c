@@ -58,6 +58,55 @@ extern void sdram_init(void);
 extern void ddr_test_refresh(unsigned int start_addr, unsigned int end_addr);
 extern void flush_cache_all(void);
 
+void release_soft_reset(void)
+{
+	cpm_outl(cpm_inl(CPM_CLKGR0) | CPM_CLKGR_OTG, CPM_CLKGR0);
+	cpm_outl(cpm_inl(CPM_SRBC) & (~CPM_SLBC_OTG_SR), CPM_SRBC);
+	cpm_outl(cpm_inl(CPM_CLKGR0) & (~CPM_CLKGR_OTG), CPM_CLKGR0);
+}
+
+void reallocate_cache(void)
+{
+	flush_cache_all();
+
+	/* allcate L2 cache size */
+	/***********************************
+	  L2 cache size
+	  reg addr: 0x12200060
+	  bit   12 11 10
+	  0   0  0   L2C=0KB
+	  0   0  1   L2C=128KB
+	  0   1  0   L2C=256KB
+	  0   1  1   L2C=512KB
+	  1   0  0   L2C=1024KB
+	 ***********************************/
+#if 1
+	/* wait l2cache alloc ok */
+	__asm__ volatile(
+			".set push     \n\t"
+			".set mips32r2 \n\t"
+			"sync          \n\t"
+			"lw $0,0(%0)   \n\t"
+			".set pop      \n\t"
+			::"r" (0xa0000000));
+	*((volatile unsigned int *)(0xb2200060)) = 0x00000400;
+	__asm__ volatile(
+			".set push     \n\t"
+			".set mips32r2 \n\t"
+			"sync          \n\t"
+			"lw $0,0(%0)   \n\t"
+			".set pop      \n\t"
+			::"r" (0xa0000000));
+#endif
+
+}
+
+/*Improving the priority of ddrc in lcd processing*/
+void change_lcd_ddrc_process_priority(void)
+{
+	*(unsigned int *)0x1301202c = 0x8840403e;   //DDRC-APB-CCHC3
+	*(unsigned int *)0x13012038 = 0xff0000cd;   //DDRC-APB-CCHC6
+}
 
 void board_init_f(ulong dummy)
 {
@@ -108,6 +157,8 @@ void board_init_f(ulong dummy)
 	debug("SDRAM init\n");
 	sdram_init();
 
+	change_lcd_ddrc_process_priority();
+
 #ifdef CONFIG_DDR_AUTO_REFRESH_TEST
 	ddr_test_refresh(0xa0000000, 0xa1000000);
 #endif
@@ -116,6 +167,11 @@ void board_init_f(ulong dummy)
 #ifdef CONFIG_DDR_TEST
 	ddr_basic_tests();
 #endif
+
+	reallocate_cache();
+
+	/* Release otg soft reset. */
+	release_soft_reset();
 
 #ifndef CONFIG_BURNER
 	/* Clear the BSS */
@@ -159,36 +215,6 @@ void jump_to_image_no_args(struct spl_image_info *spl_image)
 
 
 	flush_cache_all();
-
-	/* allcate L2 cache size */
-	/***********************************
-	  L2 cache size
-	  reg addr: 0x12200060
-	  bit   12 11 10
-	  0   0  0   L2C=0KB
-	  0   0  1   L2C=128KB
-	  0   1  0   L2C=256KB
-	  0   1  1   L2C=512KB
-	  1   0  0   L2C=1024KB
-	 ***********************************/
-#if 1
-	/* wait l2cache alloc ok */
-	__asm__ volatile(
-			".set push     \n\t"
-			".set mips32r2 \n\t"
-			"sync          \n\t"
-			"lw $0,0(%0)   \n\t"
-			".set pop      \n\t"
-			::"r" (0xa0000000));
-	*((volatile unsigned int *)(0xb2200060)) = 0x00000400;
-	__asm__ volatile(
-			".set push     \n\t"
-			".set mips32r2 \n\t"
-			"sync          \n\t"
-			"lw $0,0(%0)   \n\t"
-			".set pop      \n\t"
-			::"r" (0xa0000000));
-#endif
 #if 0
 	{
 		int i;

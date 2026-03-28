@@ -37,19 +37,19 @@ static int do_sctest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	}
 
 	if(strcmp(argv[1], "init") == 0) {
-		printf("calling sc_test init function !\n");
+		serial_debug("calling sc_test init function !\n");
 		if(init_seboot() < 0) {
-			printf("init seboot fialed.\n");
+			serial_debug("init seboot fialed.\n");
 		}
 
 	} else if(strcmp(argv[1], "scboot") == 0) {
 		if(test_scboot() < 0) {
-			printf("scboot failed !!!!\n");
+			serial_debug("scboot failed !!!!\n");
 		}
-		printf("calling sc_test scboot funtion !\n");
+		serial_debug("calling sc_test scboot funtion !\n");
 	} else if(strcmp(argv[1], "rsa") == 0) {
 		if(test_rsa() < 0) {
-			printf("at list one test case failed in test rsa !\n");
+			serial_debug("at list one test case failed in test rsa !\n");
 		}
 	} else if(strcmp(argv[1], "burn_nku") == 0) {
 		test_burnnku();
@@ -62,19 +62,19 @@ static int do_sctest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 	} else if(strcmp(argv[1], "get_enckey") == 0) {
 		test_get_enckey();
 	}else if (strcmp(argv[1], "sec_boot_en") == 0){
-		printf("burn sec boot enable bit:\n");
+		serial_debug("burn sec boot enable bit:\n");
 		cpu_burn_secboot_enable();
 	}else if (strcmp(argv[1], "load_nku") == 0){
-		printf("load test nku to mem!\n");
+		serial_debug("load test nku to mem!\n");
 		test_load_nku();
 	}else if (strcmp(argv[1], "aes_byckey") == 0){
-		printf("test aes by ckey\n");
+		serial_debug("test aes by ckey\n");
 		test_aes_by_ckey();
 	}else if (strcmp(argv[1], "chipid") == 0){
-		printf("test aes by ckey\n");
+		serial_debug("test aes by ckey\n");
 		test_read_chip_id();
 	}else if (strcmp(argv[1], "all") == 0){
-		printf("test all in one\n");
+		serial_debug("test all in one\n");
 		init_seboot();
 		cpu_burn_rckey();
 		test_burnnku();
@@ -83,7 +83,7 @@ static int do_sctest(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 	} else {
 
-		printf("cmd error!!\n");
+		serial_debug("cmd error!!\n");
 	}
 
 	return CMD_RET_SUCCESS;

@@ -64,17 +64,22 @@ extern void flush_cache_all(void);
 void __noreturn jump_to_image_linux(void *arg)
 {
 	debug("Entering kernel arg pointer: 0x%p\n", arg);
-	static u32 *param_addr = NULL;
 	typedef void (*image_entry_arg_t)(int, char **, void *)
 		__attribute__ ((noreturn));
 	image_entry_arg_t image_entry =
 		(image_entry_arg_t) spl_image.entry_point;
 
 	cleanup_before_linux();
+#ifndef CONFIG_SPL_OF_LIBFDT
+	static u32 *param_addr = NULL;
 	param_addr = (u32 *)CONFIG_PARAM_BASE;
 	param_addr[0] = 0;
 	param_addr[1] = (u32)arg;
 	flush_cache_all();
 	image_entry(2, (char **)param_addr, NULL);
+#else
+	flush_cache_all();
+	image_entry(-2, (char **)CONFIG_DTB_ADRESS, NULL);
+#endif /* CONFIG_SPL_OF_LIBFDT */
 }
 #endif

@@ -62,6 +62,13 @@ static void read_efuse_segment(unsigned int addr, unsigned int length, unsigned 
 	REG32(EFUSE_STATE) = 0;
 }
 
+void read_socid(unsigned int *id)
+{
+	read_efuse_segment(EFUSE_SOCID_ADDR, 1, id);
+}
+
+#ifndef CONFIG_SPL_USB_BOOT
+
 static inline int check_chipid(unsigned int *data)
 {
 	unsigned int lotid_l, lotid_h;
@@ -91,11 +98,6 @@ static int read_and_check_chipid()
 
 	read_efuse_segment(EFUSE_CHIPID_ADDR, 15, data);
 	return check_chipid(data);
-}
-
-static void read_socid(unsigned int *id)
-{
-	read_efuse_segment(EFUSE_SOCID_ADDR, 1, id);
 }
 
 static void ddr_change_64M()
@@ -143,3 +145,4 @@ int check_socid()
 
 	return socid;
 }
+#endif

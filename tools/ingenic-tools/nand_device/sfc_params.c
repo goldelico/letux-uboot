@@ -71,7 +71,8 @@ static int print_nand_param(void) {
 				printf("\t\t\t .eccerrstatus = {");
 				while(device->eccstat_count--)
 					printf("0x%02x, ", *(device->eccerrstatus++));
-				printf("}\n");
+				printf("},\n");
+				printf("\t\t\t .plane_select = 0x%02x,\n", device->plane_select);
 				printf("\t\t },\n");
 				device++;
 			}

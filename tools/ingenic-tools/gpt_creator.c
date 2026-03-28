@@ -301,7 +301,13 @@ int parse_partition_item(char * value, u64 * start, u64* size) {
     //To gain size field
     str_size = str_trim(sub_str);
     if (*str_size == 0) return -1;
-    if (!isdigit(*str_size)) return -1;
+	char *temp_size = str_size;
+	if (*temp_size == '-') {
+		temp_size++;  // 跳过负号
+		if (!isdigit(*temp_size)) return -1;  // 检查负号后面是否是数字
+	} else if (!isdigit(*str_size)) {
+		return -1;
+	}
 
     //To gain fstype field
     sub_str = strchr(sub_str, ',');
@@ -373,7 +379,7 @@ int add_ptn(struct ptable *ptbl, u64 first, u64 last, const char *name)
 
 	if (last > hdr->last_lba) {
 		fprintf(stderr,"partition '%s' does not fit on disk\n", name);
-		return -1;
+		last = 0xFFFFFFFFFFFFFFFF; //大于配置disk_size的大小，传入-1交由kernel处理
 	}
 	for (n = 0; n < EFI_ENTRIES; n++, entry++) {
 		if (entry->type_uuid[0])
@@ -435,6 +441,9 @@ void show(struct ptable *ptbl)
 
 u64 parse_size(char *sz)
 {
+	if (sz && sz[0] == '-') {
+		return (u64)-1;  // 返回 u64 格式的 -1
+	}
 	u64 n;
 
 	int l = strlen(sz);
@@ -546,8 +555,12 @@ int main(int argc, char **argv)
 
 			parse_partition_item(partition->value, &start, &size);
 			start /= 512;
-			size  /= 512;
-			add_ptn(&ptbl, start, start + size - 1, partition->name);
+			if(size == (u64)-1) {
+				add_ptn(&ptbl, start, 0xFFFFFFFFFFFFFFFF, partition->name);
+			} else {
+				size  /= 512;
+				add_ptn(&ptbl, start, start + size - 1, partition->name);
+			}
 			entries_count ++;
 		}
 		hdr->entries_count = entries_count;
@@ -560,6 +573,7 @@ int main(int argc, char **argv)
 	crc = crc32(0, Z_NULL, 0);
 	crc = crc32(crc, (void*) &ptbl.header, sizeof(ptbl.header));
 	hdr->crc32 = crc;
+
 
 	#define MBR_SIZE  (512)
 	fd = fopen(mbr_file_name, "wb");

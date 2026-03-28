@@ -80,8 +80,10 @@ void board_init_f(ulong dummy)
 	debug("regulator set\n");
 	spl_regulator_set();
 #endif
+#ifndef CONFIG_BURNER
 	debug("CLK stop\n");
 	clk_prepare();
+#endif
 
 	debug("PLL init\n");
 	pll_init();

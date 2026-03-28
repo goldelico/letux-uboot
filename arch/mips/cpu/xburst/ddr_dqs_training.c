@@ -293,10 +293,10 @@ int dqs_gate_train(int rank_cnt, int byte_cnt)
 				dwc_debug("Middle: %d\n", middle);
 				dwc_debug("Rank:%d\n", rank);
 				dwc_debug("Byte:%d\n", byte);
-				printf("@pas:DXDQSTR= 0x%x\n", ddr_readl(DDRP_DXDQSTR(byte)));
+				serial_debug("@pas:DXDQSTR= 0x%x\n", ddr_readl(DDRP_DXDQSTR(byte)));
 			} else {
-				printf("Rank:%d\n", rank);
-				printf("No pass at byte:%d\n", byte);
+				serial_debug("Rank:%d\n", rank);
+				serial_debug("No pass at byte:%d\n", byte);
 				res = 1;
 			}
 		}

@@ -1641,7 +1641,7 @@ void lcd_ctrl_init(void *lcd_base)
 	panel_display_on(dsi);
 #endif
 
-#ifdef DEFAULT_BACKLIGHT_LEVEL
+#ifdef CONFIG_SYS_BACKLIGHT_LEVEL
 	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
 #else
 	lcd_set_backlight_level(80);

@@ -40,10 +40,10 @@ int test_wtotp(int opera){
 	*(volatile unsigned int *)0xb3540000 &= ~(1<<15);
 
 	if (*(volatile unsigned int *)(MCU_TCSM_RETVAL) != SC_ERR_SUCC){
-		printf("secall SC_FUNC_WTOTP fail 0x%08x\n", *(volatile unsigned int *)(MCU_TCSM_RETVAL));
+		serial_debug("secall SC_FUNC_WTOTP fail 0x%08x\n", *(volatile unsigned int *)(MCU_TCSM_RETVAL));
 		return -ESEC;
 	} else {
-		printf("###########secall SC_FUNC_WTOTP success 0x%08x\n", *(volatile unsigned int *)(MCU_TCSM_RETVAL));
+		serial_debug("###########secall SC_FUNC_WTOTP success 0x%08x\n", *(volatile unsigned int *)(MCU_TCSM_RETVAL));
 	}
 	return 0;
 }
@@ -87,14 +87,14 @@ int test_burnukey(void)
 	ukey[1] = encukey1[1];
 	ukey[2] = encukey1[2];
 	ukey[3] = encukey1[3];
-	printf("ukey 0x%08x-0x%08x-0x%08x-0x%08x\n",ukey[0],ukey[1],ukey[2],ukey[3]);
+	serial_debug("ukey 0x%08x-0x%08x-0x%08x-0x%08x\n",ukey[0],ukey[1],ukey[2],ukey[3]);
 
 	args->arg[0] = 0;
 	args->arg[1] = MCU_TCSM_PADDR(MCU_TCSM_PUTUKEY);
 
 	ret = secall(args,SC_FUNC_BURNUK,0,1);
 	if (*(volatile unsigned int *)(MCU_TCSM_RETVAL) != SC_ERR_SUCC){
-		printf("secall SC_FUNC_BURNUK fail 0x%08x\n", *(volatile unsigned int *)(MCU_TCSM_RETVAL));
+		serial_debug("secall SC_FUNC_BURNUK fail 0x%08x\n", *(volatile unsigned int *)(MCU_TCSM_RETVAL));
 	}
 	test_wtotp(WT_OTP_UK);
 
@@ -105,7 +105,7 @@ int test_burnukey(void)
 	volatile unsigned int * reg_ctrl = (volatile unsigned int *)0xb3540000;
 	volatile unsigned int * reg_stat = (volatile unsigned int *)0xb3540008;
 
-	printf("xxxx otp efuse state:%x\n", *reg_stat);
+	serial_debug("xxxx otp efuse state:%x\n", *reg_stat);
 
 	*reg_ctrl |= 1<<15; /*pg en*/
 	gpio_output_value(efuse_args->efuse_en_gpio, efuse_args->efuse_en_active);
@@ -122,7 +122,7 @@ int test_burnukey(void)
 
 	*reg_ctrl |= 1<<0; /*read en*/
 	while(!(*reg_stat & (1<<0)));
-	printf("xxxx otp efuse state:%x\n", *reg_stat);
+	serial_debug("xxxx otp efuse state:%x\n", *reg_stat);
 #endif
 
 	return 0;
@@ -146,7 +146,7 @@ int test_read_chip_id()
 //	while(!(*reg_stat & (1 << 0)));
 
 
-	printf("chip-id: %x-%x-%x-%x\n", *reg_data0, *reg_data1, *reg_data2, *reg_data3);
+	serial_debug("chip-id: %x-%x-%x-%x\n", *reg_data0, *reg_data1, *reg_data2, *reg_data3);
 
 
 }
@@ -169,9 +169,9 @@ int test_aes_by_ckey()
 	};
 	aes(data,endata,4*4,1,0);
 	aes(endata,tmpdata,4*4,1,1);
-	printf("--data--%x -%x -%x -%x---\n",data[0],data[1],data[2],data[3]);
-	printf("--endata--%x -%x -%x -%x---\n",endata[0],endata[1],endata[2],endata[3]);
-	printf("--tmpdata--%x -%x -%x -%x---\n",tmpdata[0],tmpdata[1],tmpdata[2],tmpdata[3]);
+	serial_debug("--data--%x -%x -%x -%x---\n",data[0],data[1],data[2],data[3]);
+	serial_debug("--endata--%x -%x -%x -%x---\n",endata[0],endata[1],endata[2],endata[3]);
+	serial_debug("--tmpdata--%x -%x -%x -%x---\n",tmpdata[0],tmpdata[1],tmpdata[2],tmpdata[3]);
 	//cmp_data(data,tmpdata,4);
 }
 
@@ -221,8 +221,8 @@ int test_rsa()
 
 	};
 	do_rsa(input,31*4,output,nku1,124);
-	printf("--rsa--%x -%x -%x -%x---\n",output[0],output[1],output[2],output[3]);
-	printf("--rsa cmp data--%x -%x -%x -%x---\n",cmpdata[0],cmpdata[1],cmpdata[2],cmpdata[3]);
+	serial_debug("--rsa--%x -%x -%x -%x---\n",output[0],output[1],output[2],output[3]);
+	serial_debug("--rsa cmp data--%x -%x -%x -%x---\n",cmpdata[0],cmpdata[1],cmpdata[2],cmpdata[3]);
 	//cmp_data(output,data,4);
 }
 
@@ -235,10 +235,10 @@ int cpu_burn_secboot_enable_1(void)
 	volatile unsigned int * reg_stat = (volatile unsigned int *)0xb3540008;
 	volatile unsigned int * reg_data0 = (volatile unsigned int *)0xb354000c;
 
-	printf("======================== sec boot enable ===================\n");
+	serial_debug("======================== sec boot enable ===================\n");
 
-	printf("xxxx otp efuse state:%x\n", *reg_stat);
-	printf("xxxx otp efuse date:%x\n", *reg_data0);
+	serial_debug("xxxx otp efuse state:%x\n", *reg_stat);
+	serial_debug("xxxx otp efuse date:%x\n", *reg_data0);
 
 	*reg_ctrl |= 1<<15; /*pg en*/
 	gpio_output_value(efuse_args->efuse_en_gpio, efuse_args->efuse_en_active);
@@ -247,8 +247,8 @@ int cpu_burn_secboot_enable_1(void)
 	*reg_ctrl &= ~(0x7f<<21 | 0x1f<<16); /*set address ,length*/
 	*reg_ctrl |= 0x3e<<21;
 
-	printf("xxxx otp efuse date:%x\n", *reg_data0);
-	printf("xxxx otp ctrl: %x\n", *reg_ctrl);
+	serial_debug("xxxx otp efuse date:%x\n", *reg_data0);
+	serial_debug("xxxx otp ctrl: %x\n", *reg_ctrl);
 	*reg_ctrl |= 1<<1; /*write en*/
 	while(!(*reg_stat & (1<<1)));
 
@@ -260,7 +260,7 @@ int cpu_burn_secboot_enable_1(void)
 	while(!(*reg_stat & (1 << 0)));
 
 
-	printf("state updated: %x\n", *reg_stat);
+	serial_debug("state updated: %x\n", *reg_stat);
 
 }
 

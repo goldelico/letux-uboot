@@ -1,19 +1,17 @@
 #include <stdio.h>
 #include "nand_common.h"
 
-#define ISSI_MID			    0xC8
-#define ISSI_NAND_DEVICD_COUNT	    1
 
-static unsigned char issi_xaw[] = {0x2};
+static unsigned char issi_errstat_2[] = {0x2, 0x3};
 
 static struct device_struct device[] = {
-	DEVICE_STRUCT(0x21, 2048, 2, 4, 2, 1, issi_xaw),
+	DEVICE_STRUCT(0x21, 2048, 2, 4, 2, 1, issi_errstat_2, 0),
 };
 
 static struct nand_desc issi_nand = {
 
-	.id_manufactory = ISSI_MID,
-	.device_counts = ISSI_NAND_DEVICD_COUNT,
+	.id_manufactory = 0xC8,
+	.device_counts = ARRAY_SIZE(device),
 	.device = device,
 };
 

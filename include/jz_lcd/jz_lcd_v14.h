@@ -22,6 +22,8 @@
 #define round_up(x, y) ((((x)-1) | __round_mask(x, y))+1)
 #define round_down(x, y) ((x) & ~__round_mask(x, y))
 
+#define FB_INGENIC_NR_FRAMES 1
+
 #ifdef CONFIG_ONE_FRAME_BUFFERS
 #define MAX_DESC_NUM 1
 #endif
@@ -174,6 +176,30 @@ typedef union frm_ctrl {
 	}b;
 } frm_ctrl_t;
 
+typedef union chain_cfg {
+    uint32_t d32;
+    struct {
+	        uint32_t chain_end:1;
+	        uint32_t change_2_cmp:1;
+	        uint32_t reserve2_15:14;
+	        uint32_t color:3;
+	        uint32_t format:4;
+	        uint32_t reserve23_31:9;
+	    }b;
+} chain_cfg_t;
+
+typedef union rdma_irq_ctrl {
+    uint32_t d32;
+    struct {
+	        uint32_t reserve_0:1;
+	        uint32_t eos_msk:1;
+	        uint32_t sos_msk:1;
+	        uint32_t reserve3_16:14;
+	        uint32_t eod_msk:1;
+	        uint32_t reserve18_31:4;
+	    }b;
+} rdma_irq_ctrl_t;
+
 typedef union lay_cfg_en {
 	uint32_t d32;
 	struct {
@@ -245,6 +271,14 @@ typedef union lay_pos {
 	        uint32_t reserve28_31:4;
 	}b;
 } lay_pos_t;
+
+struct jzfb_sreadesc {
+    uint32_t    RdmaNextCfgAddr;
+    uint32_t    FrameBufferAddr;
+    uint32_t    Stride;
+    chain_cfg_t ChainCfg;
+    rdma_irq_ctrl_t InterruptControl;
+};
 
 struct jzfb_framedesc {
 	uint32_t	   FrameNextCfgAddr;
@@ -458,6 +492,10 @@ struct jzfb_config_info {
 
 	struct fb_fix_screeninfo fix;
 	size_t frm_size;
+
+	struct jzfb_sreadesc *sreadesc[FB_INGENIC_NR_FRAMES];
+	dma_addr_t sreadesc_phys[FB_INGENIC_NR_FRAMES];
+	dma_addr_t buffer_phys[FB_INGENIC_NR_FRAMES];
 	struct jzfb_framedesc *framedesc[MAX_DESC_NUM];
 	dma_addr_t framedesc_phys[MAX_DESC_NUM];
 	struct jzfb_layerdesc *layerdesc[MAX_DESC_NUM][MAX_LAYER_NUM];

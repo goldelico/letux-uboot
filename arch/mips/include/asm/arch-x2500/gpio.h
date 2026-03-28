@@ -96,12 +96,12 @@ struct jz_gpio_func_def {
 #define PXGPDCR		0x100   /* Port IO Power Domain control Register */
 #define PXGPDCRS	0x104   /* Port IO Power Domain control Set Register */
 #define PXGPDCRC	0x108   /* Port IO Power Domain control Clear Register */
-#define PXPUEN		0x110   /* Port Pull-up status Register */
-#define PXPUENS		0x114   /* Port Pull-up status Set Register */
-#define PXPUENC		0x118   /* Port Pull-up status Clear Register */
-#define PXPDEN		0x120   /* Port Pull-down status Register */
-#define PXPDENS		0x124   /* Port Pull-down status Set Register */
-#define PXPDENC		0x128   /* Port Pull-down status Clear Register */
+#define PXPU		0x110   /* Port Pull-up status Register */
+#define PXPUS		0x114   /* Port Pull-up status Set Register */
+#define PXPUC		0x118   /* Port Pull-up status Clear Register */
+#define PXPD		0x120   /* Port Pull-down status Register */
+#define PXPDS		0x124   /* Port Pull-down status Set Register */
+#define PXPDC		0x128   /* Port Pull-down status Clear Register */
 #define PXPDS0		0x130   /* Port Driver-strength 0  Register */
 #define PXPDS0S		0x134   /* Port Driver-strength 0 Set Register */
 #define PXPDS0C		0x138   /* Port Driver-strength 0 Clear Register */

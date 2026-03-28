@@ -5,7 +5,6 @@
 #include "../jz_sfc_common.h"
 #include "nand_common.h"
 
-#define ZETTA_DEVICES_NUM         2
 #define TSETUP		5
 #define THOLD		5
 #define	TSHSL_R		100
@@ -15,7 +14,7 @@
 #define TPP		320
 #define TBE		2
 
-static struct jz_sfcnand_base_param zetta_param[ZETTA_DEVICES_NUM] = {
+static struct jz_sfcnand_base_param zetta_param[] = {
 
 	[0] = {
 		/*ZD35Q1GA*/
@@ -37,11 +36,11 @@ static struct jz_sfcnand_base_param zetta_param[ZETTA_DEVICES_NUM] = {
 		.need_quad = 1,
 	},
 	[1] = {
-		/*ZD35Q1GA*/
+		/*ZD35Q2GA*/
 		.pagesize = 2 * 1024,
 		.blocksize = 2 * 1024 * 64,
 		.oobsize = 64,
-		.flashsize = 2 * 1024 * 64 * 1024,
+		.flashsize = 2 * 1024 * 64 * 2048,
 
 		.tSETUP  = TSETUP,
 		.tHOLD   = THOLD,
@@ -58,7 +57,7 @@ static struct jz_sfcnand_base_param zetta_param[ZETTA_DEVICES_NUM] = {
 
 };
 
-static struct device_id_struct device_id[ZETTA_DEVICES_NUM] = {
+static struct device_id_struct device_id[] = {
 	DEVICE_ID_STRUCT(0x71, "ZD35Q1GA", &zetta_param[0]),
 	DEVICE_ID_STRUCT(0x72, "ZD35Q2GA", &zetta_param[1]),
 };
@@ -69,7 +68,7 @@ static int32_t zetta_get_read_feature(struct flash_operation_message *op_info)
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
 	struct sfc_transfer transfer;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint8_t ecc_status = 0;
 	int32_t ret = 0;
 
@@ -104,30 +103,29 @@ retry:
 		case 0x71:
 		case 0x72:
 			switch((ecc_status >> 4) & 0x3) {
-			    case 0x01:
-				    ret = 0x4;
-				    break;
-			    case 0x02:
-				    ret = -EBADMSG;
-				    break;
-			    default:
-				    ret = 0;
+				case 0x0:
+					return 0;
+				case 0x1:
+					return 4;
+				case 0x2:
+					return -EBADMSG;
+				default:
+					break;
 			}
 			break;
 
 		default:
 			printf("device_id err, it maybe don`t support this device, check your device id: device_id = 0x%02x\n", device_id);
-			ret = -EIO;   //notice!!!
-
+			break;
 	}
-	return ret;
+	return -EINVAL;
 }
 
 static void zetta_single_read(struct sfc_transfer *transfer, struct flash_operation_message *op_info)
 {
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint32_t columnaddr = op_info->columnaddr;
 	int plane_flag = 0;
 
@@ -164,7 +162,7 @@ static void zetta_quad_read(struct sfc_transfer *transfer, struct flash_operatio
 
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint32_t columnaddr = op_info->columnaddr;
 	int plane_flag = 0;
 
@@ -201,7 +199,7 @@ static void zetta_single_load(struct sfc_transfer *transfer, struct flash_operat
 
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint32_t columnaddr = op_info->columnaddr;
 	int plane_flag = 0;
 
@@ -237,7 +235,7 @@ static void zetta_quad_load(struct sfc_transfer *transfer, struct flash_operatio
 
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint32_t columnaddr = op_info->columnaddr;
 	int plane_flag = 0;
 
@@ -283,7 +281,7 @@ static int zetta_nand_init(void)
 
 	zetta_nand->id_manufactory = 0xBA;
 	zetta_nand->id_device_list = device_id;
-	zetta_nand->id_device_count = ZETTA_DEVICES_NUM;
+	zetta_nand->id_device_count = ARRAY_SIZE(zetta_param);
 
 	zetta_nand->ops.nand_read_ops.single_read = zetta_single_read;
 	zetta_nand->ops.nand_read_ops.quad_read = zetta_quad_read;

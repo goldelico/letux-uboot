@@ -82,7 +82,7 @@ void clk_prepare(void)
 			timeout = 0xfff;
 			while (readl(reg) & (1 << cgusetting[i].busy) && --timeout);
 			if(!timeout) {
-				printf("wait clk %d timeout\n", i);
+				serial_debug("wait clk %d timeout\n", i);
 				continue;
 			}
 		} else {
@@ -90,7 +90,7 @@ void clk_prepare(void)
 			writel(regval, reg);
 		}
 #ifdef DUMP_CGU_SELECT
-		printf("%s(0x%x) :0x%x\n",clk_name[i] ,reg,  readl(reg));
+		serial_debug("%s(0x%x) :0x%x\n",clk_name[i] ,reg,  readl(reg));
 #endif
 	}
 }
@@ -171,7 +171,7 @@ static unsigned int get_cgu_rate(unsigned int clk_id)
 			pll_rate = pll_get_rate(MPLL);
 			break;
 		default:
-			printf("DDR clk src err!!!\n");
+			serial_debug("DDR clk src err!!!\n");
 			break;
 		}
 	} else {
@@ -190,7 +190,7 @@ static unsigned int get_cgu_rate(unsigned int clk_id)
 		pll_rate = 24000000;
 		break;
 	default:
-		printf(" clk src err!!!\n");
+		serial_debug(" clk src err!!!\n");
 		break;
 	}
 	}
@@ -245,7 +245,7 @@ void clk_set_rate(int clk_id, unsigned long rate)
 	unsigned regval = 0, reg = 0;
 
 	if(clk_id >= CGU_CNT) {
-		/* printf("set clk id error\n"); */
+		/* serial_debug("set clk id error\n"); */
 		return;
 	}
 
@@ -272,7 +272,7 @@ void clk_set_rate(int clk_id, unsigned long rate)
 	while (readl(reg) & (1 << cgu->busy))
 		;
 #ifdef DUMP_CGU_SELECT
-	printf("%s(0x%x) :0x%x\n",clk_name[clk_id] ,reg,  readl(reg));
+	serial_debug("%s(0x%x) :0x%x\n",clk_name[clk_id] ,reg,  readl(reg));
 #endif
 #endif
 	return;
@@ -296,15 +296,12 @@ void clk_init(void)
 #ifdef CONFIG_JZ_SPI0
 		| CPM_CLKGR_SSI0
 #endif
-#ifdef CONFIG_JZ_EFUSE
-		| CPM_CLKGR_EFUSE
-#endif
 #ifdef CONFIG_JZ_SCBOOT
 		| CPM_CLKGR_AES
 		| CPM_CLKGR_PDMA
-		| CPM_CLKGR_EFUSE
 		| CPM_CLKGR_DTRNG
 #endif
+		| CPM_CLKGR_EFUSE
 		;
 	reg_clkgr &=  ~gate;
 	cpm_outl(reg_clkgr,CPM_CLKGR0);
@@ -317,6 +314,9 @@ void clk_init(void)
 #endif
 #ifdef CONFIG_JZ_SCBOOT
 		| CPM_CLKGR_HASH
+#endif
+#ifdef CONFIG_JZ_PWM_V2
+		| CPM_CLKGR_PWM
 #endif
 		;
 	reg_clkgr &=  ~gate;

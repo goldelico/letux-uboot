@@ -30,7 +30,7 @@ struct cgu cgu_clk_sel[CGU_CNT] = {
 	[MSC1] = {1, CPM_MSC1CDR, 30, CONFIG_DDR_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
 	[SFC] = {1, CPM_SSICDR, 30, CONFIG_DDR_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
 	[CIM] = {1, CPM_CIMCDR, 30, CONFIG_DDR_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
-	[PWM] = {1, CPM_PWMCDR, 30, CONFIG_DDR_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 28, 27},
+	[PWM] = {1, CPM_PWMCDR, 30, CONFIG_DDR_SEL_PLL, {APLL, MPLL, -1, -1}, 29, 0, 27},
 };
 
 static void gen_cgu_params(struct clk_cgu_setting *cgusetting)

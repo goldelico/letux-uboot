@@ -26,72 +26,48 @@
 #include <netdev.h>
 #include <asm/gpio.h>
 #include <asm/arch/cpm.h>
-#include <asm/arch/nand.h>
 #include <asm/arch/mmc.h>
 #include <asm/jz_uart.h>
 
-#ifndef CONFIG_SPL_BUILD
 DECLARE_GLOBAL_DATA_PTR;
 struct global_info ginfo __attribute__ ((section(".data")));
 extern struct jz_uart *uart;
-#endif
+
+extern void burner_param_info(void);
+extern int jz_udc_probe(void);
+extern void jz_mmc_init(void);
 
 int board_early_init_f(void)
 {
-#ifndef CONFIG_SPL_BUILD
 	gd->arch.gi = (struct global_info *)CONFIG_SPL_GINFO_BASE;
 	uart = (struct jz_uart *)(UART0_BASE + gd->arch.gi->uart_idx * 0x1000);
-#endif
 	return 0;
 }
 
 int misc_init_r(void)
 {
-	return 0;
+       return 0;
 }
 
-int board_nand_init(struct nand_chip *nand)
-{
-	return 0;
-}
-
-#ifdef CONFIG_USB_GADGET
-int jz_udc_probe(void);
 void board_usb_init(void)
 {
-	printf("USB_udc_probe\n");
 	jz_udc_probe();
 }
-#endif /* CONFIG_USB_GADGET */
 
-#ifdef CONFIG_MMC
 int board_mmc_init(bd_t *bd)
 {
 	jz_mmc_init();
 	return 0;
 }
+
+#ifdef CONFIG_SYS_NAND_SELF_INIT
+void board_nand_init(void)
+{
+}
 #endif
 
-#ifdef CONFIG_DRIVER_DM9000
-
-int board_eth_init(bd_t *bis)
-{
-	return 0;
-}
-
-#endif /* CONFIG_DRIVER_DM9000 */
-
-/* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: burner_jz4780 (Ingenic XBurst JZ4780 SoC)\n");
 	return 0;
 }
 
-#ifdef CONFIG_SPL_BUILD
-
-void spl_board_init(void)
-{
-}
-
-#endif /* CONFIG_SPL_BUILD */

@@ -33,6 +33,12 @@ enum ddr_type{
 	UNKOWN,
 };
 
+enum ddr_bank{
+	BANK4,
+	BANK8,
+	BANK1,
+};
+
 /* ----------------------- */
 struct size {
 	uint32_t chip0;

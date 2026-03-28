@@ -83,6 +83,7 @@ void dump_cdt(struct sfc *sfc)
 {
 	struct sfc_cdt *cdt;
 	int i;
+	int cnt = NOR_MAX_INDEX > NAND_MAX_INDEX ? NOR_MAX_INDEX : NAND_MAX_INDEX;
 
 	if(sfc->cdt_addr == NULL){
 		printf("%s error: sfc res not init !\n", __func__);
@@ -91,7 +92,7 @@ void dump_cdt(struct sfc *sfc)
 
 	cdt = sfc->cdt_addr;
 
-	for(i = 0; i < 32; i++){
+	for(i = 0; i < cnt; i++){
 		printf("\nnum------->%d\n", i);
 		printf("link:%02x, ENDIAN:%02x, WORD_UINT:%02x, TRAN_MODE:%02x, ADDR_KIND:%02x\n",
 				(cdt[i].link >> 31) & 0x1, (cdt[i].link >> 18) & 0x1,
@@ -124,6 +125,7 @@ static void dump_data(unsigned char *buf,size_t len)
 
 void sfc_init(struct sfc *sfc)
 {
+	unsigned int tmp;
 	int n;
 	for(n = 0; n < N_MAX; n++) {
 		sfc_writel(sfc, SFC_TRAN_CONF0(n), 0);
@@ -142,6 +144,11 @@ void sfc_init(struct sfc *sfc)
 	sfc_writel(sfc, SFC_INTC, 0);
 	sfc_writel(sfc, SFC_CGE, 0);
 	sfc_writel(sfc, SFC_RM_DR, 0);
+
+	tmp = sfc_readl(sfc, SFC_GLB);
+	tmp &= ~(3);
+	tmp |= 2;
+	sfc_writel(sfc, SFC_GLB, tmp);
 }
 
 void sfc_stop(struct sfc*sfc)
@@ -760,8 +767,11 @@ static int sfc_ctl_init(struct sfc *sfc)
 void sfc_clk_set(struct sfc *sfc, uint32_t sfc_rate)
 {
 	sfc->src_clk = (unsigned long)sfc_rate;
+#ifdef CONFIG_JZ_SFC0
+	clk_set_rate(SFC0, sfc->src_clk);
+#else
 	clk_set_rate(SFC, sfc->src_clk);
-
+#endif
 	if(sfc->src_clk >= 200000000){
 		/* set sample delay */
 		sfc_smp_delay(sfc,DEV_CONF_SMP_DELAY_180);

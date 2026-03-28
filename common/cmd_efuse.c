@@ -77,13 +77,10 @@ static int do_efuse(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			pin = (int)simple_strtoul(argv[2], NULL, 10);
 			active = (int)simple_strtoul(argv[3], NULL, 10);
 		} else {
-#if defined(CONFIG_EFUSE_GPIO)
+#if defined(CONFIG_EFUSE_GPIO) && defined(CONFIG_EFUSE_EN_ACTIVE)
 			pin = CONFIG_EFUSE_GPIO;
-#endif
-#if defined(CONFIG_EFUSE_EN_ACTIVE)
 			active = CONFIG_EFUSE_EN_ACTIVE;
 #endif
-
 		}
 		ret = efuse_init(pin, active);
 		if (ret)

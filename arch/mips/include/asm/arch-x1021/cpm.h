@@ -162,6 +162,10 @@
 #define cpm_set_bit(bit,off)	(cpm_outl((cpm_inl(off) | 0x1<<(bit)),off))
 #define cpm_clear_bit(bit,off)	(cpm_outl(cpm_inl(off) & ~(0x1 << bit), off))
 
+/*USBRDT*/
+#define USBRDT_IDDIG_EN		0
+#define USBRDT_IDDIG_REG	0
+
 /*USBCDR*/
 #define USBCDR_UCS_PLL		(1 << 31)
 #define USBCDR_UPCS_MPLL	(1 << 30)

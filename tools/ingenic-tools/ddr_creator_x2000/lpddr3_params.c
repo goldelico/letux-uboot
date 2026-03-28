@@ -49,12 +49,13 @@ static int find_ddr_lattency(struct ddr_latency_table *table,int size,unsigned i
 	return table[0].latency;
 }
 
-static void fill_mr_params_lpddr3(struct ddr_params *p)
+static void fill_mr_params_lpddr3(struct ddr_params *p, struct kgd_config *kgd_cfg)
 {
 	int tmp;
 	int rl = 0,wl = 0;
 	int  count = 0;
 	struct lpddr3_params *params = &p->private_params.lpddr3_params;
+        struct lpddr3_mr_config *mr_cfg = &kgd_cfg->mr_config;
 
 	/**
 	 * MR1 registers
@@ -161,12 +162,13 @@ static void fill_mr_params_lpddr3(struct ddr_params *p)
 	  * 0111b: 120 ohm typical
 	  * All others: Reserved
 	 */
-#ifdef CONFIG_DDR_DRIVER_STRENGTH
-	p->mr3.lpddr3.DS = CONFIG_DDR_DRIVER_STRENGTH;
-#else
-	p->mr3.lpddr3.DS = 2;
-	out_warn("Warnning: Please set ddr driver strength.");
-#endif
+        if (kgd_cfg->use_kgd_config) {
+                p->mr3.lpddr3.DS = mr_cfg->kgd_mr3_ds & 0xf;
+        } else {
+                p->mr3.lpddr3.DS = 2;
+                out_warn("Warnning: Please set ddr driver strength.");
+        }
+
 	/**
 	 * MR10 Calibration registers
 	 */
@@ -191,7 +193,11 @@ static void fill_mr_params_lpddr3(struct ddr_params *p)
 	   10b: RZQ/2
 	   11b: RZQ/1
 	*/
-	p->mr11.lpddr3.ODT = 0x2;
+        if (kgd_cfg->use_kgd_config) {
+                p->mr11.lpddr3.ODT = mr_cfg->kgd_mr11_odt & 3;
+        } else {
+                p->mr11.lpddr3.ODT = 0x2;
+        }
 
 	/**
 	 * MR63 reset registers, RESET (MA[7:0] = 3Fh) – MRW Only
@@ -237,7 +243,7 @@ static void fill_in_params_lpddr3(struct ddr_params *ddr_params, struct ddr_chip
 		params->WL = tmp * __ps_per_tck;
 	}
 
-	fill_mr_params_lpddr3(ddr_params);
+	fill_mr_params_lpddr3(ddr_params, &chip->kgd_config);
 }
 
 static void ddrc_params_creator_lpddr3(struct ddrc_reg *ddrc, struct ddr_params *p)

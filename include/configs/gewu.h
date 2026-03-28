@@ -28,6 +28,7 @@
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_M300	/* M300 SoC */
 
+#include "x2000_ddr.h"
 
 #define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		1500000000	/*If MPLL not use mast be set 0*/
@@ -82,56 +83,35 @@
 #define CONFIG_SYS_UART_INDEX		1
 #define CONFIG_BAUDRATE			115200
 
-/*
-#define CONFIG_DDR_TEST_CPU
-#define CONFIG_DDR_TEST
-#define CONFIG_DDR_TEST_DATALINE
-#define CONFIG_DDR_TEST_ADDRLINE
-*/
 
-#define CONFIG_DDR_INNOPHY
-#define CONFIG_DDR_DLL_OFF
-#define CONFIG_DDR_PARAMS_CREATOR
-#define CONFIG_DDR_HOST_CC
-/* #define CONFIG_DDR_TYPE_DDR3 */
-/*#define CONFIG_DDR_TYPE_LPDDR3 */
-#define CONFIG_DDR_TYPE_LPDDR2
-#define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_DW32			0	/* 1-32bit-width, 0-16bit-width */
-/*#define CONFIG_DDR3_TSD34096M1333C9_E*/
-
-#ifdef CONFIG_DDR_TYPE_LPDDR2
-	/* #define CONFIG_LPDDR2_FMT4D32UAB_25LI_FPGA */
-	/* #define CONFIG_LPDDR2_AD210032F_AB_FPGA */
-	#define CONFIG_LPDDR2_W97BV6MK
+/*#define CONFIG_CMD_USB*/		/* USB host command */
+#ifdef CONFIG_CMD_USB
+#define CONFIG_FAT_WRITE	/* Support fatfs write */
+#define CONFIG_USB_STORAGE	/* Support u-disk. */
+#define CONFIG_USB_DWC2		/* DWC2 Host Driver. */
+#define CONFIG_USB_DRV_VBUS	GPIO_PE(22)
 #endif
 
-#ifdef CONFIG_DDR_TYPE_DDR3
-	#define CONFIG_DDR3_TSD34096M1333C9_E_FPGA
+/*#define CONFIG_CMD_FASTBOOT*/	 /*USB device command */
+/*#define CONFIG_CMD_USBSERIAL*/
+/*#define CONFIG_ARDUINO*/
+
+#ifdef CONFIG_ARDUINO
+#define CONFIG_USB_GADGET
+#define CONFIG_USB_GADGET_DUALSPEED
+#define CONFIG_USB_JZ_DWC2_UDC_V1_1
+#ifdef CONFIG_CMD_FASTBOOT
+#define CONFIG_FASTBOOT_GADGET
+#define CONFIG_FASTBOOT_FUNCTION
+#define CONFIG_G_FASTBOOT_VENDOR_NUM	(0x18d1)
+#define CONFIG_G_FASTBOOT_PRODUCT_NUM	(0xdddd)
 #endif
-
-#ifdef CONFIG_DDR_TYPE_LPDDR3
-	/* #define CONFIG_LPDDR3_MT52L256M32D1PF_FPGA*/
-	/* #define CONFIG_LPDDR3_AD310032C_AB_FPGA */
-	#define CONFIG_LPDDR3_W63AH6NKB_BI
+#ifdef CONFIG_CMD_USBSERIAL
+#define CONFIG_USBSERIAL_FUNCTION
 #endif
-
-#define CONFIG_DDR_PHY_IMPEDANCE 40
-#define CONFIG_DDR_PHY_ODT_IMPEDANCE 120
-/* #define CONFIG_FPGA_TEST */
-/*#define CONFIG_DDR_AUTO_REFRESH_TEST*/
-
-/*#define CONFIG_DDR_AUTO_SELF_REFRESH*/
-#define CONFIG_DDR_AUTO_SELF_REFRESH_CNT 257
-/*
- * #define CONFIG_DDR_CHIP_ODT
- * #define CONFIG_DDR_PHY_ODT
- * #define CONFIG_DDR_PHY_DQ_ODT
- * #define CONFIG_DDR_PHY_DQS_ODT
- * #define CONFIG_DDR_PHY_IMPED_PULLUP		0xe
- * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
- */
+#define CONFIG_USB_GADGET_VBUS_DRAW 500
+#define CONFIG_FASTBOOT_MAX_DOWNLOAD_SIZE  (CONFIG_SYS_MALLOC_LEN - 2*1024*1024)
+#endif
 
 /*pmu slp pin*/
 /*#define CONFIG_REGULATOR*/
@@ -155,12 +135,7 @@
  */
 
 /* #define BOOTARGS_COMMON "console=ttyS3,115200 mem=96M@0x0 rmem=32M@0x6000000"*/
-/*#define CONFIG_BOOTARGS_MEM_INDEX	2*/	/*start from 1, position of the args mem=xxx@0x0*/
-#define CONFIG_BOOTARGS_AUTO_MODIFY	0	/*auto detect memory size, and modify bootargs for kernel.*/
-#define CONFIG_BOOTARGS_MEM_64M			"mem=64M@0x0"	/* customize bootargs for default env.*/
-#define CONFIG_BOOTARGS_MEM_128M		"mem=128M@0x0"
-#define CONFIG_BOOTARGS_MEM_256M		"mem=256M@0x0"
-#define CONFIG_BOOTARGS_MEM_512M		"mem=256M@0x0 mem=256M@0x30000000"
+#define CONFIG_BOOTARGS_AUTO_MODIFY	1	/*auto detect memory size, and modify bootargs for kernel.*/
 
 #if (CONFIG_BOOTARGS_AUTO_MODIFY == 1)
 	#define BOOTARGS_COMMON "console=ttyS1,115200 "
@@ -260,9 +235,20 @@
 			#define CONFIG_PAT_USERFS_NAME   "userfs"
 			#define CONFIG_PAT_UPDATEFS_NAME "updatefs"
             		#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock5 rw"
-		#else
+		#elif CONFIG_SPL_SFC_NAND
         		#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=4 root=ubi0:system ubi.mtd=5 rootfstype=ubifs ro"
         		#define CONFIG_SPL_OTA_BOOTARGS    BOOTARGS_COMMON "ip=off ubi.mtd=4 ubi.mtd=5 root=/dev/ram0 rw rdinit=/linuxrc"
+		#else
+			#define CONFIG_GPT_TAB_BUILT_IN
+			#undef CONFIG_SPL_BOOTARGS
+			#if defined(CONFIG_JZ_MMC_MSC0)
+				#define CONFIG_SPL_BOOTARGS	BOOTARGS_COMMON  " rootfstype=ext4 root=/dev/mmcblk0p8 rootdelay=3 rw"
+			#elif defined(CONFIG_JZ_MMC_MSC1)
+				#define CONFIG_SPL_BOOTARGS	 BOOTARGS_COMMON " rootfstype=ext4 root=/dev/mmcblk1p8 rootdelay=3 rw"
+			#elif defined(CONFIG_JZ_MMC_MSC2)
+				#define CONFIG_SPL_BOOTARGS	 BOOTARGS_COMMON " rootfstype=ext4 root=/dev/mmcblk2p8 rootdelay=3 rw"
+			#endif
+			#define CONFIG_SPL_OTA_BOOTARGS    BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"
 		#endif
     #else
 		#ifdef CONFIG_BOOT_VMLINUX
@@ -370,8 +356,12 @@
 
 /* sfc ota config */
 #ifdef CONFIG_OTA_VERSION30
+#ifdef CONFIG_SPL_SFC_NAND
 #define CONFIG_KUNPENG_OTA_VERSION20
+#else
+#define CONFIG_JZSD_OTA_VERSION20
 #endif
+#endif /*end of ota*/
 
 /* sfc nor config */
 #ifdef CONFIG_SPL_SFC_NOR
@@ -555,9 +545,15 @@
 #define CONFIG_SYS_MEMTEST_END		0x88000000
 
 #define CONFIG_SYS_TEXT_BASE		0x80100000
+#define CONFIG_SYS_SC_TEXT_BASE     0x80100004
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
 
 #define CONFIG_UBOOT_OFFSET             0x6000
+
+#ifdef CONFIG_JZ_SCBOOT
+#define CONFIG_JZ_SECURE_SUPPORT
+/*#define CONFIG_JZ_CKEYAES*/
+#endif
 
 /**
  * Environment

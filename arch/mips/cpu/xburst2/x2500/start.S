@@ -86,7 +86,13 @@ _start:
 
 	/*
 	 * CU0=UM=EXL=IE=0, BEV=ERL=1, IP2~7=1
-	 */
+	*/
+
+	li	t0, 0xb2200FE0
+	lw	t1, 0(t0)
+	ori     t1, t1, 0x18
+	sw	t1, 0(t0)
+
 	li	t0, 0x0040FC04
 	mtc0	t0, CP0_STATUS
 
@@ -103,6 +109,8 @@ _start:
 #ifdef CONFIG_PALLADIUM
 	.set	mips32
 init_caches:
+
+
 	la	$25, CONFIG_K0BASE
 	li      $2, 3                   // cacheable for kseg0 access
 	mtc0    $2, $16                 // CP0_CONFIG
@@ -114,8 +122,8 @@ init_caches:
 
 	ori     $2, $25, 0              // start address
 	ori     $3, $2, (CONFIG_L1CACHE_SIZE - CONFIG_L1CACHELINE_SIZE)   // end address, total 32KB
-    mtc0    $0, $28, 0              // CP0_TAGLO
-    mtc0    $0, $28, 1              // CP0_DATALO
+	mtc0    $0, $28, 0              // CP0_TAGLO
+	mtc0    $0, $28, 1              // CP0_DATALO
 cache_clear_a_line:
     cache   0x8, 0($2)              // Index_Store_Tag_I
     cache   0x9, 0($2)              // Index_Store_Tag_D

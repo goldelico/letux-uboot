@@ -8,7 +8,7 @@
 #define EFUSE_R_RN		(0X3)
 
 
-#if defined(CONFIG_CMD_EFUSE) || defined(CONFIG_X2000_EFUSE)
+#if defined(CONFIG_CMD_EFUSE)
 int efuse_write(void *buf, int length, off_t offset);
 int efuse_read(void *buf, int length, off_t offset);
 int efuse_read_chipid(void *buf, int length, off_t offset);

@@ -41,6 +41,9 @@ static int usb_video_curr_dev = -1;	/* current video device */
 #ifdef CONFIG_USB_HOST_ETHER
 static int usb_ether_curr_dev = -1; /* current ethernet device */
 #endif
+#ifdef CONFIG_USB_LOAD
+static int usb_load_curr_dev = -1;	/* current loader device */
+#endif
 
 /* some display routines (info command) */
 static char *usb_get_class_desc(unsigned char dclass)
@@ -493,6 +496,10 @@ static int do_usb(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 #ifdef CONFIG_USB_HOST_ETHER
 			/* try to recognize ethernet devices immediately */
 			usb_ether_curr_dev = usb_host_eth_scan(1);
+#endif
+#ifdef CONFIG_USB_LOAD
+			/* try to recognize ethernet devices immediately */
+			usb_load_curr_dev = usb_load_scan(1);
 #endif
 #ifdef CONFIG_USB_KEYBOARD
 			drv_usb_kbd_init();

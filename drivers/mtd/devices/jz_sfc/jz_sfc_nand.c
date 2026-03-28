@@ -28,7 +28,7 @@
 #include "./nand_device/nand_common.h"
 
 #ifdef CONFIG_BURNER
-static int burn_readback = 0;
+#include <cloner/cloner.h>
 static char *readback_buf = NULL;
 #endif
 
@@ -52,6 +52,7 @@ struct jz_sfcnand_burner_param jz_sfc_nand_burner_param;
 
 static int sfcnand_block_checkbad(struct mtd_info *mtd, loff_t ofs,int getchip,int allowbbt);
 static int jz_sfcnand_block_markbad(struct mtd_info *mtd, loff_t ofs);
+static int is_readonly_partition(uint32_t offset, uint32_t size);
 
 static struct nand_ecclayout gd5f_ecc_layout_128 = {
 	.oobavail = 0,
@@ -323,6 +324,11 @@ static int jz_sfcnand_write_oob(struct mtd_info *mtd, loff_t addr, struct mtd_oo
 	uint32_t oob_addr = (uint32_t)addr;
 	int32_t ret;
 
+#ifndef CONFIG_BURNER
+	if (is_readonly_partition(oob_addr, ops->len))
+		return -EROFS;
+#endif
+
 	debug("write oob_addr %x, datalen %d ooboff %d, ooblen %d\n", oob_addr, ops->len, ops->ooboffs, ops->ooblen);
 
 	if(ops->datbuf && ops->len) {
@@ -370,6 +376,17 @@ static int sfcnand_block_markbad(struct mtd_info *mtd,loff_t ofs)
 static int jz_sfcnand_erase(struct mtd_info *mtd, struct erase_info *instr)
 {
 	int ret;
+
+        if (
+#ifdef CONFIG_BURNER
+                spi_args->spi_erase == CHIP_ERASE &&
+#else
+                !instr->scrub &&
+#endif
+                is_readonly_partition((uint32_t)instr->addr, (uint32_t)instr->len)
+        )
+		return -EROFS;
+
 	if((ret = jz_sfc_nand_erase(mtd, instr))) {
 		printf("WARNING: block %d erase fail !\n",(uint32_t)instr->addr / mtd->erasesize);
 		if((ret = jz_sfcnand_block_markbad(mtd, instr->addr))) {
@@ -469,6 +486,11 @@ static int jz_sfcnand_write(struct mtd_info *mtd, loff_t to, size_t len, size_t 
 	int32_t ret;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
 
+#ifndef CONFIG_BURNER
+        if (is_readonly_partition((uint32_t)to, len))
+		return -EROFS;
+#endif
+
 	while(len) {
 		pageaddr = (uint32_t)to / pagesize;
 		columnaddr = (uint32_t)to % pagesize;
@@ -483,7 +505,7 @@ static int jz_sfcnand_write(struct mtd_info *mtd, loff_t to, size_t len, size_t 
 		}
 
 #ifdef CONFIG_BURNER
-		if(burn_readback) {
+		if(debug_args->write_back_chk) {
 			if(!readback_buf) {
 				readback_buf = (char *)malloc(wlen);
 				if(!readback_buf) {
@@ -688,14 +710,13 @@ static int32_t jz_sfc_nand_try_id(struct sfc_flash *flash, struct jz_sfcnand_fla
 	struct jz_sfcnand_device *nand_device;
 	struct sfc_transfer transfer;
 	uint8_t addr_len[2] = {0, 1};
-	uint8_t id_buf[2] = {0};
+	uint8_t id_buf[3] = {0};
 	uint8_t i = 0;
 	struct device_id_struct *device_id = NULL;
 	int32_t id_count = 0;
 
 	for(i = 0; i < sizeof(addr_len); i++) {
-
-		memset(id_buf, 0, 2);
+		memset(id_buf, 0, 3);
 		memset(&transfer, 0, sizeof(transfer));
 		sfc_list_init(&transfer);
 		transfer.sfc_mode = TM_STD_SPI;
@@ -717,15 +738,26 @@ static int32_t jz_sfc_nand_try_id(struct sfc_flash *flash, struct jz_sfcnand_fla
 			return -EIO;
 		}
 
-		printf("id_manufactory = %x, id_device %x\n", id_buf[0], id_buf[1]);
+		printf("id_manufactory 0x%02x, id_device 0x%02x %02x\n", id_buf[0], id_buf[1], id_buf[2]);
 		list_for_each_entry(nand_device, &nand_list, list) {
 			if(nand_device->id_manufactory == id_buf[0]) {
 				device_id = nand_device->id_device_list;
 				id_count = nand_device->id_device_count;
 				while(id_count--) {
-					if(device_id->id_device == id_buf[1]) {
+					if(device_id->id_device > 0x0 &&
+							device_id->id_device <= 0xff &&
+							(device_id->id_device == id_buf[1])) {
 						nand_info->id_manufactory = id_buf[0];
 						nand_info->id_device = id_buf[1];
+						nand_info->param = *device_id->param;
+						goto found_param;
+					}
+					else if(device_id->id_device > 0xff &&
+							device_id->id_device <= 0xffff &&
+							device_id->id_device == (id_buf[2] | (id_buf[1]<<8))) {
+						nand_info->id_manufactory = id_buf[0];
+						nand_info->id_device = id_buf[1]<<8;
+						nand_info->id_device |= id_buf[2];
 						nand_info->param = *device_id->param;
 						goto found_param;
 					}
@@ -742,7 +774,7 @@ static int32_t jz_sfc_nand_try_id(struct sfc_flash *flash, struct jz_sfcnand_fla
 	}
 
 found_param:
-	printf("Found nand: id_manufactory: 0x%02x id_device: 0x%02x\n", nand_info->id_manufactory, nand_info->id_device);
+	printf("Found nand: id_manufactory: 0x%02x id_device: 0x%04x\n", nand_info->id_manufactory, nand_info->id_device);
 
 	return jz_sfcnand_fill_ops(flash, &nand_device->ops);
 }
@@ -757,7 +789,15 @@ int jz_sfcnand_register(struct jz_sfcnand_device *flash) {
 
 static int32_t sfc_nand_clear_write_protect(struct sfc_flash *flash)
 {
-	return sfc_nand_set_feature(flash, 0xa0, 0);
+#if 0 // KANY1D4S2WD block unlock.
+	uint8_t val = 0;
+	sfc_nand_get_feature(flash, 0xa0, &val);
+	// HWP_EN must be enabled first before block unlock region is set.
+	val |= (1 << 1);
+	sfc_nand_set_feature(flash, 0xa0, val);
+#endif
+	sfc_nand_set_feature(flash, 0xa0, 0);
+	return 0;
 }
 
 static int32_t sfc_nand_enable_ecc(struct sfc_flash *flash)
@@ -811,13 +851,16 @@ static inline int32_t spinand_moudle_init(void)
 	return ret;
 }
 
-int32_t jz_sfc_nand_init(uint32_t sfc_quad_mode,uint32_t sfc_frequency,struct jz_sfcnand_burner_param *param)
+int32_t jz_sfc_nand_init()
 {
 	struct nand_chip *chip;
 	struct mtd_info *mtd;
 	struct jz_sfcnand_flashinfo *flash_info;
 	uint32_t sfc_rate = 100000000;
 	int32_t ret = 0;
+#ifdef CONFIG_BURNER
+	struct jz_sfcnand_burner_param *param = spi_args->flash_info;
+#endif
 
 	if(!flash) {
 		flash = malloc(sizeof(struct sfc_flash));
@@ -831,13 +874,8 @@ int32_t jz_sfc_nand_init(uint32_t sfc_quad_mode,uint32_t sfc_frequency,struct jz
 #endif
 
 #ifdef CONFIG_BURNER
-		if(sfc_frequency) {
-			sfc_rate = sfc_frequency;
-			printf("cloner set sfc frequency:%d\n",sfc_frequency);
-		}
-		else {
-			printf("cloner set sfc frequency fail\n");
-		}
+		if(spi_args->sfc_frequency)
+			sfc_rate = spi_args->sfc_frequency;
 #endif
 		flash->sfc = sfc_res_init(sfc_rate);
 
@@ -882,15 +920,26 @@ int32_t jz_sfc_nand_init(uint32_t sfc_quad_mode,uint32_t sfc_frequency,struct jz
 		ret = -EINVAL;
 		goto failed;
 	}
-#if defined(CONFIG_JZ_SPINAND_SN) && defined(CONFIG_JZ_SPINAND_MAC)
-	mtd->size = flash_info->param.flashsize - CONFIG_SN_SIZE - CONFIG_MAC_SIZE;
-#else
+
 	mtd->size = flash_info->param.flashsize;
+#ifdef CONFIG_BURNER
+	if(spi_args->reserve_space)
 #endif
+	{
+#if defined(CONFIG_JZ_SPINAND_SN)
+		mtd->size -= CONFIG_SN_SIZE;
+#endif
+#if defined(CONFIG_JZ_SPINAND_MAC)
+		mtd->size -= CONFIG_MAC_SIZE;
+#endif
+#if defined(CONFIG_JZ_SPINAND_LICENSE)
+		mtd->size -= CONFIG_LICENSE_SIZE;
+#endif
+	}
 
 #ifdef CONFIG_BURNER
 	readback_buf = (char *)malloc(flash_info->param.pagesize);
-	flash_info->param.need_quad = sfc_quad_mode;
+	flash_info->param.need_quad = spi_args->sfc_quad_mode;
 
 	/* for burner get pt indext */
 	flash_info->partition.num_partition = param->partition_num;
@@ -954,7 +1003,48 @@ failed:
 	return ret;
 }
 
-static void mtd_sfcnand_partition_analysis(uint32_t blk_sz, uint8_t partcount, struct jz_sfcnand_partition *jz_mtd_spinand_partition)
+struct jz_sfcnand_partition *get_sfc_nand_partition(u32 startaddr,u32 length,int *pt_index)
+{
+	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
+	int ptcount = nand_info->partition.num_partition;
+	struct jz_sfcnand_partition *partition=nand_info->partition.partition;
+	int i;
+
+	for(i = 0; i < ptcount; i++){
+		if(startaddr >= partition[i].offset && (startaddr + length) <= (partition[i].offset + partition[i].size)){
+			*pt_index = i;
+			break;
+		}
+	}
+	if(i >= ptcount){
+		printf("startaddr 0x%x can't find the pt_index or you partition size 0x%x is not align with 128K\n",startaddr, length);
+		*pt_index = -1;
+		return NULL;
+	}
+	return &partition[i];
+}
+
+
+static int is_readonly_partition(uint32_t offset, uint32_t size)
+{
+        int index;
+        struct jz_sfcnand_partition *partition = get_sfc_nand_partition(offset, size, &index);
+
+        if (!partition)
+                return -EINVAL;
+
+        if (partition->mask_flags && (partition->mask_flags & PART_RO)) {
+                printf("\n%s partition is read-only and does not allow erase or write operation.\n", partition->name);
+                return 1;
+        }
+
+        return 0;
+}
+
+
+
+#ifdef CONFIG_BURNER
+static void mtd_sfcnand_partition_analysis(uint32_t blk_sz, uint32_t partcount, struct jz_sfcnand_partition *jz_mtd_spinand_partition)
 {
 	char mtdparts_env[X_ENV_LENGTH];
 	char command[X_COMMAND_LENGTH];
@@ -988,46 +1078,32 @@ static void mtd_sfcnand_partition_analysis(uint32_t blk_sz, uint8_t partcount, s
 	setenv("partition", NULL);
 }
 
-
-struct jz_sfcnand_partition *get_partion_index(u32 startaddr,u32 length,int *pt_index)
+int32_t mtd_sfcnand_probe_burner()
 {
-	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
-	int i;
-	int ptcount = nand_info->partition.num_partition;
-	struct jz_sfcnand_partition *jz_mtd_spinand_partition=nand_info->partition.partition;
-	for(i = 0; i < ptcount; i++){
-		if(startaddr >= jz_mtd_spinand_partition[i].offset && (startaddr + length) <= (jz_mtd_spinand_partition[i].offset + jz_mtd_spinand_partition[i].size)){
-			*pt_index = i;
-			break;
-		}
-	}
-	if(i >= ptcount){
-		printf("startaddr 0x%x can't find the pt_index or you partition size 0x%x is not align with 128K\n",startaddr, length);
-		*pt_index = -1;
-		return NULL;
-	}
-	return &jz_mtd_spinand_partition[i];
-}
-
-int32_t mtd_sfcnand_probe_burner(uint32_t *erase_mode, uint32_t sfc_quad_mode, uint32_t sfc_frequency, int read_back, struct jz_sfcnand_burner_param *param)
-{
+	struct jz_sfcnand_burner_param *param = spi_args->flash_info;
 	struct mtd_info *mtd = &nand_info[0];
 	struct nand_chip *chip;
 	int32_t ret;
-#ifdef CONFIG_BURNER
-	burn_readback = read_back;
-#endif
-	if(jz_sfc_nand_init(sfc_quad_mode, sfc_frequency, param)) {
+
+	if(jz_sfc_nand_init()) {
 		printf("ERR: jz_sfc_nand_init error!\n");
 		return -EIO;
 	}
 	chip = mtd->priv;
 	chip->scan_bbt(mtd);
 	chip->options |= NAND_BBT_SCANNED;
-	/*0: none 1, force-erase, force erase contain creat bbt*/
-	if (*erase_mode == 1)
-		if((ret = run_command("nand erase.chip -y", 0)))
-			return ret;
+
+	switch(spi_args->spi_erase){
+		case CHIP_ERASE:
+		case FORCE_ERASE:
+			if((ret = run_command("nand erase.chip -y", 0)))
+				return ret;
+			break;
+		case FACTORY_ERASE:
+			if((ret = run_command("nand scrub.chip -y", 0)))
+				return ret;
+			break;
+	}
 
 	if(chip->bbt)
 		free(chip->bbt);
@@ -1037,3 +1113,4 @@ int32_t mtd_sfcnand_probe_burner(uint32_t *erase_mode, uint32_t sfc_quad_mode, u
 			(void *)&param->partition/*This is a structure rather than a pointer in burner*/);
 	return 0;
 }
+#endif

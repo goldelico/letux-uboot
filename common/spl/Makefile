@@ -23,9 +23,9 @@ endif
 COBJS-$(CONFIG_SPL_ONENAND_SUPPORT) += spl_onenand.o
 COBJS-$(CONFIG_SPL_NET_SUPPORT) += spl_net.o
 COBJS-$(CONFIG_SPL_MMC_SUPPORT) += spl_mmc.o
+COBJS-$(CONFIG_JZSD_OTA_VERSION20) += spl_ota_jzsd.o #mmc ota
 ifdef CONFIG_SPL_JZSDHCI
 COBJS-$(CONFIG_SPL_JZMMC_SUPPORT) += spl_jzsdhci.o
-COBJS-$(CONFIG_JZSD_OTA_VERSION20) += spl_ota_jzsd.o
 else
 COBJS-$(CONFIG_SPL_JZMMC_SUPPORT) += spl_jzmmc.o
 endif
@@ -46,16 +46,28 @@ ifndef CONFIG_SPL_LIBCOMMON_SUPPORT
 COBJS-y += spl_printf.o
 endif
 COBJS-$(CONFIG_GPT_TAB_BUILT_IN) += spl_gpt_partition.o
-
-COBJS-$(CONFIG_SPL_AUTO_PROBE_ARGS_MEM) += spl_auto_args_mem.o
-
+ifdef CONFIG_SPL_AUTO_PROBE_ARGS_MEM
+COBJS-y += spl_auto_args_mem.o
+else
+COBJS-$(CONFIG_BOOTARGS_AUTO_MODIFY) += spl_auto_modify_mem.o
+endif
 COBJS-$(CONFIG_SPL_RISCV) += spl_riscv.o
+
+COBJS-$(CONFIG_SPL_EFUSE) += spl_efuse.o
+
+COBJS-$(CONFIG_RUN_FIRMWARE_VIA_USB_BOOT) += usb_boot.o
+COBJS-$(CONFIG_SPL_USB_BOOT) += usb_boot.o
 
 endif
 
 COBJS	:= $(sort $(COBJS-y))
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS-y))
+ifdef CONFIG_SPL_MCU_RTOS_BOOT
+ifdef CONFIG_X2600
+OBJS	+= x2600_riscv.hex
+endif
+endif
 
 all:	$(obj).depend $(LIB)
 

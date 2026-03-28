@@ -26,6 +26,7 @@ include $(TOPDIR)/config.mk
 LIB	:= $(obj)libpwm.o
 
 COBJS-$(CONFIG_JZ_PWM)	+= jz_pwm.o
+COBJS-$(CONFIG_JZ_PWM_V2)	+= jz_pwm_v2.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

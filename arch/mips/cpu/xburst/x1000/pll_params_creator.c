@@ -185,29 +185,29 @@ static void gen_sys_div(struct pll_setting *setting,struct div_setting *div)
 	}
 
 	div->cdiv = pll_freq[cpll] / setting->cpu_freq - 1;
-	if((div->cdiv < 0) && (div->cdiv >16))
+	if((div->cdiv < 0) || (div->cdiv > 0xf))
 		out_error("cpu div[%d] is out of range.",div->cdiv);
 
 	div->l2div = find_min_div(pll_freq[cpll],MAX_L2_CLK) - 1;
-	if((div->l2div < 0) && (div->l2div >16))
+	if((div->l2div < 0) || (div->l2div > 0xf))
 		out_error("l2cache div[%d] is out of range.",div->l2div);
 
 	div->sel_h0pll = periph_pll + 1;
 	div->sel_h2pll = periph_pll + 1;
 
 	div->h0div = find_min_div(pll_freq[periph_pll],MAX_H0_CLK) - 1;
-	if((div->h0div < 0) && (div->h0div >16))
+	if((div->h0div < 0) || (div->h0div > 0xf))
 		out_error("h0 div[%d] is out of range.",div->h0div);\
 
 	div->h2div = find_min_div(pll_freq[periph_pll] ,MAX_H2_CLK) - 1;
-	if((div->h2div < 0) && (div->h2div >16))
+	if((div->h2div < 0) || (div->h2div > 0xf))
 		out_error("h2 div[%d] is out of range.",div->h2div);
 	else {
 		unsigned int h2_freq = pll_freq[periph_pll] / (div->h2div + 1);
 		unsigned int h2_pdiv = find_min_div(h2_freq,MAX_P_CLK);
 		unsigned int p_freq = h2_freq / h2_pdiv;
 		div->pdiv = pll_freq[periph_pll] / p_freq - 1;
-		if((div->pdiv < 0) && (div->pdiv >16))
+		if((div->pdiv < 0) || (div->pdiv > 0xf))
 			out_error("pdiv[%d] is out of range.",div->pdiv);
 	}
 }

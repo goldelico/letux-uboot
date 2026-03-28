@@ -57,10 +57,29 @@ extern void pll_init(void);
 extern void sdram_init(void);
 extern void ddr_test_refresh(unsigned int start_addr, unsigned int end_addr);
 extern void flush_cache_all(void);
+extern void gpio_set_driver_strength(enum gpio_port gpio, int value, unsigned int pins);
 
+#ifdef CONFIG_SPL_USB_BOOT
+extern int spl_usb_boot;
+#endif
+
+void gpio_set_driver_strength_init(void)
+{
+#if 0
+	/* set sfc pe16-pe21 driver strength as GPIO_DS_LEVEL_1*/
+	gpio_set_driver_strength(GPIO_PORT_E, GPIO_DS_LEVEL_1, 0x3f << 16);
+#endif
+}
 
 void board_init_f(ulong dummy)
 {
+	/* OST clk gate set 0 */
+	cpm_outl(cpm_inl(CPM_CLKGR0) & (~CPM_CLKGR_OST), CPM_CLKGR0);
+	/* wtd disable */
+	writel(0, WDT_BASE + WDT_TCER);
+
+	cpm_outl(cpm_inl(CPM_MESTSEL) | 0x7, CPM_MESTSEL);
+
 	/* Set global data pointer */
 	gd = &gdata;
 
@@ -69,15 +88,18 @@ void board_init_f(ulong dummy)
 	gd->arch.gi = &ginfo;
 #else
 	burner_param_info();
+
+#ifdef CONFIG_SPL_USB_BOOT
+	if (!!spl_usb_boot) {
+		timer_init();
+		usb_boot_loop();
+		return;
+	}
+#endif
 #endif
 
 	gpio_init();
-	/* OST clk gate set 0 */
-	cpm_outl(cpm_inl(CPM_CLKGR0) & (~CPM_CLKGR_OST), CPM_CLKGR0);
-	/* wtd disable */
-	writel(0, WDT_BASE + WDT_TCER);
-
-	cpm_outl(cpm_inl(CPM_MESTSEL) | 0x7, CPM_MESTSEL);
+	gpio_set_driver_strength_init();
 
 	/* Init uart first */
 #ifndef CONFIG_X2000_FPGA
@@ -86,11 +108,12 @@ void board_init_f(ulong dummy)
 
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();
-	printf("ERROR EPC %x\n", read_c0_errorepc());
+	serial_debug("ERROR EPC %x\n", read_c0_errorepc());
+	serial_debug("Reset status %x\n", *(volatile unsigned int *)0xb0000008);
 	if(*(volatile unsigned int *)0xbfc00084 == 0x244232c8) {
-		printf("Current Version: V2\n");
+		serial_debug("Current Version: V2\n");
 	} else {
-		printf("Current Version: V1\n");
+		serial_debug("Current Version: V1\n");
 	}
 #endif
 #ifndef CONFIG_X2000_FPGA
@@ -119,12 +142,24 @@ void board_init_f(ulong dummy)
 	ddr_basic_tests();
 #endif
 
+#ifdef CONFIG_RUN_FIRMWARE_VIA_USB_BOOT
+       serial_debug("run start1 firmware finished, return to bootrom!\n");
+       return;
+#endif
+
 #ifndef CONFIG_BURNER
 	/* Clear the BSS */
 	memset(__bss_start, 0, (char *)&__bss_end - __bss_start);
 
+#ifdef CONFIG_SPL_COMMAND_ICACHE
+	typedef void (*board_init_func)(gd_t * id, ulong dest_addr);
+	board_init_func p_board_init_func = (board_init_func *)bus_to_virt(board_init_r);
 	debug("board_init_r\n");
+	p_board_init_func(NULL, 0);
+#else
 	board_init_r(NULL, 0);
+#endif
+
 #else
 	debug("run start1 firmware finished\n");
 	return;
@@ -149,7 +184,7 @@ void jump_to_image_no_args(struct spl_image_info *spl_image)
 	flush_cache_all();
 	int ret = secure_load_uboot(spl_image);
 	if (ret) {
-	  printf("Error spl secure load uboot.\n");
+	  serial_debug("Error spl secure load uboot.\n");
 	  hang();
 	}
 	spl_image->entry_point += 2048;

@@ -1,6 +1,9 @@
+#include <cloner/cloner.h>
+#include "cloner_moudle.h"
+#include "cloner_log.h"
+
 #include <linux/list.h>
 #include <malloc.h>
-#include <cloner/cloner.h>
 #include "extend_policy_manager.h"
 
 static LIST_HEAD(epmg_list);
@@ -64,7 +67,7 @@ int extend_policy_mg_init(void)
 
 	if (!clmd)
 		return -ENOMEM;
-	clmd->medium = MAGIC_EXPY; 
+	clmd->medium = MAGIC_EXPY;
 	clmd->ops = EXT_POL;
 	clmd->read = epmg_read;
 	clmd->write = epmg_write;

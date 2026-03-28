@@ -91,7 +91,7 @@ void clk_prepare(void)
 			timeout = 0xfff;
 			while (readl(reg) & (1 << cgusetting[i].busy) && --timeout);
 			if(!timeout) {
-				printf("wait clk %d timeout\n", i);
+				serial_debug("wait clk %d timeout\n", i);
 				continue;
 			}
 		} else {
@@ -99,7 +99,7 @@ void clk_prepare(void)
 			writel(regval, reg);
 		}
 #ifdef DUMP_CGU_SELECT
-		printf("%s(0x%x) :0x%x\n",clk_name[i] ,reg,  readl(reg));
+		serial_debug("%s(0x%x) :0x%x\n",clk_name[i] ,reg,  readl(reg));
 #endif
 	}
 }
@@ -180,7 +180,7 @@ static unsigned int get_cgu_rate(unsigned int clk_id)
 			pll_rate = pll_get_rate(MPLL);
 			break;
 		default:
-			printf("DDR clk src err\n");
+			serial_debug("DDR clk src err\n");
 			break;
 		}
 	}
@@ -199,7 +199,7 @@ static unsigned int get_cgu_rate(unsigned int clk_id)
 			pll_rate = pll_get_rate(EPLL);
 		break;
 	default:
-		printf("clk src err\n");
+		serial_debug("clk src err\n");
 		break;
 	}
 
@@ -254,7 +254,7 @@ void clk_set_rate(int clk_id, unsigned long rate)
 	unsigned int ratio;
 
 	if(clk_id >= CGU_CNT) {
-		/* printf("set clk id error\n"); */
+		/* serial_debug("set clk id error\n"); */
 		return;
 	}
 
@@ -294,7 +294,7 @@ void clk_set_rate(int clk_id, unsigned long rate)
 	while (readl(reg) & (1 << cgu->busy))
 		;
 #ifdef DUMP_CGU_SELECT
-	printf("%s(0x%x) :0x%x\n",clk_name[clk_id] ,reg,  readl(reg));
+	serial_debug("%s(0x%x) :0x%x\n",clk_name[clk_id] ,reg,  readl(reg));
 #endif
 #endif
 	return;
@@ -321,16 +321,13 @@ void clk_init(void)
 #ifdef CONFIG_JZ_SPI1
 		| CPM_CLKGR_SSI1
 #endif
-#ifdef CONFIG_JZ_EFUSE
-		| CPM_CLKGR_EFUSE
-#endif
 #ifdef CONFIG_JZ_SCBOOT
 		| CPM_CLKGR_RSA
 		| CPM_CLKGR_AES
 		| CPM_CLKGR_PDMA
-		| CPM_CLKGR_EFUSE
 		| CPM_CLKGR_DTRNG
 #endif
+		| CPM_CLKGR_EFUSE
 		;
 	reg_clkgr &=  ~gate;
 	cpm_outl(reg_clkgr,CPM_CLKGR0);
@@ -351,6 +348,9 @@ void clk_init(void)
 #endif
 #ifdef CONFIG_JZ_MIPI_DSI
 		| CPM_CLKGR_MIPI_DSI
+#endif
+#ifdef CONFIG_JZ_PWM_V2
+		| CPM_CLKGR_PWM
 #endif
 		;
 	reg_clkgr &=  ~gate;
@@ -383,3 +383,4 @@ void enable_uart_clk(void)
 	cpm_outl(clkgr0, CPM_CLKGR0);
 	cpm_outl(clkgr1, CPM_CLKGR1);
 }
+

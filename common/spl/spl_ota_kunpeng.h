@@ -6,7 +6,7 @@ struct ota_ops {
 	int (*flash_read)(unsigned int addr, unsigned int len, unsigned int buf);
 	struct jz_sfcnand_partition_param *(*flash_get_partitions)(void);
 	unsigned int (*flash_get_part_offset_by_name)(struct jz_sfcnand_partition_param *partitions, char *name);
-	void (*flash_load_kernel)(long offset);
+	void (*flash_load_kernel)(long offset, char *name);
 };
 
 char* spl_ota_load_image(void);

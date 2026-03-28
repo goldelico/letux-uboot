@@ -1,0 +1,17 @@
+[
+    {
+      "name": "GCC for ingenic cross compile on Windows",
+  
+      "toolchainFile": "mips-gcc-sde-elf.cmake",
+      "preferredGenerator": {
+        "name":"MinGW Makefiles"
+      }
+    },
+    {
+      "name": "GCC for ingenic cross compile on Linux",
+      "toolchainFile": "mips-gcc-sde-elf.cmake",
+      "preferredGenerator": {
+        "name":"Unix Makefiles"
+      }
+    }
+]

@@ -13,14 +13,14 @@ struct jz_sfcnand_partition {
 	uint32_t manager_mode;     /* manager_mode mtd or ubi */
 };
 
-struct jz_sfcnand_burner_param {
-	uint32_t magic_num;
-	int32_t partition_num;
+struct jz_sfcnand_partition_param {
+	int32_t num_partition;
 	struct jz_sfcnand_partition *partition;
 };
 
-struct jz_sfcnand_partition_param {
-	uint8_t num_partition;
+struct jz_sfcnand_burner_param {
+	uint32_t magic_num;
+	int32_t partition_num;
 	struct jz_sfcnand_partition *partition;
 };
 
@@ -54,7 +54,7 @@ struct jz_sfcnand_base_param {
 };
 
 struct device_id_struct {
-	uint8_t id_device;
+	uint16_t id_device;
 	char *name;
 	struct jz_sfcnand_base_param *param;
 };
@@ -105,7 +105,7 @@ struct jz_sfcnand_device {
 
 struct jz_sfcnand_flashinfo {
 	uint8_t id_manufactory;
-	uint8_t id_device;
+	uint16_t id_device;
 
 	struct jz_sfcnand_base_param param;
 	struct jz_sfcnand_partition_param partition;
@@ -116,8 +116,6 @@ struct jz_sfcnand_flashinfo {
 #define X_COMMAND_LENGTH    128
 
 
-#define MTD_MODE        0x0
-#define UBI_MANAGER     0x1
 
 int jz_sfcnand_register(struct jz_sfcnand_device *flash);
 typedef int32_t (*spinand_regcall_t)(void);
@@ -136,7 +134,7 @@ typedef int32_t (*spinand_regcall_t)(void);
 struct spl_nand_param {
 		unsigned int pagesize:16;
 		unsigned int id_manufactory:8;
-		unsigned int device_id:8;
+		unsigned int device_id:16;
 
 		unsigned int addrlen:2;
 		unsigned int ecc_bit:3;
@@ -144,6 +142,7 @@ struct spl_nand_param {
 
 		unsigned char eccstat_count;
 		unsigned char eccerrstatus[2];
+		unsigned char plane_select;
 } __attribute__((aligned(4)));
 #endif
 

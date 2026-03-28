@@ -20,7 +20,7 @@
 //#define DEBUG_DDR_CONTENT
 
 #ifdef DEBUG_MSC
-#define msc_debug	printf
+#define msc_debug	serial_debug
 #else
 #define msc_debug(fmt, args...) do { }while(0)
 #endif
@@ -44,6 +44,10 @@ static uint32_t bus_width = MSC_BUS_WIDTH_4;
 #else // CONFIG_SPL_JZ_MSC_BUS_1BIT
 static uint32_t bus_width = MSC_BUS_WIDTH_1;
 #endif
+
+static void soc_mmc_set_rx_phase(int val);
+static void soc_mmc_set_tx_phase(int val);
+static void soc_mmc_enable_tuning(int enable);
 
 static uint32_t msc_readl(uint32_t off)
 {
@@ -99,7 +103,7 @@ static void msc_reset(u8 mask)
 	}
 
 	if(!timeout)
-		printf("host reset=0x%x fail!\n", mask);
+		serial_debug("host reset=0x%x fail!\n", mask);
 }
 
 static void mmc_init_host(void)
@@ -138,9 +142,9 @@ static void msc_clk_switch(int high_frq)
 		val &= ~MSC_CLK_H_FREQ;
 	writel(val, CPM_MSC_CLK_R);
 #else //CONFIG_FPGA
-
+// DEVICE CLK = THIS_CLK / 4
 #ifndef MSC_INIT_CLK
-#define MSC_INIT_CLK    200000
+#define MSC_INIT_CLK    400000
 #endif
 
 #ifndef MSC_WORKING_CLK
@@ -156,6 +160,20 @@ static void msc_clk_switch(int high_frq)
   #ifdef CONFIG_JZ_MMC_MSC2
 	#define CPM_MSC MSC2
   #endif
+
+
+#if defined(MSC_CLK_RX_SEL) || defined(MSC_CLK_TX_SEL)
+	if(high_frq) {
+		soc_mmc_enable_tuning(0);
+		soc_mmc_set_rx_phase(MSC_CLK_RX_SEL);
+		soc_mmc_set_tx_phase(MSC_CLK_TX_SEL);
+	} else {
+		soc_mmc_enable_tuning(0);
+		soc_mmc_set_rx_phase(0);
+		soc_mmc_set_tx_phase(0);
+	}
+#endif
+
 	/* TODO: set clk */
 	msc_writew(MSC_CLK_CTRL_R, MSC_SD_CLK_EN_BIT | MSC_INTERNAL_CLK_EN_BIT);
 	/* set clk */
@@ -164,7 +182,7 @@ static void msc_clk_switch(int high_frq)
 	else
 		clk_set_rate(CPM_MSC, MSC_WORKING_CLK);
 
-	//printf("%s : clk_id[%d], set clk[%d], clk_get_rate=%d width=%d\n", __func__,   \
+	//serial_debug("%s : clk_id[%d], set clk[%d], clk_get_rate=%d width=%d\n", __func__, \
 			CPM_MSC, high_frq ? MSC_WORKING_CLK : MSC_INIT_CLK, clk_get_rate(CPM_MSC), 1 << bus_width);
 #endif
 
@@ -216,7 +234,7 @@ static u32 wait_cmd_complete(int index)
 	}
 
 	if(!timeout) {
-		printf("[ERROR]:ERROR_INT_STAT:%x,INT_STAT=%x cmd timeout\n", msc_readw(MSC_ERROR_INT_STAT_R), msc_readw(MSC_NORMAL_INT_STAT_R));
+		serial_debug("[ERROR]:ERROR_INT_STAT:%x,INT_STAT=%x cmd timeout\n", msc_readw(MSC_ERROR_INT_STAT_R), msc_readw(MSC_NORMAL_INT_STAT_R));
 		return -1;
 	}
 
@@ -235,7 +253,7 @@ static u32 wait_xfer_complete(void)
 	}
 
 	if(!timeout) {
-		printf("[ERROR]:ERROR_INT_STAT:%x,xfer timeout\n", msc_readw(MSC_ERROR_INT_STAT_R));
+		serial_debug("[ERROR]:ERROR_INT_STAT:%x,xfer timeout\n", msc_readw(MSC_ERROR_INT_STAT_R));
 		return -1;
 	}
 
@@ -250,11 +268,10 @@ static u32 wait_buf_rb(void)
 
 	while(!(msc_readw(MSC_NORMAL_INT_STAT_R) \
 				& MSC_BUF_RD_READY_STAT_BIT) && --timeout){
-		udelay(1);  //1 block read time
 	}
 
 	if(!timeout) {
-		printf("[ERROR]:ERROR_INT_STAT:%x,buf read timeout\n", msc_readw(MSC_ERROR_INT_STAT_R));
+		serial_debug("[ERROR]:ERROR_INT_STAT:%x,buf read timeout\n", msc_readw(MSC_ERROR_INT_STAT_R));
 		dump_error_status();
 		return -1;
 	}
@@ -324,9 +341,9 @@ static  u8* msc_get_resp(void)
 		}
 	}
 #if 0
-	printf("Response of CMD\n");
+	serial_debug("Response of CMD\n");
 	for(i=0; i<=3; i++){
-		printf("\tRESP%d%d=0x%08x\n",6-(i*2),7-(i*2), RESP_ARRAY[i]);
+		serial_debug("\tRESP%d%d=0x%08x\n",6-(i*2),7-(i*2), RESP_ARRAY[i]);
 	}
 #endif
 
@@ -347,7 +364,7 @@ static u32 msc_check_cmd_data_line(u32 cmdidx)
 
 	while (msc_readl(MSC_PSTATE_REG) & mask) {
 		if (timeout == 0) {
-			printf("Ctrl never released inhibit bit(s).\n");
+			serial_debug("Ctrl never released inhibit bit(s).\n");
 			return -1;
 		}
 		timeout--;
@@ -467,7 +484,15 @@ static u32 mmc_block_read_poll(u8 type, u32 start, u32 blkcnt, u32 *dst)
 	msc_debug("%s-->bus_width: %d\n", __func__, bus_width);
 
 	nob = blkcnt;
-	msc_writew(MSC_BLOCKSIZE_R, 0x200);
+	if(type == 1) {
+		msc_writew(MSC_BLOCKSIZE_R, 0x200);
+	}else {
+		msc_writew(MSC_BLOCKSIZE_R, 4);
+	}
+
+	if(nob > 0xffff)
+		serial_debug("Check blkcnt %x!\n", nob);
+
 	msc_writew(MSC_BLOCKCOUNT_R, nob);
 
 	msc_set_xfer_bus_width(bus_width);
@@ -483,25 +508,47 @@ static u32 mmc_block_read_poll(u8 type, u32 start, u32 blkcnt, u32 *dst)
 
 	msc_writew(MSC_XFER_MODE_R, xfer_data);
 
-	mmc_cmd(MMC_CMD_SET_BLOCKLEN, 0x200, 0, MSC_CMDAT_RESPONSE_R1);
-
 	if (type) {
+		mmc_cmd(MMC_CMD_SET_BLOCKLEN, 0x200, 0, MSC_CMDAT_RESPONSE_R1);
 		/* 读取块设备内容 */
 		if(1 == blkcnt)
 			mmc_cmd(MMC_CMD_READ_SINGLE_BLOCK, cmd_args, MSC_DATA_PRESENT_SEL_BIT, MSC_CMDAT_RESPONSE_R1);
 		else
 			mmc_cmd(MMC_CMD_READ_MULTIPLE_BLOCK, cmd_args, MSC_DATA_PRESENT_SEL_BIT, MSC_CMDAT_RESPONSE_R1);
 	} else {
+		mmc_cmd(MMC_CMD_SET_BLOCKLEN, 4, 0, MSC_CMDAT_RESPONSE_R1);
 		/* 读取ESD信息 */
 		mmc_cmd(8, 0, MSC_DATA_PRESENT_SEL_BIT, MSC_CMDAT_RESPONSE_R1);
 	}
-
-	for(; nob > 0; nob--) {
-		cnt = 512 / 4;
-		if(wait_buf_rb())
-			goto err;
-
-		while(cnt--) {
+	if(type) {
+		for(; nob > 0; nob--) {
+			if(wait_buf_rb())
+				goto err;
+			if(0) {
+				cnt = 512 / 4;
+				while(cnt--) {
+					*dst = msc_readl(MSC_BUF_DATA_R);
+					dst++;
+				}
+			} else {
+				int i;
+				for(i = 0;i < 512 / 4 / 8;i++) {
+					dst[0] = msc_readl(MSC_BUF_DATA_R);
+					dst[1] = msc_readl(MSC_BUF_DATA_R);
+					dst[2] = msc_readl(MSC_BUF_DATA_R);
+					dst[3] = msc_readl(MSC_BUF_DATA_R);
+					dst[4] = msc_readl(MSC_BUF_DATA_R);
+					dst[5] = msc_readl(MSC_BUF_DATA_R);
+					dst[6] = msc_readl(MSC_BUF_DATA_R);
+					dst[7] = msc_readl(MSC_BUF_DATA_R);
+					dst += 8;
+				}
+			}
+		}
+	} else {
+		for(; nob > 0; nob--) {
+			if(wait_buf_rb())
+				goto err;
 			*dst = msc_readl(MSC_BUF_DATA_R);
 			dst++;
 		}
@@ -632,7 +679,7 @@ static u32 mmc_block_read_sdma(u8 type, u32 start, u32 blkcnt, u32 *dst)
             u32 error_status = msc_readw(MSC_ERROR_INT_STAT_R);
             msc_writew(MSC_NORMAL_INT_STAT_R, MSC_ERR_INTERRUPT_STAT_BIT);
             msc_writew(MSC_ERROR_INT_STAT_R, error_status);
-            printf("[DATA]:Error detected in status(0x%X) error_status(0x%X)\n", status, error_status);
+            serial_debug("[DATA]:Error detected in status(0x%X) error_status(0x%X)\n", status, error_status);
             goto err;
         }
 
@@ -647,7 +694,7 @@ static u32 mmc_block_read_sdma(u8 type, u32 start, u32 blkcnt, u32 *dst)
         if (timeout-- > 0) {
             udelay(1);
         } else {
-            printf("Transfer data timeout\n");
+            serial_debug("Transfer data timeout\n");
             return -1;
         }
     } while (!(status & MSC_XFER_COMPLETE_STAT_BIT));
@@ -747,7 +794,7 @@ static int mmc_get_ext_csd_sdma(unsigned char *buffer)
             u32 error_status = msc_readw(MSC_ERROR_INT_STAT_R);
             msc_writew(MSC_NORMAL_INT_STAT_R, MSC_ERR_INTERRUPT_STAT_BIT);
             msc_writew(MSC_ERROR_INT_STAT_R, error_status);
-            printf("[DATA]:Error detected in status(0x%X) error_status(0x%X)\n", status, error_status);
+            serial_debug("[DATA]:Error detected in status(0x%X) error_status(0x%X)\n", status, error_status);
             goto err;
         }
 
@@ -762,14 +809,14 @@ static int mmc_get_ext_csd_sdma(unsigned char *buffer)
         if (timeout-- > 0) {
             udelay(1);
         } else {
-            printf("Transfer data timeout\n");
+            serial_debug("Transfer data timeout\n");
             return -1;
         }
     } while (!(status & MSC_XFER_COMPLETE_STAT_BIT));
     nob = 0;
 
     if(wait_xfer_complete()) {
-		printf("wait xfer complete error\n");
+		serial_debug("wait xfer complete error\n");
         goto err;
 	}
 #ifdef DEBUG_MSC
@@ -783,11 +830,11 @@ static int mmc_get_ext_csd_sdma(unsigned char *buffer)
 	unsigned int *tmp_buf = (unsigned int *)buffer;
 	for (i = 0; i < 512 / 4; i++) {
 		if ( (i != 0) && (i % 4 == 0) ) {
-			printf("\n");
+			serial_debug("\n");
 		}
-		printf("%x:", tmp_buf[i]);
+		serial_debug("%x:", tmp_buf[i]);
 	}
-	printf("\n");
+	serial_debug("\n");
 #endif
 err:
 	msc_sync_abort();
@@ -824,7 +871,7 @@ static void response_convert_to_rtos(unsigned int *src, unsigned int *dst)
 	dst[3] = src[0];
 }
 
-static void soc_mmc_set_rx_phase(void)
+static void soc_mmc_set_rx_phase(int val)
 {
     unsigned int offset;
     unsigned int value;
@@ -841,13 +888,13 @@ static void soc_mmc_set_rx_phase(void)
 
     value = cpm_inl(offset);
     value &= ~(0x7 << 17);
-    value |= (0x0 << 17);   /* sample clock: 0x7 is 325-degree for RX phase */
+    value |= (val << 17);   /* sample clock: 0x7 is 325-degree for RX phase */
                             /* sample clock: 0x2 is  90-degree for RX phase */
                             /* sample clock: 0x0 is   0-degree for RX phase */
     cpm_outl(value, offset);
 }
 
-static void soc_mmc_set_tx_phase(void)
+static void soc_mmc_set_tx_phase(int val)
 {
     unsigned int offset;
     unsigned int value;
@@ -864,7 +911,7 @@ static void soc_mmc_set_tx_phase(void)
 
     value = cpm_inl(offset);
     value &= ~(0x3 << 15);
-    value |= (0x3 << 15);  /* sample clock: 0x3 is 270-degree for TX phase
+    value |= (val << 15);  /* sample clock: 0x3 is 270-degree for TX phase
                             *               0x2 is 180-degree for TX phase
                             *               0x1 is 135-degree for TX phase
                             *               0x0 is 90-degree for TX phase
@@ -976,7 +1023,7 @@ static int sd_found(void)
 	}
 
 	if (!(resp[4] & 0x80)) {
-		printf("sd init fail\n");
+		serial_debug("sd init fail\n");
 		return -1;
 	}
 
@@ -1004,8 +1051,8 @@ static int sd_found(void)
 
 	/* 控制器 HS下相关配置 */
 	soc_mmc_enable_tuning(0);
-	soc_mmc_set_rx_phase();
-	soc_mmc_set_tx_phase();
+	soc_mmc_set_rx_phase(0);
+	soc_mmc_set_tx_phase(3);
 	msc_set_high_speed_enable(1);
 
 	/* 默认切换为high speed 50MHz */
@@ -1099,7 +1146,7 @@ static int mmc_found(void)
 	}
 
 	if (!timeout) {
-		printf("emmc card init err\n");
+		serial_debug("emmc card init err\n");
 		return -1;
 	}
 
@@ -1139,7 +1186,36 @@ static int mmc_found(void)
 
 	/* 正常启动 不记录Card 信息 */
 	if (!card_params) {
+#if MSC_WORKING_CLK > 100000000
+		/* 控制器 HS200模式下相关配置 */
+		msc_set_high_speed_enable(1);
+		/* 设置为HS200 */
+		int reg_value = msc_readw(MSC_HOST_CTRL2_R);
+		reg_value &= ~MSC_UHS_MODE_SEL_MASK;
+		reg_value &= ~MSC_SIGNALING_EN_BIT;
+		reg_value |= MSC_UHS_MODE_SEL_SDR104;
+		reg_value |= MSC_SIGNALING_EN_BIT;
+		msc_writew(MSC_HOST_CTRL2_R, reg_value);
+
+		/* 设置频率 HS200 */
+		int value = 2;  /* =2: 200M HS200
+						 * =1: 52M  High Speed
+						 * =0: 26M  Default
+						 */
+		int timing_arg = 0x3 << 24 | 185 << 16 | value << 8 | 0x1;
+		resp = mmc_cmd(6, timing_arg, 0, MSC_CMDAT_RESPONSE_R1b); /* set buswidth*/
+
+		timeout = 100000;
+		do {
+			resp = mmc_cmd(13, rca, 0, MSC_CMDAT_RESPONSE_R1);
+			status = resp[1] | (resp[2] << 8) | (resp[3] << 16) | (resp[4] << 24);
+			if((status & (0xf << 9)) != (7 << 9))
+				break;
+			udelay(1);
+		}while(--timeout);
+#endif
 		msc_clk_switch(1);
+
 		return 0;
 	}
 
@@ -1151,8 +1227,8 @@ static int mmc_found(void)
 
 	/* 控制器 HS200模式下相关配置 */
 	soc_mmc_enable_tuning(0);
-	soc_mmc_set_rx_phase();
-	soc_mmc_set_tx_phase();
+	soc_mmc_set_rx_phase(0);
+	soc_mmc_set_tx_phase(3);
 	msc_set_high_speed_enable(1);
 
 	/* 设置为HS200 */
@@ -1255,7 +1331,93 @@ static int dump_ddr_content(unsigned int *src, int len)
 }
 #endif
 
-static int mmc_load_image_raw(unsigned long sector)
+#ifdef CONFIG_JZ_WATCHDOG
+#include <asm/arch/cpm.h>
+#include <watchdog.h>
+
+#define OPEN_WRITE_CPSPR	0x00005a5a
+#define CLOSE_WRITE_CPSPR	0x0000a5a5
+
+#define SPL_OTA_RUN_FLAG 		0x4f5441
+#define SPL_OTA_FAIL_FLAG 		0x41544f
+#define SYS_PANIC_SIGNATURE		0x004343
+
+static inline void cpm_write_cpspr(int val)
+{
+	cpm_outl(OPEN_WRITE_CPSPR, CPM_CPSPPR);
+	cpm_outl(val, CPM_CPSPR);
+	cpm_outl(CLOSE_WRITE_CPSPR, CPM_CPSPPR);
+}
+
+static inline int spl_test_ota_result(void)
+{
+	unsigned int val = cpm_inl(CPM_CPSPR);
+	if (val == SPL_OTA_RUN_FLAG || val == SYS_PANIC_SIGNATURE ) {
+		cpm_write_cpspr(SPL_OTA_FAIL_FLAG);
+		return 1;
+	}
+
+	return 0;
+}
+
+static inline int spl_ota_set_flag_and_boot_wdt(void)
+{
+	cpm_write_cpspr(SPL_OTA_RUN_FLAG);
+	hw_watchdog_init();
+}
+#endif
+
+#if defined(CONFIG_SPL_OS_BOOT) && defined(CONFIG_JZ_SECURE_SUPPORT)
+extern int secure_scboot (void *, void *);
+
+#ifdef CONFIG_JZ_SECURE_ROOTFS
+#define LOAD_ROOTFS_ADDR 0x82000000
+static void secure_check_hash_rootfs(const char *name, void *buffer)
+{
+	unsigned int rootfs_offset;
+	unsigned int code_len;
+	unsigned int *ptr = (unsigned int *)(LOAD_ROOTFS_ADDR - 2048);
+	int ret;
+
+#ifdef CONFIG_SPL_OS_OTA_BOOT
+	if (!strncmp(name, CONFIG_SPL_OS_NAME2, strlen(CONFIG_SPL_OS_NAME2)))
+		ret = spl_get_built_in_gpt_partition(CONFIG_SPL_ROOTFS_NAME2, &rootfs_offset, NULL);
+	else
+		ret = spl_get_built_in_gpt_partition(CONFIG_SPL_ROOTFS_NAME, &rootfs_offset, NULL);
+#else
+	ret = spl_get_built_in_gpt_partition(CONFIG_SPL_ROOTFS_NAME, &rootfs_offset, NULL);
+#endif
+
+	if (ret == -1) {
+		serial_debug("rootfs partitions not found\n");
+		hang();
+	}
+
+	memcpy(LOAD_ROOTFS_ADDR - 2048, buffer, 2048);
+	code_len = ptr[128];
+
+	/* 非DMA模式块数量不能超过0xffff */
+	int max_load_length = 31 * 1024 * 1024;
+	/* 读长度块512对齐 */
+	code_len = (code_len + (512 - 1)) / 512;
+	code_len = code_len * 512;
+	int temp_offset = 0;
+	while (temp_offset < code_len) {
+		int temp_size = (code_len - temp_offset) > max_load_length ? max_load_length : (code_len - temp_offset);
+		mmc_block_read(rootfs_offset + temp_offset / 512, temp_size / 512, LOAD_ROOTFS_ADDR + temp_offset);
+		temp_offset += temp_size;
+	}
+
+	ret = secure_scboot(LOAD_ROOTFS_ADDR - 2048, LOAD_ROOTFS_ADDR);
+	if(ret) {
+		serial_debug("Error check rootfs hash.\n");
+		hang();
+	}
+}
+#endif
+#endif
+
+static int mmc_load_image_raw(unsigned long sector, const char *name)
 {
 	int err = 0;
 	u32 image_size_sectors;
@@ -1269,23 +1431,62 @@ static int mmc_load_image_raw(unsigned long sector)
 	if (err < 0)
 		goto end;
 
+#if defined(CONFIG_SPL_OS_BOOT) && defined(CONFIG_JZ_SECURE_SUPPORT)
+	header = (struct image_header *)(CONFIG_SYS_SC_TEXT_BASE -
+					 sizeof(struct image_header));
+#endif
+
 #ifdef DEBUG_DDR_CONTENT
 	dump_ddr_content(header, 0x200);
 #endif
 	header->ih_name[IH_NMLEN - 1] = 0;
 	spl_parse_image_header(header);
 
+#ifdef CONFIG_JZ_SECURE_ROOTFS
+	/* 读的长度增加2K(rootfs signature) */
+	image_size_sectors = (spl_image.size + 2048 + 0x200 - 1) / 0x200;
+#else
 	/* convert size to sectors - round up */
 	image_size_sectors = (spl_image.size + 0x200 - 1) / 0x200;
+#endif
 
 	/* Read the header too to avoid extra memcpy */
+#if defined(CONFIG_SPL_OS_BOOT) && defined(CONFIG_JZ_SECURE_SUPPORT)
+	/* 跳过2Kbyte大小的安全启动签名数据 */
+	err = mmc_block_read(sector, image_size_sectors,
+			     (void *)spl_image.load_addr - 2048);
+
+#ifdef CONFIG_JZ_SECURE_ROOTFS
+	unsigned int *info =  (void *)spl_image.load_addr - 2048 + 512;
+	unsigned int sig_offset = *info + (16 - 1);
+	sig_offset = sig_offset & ~(16 - 1);
+	sig_offset = sig_offset + 2048;
+	/* signature address */
+	secure_check_hash_rootfs(name, (void *)spl_image.load_addr - 2048 + sig_offset);
+#endif
+
+#else
 	err = mmc_block_read(sector, image_size_sectors,
 			     (void *)spl_image.load_addr);
+#endif
 
 #ifdef DEBUG_DDR_CONTENT
+#if defined(CONFIG_SPL_OS_BOOT) && defined(CONFIG_JZ_SECURE_SUPPORT)
+	dump_ddr_content(spl_image.load_addr - 2048, 200);
+#else
 	dump_ddr_content(spl_image.load_addr, 200);
 #endif
+#endif /* end of DEBUG_DDR_CONTENT */
 	flush_cache_all();
+
+#if defined(CONFIG_SPL_OS_BOOT) && defined(CONFIG_JZ_SECURE_SUPPORT)
+	int ret = secure_scboot(spl_image.load_addr - 2048, spl_image.load_addr);
+	if(ret) {
+		serial_debug("Error spl secure load kernel.\n");
+		hang();
+	}
+#endif
+
 end:
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
 	if (err < 0)
@@ -1305,13 +1506,24 @@ static int mmc_load_img_from_partition(const char *name)
 	unsigned int start_sector;
 	int ret;
 
+#ifdef CONFIG_SPL_OF_LIBFDT
+	unsigned int dtb_addr;
+	ret = spl_get_built_in_gpt_partition(CONFIG_DTB_NAME, &dtb_addr, NULL);
+	if (ret){
+		serial_debug("dtb not found: "CONFIG_DTB_NAME"\n");
+		hang();
+	}
+
+	mmc_block_read(dtb_addr, (CONFIG_DTB_SIZE + 512 - 1) / 512, (unsigned char *)CONFIG_DTB_ADRESS);
+#endif /* CONFIG_SPL_OF_LIBFDT */
+
 	ret = spl_get_built_in_gpt_partition(name, &start_sector, NULL);
 	if (ret) {
-		printf("mmc:failed get part %s\n", name);
+		serial_debug("mmc:failed get part %s\n", name);
 		return ret;
 	}
 
-	return mmc_load_image_raw(start_sector);
+	return mmc_load_image_raw(start_sector, name);
 }
 #endif
 
@@ -1336,15 +1548,29 @@ static int mmc_ota_load_img_from_partition(const char *name)
 		}
 	}
 
+#ifdef CONFIG_JZ_WATCHDOG
+	if (spl_test_ota_result()) {
+		serial_debug("ota fail!\n");
+		if (is_kernel2) {
+			kernel_name = CONFIG_SPL_OS_NAME;
+			is_kernel2 = 0;
+		} else {
+			kernel_name = CONFIG_SPL_OS_NAME2;
+			is_kernel2 = 1;
+		}
+	} else
+		spl_ota_set_flag_and_boot_wdt();
+#endif
+
 	ret = spl_get_built_in_gpt_partition(kernel_name, &start_sector, NULL);
 	if (ret) {
-		printf("kernel not found: "CONFIG_SPL_OS_NAME"\n");
+		serial_debug("kernel not found: "CONFIG_SPL_OS_NAME"\n");
 		hang();
 	}
 
 	debug("kernel:%s %x\n", kernel_name, start_sector);
 
-	mmc_load_image_raw(start_sector);
+	mmc_load_image_raw(start_sector, kernel_name);
 
 	if (is_kernel2)
 		return CONFIG_SYS_SPL_ARGS_ADDR2;
@@ -1361,7 +1587,7 @@ static struct jzsd_ota_ops jzsd_ota_ops = {
 };
 #endif
 
-#ifdef CONFIG_SPL_RTOS_BOOT
+#if defined(CONFIG_SPL_RTOS_BOOT) || defined(CONFIG_SPL_RTOS_LOAD_KERNEL) || defined(CONFIG_BOOT_RTOS_OTA)
 
 struct rtos_header rtos_header;
 
@@ -1432,6 +1658,41 @@ static void start_second_cpu(void)
 }
 #endif
 
+#ifdef CONFIG_SPL_RTOS_LINUX_MAPPED_FILESYSTEM_NAME
+static int mmc_rtos_load_rtosdata_partition(struct rtos_header *rtos)
+{
+	unsigned int mapped_rtosdata_offset_sector;
+	unsigned int mapped_rtosdata_size_sector;
+	unsigned int *mapped_rtosdata_address;
+	int ret;
+
+	ret = spl_get_built_in_gpt_partition(CONFIG_SPL_RTOS_LINUX_MAPPED_FILESYSTEM_NAME,
+								&mapped_rtosdata_offset_sector, &mapped_rtosdata_size_sector);
+	if (ret) {
+		serial_debug("not found: "CONFIG_SPL_RTOS_LINUX_MAPPED_FILESYSTEM_NAME"\n");
+		return -1;
+	}
+
+	if (rtos->heap_end - rtos->heap_start <= mapped_rtosdata_size_sector * 512) {
+		serial_debug("part too large:" CONFIG_SPL_RTOS_LINUX_MAPPED_FILESYSTEM_NAME"\n");
+		return -1;
+	}
+
+	mapped_rtosdata_address = (unsigned int *)(rtos->heap_end - mapped_rtosdata_size_sector * 512);
+
+	ret = mmc_block_read(mapped_rtosdata_offset_sector, mapped_rtosdata_size_sector, mapped_rtosdata_address);
+	if (ret == 0) {
+		serial_debug("read rtos data err\n");
+		return -1;
+	}
+
+	/* 传递RTOS DATA大小到RTOS系统中 */
+	unsigned int *rtos_mapped_rtosdata_size = (unsigned int *)(rtos->mapped_rtosdata_size) ;
+	*rtos_mapped_rtosdata_size = mapped_rtosdata_size_sector * 512;
+	return 0;
+}
+#endif
+
 static int mmc_rtos_load(struct rtos_header *rtos, unsigned int sector_offset)
 {
 	int err = 0;
@@ -1458,9 +1719,13 @@ static int mmc_rtos_load(struct rtos_header *rtos, unsigned int sector_offset)
 
 	return 0;
 end:
-	printf("read rtos image err\n");
+	serial_debug("read rtos image err\n");
 	return -1;
 }
+
+#endif
+
+#ifdef CONFIG_SPL_RTOS_BOOT
 
 static void mmc_load_rtos_boot(void)
 {
@@ -1483,7 +1748,7 @@ static void mmc_load_rtos_boot(void)
 
 	ret = spl_get_built_in_gpt_partition(rtos_name, &rtos_offset, NULL);
 	if (ret) {
-		printf("rtos not found: "CONFIG_SPL_RTOS_NAME"\n");
+		serial_debug("rtos not found: "CONFIG_SPL_RTOS_NAME"\n");
 		hang();
 	}
 
@@ -1492,8 +1757,8 @@ static void mmc_load_rtos_boot(void)
 	#ifdef CONFIG_SPL_RTOS_NAME
 	ret = spl_get_built_in_gpt_partition(CONFIG_SPL_RTOS_NAME, &rtos_offset, NULL);
 	if (ret) {
-		printf("rtos not found: "CONFIG_SPL_RTOS_NAME"\n");
-		printf("rtos use default offset sector:%d\n", CONFIG_RTOS_OFFSET_SECTOR);
+		serial_debug("rtos not found: "CONFIG_SPL_RTOS_NAME"\n");
+		serial_debug("rtos use default offset sector:%d\n", CONFIG_RTOS_OFFSET_SECTOR);
 		rtos_offset = CONFIG_RTOS_OFFSET_SECTOR;
 	}
 	#else
@@ -1501,21 +1766,16 @@ static void mmc_load_rtos_boot(void)
 	#endif
 #endif
 
+	/* RTOS镜像加载 */
 	if (mmc_rtos_load(&rtos_header, rtos_offset))
 		hang();
 
 	flush_cache_all();
 
-#if defined(CONFIG_SPL_OS_BOOT) && defined(CONFIG_RTOS_CONN_WITH_OS)
-	/* 由RTOS 加载OS镜像, SPL等待OS加载完成，并由SPL完成后续引导 */
-	os_boot_args.magic = 0x53475241;  /* ARGS */
-	os_boot_args.boot_type = SPL_RTOS_TYPE_LOAD_OS;
-	os_boot_args.is_loading = 0;
-	os_boot_args.command_line = CONFIG_SYS_SPL_ARGS_ADDR;
-	spl_get_built_in_gpt_partition(CONFIG_SPL_OS_NAME, &os_boot_args.offset_sector, &os_boot_args.size_sector);
-
-	spl_rtos_args.os_boot_args = &os_boot_args;
-#endif
+	/* RTOS-Linux 映射文件系统加载 */
+	#ifdef CONFIG_SPL_RTOS_LINUX_MAPPED_FILESYSTEM_NAME
+	mmc_rtos_load_rtosdata_partition(&rtos_header);
+	#endif
 
 #ifdef CONFIG_RTOS_BOOT_ON_SECOND_CPU
 	start_second_cpu();
@@ -1525,14 +1785,181 @@ static void mmc_load_rtos_boot(void)
 #endif
 }
 
-void *spl_rtos_get_spl_image_info(void)
+#endif
+
+#ifdef CONFIG_SPL_RTOS_LOAD_KERNEL
+
+static void spl_mmc_cfg_os_args(char *kernel_name, char *cmdargs)
 {
-	return os_boot_args.spl_image_info;
+	int ret;
+	unsigned int offset_sector = 0;
+	ret = spl_get_built_in_gpt_partition(CONFIG_SPL_OS_NAME, &offset_sector, NULL);
+	if (ret) {
+		serial_debug("kernel not found: "CONFIG_SPL_OS_NAME"\n");
+		hang();
+	}
+	debug("kernel:%s %x\n", kernel_name, offset_sector);
+
+	u32 image_size_sectors;
+	struct image_header *header;
+
+	header = (struct image_header *)(CONFIG_SYS_TEXT_BASE -
+					 sizeof(struct image_header));
+
+	/* read image header to find the image size & load address */
+	ret = mmc_block_read(offset_sector, 1, header);
+	if (ret < 0)
+		hang();
+
+#ifdef CONFIG_JZ_SECURE_SUPPORT
+	header = (struct image_header *)(CONFIG_SYS_SC_TEXT_BASE -
+					 sizeof(struct image_header));
+#endif
+
+	header->ih_name[IH_NMLEN - 1] = 0;
+	spl_parse_image_header(header);
+
+	/* convert size to sectors - round up */
+	image_size_sectors = (spl_image.size + 0x200 - 1) / 0x200;
+
+	cmdargs = cmdargs ? cmdargs : CONFIG_SYS_SPL_ARGS_ADDR;
+#ifdef CONFIG_SPL_AUTO_PROBE_ARGS_MEM
+	cmdargs = spl_board_process_mem_bootargs(cmdargs);
+#endif
+
+	/* 由RTOS 加载OS镜像, SPL等待OS加载完成, 并由SPL完成后续引导 */
+	os_boot_args.magic = 0x53475241;  /* ARGS */
+	os_boot_args.offset = offset_sector * 0x200;
+	os_boot_args.size = image_size_sectors * 0x200;
+	os_boot_args.load_addr = spl_image.load_addr;
+	os_boot_args.cmdargs = cmdargs;
+	os_boot_args.entry_point = spl_image.entry_point;
+
+	spl_rtos_args.os_boot_args = &os_boot_args;
 }
 
+/* not support rtos boot on second cpu */
+static char *mmc_boot_rtos_load_os(void)
+{
+	int ret;
+	const char *kernel_name = CONFIG_SPL_OS_NAME;
+	const char *rtos_name = CONFIG_SPL_RTOS_NAME;
+	char *cmdargs = CONFIG_SYS_SPL_ARGS_ADDR;
+#ifdef CONFIG_SPL_OF_LIBFDT
+	char *dtbname = CONFIG_DTB_NAME;
+#endif /* CONFIG_SPL_OF_LIBFDT */
+
+#ifdef CONFIG_SPL_OS_OTA_BOOT
+	int is_kernel2 = 0;
+	unsigned int ota_offset = 0;
+	ret = spl_get_built_in_gpt_partition(CONFIG_SPL_OTA_NAME, &ota_offset, NULL);
+	if (!ret) {
+		const char *buf = (const char *)(CONFIG_SYS_TEXT_BASE);
+		const char *kernel2 = "ota:"CONFIG_SPL_OS_NAME2;
+		mmc_block_read(ota_offset, 1, (u32 *)buf);
+		if (!strncmp(kernel2, buf, strlen(kernel2))) {
+			is_kernel2 = 1;
+#ifdef CONFIG_SPL_OF_LIBFDT
+			dtbname = CONFIG_DTB_NAME2;
+#endif /* CONFIG_SPL_OF_LIBFDT */
+		}
+
+#ifdef CONFIG_JZ_WATCHDOG
+		if (spl_test_ota_result()) {
+			serial_debug("ota fail!\n");
+			is_kernel2 = is_kernel2 ? 0 : 1;
+		} else
+			spl_ota_set_flag_and_boot_wdt();
+#endif
+		if (is_kernel2) {
+			kernel_name = CONFIG_SPL_OS_NAME2;
+			rtos_name = CONFIG_SPL_RTOS_NAME2;
+			cmdargs = CONFIG_SYS_SPL_ARGS_ADDR2;
+		}
+	}
+#endif
+
+#ifdef CONFIG_SPL_OF_LIBFDT
+	unsigned int dtb_addr;
+	ret = spl_get_built_in_gpt_partition(dtbname, &dtb_addr, NULL);
+	if (ret){
+		serial_debug("dtb not found: %s\n", dtbname);
+		hang();
+	}
+
+	mmc_block_read(dtb_addr, (CONFIG_DTB_SIZE + 512 - 1) / 512, (unsigned char *)CONFIG_DTB_ADRESS);
+#endif /* CONFIG_SPL_OF_LIBFDT */
+
+	spl_mmc_cfg_os_args(kernel_name, cmdargs);
+
+	unsigned int rtos_offset = CONFIG_RTOS_OFFSET_SECTOR;
+	ret = spl_get_built_in_gpt_partition(rtos_name, &rtos_offset, NULL);
+	if (ret) {
+		serial_debug("rtos not found: "CONFIG_SPL_RTOS_NAME"\n");
+		serial_debug("rtos use default offset sector:%d\n", CONFIG_RTOS_OFFSET_SECTOR);
+		rtos_offset = CONFIG_RTOS_OFFSET_SECTOR;
+	}
+	debug("rtos:%s %x\n", rtos_name, rtos_offset);
+
+	/* RTOS镜像加载 */
+	if (mmc_rtos_load(&rtos_header, rtos_offset))
+		hang();
+
+	flush_cache_all();
+
+	/* RTOS-Linux 映射文件系统加载 */
+	#ifdef CONFIG_SPL_RTOS_LINUX_MAPPED_FILESYSTEM_NAME
+	mmc_rtos_load_rtosdata_partition(&rtos_header);
+	#endif
+
+	rtos_raw_start(&rtos_header, &spl_rtos_args);
+
+#ifdef CONFIG_JZ_SECURE_SUPPORT
+	ret = secure_scboot(spl_image.load_addr, spl_image.load_addr);
+	if (ret) {
+		serial_debug("Error spl secure load kernel.\n");
+		hang();
+	}
+#endif
+
+	return cmdargs;
+}
 #endif
 
 
+#ifdef CONFIG_BOOT_RTOS_OTA
+static void mmc_load_rtos_ota_boot(void)
+{
+	int ret;
+	unsigned int ota_offset;
+	unsigned int offset;
+
+	ret = spl_get_built_in_gpt_partition(CONFIG_SPL_OTA_NAME, &ota_offset, NULL);
+	if (!ret) {
+		const char *buf = (const char *)(CONFIG_SYS_TEXT_BASE);
+		const char *ota_part_info = CONFIG_SPL_RTOS_OTA_INFO;
+
+		mmc_block_read(ota_offset, 1, (u32 *)buf);
+		if (strncmp(ota_part_info, buf, strlen(ota_part_info))) {
+			return;
+		}
+
+		ret = spl_get_built_in_gpt_partition(CONFIG_SPL_RTOS_OTA_NAME, &offset, NULL);
+		if (ret) {
+			msc_debug("rtos not found: "CONFIG_SPL_RTOS_OTA_NAME"\n");
+			return;
+		}
+
+		/* RTOS镜像加载 */
+		if (mmc_rtos_load(&rtos_header, offset))
+			hang();
+
+		flush_cache_all();
+		rtos_raw_start(&rtos_header, &spl_rtos_args);
+		msc_debug("rtos: %x\n", offset);
+	}
+}
+#endif
 
 char *spl_mmc_load_image(void)
 {
@@ -1547,6 +1974,15 @@ char *spl_mmc_load_image(void)
 #endif
 
 	jzmmc_init();
+
+
+#ifdef CONFIG_BOOT_RTOS_OTA
+	mmc_load_rtos_ota_boot();
+#endif
+
+#ifdef CONFIG_SPL_RTOS_LOAD_KERNEL
+	return mmc_boot_rtos_load_os();
+#endif
 
 #ifdef CONFIG_SPL_RTOS_BOOT
 	mmc_load_rtos_boot();
@@ -1563,19 +1999,11 @@ char *spl_mmc_load_image(void)
 	register_jzsd_ota_ops(&jzsd_ota_ops);
 	return spl_jzsd_ota_load_image();
 #else
-	if (os_boot_args.boot_type == SPL_RTOS_TYPE_LOAD_OS) {
-		/* 等待RTOS加载镜像文件 */
-		while (!os_boot_args.is_loading) {
-			mdelay(10);
-		}
-	} else {
-		/* 正常加载 */
-		mmc_load_img_from_partition(CONFIG_SPL_OS_NAME);
-	}
-
+	/* 正常加载 */
+	mmc_load_img_from_partition(CONFIG_SPL_OS_NAME);
 #endif
 #else
-	mmc_load_image_raw(CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR);
+	mmc_load_image_raw(CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR, NULL);
 #endif
 	return NULL;
 }

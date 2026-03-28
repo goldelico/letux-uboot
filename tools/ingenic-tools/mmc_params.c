@@ -25,7 +25,7 @@
 #include <string.h>
 #include <config.h>
 
-#if defined(CONFIG_X2000) || defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500)
+#if defined(CONFIG_X2000) || defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500) || defined(CONFIG_X2600) ||defined(CONFIG_AD100) || defined(CONFIG_X2580)
 #define SPL_SIZE (24 * 1024)
 #endif
 #if defined(CONFIG_X1600)
@@ -40,7 +40,8 @@
 
 int main(int argc, char *argv[])
 {
-	int fd, count;
+	int count;
+	FILE *fd;
 	int bytes_read;
 	char buffer[BUFFER_SIZE];
 	unsigned int check = 0;
@@ -51,15 +52,15 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	fd = open(argv[1], O_RDWR);
-	if (fd < 0) {
+	fd = fopen(argv[1], "rb+");
+	if (fd == NULL) {
 		printf("Open %s Error\n", argv[1]);
 		return 1;
 	}
 
 	count = 0;
 
-	while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0) {
+	while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, fd)) > 0) {
 			count += bytes_read;
 	}
 	printf("mmc spl count = %08x Bytes\n", count);
@@ -70,13 +71,13 @@ int main(int argc, char *argv[])
 	printf("mmc spl count = %08x Blocks\n", count);
 
 	/*set spl len*/
-	lseek( fd, SPL_LENGTH_POSITION, SEEK_SET);
-	if ((t = write(fd, &count, 4)) != 4) {
+	fseek( fd, SPL_LENGTH_POSITION, SEEK_SET);
+	if ((t = fwrite(&count, 4, 1, fd)) != 1) {
 		printf("Check: Write %s Error\n",argv[1]);
 		return 1;
 	}
 
-	close(fd);
+	fclose(fd);
 
 	return 0;
 }

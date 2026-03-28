@@ -35,7 +35,7 @@ int do_aes(void *binaddr, int len, int aeskey, int aescrypt)
 	unsigned int size = len;
 	void *addr = binaddr;
 
-	printf("tranfser size = %x\n", size);
+	serial_debug("tranfser size = %x\n", size);
 
 	/*aes one time max 512 bytes (128 word) */
 	for(iLoop = 0; iLoop * 512 < size; iLoop++) {

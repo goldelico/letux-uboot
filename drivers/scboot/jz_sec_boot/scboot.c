@@ -159,17 +159,17 @@ int scboot_only(void *input,void *output)
 	for (i = 0; i < 6; i++)
 		pdma_bank0_off[i] = pdma_ins[i];
 
-	printf("Security boot...\n");
+	serial_debug("Security boot...\n");
 
     len = setup_sckeys(input);
 
 	if(len == 0) {
-		printf("ERROR: please check header information!!\n");
+		serial_debug("ERROR: please check header information!!\n");
 		hang();
 	}
 	ret = start_scboot(input, output, len);
 	if(ret) {
-		printf("ERROR: please check your image !!\n");
+		serial_debug("ERROR: please check your image !!\n");
 		hang();
 	}
 // 现场清理，防止key泄露，不建议去掉

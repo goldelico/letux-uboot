@@ -23,6 +23,10 @@ include $(TOPDIR)/config.mk
 LIB	:= $(obj)libusb_phy.o
 
 COBJS-$(CONFIG_TWL4030_USB) += twl4030.o
+COBJS-$(CONFIG_M300) += m300_phy.o
+COBJS-$(CONFIG_X1600) += x1600_phy.o
+COBJS-$(CONFIG_X2000_V12) += x2000_phy.o
+COBJS-$(CONFIG_X2600) += x2600_phy.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

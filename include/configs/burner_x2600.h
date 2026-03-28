@@ -1,0 +1,170 @@
+/*
+ * Ingenic burner configuration
+ *
+ * Copyright (c) 2024  Ingenic Semiconductor Co.,Ltd
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307 USA
+ */
+
+#ifndef __BURNER_H__
+#define __BURNER_H__
+
+/**
+ * Basic configuration(SOC, Cache, UART, DDR).
+ */
+#define CONFIG_MIPS32		        /* MIPS32 CPU core */
+#define CONFIG_CPU_XBURST2
+#define CONFIG_SYS_LITTLE_ENDIAN
+#define CONFIG_X2600
+
+
+#define CONFIG_SYS_APLL_FREQ		800000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MPLL_FREQ		1200000000	/*If MPLL not use mast be set 0*/
+#define CONFIG_SYS_EPLL_FREQ		300000000	/*If MPLL not use mast be set 0*/
+#define CONFIG_CPU_SEL_PLL		APLL
+#define CONFIG_DDR_SEL_PLL		MPLL
+#define CONFIG_SYS_CPU_FREQ		CONFIG_SYS_APLL_FREQ
+#define CONFIG_SYS_MEM_FREQ		(CONFIG_SYS_MPLL_FREQ / 3)
+
+#define CONFIG_SYS_AHB0_FREQ		200000000
+#define CONFIG_SYS_AHB2_FREQ		200000000	/*APB = AHB2/2*/
+
+
+/**
+ *  Cache
+ **/
+#define CONFIG_SYS_DCACHE_SIZE		(32 * 1024)
+#define CONFIG_SYS_DCACHELINE_SIZE	(32)
+#define CONFIG_SYS_DCACHE_WAYS		(8)
+#define CONFIG_SYS_ICACHE_SIZE		(32 * 1024)
+#define CONFIG_SYS_ICACHELINE_SIZE	(32)
+#define CONFIG_SYS_ICACHE_WAYS		(8)
+#define CONFIG_SYS_CACHELINE_SIZE	(32)
+/* A switch to configure whether cpu has a 2nd level cache */
+#define CONFIG_BOARD_SCACHE
+#define CONFIG_SYS_SCACHE_SIZE		(256 * 1024)
+#define CONFIG_SYS_SCACHELINE_SIZE	(64)
+#define CONFIG_SYS_SCACHE_WAYS		(8)
+
+
+/* CLK CGU */
+#define  CGU_CLK_SRC {				\
+		{MSC0, MPLL},			\
+		{MSC1, MPLL},			\
+		{SFC, MPLL},			\
+		{SRC_EOF,SRC_EOF}		\
+	}
+
+
+/*
+ * DDR
+ */
+#define CONFIG_DDR_INNOPHY
+
+/*
+ * UART
+ */
+#define CONFIG_SYS_UART_INDEX               0
+
+/*
+ * Burner
+ */
+
+#define CONFIG_USB_PRODUCT_ID               0xeaef
+#define CONFIG_USB_VENDOR_ID                0xa108
+#define CONFIG_BURNER_CPU_INFO              "X2600"
+/* Platform auto-detection */
+#define CONFIG_SPL_USB_BOOT
+#define CONFIG_CHECK_SOCID
+
+/*
+ * Drivers configuration.
+ */
+
+/* MMC */
+#define CONFIG_JZ_MMC_MSC0
+#define CONFIG_JZ_MMC_MSC1
+#define CONFIG_CMD_MMC
+#define CONFIG_MMC
+#define CONFIG_SDHCI
+#define CONFIG_JZ_SDHCI
+#define CONFIG_GENERIC_MMC
+
+
+/* SFC */
+#define CONFIG_JZ_SFC
+#define CONFIG_SFC_V20
+#define CONFIG_SPIFLASH_PART_OFFSET         0x5800
+
+
+/* Nor */
+#define CONFIG_MTD_SFCNOR
+#define CONFIG_CMD_SFC_NOR
+#define CONFIG_JZ_SFC_NOR
+#define CONFIG_SFC_NOR_RATE                 200000000
+#define CONFIG_SPI_NORFLASH_PART_OFFSET     0x5874
+#define CONFIG_SPL_VERSION_OFFSET           16
+
+
+/* Nand */
+#define CONFIG_MTD_SFCNAND
+
+#define CONFIG_CMD_NAND
+#define CONFIG_SFC_NAND_INIT_RATE          100000000
+#define CONFIG_SFC_NAND_RATE               200000000
+#define CONFIG_SYS_MAX_NAND_DEVICE         1
+#define CONFIG_SYS_NAND_SELF_INIT
+#define CONFIG_SYS_MAX_NAND_DEVICE         1
+#define CONFIG_MTD_DEVICE
+#define MTDIDS_DEFAULT                     "nand0=nand"
+
+#define CONFIG_CMD_UBI
+#define CONFIG_CMD_MTDPARTS
+
+#define CONFIG_MTD_PARTITIONS
+#define CONFIG_MTD_UBI_BEB_LIMIT           20
+#define CONFIG_LZO
+#define CONFIG_RBTREE
+
+/*
+ *  SPINAND MAC SN : the product of customer add partition of sequence code.
+ */
+#define CONFIG_JZ_SPINAND_MAC
+#define CONFIG_MAC_SIZE                  (1 * 1024 * 1024)
+#define CONFIG_JZ_SPINAND_SN
+#define CONFIG_SN_SIZE                   (1 * 1024 * 1024)
+#define CONFIG_JZ_SPINAND_LICENSE
+#define CONFIG_LICENSE_SIZE              (1 * 1024 * 1024)
+
+
+/* EFUSE */
+#define CONFIG_CMD_EFUSE
+#define CONFIG_JZ_EFUSE
+#define CONFIG_JZ_SCBOOT
+
+
+/**
+ * SPL configuration
+ */
+#define CONFIG_SPL_GINFO_BASE		0x80001000
+#define CONFIG_SPL_GINFO_SIZE		0x800
+
+#define CONFIG_SPL_TEXT_BASE		0x80001800
+#define CONFIG_SPL_MAX_SIZE		CONFIG_SPIFLASH_PART_OFFSET
+
+#include "burner_common.h"
+
+#endif /* __BURNER_H__ */

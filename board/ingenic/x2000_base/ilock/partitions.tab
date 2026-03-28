@@ -7,8 +7,10 @@ partition:
 	#name     =  start,   size, fstype
 	xboot     =     0m,     1m,
 	kernel    =     1m,     8m, EMPTY
-	rootfs    =     9m,     40m, LINUX_FS
-	userdata  =     49m,    36m, LINUX_FS
-	rtos    =       85m,    32m, EMPTY
+	rootfs    =     9m,     50m, LINUX_FS
+	userdata  =     59m,    26m, LINUX_FS
+	rtos      =     85m,    24m, EMPTY
+	rtosdata  =    109m,     4m, LINUX_FS
+	facedata  =    113m,     4m, LINUX_FS
 
 #fstype could be: LINUX_FS, FAT_FS, EMPTY

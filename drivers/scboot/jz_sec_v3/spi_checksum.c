@@ -20,6 +20,8 @@
  * MA 02111-1307 USA
  */
 
+#include <common.h>
+
 #define BUFFER_SIZE 4
 #define SKIP_SIZE 2048
 
@@ -85,7 +87,7 @@ u8 sec_crc(u8 *addr, int len)
 		len -= 4;
 	}
 
-	printf("spi spl crc7 = %x \n", crc);
+	serial_debug("spi spl crc7 = %x \n", crc);
 
 	return crc;
 }

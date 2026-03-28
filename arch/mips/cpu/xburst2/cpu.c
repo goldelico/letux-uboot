@@ -43,12 +43,10 @@ void __attribute__((weak)) _machine_restart(void)
 
 	writel(TSCR_WDTSC, TCU_BASE + TCU_TSCR);
 
-#if (defined(CONFIG_X2000) || defined(CONFIG_X2500))
 	writel(0, WDT_BASE + WDT_TCNT);
-#endif
 	writel(time, WDT_BASE + WDT_TDR);
 	writel(TCSR_PRESCALE | TCSR_RTC_EN
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100))
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2600))
 			| TCSR_CLRZ
 #endif
 			, WDT_BASE + WDT_TCSR);
@@ -63,7 +61,7 @@ int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
 	_machine_restart();
 
-	fprintf(stderr, "*** reset failed ***\n");
+	// fprintf(stderr, "*** reset failed ***\n");
 	return 0;
 }
 

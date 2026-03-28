@@ -12,13 +12,22 @@
 #define NOR_VERSION             (NOR_MAJOR_VERSION_NUMBER | (NOR_MINOR_VERSION_NUMBER << 8) | (NOR_REVERSION_NUMBER << 16))
 
 #define NOR_PART_NUM		10
-#define NORFLASH_PART_RW	0
-#define NORFLASH_PART_WO	1
-#define NORFLASH_PART_RO	2
 
-#define MTD_MODE                0x0     //use mtd mode, erase partition when write
-#define MTD_D_MODE              0x2     //use mtd dynamic mode, erase block_size when write
-#define UBI_MANAGER             0x1
+#define NOR_CMD_TYPE_1        0x00010001
+#define NOR_CMD_TYPE_2        0x00020002
+#define NOR_CMD_TYPE_3        0x00030003
+
+struct nor_id {
+        char name[32];
+        unsigned int id;
+};
+
+struct nor_id_info {
+        unsigned int cmd_type;
+        unsigned int id_count;
+        struct nor_id *id_list;
+};
+
 
 struct spi_nor_cmd_info {
 	unsigned short cmd;
@@ -90,7 +99,6 @@ struct mini_spi_nor_info {
 	unsigned int page_size;
 	unsigned int erase_size;
 
-//	unsigned char spl_quad;	/* reserve, for spl set quad mode */
 };
 
 struct nor_partition {
@@ -123,7 +131,6 @@ struct builtin_params {
 struct spiflash_info {
 	struct burner_params burner_params;
 	struct mini_spi_nor_info mini_spi_nor_info;
-	unsigned char b_quad;	/* for burner set quad mode */
 };
 
 struct nor_block_info {
@@ -186,9 +193,6 @@ struct multi_die_flash {
 };
 
 
-/* SFC CDT Maximum INDEX number */
-#define INDEX_MAX_NUM 32
-
 /* SFC CDT INDEX */
 enum {
 	/* 1. nor reset */
@@ -247,8 +251,24 @@ enum {
 	/* 14. read die id */
 	NOR_READ_ACTIVE_DIE_ID,
 
+	/* 15. write status register 1 */
+	NOR_SET_STATUS_1_ENABLE,
+	NOR_SET_STATUS_1,
+	NOR_SET_STATUS_1_FINISH,
+
+	/* 16. write status register 2 */
+	NOR_SET_STATUS_2_ENABLE,
+	NOR_SET_STATUS_2,
+	NOR_SET_STATUS_2_FINISH,
+
+	/* 17. write status register 3 */
+	NOR_SET_STATUS_3_ENABLE,
+	NOR_SET_STATUS_3,
+	NOR_SET_STATUS_3_FINISH,
+
 	/* index count */
 	NOR_MAX_INDEX,
 };
+
 
 #endif

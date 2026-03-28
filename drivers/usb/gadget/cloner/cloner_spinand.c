@@ -19,9 +19,11 @@ extern struct nand_param_from_burner nand_param_from_burner;
  *pointer addr changed to the address which param we probe.
  * ******************************************************************************/
 
-void get_burner_nandinfo(char *flash_info,struct nand_param_from_burner *param)
+void get_burner_nandinfo()
 {
 	int i;
+	struct nand_param_from_burner *param = &nand_param_from_burner;
+	struct jz_sfcnand_burner_param *flash_info = spi_args->flash_info;
 	struct jz_sfcnand_burner_param *tmpbp = (struct jz_sfcnand_burner_param*)flash_info;
 	param->version = 0;
 	param->flash_type = 1;

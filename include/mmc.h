@@ -165,6 +165,42 @@
 /*
  * EXT_CSD fields
  */
+#define EXT_CSD_SEC_COUNT_3		215
+#define EXT_CSD_SEC_COUNT_2		214
+#define EXT_CSD_SEC_COUNT_1		213
+#define EXT_CSD_SEC_COUNT_0		212
+
+#define EXT_CSD_MAX_ENH_SIZE_MULT_2	159
+#define EXT_CSD_MAX_ENH_SIZE_MULT_1	158
+#define EXT_CSD_MAX_ENH_SIZE_MULT_0	157
+
+#define EXT_CSD_GP_SIZE_MULT_4_2	154
+#define EXT_CSD_GP_SIZE_MULT_4_1	153
+#define EXT_CSD_GP_SIZE_MULT_4_0	152
+#define EXT_CSD_GP_SIZE_MULT_3_2	151
+#define EXT_CSD_GP_SIZE_MULT_3_1	150
+#define EXT_CSD_GP_SIZE_MULT_3_0	149
+#define EXT_CSD_GP_SIZE_MULT_2_2	148
+#define EXT_CSD_GP_SIZE_MULT_2_1	147
+#define EXT_CSD_GP_SIZE_MULT_2_0	146
+#define EXT_CSD_GP_SIZE_MULT_1_2	145
+#define EXT_CSD_GP_SIZE_MULT_1_1	144
+#define EXT_CSD_GP_SIZE_MULT_1_0	143
+#define EXT_CSD_ENH_SIZE_MULT_2         142
+#define EXT_CSD_ENH_SIZE_MULT_1         141
+#define EXT_CSD_ENH_SIZE_MULT_0         140
+#define EXT_CSD_ENH_START_ADDR_3        139
+#define EXT_CSD_ENH_START_ADDR_2        138
+#define EXT_CSD_ENH_START_ADDR_1        137
+#define EXT_CSD_ENH_START_ADDR_0        136
+#define EXT_CSD_PARTITION_SETTING_COMPLETED	155	/* R/W */
+#define EXT_CSD_PARTITIONS_ATTRIBUTE    156     /* R/W */
+
+#define EXT_CSD_EXT_PARTITIONS_ATTRIBUTE_1      53
+#define EXT_CSD_EXT_PARTITIONS_ATTRIBUTE_0      52
+
+
+
 #define EXT_CSD_GP_SIZE_MULT		143	/* R/W */
 #define EXT_CSD_PARTITIONING_SUPPORT	160	/* RO */
 #define EXT_CSD_RPMB_MULT		168	/* RO */
@@ -183,6 +219,13 @@
 /*
  * EXT_CSD field definitions
  */
+#define EXT_CSD_PARTITIONING_EN         (1<<0)
+#define EXT_CSD_ENH_ATTRIBUTE_EN        (1<<1)
+#define EXT_CSD_ENH_4                   (1<<4)
+#define EXT_CSD_ENH_3                   (1<<3)
+#define EXT_CSD_ENH_2                   (1<<2)
+#define EXT_CSD_ENH_1                   (1<<1)
+#define EXT_CSD_ENH_USR                 (1<<0)
 
 #define EXT_CSD_CMD_SET_NORMAL		(1 << 0)
 #define EXT_CSD_CMD_SET_SECURE		(1 << 1)

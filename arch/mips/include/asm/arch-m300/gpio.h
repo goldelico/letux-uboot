@@ -80,9 +80,27 @@ struct jz_gpio_func_def {
 #define PXPAT0C		0x48   /* Port Pattern 0 Clear Register */
 #define PXFLG		0x50   /* Port Flag Register */
 #define PXFLGC		0x58   /* Port Flag clear Register */
-#define PXPE		0x70   /* Port Pull Disable Register */
-#define PXPES		0x74   /* Port Pull Disable Set Register */
-#define PXPEC		0x78   /* Port Pull Disable Clear Register */
+#define PXDG 		0x70   /* PIN  Dual-Edge Interrupt Register */
+#define PXDGS		0x74   /* Port Dual-Edge Interrupt Set Register */
+#define PXDGC		0x78   /* Port Dual-Edge Interrupt Clear Register */
+#define PXPU 		0x80   /* Port IPULL-UP enabled State Register */
+#define PXPUS		0x84   /* Port IPULL-UP enabled State Set Register */
+#define PXPUC		0x88   /* Port IPULL-UP enabled State Clear Register */
+#define PXPD 		0x90   /* Port IPULL-Down enabled State Register */
+#define PXPDS		0x94   /* Port IPULL-Down enabled State Set Register */
+#define PXPDC		0x98   /* Port IPULL-Down enabled State Clear Register */
+#define PXDS0		0xA0   /* Port Drive Strength Register0 */
+#define PXDS0S		0xA4   /* Port Drive Strength Set Register0 */
+#define PXDS0C		0xA8   /* Port Drive Strength Clear Register0 */
+#define PXDS1		0xB0   /* Port Drive Strength Register1 */
+#define PXDS1S		0xB4   /* Port Drive Strength Set Register1 */
+#define PXDS1C		0xB8   /* Port Drive Strength Clear Register1 */
+#define PXSR		0xD0   /* Port Slew Rate Register */
+#define PXSRS		0xD4   /* Port Slew Rate Set Register */
+#define PXSRC		0xD8   /* Port PORTA Slew Rate Clear Register */
+#define PXSMT 		0xE0   /* Port Schmitt Trigger Register*/
+#define PXSMTS		0xE4   /* Port Schmitt Trigger Set Register */
+#define PXSMTC		0xE8   /* Port Schmitt Trigger Clear Register */
 
 #define GPIO_PXPIN(n)	(GPIO_BASE + (PXPIN + (n)*0x100)) /* PIN Level Register */
 #define GPIO_PXINT(n)	(GPIO_BASE + (PXINT + (n)*0x100)) /* Port Interrupt Register */
@@ -99,9 +117,27 @@ struct jz_gpio_func_def {
 #define GPIO_PXPAT0C(n)	(GPIO_BASE + (PXPAT0C + (n)*0x100)) /* Port Pattern 0 Clear Register */
 #define GPIO_PXFLG(n)	(GPIO_BASE + (PXFLG + (n)*0x100)) /* Port Flag Register */
 #define GPIO_PXFLGC(n)	(GPIO_BASE + (PXFLGC + (n)*0x100)) /* Port Flag clear Register */
-#define GPIO_PXPE(n)	(GPIO_BASE + (PXPE + (n)*0x100)) /* Port Pull Disable Register */
-#define GPIO_PXPES(n)	(GPIO_BASE + (PXPES + (n)*0x100)) /* Port Pull Disable Set Register */
-#define GPIO_PXPEC(n)	(GPIO_BASE + (PXPEC + (n)*0x100)) /* Port Pull Disable Clear Register */
+#define GPIO_PXDG(n)	(GPIO_BASE + (PXDG   + (n)*0x100))/* PIN  Dual-Edge Interrupt Register */
+#define GPIO_PXDGS(n)	(GPIO_BASE + (PXDGS  + (n)*0x100))/* Port Dual-Edge Interrupt Set Register */
+#define GPIO_PXDGC(n)	(GPIO_BASE + (PXDGC  + (n)*0x100))/* Port Dual-Edge Interrupt Clear Register */
+#define GPIO_PXPU(n)	(GPIO_BASE + (PXPU   + (n)*0x100))/* Port IPULL-UP enabled State Register */
+#define GPIO_PXPUS(n)	(GPIO_BASE + (PXPUS  + (n)*0x100))/* Port IPULL-UP enabled State Set Register */
+#define GPIO_PXPUC(n)	(GPIO_BASE + (PXPUC  + (n)*0x100))/* Port IPULL-UP enabled State Clear Register */
+#define GPIO_PXPD(n)	(GPIO_BASE + (PXPD   + (n)*0x100))/* Port IPULL-Down enabled State Register */
+#define GPIO_PXPDS(n)	(GPIO_BASE + (PXPDS  + (n)*0x100))/* Port IPULL-Down enabled State Set Register */
+#define GPIO_PXPDC(n)	(GPIO_BASE + (PXPDC  + (n)*0x100))/* Port IPULL-Down enabled State Clear Register */
+#define GPIO_PXDS0(n)	(GPIO_BASE + (PXDS0  + (n)*0x100))/* Port Drive Strength Register0 */
+#define GPIO_PXDS0S(n)	(GPIO_BASE + (PXDS0S + (n)*0x100))/* Port Drive Strength Set Register0 */
+#define GPIO_PXDS0C(n)	(GPIO_BASE + (PXDS0C + (n)*0x100))/* Port Drive Strength Clear Register0 */
+#define GPIO_PXDS1(n)	(GPIO_BASE + (PXDS1  + (n)*0x100))/* Port Drive Strength Register1 */
+#define GPIO_PXDS1S(n)	(GPIO_BASE + (PXDS1S + (n)*0x100))/* Port Drive Strength Set Register1 */
+#define GPIO_PXDS1C(n)	(GPIO_BASE + (PXDS1C + (n)*0x100))/* Port Drive Strength Clear Register1 */
+#define GPIO_PXSR(n)	(GPIO_BASE + (PXSR   + (n)*0x100))/* Port Slew Rate Register */
+#define GPIO_PXSRS(n)	(GPIO_BASE + (PXSRS  + (n)*0x100))/* Port Slew Rate Set Register */
+#define GPIO_PXSRC(n)	(GPIO_BASE + (PXSRC  + (n)*0x100))/* Port PORTA Slew Rate Clear Register */
+#define GPIO_PXSMT(n)	(GPIO_BASE + (PXSMT  + (n)*0x100))/* Port Schmitt Trigger Register*/
+#define GPIO_PXSMTS(n)	(GPIO_BASE + (PXSMTS + (n)*0x100))/* Port Schmitt Trigger Set Register */
+#define GPIO_PXSMTC(n)	(GPIO_BASE + (PXSMTC + (n)*0x100))/* Port Schmitt Trigger Clear Register */
 
 void gpio_set_func(enum gpio_port n, enum gpio_function func, unsigned int pins);
 void gpio_port_set_value(int port, int pin, int value);

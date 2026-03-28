@@ -130,7 +130,7 @@ static void bitcpy(const unsigned int *s,unsigned int *d,
 			ss_bit = 0;
 
 		}
-		//              printf("bsz = %d min = %d\n",bsz,min);
+		//              serial_debug("bsz = %d min = %d\n",bsz,min);
 		bsz -= min;
 
 	}
@@ -173,8 +173,8 @@ static int redundancy_rd(void)
 
 	while(!(REG32(EFUSE_REG_STAT) & EFUSE_REG_STAT_RDDONE));
 	REG32(EFUSE_REG_CTRL) = 0;
-	printf("rir1 = 0x%08x\n", REG32(EFUSE_REG_DAT1));
-	printf("rir2 = 0x%08x\n", REG32(EFUSE_REG_DAT1 + 4));
+	serial_debug("rir1 = 0x%08x\n", REG32(EFUSE_REG_DAT1));
+	serial_debug("rir2 = 0x%08x\n", REG32(EFUSE_REG_DAT1 + 4));
 }
 
 
@@ -195,16 +195,16 @@ static int read_ckey()
 		return -1;
 	}
 
-	printf("key setted(actual): %08x-%08x-%08x-%08x\n", output[0], output[1], output[2], output[3]);
-	printf("                    %08x-%08x-%08x-%08x-%08x\n", output[4], output[5], output[6], output[7], output[8]);
+	serial_debug("key setted(actual): %08x-%08x-%08x-%08x\n", output[0], output[1], output[2], output[3]);
+	serial_debug("                    %08x-%08x-%08x-%08x-%08x\n", output[4], output[5], output[6], output[7], output[8]);
 	decode(output, 34 * 8, ckey);
 
-	printf("ckey:\n");
+	serial_debug("ckey:\n");
 	for (i = 0; i < 8; i++) {
-		printf("%04x ", ckey[i]);
+		serial_debug("%04x ", ckey[i]);
 	}
 
-	printf("\nckey:end\n");
+	serial_debug("\nckey:end\n");
 
 	return 0;
 }
@@ -230,25 +230,25 @@ static int read_ukey(int ukey_flag, unsigned int *ukey)
 		return -1;
 	}
 
-	printf("key setted(actual): %08x-%08x-%08x-%08x\n", output[0], output[1], output[2], output[3]);
-	printf("                    %08x-%08x-%08x-%08x-%08x\n", output[4], output[5], output[6], output[7], output[8]);
+	serial_debug("key setted(actual): %08x-%08x-%08x-%08x\n", output[0], output[1], output[2], output[3]);
+	serial_debug("                    %08x-%08x-%08x-%08x-%08x\n", output[4], output[5], output[6], output[7], output[8]);
 
 	if(ukey_flag == SC_OTP_SEL_UKEY) {
 		unsigned char *tmp1 = (unsigned char *)output;
 		memcpy(output, &tmp1[2], 34);
 	}
-	printf("key setted(actual): %08x-%08x-%08x-%08x\n", output[0], output[1], output[2], output[3]);
-	printf("                    %08x-%08x-%08x-%08x-%08x\n", output[4], output[5], output[6], output[7], output[8]);
+	serial_debug("key setted(actual): %08x-%08x-%08x-%08x\n", output[0], output[1], output[2], output[3]);
+	serial_debug("                    %08x-%08x-%08x-%08x-%08x\n", output[4], output[5], output[6], output[7], output[8]);
 	decode(output, 34 * 8, ukey);
 
-	printf("ukey:\n");
+	serial_debug("ukey:\n");
 
 	for (i = 0; i < 8; i++) {
-		printf("%04x\n", ukey[i]);
+		serial_debug("%04x\n", ukey[i]);
 
 	}
 
-	printf("\nukey end\n");
+	serial_debug("\nukey end\n");
 
 	return 0;
 }
@@ -274,22 +274,22 @@ static int read_nkusig()
 		return -1;
 	}
 
-	printf("ukusig _burn(actual): %08x-%08x-%08x-%08x\n", output[0], output[1], output[2], output[3]);
-	printf("                    %08x-%08x-%08x-%08x-%08x\n", output[4], output[5], output[6], output[7], output[8]);
+	serial_debug("ukusig _burn(actual): %08x-%08x-%08x-%08x\n", output[0], output[1], output[2], output[3]);
+	serial_debug("                    %08x-%08x-%08x-%08x-%08x\n", output[4], output[5], output[6], output[7], output[8]);
 
 	unsigned char *tmp1 = (unsigned char *)output;
 	memcpy(output, &tmp1[2], 34);
-	printf("ukusig _burn(actual): %08x-%08x-%08x-%08x\n", output[0], output[1], output[2], output[3]);
-	printf("                    %08x-%08x-%08x-%08x-%08x\n", output[4], output[5], output[6], output[7], output[8]);
+	serial_debug("ukusig _burn(actual): %08x-%08x-%08x-%08x\n", output[0], output[1], output[2], output[3]);
+	serial_debug("                    %08x-%08x-%08x-%08x-%08x\n", output[4], output[5], output[6], output[7], output[8]);
 	decode(output, 34 * 8, nkusig);
 
-	printf("nkusig:\n");
+	serial_debug("nkusig:\n");
 	for (i = 0; i < 8; i++) {
-		printf("%04x ", nkusig[i]);
+		serial_debug("%04x ", nkusig[i]);
 
 	}
 
-	printf("\nnkusig end\n");
+	serial_debug("\nnkusig end\n");
 
 	return 0;
 }
@@ -306,7 +306,7 @@ static int hash(const void *in, void *out, const size_t len)
 	volatile struct sc_args *args = (volatile struct sc_args *)GET_SC_ARGS();
 	for (index = 0; index < len; index++) {
 		in_t[index] = in_s[index];
-	//	printf("%x\n", in_t[index]);
+	//	serial_debug("%x\n", in_t[index]);
 	}
 
 	args->arg[0] = len | 0x01 << 16 | 0x01 << 18 | 0x03 << 19/*hash 256*/;
@@ -322,15 +322,15 @@ static int hash(const void *in, void *out, const size_t len)
 	for (index = 0; index < 8; index++)
 		out_s[index] = out_t[index];
 
-	printf("hash\n");
+	serial_debug("hash\n");
 	for (index = 0; index < 256 / 8 / 4; index++) {
 		if (index != 0 && index % 4 == 0)
-			printf("\n");
+			serial_debug("\n");
 
-		printf("%x ", out_s[index]);
+		serial_debug("%x ", out_s[index]);
 	}
 
-	printf("\nhash end\n");
+	serial_debug("\nhash end\n");
 	return 0;
 }
 
@@ -349,22 +349,22 @@ static int check_nku()
 	tcsm_nku[1] = nku[1] * 4 * 8;
 	rsa_key_word = nku[0];
 
-	printf("N %d BITS\n",tcsm_nku[0]);
+	serial_debug("N %d BITS\n",tcsm_nku[0]);
 	for (iLoop = 0; iLoop < rsa_key_word; iLoop++) {
 		tcsm_nku[iLoop + 2] = nku[iLoop + 2];
 
-		printf("%08x ", tcsm_nku[iLoop + 2]);
+		serial_debug("%08x ", tcsm_nku[iLoop + 2]);
 		if((iLoop + 1) % 4 == 0)
-			printf("\n");
+			serial_debug("\n");
 	}
 
-	printf("KU %d BITS\n",tcsm_nku[1]);
+	serial_debug("KU %d BITS\n",tcsm_nku[1]);
 	for (iLoop = 0; iLoop < rsa_key_word; iLoop++) {
 		tcsm_nku[iLoop + 2 + rsa_key_word] = nku[iLoop + 2 + rsa_key_word];
 
-		printf("%08x ", tcsm_nku[iLoop + 2 + rsa_key_word]);
+		serial_debug("%08x ", tcsm_nku[iLoop + 2 + rsa_key_word]);
 		if((iLoop + 1) % 4 == 0)
-			printf("\n");
+			serial_debug("\n");
 	}
 
 	REG32(EFUSE_REG_CTRL) = 0;
@@ -372,10 +372,10 @@ static int check_nku()
 	ret = secall(args, SC_FUNC_CHECKNKU, 0, 1);
 
 	if (*(volatile unsigned int *)(MCU_TCSM_RETVAL) != SC_ERR_SUCC) {
-		printf("SC_FUNC_CHECKNKU failed! ret=0x%08x\n", *(volatile unsigned int *)(MCU_TCSM_RETVAL));
+		serial_debug("SC_FUNC_CHECKNKU failed! ret=0x%08x\n", *(volatile unsigned int *)(MCU_TCSM_RETVAL));
 		return -1;
 	}
-	printf("SC_FUNC_CHECKNKU Success\n");
+	serial_debug("SC_FUNC_CHECKNKU Success\n");
 	return 0;
 }
 
@@ -389,7 +389,7 @@ static int aes(const void *key, const void *in, void *out, const size_t len)
 	volatile struct sc_args *args = (volatile struct sc_args *)GET_SC_ARGS();
 	for (index = 0; index < 8; index++) {
 		key_t[index] = key_s[index];
-		printf("%x\n", key_t[index]);
+		serial_debug("%x\n", key_t[index]);
 	}
 
 	args->arg[0] =  0x01 << 1 /*dma*/ | 0x02 << 12;
@@ -408,15 +408,15 @@ static int aes(const void *key, const void *in, void *out, const size_t len)
 		return -1;
 	}
 
-	printf("aes\n");
+	serial_debug("aes\n");
 	for (index = 0; index < len; index++) {
 		if (index != 0 && index % 4 == 0)
-			printf("\n");
+			serial_debug("\n");
 
-		printf("%x ", out_s[index]);
+		serial_debug("%x ", out_s[index]);
 	}
 
-	printf("\naes end\n");
+	serial_debug("\naes end\n");
 	return 0;
 }
 static unsigned int serom_code[] = {
@@ -456,19 +456,19 @@ static int load_serom_firmware(struct pdma_message *pdma_msg)
 		pdma_msg->ret = 0;
 		boot_up_mcu();
 
-		printf("boot_up_mcu end\n");
+		serial_debug("boot_up_mcu end\n");
 		while (!FINISH(pdma_msg->ret)){
 			udelay(1000*1000);
-			printf("wait copy done!\n");
+			serial_debug("wait copy done!\n");
 
 		}
-		printf("FINISH ret end\n");
+		serial_debug("FINISH ret end\n");
 
 		if(RETURN(pdma_msg->ret) == 0) {
-			printf("success.\n");
+			serial_debug("success.\n");
 
 		}else{
-			printf("fail!\n");
+			serial_debug("fail!\n");
 			return -1;
 
 		}
@@ -476,7 +476,7 @@ static int load_serom_firmware(struct pdma_message *pdma_msg)
 
 
 	}
-	printf("ok!\n");
+	serial_debug("ok!\n");
 	return 0;
 }
 
@@ -492,7 +492,7 @@ static void load_pdma_firmware()
 	unsigned int *src_ptr = pdma_code;
 	unsigned int *dst_ptr = (unsigned int *)(TCSM_BANK0);//cacheable
 
-	printf("xxx load pdma firmware!\n");
+	serial_debug("xxx load pdma firmware!\n");
 	for(i=0; i < ARRAY_SIZE(pdma_code); i++)
 		*dst_ptr++ = *src_ptr++;
 }
@@ -512,7 +512,7 @@ static int init_seboot_t()
 	mdelay(30);
 
 	if(load_serom_firmware(pdma_msg)) {
-		printf("load serom firmware error!!!!!!\n");
+		serial_debug("load serom firmware error!!!!!!\n");
 		return -1;
 
 	}
@@ -529,7 +529,7 @@ static int otp_r()
 
 	while(!(REG32(EFUSE_REG_STAT) & EFUSE_REG_STAT_RDDONE));
 
-	printf("REG32(EFUSE_REG_DAT1) = %x\n",REG32(EFUSE_REG_DAT1));
+	serial_debug("REG32(EFUSE_REG_DAT1) = %x\n",REG32(EFUSE_REG_DAT1));
 	return 0;
 }
 
@@ -542,32 +542,32 @@ static int do_sct(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 	if(strcmp(argv[1], "init") == 0) {
 		if(init_seboot() < 0) {
-			printf("init seboot fialed.\n");
+			serial_debug("init seboot fialed.\n");
 			return 0;
 		}
 
 	} else if(strcmp(argv[1], "read_ckey") == 0) {
 		if (read_ckey() < 0) {
-			printf("read ckey failed\n");
+			serial_debug("read ckey failed\n");
 			return 0;
 		}
 		if (hash(ckey, chipkey, 8) < 0) {
-			printf("get chip key failed\n");
+			serial_debug("get chip key failed\n");
 			return 0;
 		}
 	} else if(strcmp(argv[1], "read_ukey") == 0) {
 		if (read_ukey(SC_OTP_SEL_UKEY, userkey) < 0) {
-			printf("read_ukey failed\n");
+			serial_debug("read_ukey failed\n");
 			return 0;
 		}
 		if (read_ukey(SC_OTP_SEL_UKEY1, userkey1) < 0) {
-			printf("read_ukey1 failed\n");
+			serial_debug("read_ukey1 failed\n");
 			return 0;
 		}
 
 	} else if(strcmp(argv[1], "read_nkusig") == 0) {
 		if (read_nkusig() < 0) {
-			printf("read nkusig failed\n");
+			serial_debug("read nkusig failed\n");
 			return 0;
 		}
 
@@ -577,60 +577,60 @@ static int do_sct(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
 
 	} else if(strcmp(argv[1], "cmp_ukey") == 0) {
 		if (aes(chipkey, ukey, ukey_en, 8) < 0) {
-			printf("cmp_ukey failed\n");
+			serial_debug("cmp_ukey failed\n");
 			return 0;
 		}
 
 	} else if(strcmp(argv[1], "cmp_ukey1") == 0) {
 		if (aes(chipkey, &ukey[8], ukey1_en, 8) < 0) {
-			printf("cmp_ukey1 failed\n");
+			serial_debug("cmp_ukey1 failed\n");
 			return 0;
 		}
 
 	} else if(strcmp(argv[1], "cmp_nkusig") == 0) {
 		if (hash(nku + 2, nkusig_cmp, 64 + 64) < 0) {
-			printf("cmp_nkusig failed\n");
+			serial_debug("cmp_nkusig failed\n");
 			return 0;
 		}
 
 		if (aes(chipkey, nkusig_cmp, nkusig_en, 8) < 0) {
-			printf("cmp_nkusig aes failed\n");
+			serial_debug("cmp_nkusig aes failed\n");
 			return 0;
 		}
 
 	} else if(strcmp(argv[1], "burn_ckey") == 0) {
 		if (cpu_burn_rckey() < 0) {
-			printf("burn_ckey failed\n");
+			serial_debug("burn_ckey failed\n");
 			return 0;
 		}
 	} else if(strcmp(argv[1], "burn_ukey") == 0) {
 		if (cpu_burn_ukey(ukey) < 0) {
-			printf("burn_ukey failed\n");
+			serial_debug("burn_ukey failed\n");
 			return 0;
 		}
 
 	} else if(strcmp(argv[1], "burn_nkusig") == 0) {
 		if (cpu_burn_nku(nku, 520) < 0) {
-			printf("burn_nkusig failed\n");
+			serial_debug("burn_nkusig failed\n");
 			return 0;
 		}
 	} else if(strcmp(argv[1], "burn_scen") == 0) {
 		if (cpu_burn_secboot_enable() < 0) {
-			printf("burn_sc_en failed\n");
+			serial_debug("burn_sc_en failed\n");
 			return 0;
 		}
 	} else if(strcmp(argv[1], "check_nku") == 0) {
 		if (check_nku() < 0) {
-			printf("check_nku failed\n");
+			serial_debug("check_nku failed\n");
 			return 0;
 		}
 	} else if (strcmp(argv[1], "test") == 0) {
 		//hash(&a, test_hash, 1);
 		for (index = 0; index < 4; index++)
-			printf("%x\n", b[index]);
+			serial_debug("%x\n", b[index]);
 		aes(k, b, c, 4);
 	}else {
-		printf("cmd error!!\n");
+		serial_debug("cmd error!!\n");
 	}
 
 	return CMD_RET_SUCCESS;

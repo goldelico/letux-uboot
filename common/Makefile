@@ -47,6 +47,7 @@ COBJS-$(CONFIG_BOOT_XIMAGE) += cmd_bootx.o
 COBJS-$(CONFIG_BOOT_ANDROID) += boot_mode.o
 COBJS-$(CONFIG_CMD_FASTBOOT) += cmd_fastboot.o
 COBJS-$(CONFIG_CMD_USBSERIAL) += cmd_usbserial.o
+COBJS-$(CONFIG_CMD_USBPRINTER) += cmd_usbprinter.o
 COBJS-$(CONFIG_CMD_BOOTM) += cmd_bootm.o
 COBJS-y += cmd_help.o
 COBJS-y += cmd_version.o
@@ -69,7 +70,11 @@ COBJS-$(CONFIG_ENV_IS_IN_SFC) += env_sfc.o
 COBJS-$(CONFIG_ENV_IS_IN_FAT) += env_fat.o
 COBJS-$(CONFIG_ENV_IS_IN_NAND) += env_nand.o
 COBJS-$(CONFIG_ENV_IS_IN_SPI_NAND) += env_spinand.o
+ifndef CONFIG_ENV_IS_IN_SFC_NAND_PARTITION
 COBJS-$(CONFIG_ENV_IS_IN_SFC_NAND) += env_sfcnand.o
+else
+COBJS-$(CONFIG_ENV_IS_IN_SFC_NAND_PARTITION) += env_sfcnand_partition.o
+endif
 COBJS-$(CONFIG_ENV_IS_IN_NAND_ZM) += env_nand_zm.o
 COBJS-$(CONFIG_ENV_IS_IN_NAND_JZMTD) += env_nand_jzmtd.o
 COBJS-$(CONFIG_ENV_IS_IN_NVRAM) += env_nvram.o
@@ -87,6 +92,7 @@ COBJS-$(CONFIG_CMD_SOURCE) += cmd_source.o
 COBJS-$(CONFIG_CMD_BDI) += cmd_bdinfo.o
 COBJS-$(CONFIG_CMD_BEDBUG) += bedbug.o cmd_bedbug.o
 COBJS-$(CONFIG_CMD_BMP) += cmd_bmp.o
+COBJS-$(CONFIG_CMD_JZ_VPU_TEST) += cmd_jz_vpu.o
 COBJS-$(CONFIG_CMD_LOGO_RLE) += cmd_rle.o
 COBJS-$(CONFIG_CMD_BOOTMENU) += cmd_bootmenu.o
 COBJS-$(CONFIG_CMD_BOOTLDR) += cmd_bootldr.o
@@ -209,8 +215,10 @@ COBJS-y += usb.o usb_hub.o
 COBJS-$(CONFIG_USB_STORAGE) += usb_storage.o
 COBJS-$(CONFIG_USB_UVC) += uvc/uvc_driver.o
 COBJS-$(CONFIG_USB_UVC) += uvc/uvc_video.o
+COBJS-$(CONFIG_USB_LOAD) += usb_load.o
 endif
 COBJS-$(CONFIG_CMD_USB_MASS_STORAGE) += cmd_usb_mass_storage.o
+COBJS-$(CONFIG_CMD_USB_LOAD) += cmd_usb_load.o
 COBJS-$(CONFIG_CMD_XIMG) += cmd_ximg.o
 COBJS-$(CONFIG_YAFFS2) += cmd_yaffs2.o
 COBJS-$(CONFIG_CMD_SPL) += cmd_spl.o
@@ -237,6 +245,7 @@ COBJS-$(CONFIG_CMD_DFU) += cmd_dfu.o
 COBJS-$(CONFIG_CMD_GPT) += cmd_gpt.o
 COBJS-$(CONFIG_CMD_BURN) += cmd_burn.o
 COBJS-$(CONFIG_SOFT_BURNER) += cmd_softburn.o
+COBJS-$(CONFIG_SOFT_BURNER_V2) += cmd_softburn.o
 COBJS-$(CONFIG_CMD_EFUSE) += cmd_efuse.o
 COBJS-$(CONFIG_CMD_BATTERYDET) += cmd_batterydet.o
 endif
@@ -287,6 +296,12 @@ XCOBJS	:= $(sort $(XCOBJS-y))
 SRCS	:= $(COBJS:.o=.c) $(XCOBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))
 XOBJS	:= $(addprefix $(obj),$(XCOBJS))
+
+ifdef CONFIG_CMD_JZ_VPU_TEST
+LOCAL_CFLAGS += -I$(TOPDIR)/drivers/video/jz_vpu/ -I$(TOPDIR)/drivers/video/jz_vpu/libh264 -I$(TOPDIR)/drivers/video/jz_vpu/libh264/include
+CFLAGS += $(LOCAL_CFLAGS)
+CPPFLAGS += $(LOCAL_CFLAGS)
+endif
 
 CPPFLAGS += -I..
 

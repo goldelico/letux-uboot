@@ -1,5 +1,5 @@
 #
-# Ingenic burner_x1600 makefile
+# Ingenic burner makefile
 #
 # Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
 # Author: Zoro <ykli@ingenic.cn>

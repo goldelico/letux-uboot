@@ -165,7 +165,7 @@ static int scboot_boot_cmp_hash(void *input, void *output)
 	volatile unsigned int *rsasrc = (volatile unsigned int *)(TCSM_CODE_ADDR);
 
 	if (cmp_data(rsarst, rsasrc, 4)) { /*128 for md5, 160 for sha1-1*/
-		printf("Digital signature does not match!!!!\n");
+		serial_debug("Digital signature does not match!!!!\n");
 		return SC_ERR_ILLEGAL_SPLSHA1;
 	}
 	return 0;
@@ -210,14 +210,14 @@ int secure_scboot(void *input, void *output)
 	secure_check(input, &issig);
 
 	if((EFUSTATE_SECBOOT_EN == 0) && (issig == 0)) {
-		printf("Normal boot...\n");
+		serial_debug("Normal boot...\n");
 	}
 	else if(EFUSTATE_SECBOOT_EN && (issig == 0)) {
-		printf("ERROR: please sign your image !!\n");
+		serial_debug("ERROR: please sign your image !!\n");
 		while(1);
 	}
 	else if(issig == 1) {
-		printf("Security boot...\n");
+		serial_debug("Security boot...\n");
 		boot_device = spl_boot_device();
 
 		switch(boot_device) {
@@ -225,7 +225,7 @@ int secure_scboot(void *input, void *output)
 		case BOOT_DEVICE_SFC_NOR:
 			ret = scboot_boot_cmp_hash(input, output);
 			if(ret) {
-				printf("ERROR: please check your image !!\n");
+				serial_debug("ERROR: please check your image !!\n");
 				hang();
 			}
 			break;
@@ -241,12 +241,12 @@ int secure_scboot(void *input, void *output)
 		case BOOT_DEVICE_SPI_NAND:
 			ret = setup_sckeys(input, &len);
 			if(ret) {
-				printf("ERROR: please check header information!!\n");
+				serial_debug("ERROR: please check header information!!\n");
 				hang();
 			}
 			ret = start_scboot(input, output, len);
 			if(ret) {
-				printf("ERROR: please check your image !!\n");
+				serial_debug("ERROR: please check your image !!\n");
 				hang();
 			}
 			break;

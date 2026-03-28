@@ -1,4 +1,5 @@
 #ifdef CONFIG_MTD_SFCNOR
+#include <asm/arch/sfc.h>
 #include <asm/arch/spinor.h>
 
 extern struct debug_param *debug_args;
@@ -13,39 +14,29 @@ int sfc_reset()
 	return sfc_nor_reset();
 }
 
-int sfc_erase()
-{
-	unsigned int bus = CONFIG_SF_DEFAULT_BUS;
-	unsigned int cs = CONFIG_SF_DEFAULT_CS;
-	unsigned int speed = CONFIG_SF_DEFAULT_SPEED;
-	unsigned int mode = CONFIG_SF_DEFAULT_MODE;
-	int err = 0;
-	int ret = jz_sfc_chip_erase();
-	if (ret < 0)
-		printf("sfc chip erese failed!\n");
-	else
-		printf("sfc chip erase ok\n");
-	return ret;
-}
-
 static void sfcnor_add_info_to_flash(unsigned char *buf)
 {
 	struct legacy_params *l_params;
 	int spl_version;
+	uint32_t param_offset = CONFIG_SPIFLASH_PART_OFFSET;
 	/* spl_version is in 16byte of spl header,
 	 * spl_version = 0x01, spl is new code, NOR_VERSION is 2,
 	 * spl_version = 0x00, spl is old code, NOR_VERSION is 1.
 	 * */
+
+	if ((int)(spi_args->param_offset) > 0)
+		param_offset = spi_args->param_offset;
+
 	spl_version = buf[CONFIG_SPL_VERSION_OFFSET];
 	switch (spl_version) {
 		case 0:
 			l_params = params_compatibility();
-			memcpy(buf + CONFIG_SPIFLASH_PART_OFFSET, l_params, sizeof(struct legacy_params));
+			memcpy(buf + param_offset, l_params, sizeof(struct legacy_params));
 			break;
 		case 1:
 			params.version = NOR_VERSION;
-			memcpy(buf + CONFIG_SPIFLASH_PART_OFFSET, &params, sizeof(struct burner_params));
-			memcpy(buf + CONFIG_SPIFLASH_PART_OFFSET + sizeof(struct burner_params), &mini_params, sizeof(struct mini_spi_nor_info));
+			memcpy(buf + param_offset, &params, sizeof(struct burner_params));
+			memcpy(buf + param_offset + sizeof(struct burner_params), &mini_params, sizeof(struct mini_spi_nor_info));
 			break;
 		default:
 			printf("spl uboot version error !\n");
@@ -73,7 +64,7 @@ int sfcnor_read(struct cloner *cloner)
 	return ret;
 }
 
-int sfc_program(struct cloner *cloner)
+int sfc_nor_program(struct cloner *cloner)
 {
 	unsigned int bus = CONFIG_SF_DEFAULT_BUS;
 	unsigned int cs = CONFIG_SF_DEFAULT_CS;
@@ -88,8 +79,6 @@ int sfc_program(struct cloner *cloner)
 	struct spi_flash *flash;
 	struct nor_partition *partition;
 
-	volatile int pt_offset;
-	volatile int pt_size;
 	volatile int pt_index;
 	static pt_index_bak = -1;
 
@@ -105,14 +94,14 @@ int sfc_program(struct cloner *cloner)
 		BURNNER_PRI("the length = %x, is no enough %x\n",len,blk_size);
 	}
 
-	partition = get_partition_index(offset,len, &pt_index);
+	partition = get_sfc_nor_partition(offset,len, &pt_index);
 
 	if(pt_index < 0 || partition == NULL){
 		printf("out of partition\n");
 		return -EIO;
 	}
 
-	if (spi_args->spi_erase == SPI_NO_ERASE) {
+	if (spi_args->spi_erase == PART_ERASE || partition->mask_flags == PART_RO) {
 		if (partition->manager_mode == MTD_D_MODE)
 			pt_index = offset / blk_size;
 		if(pt_index != pt_index_bak){
@@ -158,4 +147,5 @@ int sfc_program(struct cloner *cloner)
 	}
 	return ret;
 }
-#endif
+
+#endif /*CONFIG_MTD_SFCNOR*/

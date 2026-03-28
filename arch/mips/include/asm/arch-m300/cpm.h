@@ -149,6 +149,10 @@
 #define CPM_CLKGR_I2C5		(1 << 1)
 #define CPM_CLKGR_I2C4		(1 << 0)
 
+/*USB Reset Detect Timer Register*/
+#define USBRDT_IDDIG_EN			(1 << 24)
+#define USBRDT_IDDIG_REG                (1 << 23)
+
 /* MSC EXTCLK enable BIT */
 #define MSCCDR_EXCK_E		(1 << 21)
 #define MSCCDR_MPCS		(30)

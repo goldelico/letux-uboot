@@ -35,6 +35,28 @@ typedef union ddrp_rst {
 
 #define PHY_RESET (0x0 & ~(1<<2 | 1<<3))
 
+#if defined(CONFIG_X2600) || defined(CONFIG_AD100)
+typedef union ddrp_mem_cfg {
+	uint32_t d32;
+	struct {
+		unsigned int memsel:3;
+		unsigned int brusel:1;
+		unsigned int reserved1:1;
+		unsigned int rfifo_by:1;
+		unsigned int reserved6_7:2;
+	}b;
+}ddrp_mem_cfg_t;
+#elif defined(CONFIG_X2580)
+typedef union ddrp_mem_cfg {
+	uint32_t d32;
+	struct {
+		unsigned int memsel:3;
+		unsigned int brusel:1;
+		unsigned int reserved5_31:28;
+	}b;
+}ddrp_mem_cfg_t;
+
+#else
 typedef union ddrp_mem_cfg {
 	uint32_t d32;
 	struct {
@@ -45,6 +67,7 @@ typedef union ddrp_mem_cfg {
 	}b;
 }ddrp_mem_cfg_t;
 /* } ddrp_memcfg_t; */
+#endif
 
 typedef union ddrp_dq_width {
 	uint32_t d32;

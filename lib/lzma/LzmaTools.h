@@ -32,4 +32,5 @@
 
 extern int lzmaBuffToBuffDecompress (unsigned char *outStream, SizeT *uncompressedSize,
 			      unsigned char *inStream,  SizeT  length);
+extern int jz_lzma_decompress(unsigned char *src, size_t size, unsigned char *dst, unsigned int index);
 #endif

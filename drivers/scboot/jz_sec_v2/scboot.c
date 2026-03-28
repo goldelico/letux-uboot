@@ -88,6 +88,8 @@ static int setup_sckeys(void *addr, unsigned int *len)
 }
 
 extern void flush_cache_all(void);
+extern void enable_efuse_pd(void);
+extern void disable_efuse_pd(void);
 static int start_scboot(void *input, void *output, unsigned int binlen)
 {
 	struct sc_args *args = (struct sc_args *)(MCU_TCSM_SECALL_MSG);
@@ -97,7 +99,7 @@ static int start_scboot(void *input, void *output, unsigned int binlen)
 	int *srcptr = (int *)(input + SC_MAGIC_SIZE + SC_KEY_SIZE);
 	int *dstptr = (int *)(output);
 
-#if 0
+#if 1
 	int newround = 1;
 	int endround = 0;
 	int pos = 0;
@@ -124,9 +126,10 @@ static int start_scboot(void *input, void *output, unsigned int binlen)
 		binlen -= SC_MAX_SIZE_PERTIME;
 	} while (!endround);
 
-//			if(ret)
-//				return ret;
 #else
+
+	if (srcptr != dstptr)
+		serial_debug("securityboot: srcptr(0x%x) not equal to dstptr(0x%x)\n", srcptr, dstptr);
 
 	args->arg[0] = 1 | 1 << 1 | 1 << 2;
 	args->arg[2] = virt_to_phys(srcptr);
@@ -174,6 +177,8 @@ int secure_scboot(void *input, void *output)
 //	tmp &= ~(CPM_CLKGR_AES | CPM_CLKGR_PDMA);
 //	cpm_writel(tmp, CPM_CLKGR);
 
+	enable_efuse_pd();
+
 	for (i = 0; i < 6; i++)
 		pdma_bank0_off[i] = pdma_ins[i];
 
@@ -183,32 +188,39 @@ int secure_scboot(void *input, void *output)
 
 	if(EFUSTATE_SECBOOT_EN == 0) {
 		if (issig == 0) {
-			printf("Normal boot...\n");
+			serial_debug("Normal boot...\n");
 			return 0;
 		} else {
-			printf("ERROR: please check image size !!\n");
+			serial_debug("ERROR: please check image size !!\n");
 			return -1;
 		}
 	} else if (EFUSTATE_SECBOOT_EN) {
 		if(issig == 1) {
-			printf("Security boot...\n");
+			serial_debug("Security boot...\n");
 			ret = setup_sckeys(input, &len);
 			if(ret) {
-				printf("ERROR: please check image size, ret = %x !!\n", ret);
+				serial_debug("ERROR: please check image size, ret = %x !!\n", ret);
 				return -1;
 			}
 
 			ret = start_scboot(input, output, len);
 			if(ret) {
-				printf("ERROR: please check your image, ret = %x!!\n", ret);
+				serial_debug("ERROR: please check your image, ret = %x!!\n", ret);
 				return -1;
 			}
 		} else {
-			printf("ERROR: please sign your image !!\n");
+			serial_debug("ERROR: please sign your image !!\n");
 			return -1;
 		}
 	}
 
+	disable_efuse_pd();
 	return ret;
 }
 
+int is_security_boot(void)
+{
+#define EFUSE_REG_STAT 0xb3540008
+#define EFUSTATE_SECBOOT_EN_SFT (0x1 << 8)
+	return *(volatile unsigned int *)(EFUSE_REG_STAT) & EFUSTATE_SECBOOT_EN_SFT;
+}

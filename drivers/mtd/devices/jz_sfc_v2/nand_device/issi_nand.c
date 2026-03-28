@@ -4,7 +4,6 @@
 #include "../jz_sfc_common.h"
 #include "nand_common.h"
 
-#define ISSI_DEVICES_NUM         1
 #define THOLD	    5
 #define TSETUP	    5
 #define TSHSL_R	    100
@@ -16,16 +15,16 @@
 
 struct jz_sfcnand_device *issi_nand;
 
-static struct jz_sfcnand_base_param issi_param[ISSI_DEVICES_NUM] = {
+static struct jz_sfcnand_base_param issi_param[] = {
 	[0] = {
-	/*IS37SML01G1*/
+		/*IS37SML01G1*/
 		.pagesize = 2 * 1024,
 		.blocksize = 2 * 1024 * 64,
 		.oobsize = 64,
 		.flashsize = 2 * 1024 * 64 * 1024,
 
-		.tHOLD  = THOLD,
-		.tSETUP = TSETUP,
+		.tSETUP  = TSETUP,
+		.tHOLD   = THOLD,
 		.tSHSL_R = TSHSL_R,
 		.tSHSL_W = TSHSL_W,
 
@@ -39,51 +38,43 @@ static struct jz_sfcnand_base_param issi_param[ISSI_DEVICES_NUM] = {
 	},
 };
 
-static struct device_id_struct device_id[ISSI_DEVICES_NUM] = {
+static struct device_id_struct device_id[] = {
 	DEVICE_ID_STRUCT(0x21, "IS37SML01G1", &issi_param[0]),
 };
 
-
-static cdt_params_t *issi_get_cdt_params(struct sfc_flash *flash, uint8_t device_id)
+static cdt_params_t *issi_get_cdt_params(struct sfc_flash *flash, uint16_t device_id)
 {
 	CDT_PARAMS_INIT(issi_nand->cdt_params);
-
 	switch(device_id) {
-	    case 0x21:
-		    break;
-	    default:
-		    pr_err("device_id err, please check your  device id: device_id = 0x%02x\n", device_id);
-		    return NULL;
+		case 0x21:
+			break;
+		default:
+			pr_err("device_id err, please check your  device id: device_id = 0x%02x\n", device_id);
+			return NULL;
 	}
-
 	return &issi_nand->cdt_params;
 }
 
-
-static inline int deal_ecc_status(struct sfc_flash *flash, uint8_t device_id, uint8_t ecc_status)
+static inline int deal_ecc_status(struct sfc_flash *flash, uint16_t device_id, uint8_t ecc_status)
 {
-	int ret = 0;
-
 	switch(device_id) {
 		case 0x21:
-			switch((ecc_status >> 0x4) & 0x3) {
-			    case 0x0:
-			    case 0x1:
-				    ret = 0;
-				    break;
-			    case 0x2:
-				    ret = -EBADMSG;
-				    break;
-			    default:
-				   printf("it is flash Unknown state, device_id: 0x%02x\n", device_id);
-				    ret = -EIO;
+			switch((ecc_status >> 4) & 0x3) {
+				case 0x0:
+					return 0;
+				case 0x1:
+					return 1;
+				case 0x2:
+					return -EBADMSG;
+				default:
+					break;
 			}
 			break;
 		default:
 			printf("device_id err, it maybe don`t support this device, check your device id: device_id = 0x%02x\n", device_id);
-		ret = -EIO;
+			break;
 	}
-	return ret;
+	return -EINVAL;
 }
 
 
@@ -95,9 +86,9 @@ static int issi_nand_init(void) {
 		return -ENOMEM;
 	}
 
-	issi_nand->id_manufactory = 0xc8;
+	issi_nand->id_manufactory = 0xC8;
 	issi_nand->id_device_list = device_id;
-	issi_nand->id_device_count = ISSI_DEVICES_NUM;
+	issi_nand->id_device_count = ARRAY_SIZE(issi_param);
 
 	issi_nand->ops.get_cdt_params = issi_get_cdt_params;
 	issi_nand->ops.deal_ecc_status = deal_ecc_status;

@@ -105,6 +105,7 @@
 #define CONFIG_SFC_NAND_RATE	        100000000
 #define CONFIG_SPL_VERSION_OFFSET	16
 #define CONFIG_SPIFLASH_PART_OFFSET	(0x6800)
+#define CONFIG_MTD_UBI_BEB_LIMIT    20
 
 /*
  *  SPINAND MAC SN : the product of customer add partition of sequence code.
@@ -143,8 +144,8 @@
 
 #define CONFIG_SYS_MAXARGS              16
 #define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "# "
-#define CONFIG_SYS_CBSIZE               1024 /* Console I/O Buffer Size */
+#define CONFIG_SYS_PROMPT "burner# "
+#define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
 #define CONFIG_SYS_MONITOR_LEN		(1024 * 1024)
@@ -211,7 +212,7 @@
 #define CONFIG_BURNER
 #define CONFIG_USB_GADGET
 #define CONFIG_USB_JZ_BURNER_GADGET
-#define CONFIG_JZ_VERDOR_BURN_EXTPOL
+/*#define CONFIG_JZ_VERDOR_BURN_EXTPOL*/
 #define	CONFIG_JZ_VERDOR_BURN_FUNCTION
 #define CONFIG_USB_JZ_DWC2_UDC_V1_1
 #define CONFIG_USB_SELF_POLLING

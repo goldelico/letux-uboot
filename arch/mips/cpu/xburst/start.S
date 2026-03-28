@@ -36,6 +36,13 @@
 	.globl _start
 	.text
 _start:
+
+#ifdef CONFIG_JZ_SECURE_SUPPORT
+#ifdef CONFIG_X1600
+	.space 2048, 0
+#endif
+#endif
+
 	/* Initialize $gp */
 	bal	1f
 	 nop

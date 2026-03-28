@@ -82,7 +82,7 @@ typedef union ddrc_timing4 {
 		unsigned reserved6_7:2;
 		unsigned tRAS:6;
 		unsigned reserved14_15:2;
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300)) || defined(CONFIG_X2100)
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300)) || defined(CONFIG_X2100) || defined(CONFIG_X2600) || defined(CONFIG_AD100)
 		unsigned tRC:7;
 		unsigned reserved23:1;
 #else
@@ -98,7 +98,7 @@ typedef union ddrc_timing5 {
 	uint32_t d32;
 	/** register bits */
 	struct {
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300)) || defined(CONFIG_X2100)
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300)) || defined(CONFIG_X2100) || defined(CONFIG_X2600) || defined(CONFIG_AD100)
 		unsigned tCKE:4;
 #else
 		unsigned tCKE:3;

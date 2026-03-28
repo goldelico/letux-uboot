@@ -14,20 +14,22 @@ static int secall(volatile struct sc_args *argsx,unsigned int func,unsigned stat
 	argsx->func = (func);
 	argsx->state = (state);
 	argsx->retval = 0x80000000;
-/*	printf("1..mcu control:%08x, func:%x\n", *(volatile unsigned int *)0xb3421030, func);*/
+/*	serial_debug("1..mcu control:%08x, func:%x\n", *(volatile unsigned int *)0xb3421030, func);*/
 	send_secall(1);
-/*	printf("2..mcu control:%08x\n", *(volatile unsigned int *)0xb3421030);*/
+/*	serial_debug("2..mcu control:%08x\n", *(volatile unsigned int *)0xb3421030);*/
 	if (wait)
 	{
 		while (argsx->retval & 0x80000000) {
-			/*printf("dbg :%x\n", *(volatile unsigned int *)MCU_TCSM_DBG);*/
-			/*printf("tcsm bank 1:%08x\n", *(volatile unsigned int *)0xb3423000);*/
-			/*printf("3..mcu control:%08x\n", *(volatile unsigned int *)0xb3421030);*/
-			/*printf("wait secall excuted: retval:%x\n", argsx->retval);*/
-			/*printf("RETVAL %x\n", *(volatile unsigned int *)(MCU_TCSM_RETVAL));*/
+			/*serial_debug("dbg :%x\n", *(volatile unsigned int *)MCU_TCSM_DBG);*/
+			/*serial_debug("tcsm bank 1:%08x\n", *(volatile unsigned int *)0xb3423000);*/
+			/*serial_debug("3..mcu control:%08x\n", *(volatile unsigned int *)0xb3421030);*/
+			/*serial_debug("wait secall excuted: retval:%x\n", argsx->retval);*/
+			/*serial_debug("RETVAL %x\n", *(volatile unsigned int *)(MCU_TCSM_RETVAL));*/
+			if(*(volatile unsigned int *)(MCU_TCSM_RETVAL) & 0xFFFF)
+				break;
 		}
 	}
-/*	printf("wait secall excuted: retval:%x\n", argsx->retval);*/
+/*	serial_debug("wait secall excuted: retval:%x\n", argsx->retval);*/
 	return argsx->retval;
 }
 #define get_secall_off(x) ((unsigned int)x - TCSM_BANK(0))

@@ -40,16 +40,17 @@ int init_seboot(void)
 	int ret = 0;
 	volatile struct sc_args *args;
 	args = (volatile struct sc_args *)GET_SC_ARGS();
+	serial_debug("scboot for x16xx.\n");
 
-	printf("clkgate0: %x\n", REG32(CPM_BASE + CPM_CLKGR0));
-	printf("clkgate1: %x\n", REG32(CPM_BASE + CPM_CLKGR1));
+	serial_debug("clkgate0: %x\n", REG32(CPM_BASE + CPM_CLKGR0));
+	serial_debug("clkgate1: %x\n", REG32(CPM_BASE + CPM_CLKGR1));
 	REG32(CPM_BASE + CPM_CLKGR0) = 0;
 	REG32(CPM_BASE + CPM_CLKGR1) = 0;
-	printf("clkgate0: %x\n", REG32(CPM_BASE + CPM_CLKGR0));
-	printf("clkgate1: %x\n", REG32(CPM_BASE + CPM_CLKGR1));
+	serial_debug("clkgate0: %x\n", REG32(CPM_BASE + CPM_CLKGR0));
+	serial_debug("clkgate1: %x\n", REG32(CPM_BASE + CPM_CLKGR1));
 
 	reset_mcu();
-	printf("%s %d: 0x%x\n",__func__,__LINE__,REG32(PDMA_BASE + DMCS_OFF));
+	serial_debug("%s %d: 0x%x\n",__func__,__LINE__,REG32(PDMA_BASE + DMCS_OFF));
 	load_pdma_firmware();
 	boot_up_mcu();
 	udelay(50 * 1000);

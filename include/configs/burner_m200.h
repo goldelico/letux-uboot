@@ -135,14 +135,9 @@
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
 #define CONFIG_CMD_BURN		/*ingenic usb burner support*/
-#define CONFIG_CMD_EFUSE	/*efuse*/
 
-#ifdef CONFIG_CMD_EFUSE
-#define	CONFIG_M200_EFUSE
+#define CONFIG_CMD_EFUSE
 #define	CONFIG_JZ_EFUSE
-#define CONFIG_EFUSE_GPIO	GPIO_PA(12)
-#define CONFIG_EFUSE_LEVEL	0
-#endif
 
 /**
  * Serial download configuration
@@ -167,7 +162,7 @@
 
 #define CONFIG_SYS_MAXARGS 16
 #define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "# "
+#define CONFIG_SYS_PROMPT "burner# "
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
@@ -238,8 +233,8 @@
 #define CONFIG_BURNER
 #define CONFIG_USB_GADGET
 #define CONFIG_USB_JZ_BURNER_GADGET
-#define CONFIG_JZ_VERDOR_BURN_EXTPOL
-#define CONFIG_JZ_VERDOR_BURN_EP_TEST
+/*#define CONFIG_JZ_VERDOR_BURN_EXTPOL
+#define CONFIG_JZ_VERDOR_BURN_EP_TEST*/
 #define	CONFIG_JZ_VERDOR_BURN_FUNCTION
 #define CONFIG_USB_JZ_DWC2_UDC_V1_1
 #define CONFIG_USB_SELF_POLLING

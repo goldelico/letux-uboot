@@ -21,16 +21,16 @@
  */
 
 static struct jz_gpio_func_def uart_gpio_func[] = {
-	[0] = { .port = GPIO_PORT_D, .func = GPIO_FUNC_2, .pins = 0x3 << 23},
-	[1] = {.port = GPIO_PORT_C, .func = GPIO_FUNC_1, .pins = 0x3 << 23},
-	[2] = {.port = GPIO_PORT_D, .func = GPIO_FUNC_0, .pins = 0x3 << 30},
-	[3] = {.port = GPIO_PORT_C, .func = GPIO_FUNC_0, .pins = 0x3 << 25},
+	[0] = { .port = GPIO_PORT_D, .func = GPIO_FUNC_2 | GPIO_PULL, .pins = 0x3 << 23},
+	[1] = {.port = GPIO_PORT_C, .func = GPIO_FUNC_1 | GPIO_PULL, .pins = 0x3 << 23},
+	[2] = {.port = GPIO_PORT_D, .func = GPIO_FUNC_0 | GPIO_PULL, .pins = 0x3 << 30},
+	[3] = {.port = GPIO_PORT_C, .func = GPIO_FUNC_0 | GPIO_PULL, .pins = 0x3 << 25},
 #ifdef CONFIG_SYS_UART4_PA
-	[4] = {.port = GPIO_PORT_A, .func = GPIO_FUNC_1, .pins = 0x3 << 2},
+	[4] = {.port = GPIO_PORT_A, .func = GPIO_FUNC_1 | GPIO_PULL, .pins = 0x3 << 2},
 #else  /* CONFIG_SYS_UART4_PC */
-	[4] = {.port = GPIO_PORT_C, .func = GPIO_FUNC_3, .pins = 0x3 << 11},
+	[4] = {.port = GPIO_PORT_C, .func = GPIO_FUNC_3 | GPIO_PULL, .pins = 0x3 << 11},
 #endif
-    [5] = {.port = GPIO_PORT_C, .func = GPIO_FUNC_3, .pins = 0x3 << 5},
+    [5] = {.port = GPIO_PORT_C, .func = GPIO_FUNC_3 | GPIO_PULL, .pins = 0x3 << 5},
 };
 
 static struct jz_gpio_func_def gpio_func[] = {
@@ -63,6 +63,6 @@ static struct jz_gpio_func_def gpio_func[] = {
 #endif
 
 #ifdef CONFIG_JZ_SFC_PE
-	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0 , .pins = 0x3f << 16, },
+	{ .port = GPIO_PORT_E, .func = GPIO_FUNC_0 | GPIO_PULL, .pins = 0x3f << 16, },
 #endif
 };

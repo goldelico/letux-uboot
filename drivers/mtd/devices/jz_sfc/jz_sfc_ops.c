@@ -248,6 +248,7 @@ static int set_4byte_mode_wren(struct sfc_flash *flash)
 	return ret;
 }
 
+#ifdef CONFIG_MTD_SFCNOR
 
 struct spi_nor_flash_ops nor_flash_ops;
 
@@ -289,4 +290,4 @@ int32_t sfc_nor_get_special_ops(struct sfc_flash *flash)
 
 	return 0;
 }
-
+#endif

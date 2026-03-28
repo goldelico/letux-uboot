@@ -40,7 +40,7 @@
 	.globl _start
 	.text
 _start:
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300))
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2600) || defined(CONFIG_AD100))
 #ifdef CONFIG_JZ_SECURE_SUPPORT
 	.space 2048, 0
 

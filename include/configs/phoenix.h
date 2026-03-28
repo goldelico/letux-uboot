@@ -263,15 +263,10 @@
 #define CONFIG_CMD_NET     /* networking support*/
 #define CONFIG_CMD_PING
 
-/*#define CONFIG_CMD_EFUSE*/	/*efuse*/
-
-
-#ifdef CONFIG_CMD_EFUSE
-#define	CONFIG_X1000_EFUSE
+/*
+#define CONFIG_CMD_EFUSE
 #define	CONFIG_JZ_EFUSE
-#define CONFIG_EFUSE_GPIO	GPIO_PB(27)
-#define CONFIG_EFUSE_LEVEL	0
-#endif
+*/
 
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_USE_ARCH_MEMSET

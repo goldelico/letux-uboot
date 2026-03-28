@@ -51,6 +51,13 @@ struct global_info ginfo __attribute__ ((section(".data"))) = {
 extern void pll_init(void);
 extern void sdram_init(void);
 extern void validate_cache(void);
+#ifdef CONFIG_GPIO_SPI_TO_UART
+extern int gpio_spi_to_uart_init(void);
+#endif
+
+#ifdef CONFIG_SPL_USB_BOOT
+extern int spl_usb_boot;
+#endif
 
 #ifdef CONFIG_SIMULATION
 volatile noinline void hello_word(void)
@@ -68,6 +75,9 @@ void release_soft_reset(void)
 
 void board_init_f(ulong dummy)
 {
+	*(volatile unsigned int *)0xb000202c |= 1 << 16; // wdt disable.
+	*(volatile unsigned int *)0xb0002004 &= ~(1 << 0); // wdt disable.
+
 	/* Set global data pointer */
 	gd = &gdata;
 
@@ -76,13 +86,16 @@ void board_init_f(ulong dummy)
 	gd->arch.gi = &ginfo;
 #else
 	burner_param_info();
+
+#ifdef CONFIG_SPL_USB_BOOT
+	if (!!spl_usb_boot) {
+		usb_boot_loop();
+		return;
+	}
+#endif
 #endif
 
-
 	gpio_init();
-
-	*(volatile unsigned int *)0xb000202c |= 1 << 16; // wdt disable.
-	*(volatile unsigned int *)0xb0002004 &= ~(1 << 0); // wdt disable.
 
 #ifndef CONFIG_FPGA
 	/* Init uart first */
@@ -92,8 +105,13 @@ void board_init_f(ulong dummy)
 #ifdef CONFIG_SPL_SERIAL_SUPPORT
 	preloader_console_init();
 #endif
-	printf("ERROR EPC %x\n", read_c0_errorepc());
 
+#ifdef CONFIG_GPIO_SPI_TO_UART
+	gpio_spi_to_uart_init();
+#endif
+#ifndef CONFIG_DDR_DRVODT_DEBUG
+	serial_debug("ERROR EPC %x\n", read_c0_errorepc());
+#endif
 #ifndef CONFIG_FPGA
 	debug("Timer init\n");
 	timer_init();
@@ -112,6 +130,11 @@ void board_init_f(ulong dummy)
 
 	debug("CLK init\n");
 	clk_init();
+#endif
+
+#ifdef CONFIG_HW_WATCHDOG
+	debug("WATCHDOG init\n");
+	hw_watchdog_init();
 #endif
 
 	debug("SDRAM init\n");
@@ -145,9 +168,19 @@ void board_init_f(ulong dummy)
 	board_init_r(NULL, 0);
 #else
 	debug("run firmware finished\n");
-	return ;
+	return;
 #endif
 }
+
+#ifdef CONFIG_JZ_SECURE_SUPPORT
+extern int secure_scboot (void *, void *);
+static int secure_load_uboot(struct spl_image_info *spl_image)
+{
+	int ret = secure_scboot ((void *)spl_image->load_addr,
+				 (void *)spl_image->entry_point);
+	return ret;
+}
+#endif
 
 extern void flush_cache_all(void);
 
@@ -155,6 +188,17 @@ void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
 	typedef void __noreturn (*image_entry_noargs_t)(void);
 
+#ifdef CONFIG_JZ_SECURE_SUPPORT
+	flush_cache_all();
+	int ret = secure_load_uboot(spl_image);
+	if (ret) {
+	  serial_debug("Error spl secure load uboot.\n");
+	  hang();
+	}
+	spl_image->entry_point += 2048;
+#endif
+
+	debug("image entry point: 0x%x\n", spl_image->entry_point);
 	image_entry_noargs_t image_entry =
 			(image_entry_noargs_t) spl_image->entry_point;
 

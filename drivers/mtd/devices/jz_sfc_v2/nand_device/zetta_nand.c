@@ -4,7 +4,6 @@
 #include "../jz_sfc_common.h"
 #include "nand_common.h"
 
-#define ZETTA_DEVICES_NUM         2
 #define TSETUP		5
 #define THOLD		5
 #define	TSHSL_R		100
@@ -16,7 +15,7 @@
 
 static struct jz_sfcnand_device *zetta_nand;
 
-static struct jz_sfcnand_base_param zetta_param[ZETTA_DEVICES_NUM] = {
+static struct jz_sfcnand_base_param zetta_param[] = {
 
 	[0] = {
 		/*ZD35Q1GA*/
@@ -61,53 +60,52 @@ static struct jz_sfcnand_base_param zetta_param[ZETTA_DEVICES_NUM] = {
 
 };
 
-static struct device_id_struct device_id[ZETTA_DEVICES_NUM] = {
+static struct device_id_struct device_id[] = {
 	DEVICE_ID_STRUCT(0x71, "ZD35Q1GA", &zetta_param[0]),
 	DEVICE_ID_STRUCT(0x72, "ZD35Q2GA", &zetta_param[1]),
 };
 
 
-static cdt_params_t *zetta_get_cdt_params(struct sfc_flash *flash, uint8_t device_id)
+static cdt_params_t *zetta_get_cdt_params(struct sfc_flash *flash, uint16_t device_id)
 {
 	CDT_PARAMS_INIT(zetta_nand->cdt_params);
 
 	switch(device_id) {
-	    case 0x71:
-	    case 0x72:
-		    break;
-	    default:
-		    pr_err("device_id err, please check your  device id: device_id = 0x%02x\n", device_id);
-		    return NULL;
+		case 0x71:
+		case 0x72:
+			break;
+		default:
+			pr_err("device_id err, please check your  device id: device_id = 0x%02x\n", device_id);
+			return NULL;
 	}
 
 	return &zetta_nand->cdt_params;
 }
 
 
-static inline int deal_ecc_status(struct sfc_flash *flash, uint8_t device_id, uint8_t ecc_status)
+static inline int deal_ecc_status(struct sfc_flash *flash, uint16_t device_id, uint8_t ecc_status)
 {
-	int ret = 0;
 
 	switch(device_id) {
 		case 0x71:
 		case 0x72:
 			switch((ecc_status >> 4) & 0x3) {
-			    case 0x01:
-				    ret = 0x4;
-				    break;
-			    case 0x02:
-				    ret = -EBADMSG;
-				    break;
-			    default:
-				    ret = 0;
+				case 0x0:
+					return 0;
+				case 0x1:
+					return 4;
+				case 0x2:
+					return -EBADMSG;
+				default:
+					break;
 			}
 			break;
 
 		default:
 			printf("device_id err, it maybe don`t support this device, check your device id: device_id = 0x%02x\n", device_id);
-			ret = -EIO;   //notice!!!
+			break;
 	}
-	return ret;
+	return -EINVAL;
 }
 
 
@@ -121,7 +119,7 @@ static int zetta_nand_init(void)
 
 	zetta_nand->id_manufactory = 0xBA;
 	zetta_nand->id_device_list = device_id;
-	zetta_nand->id_device_count = ZETTA_DEVICES_NUM;
+	zetta_nand->id_device_count = ARRAY_SIZE(zetta_param);
 
 	zetta_nand->ops.get_cdt_params = zetta_get_cdt_params;
 	zetta_nand->ops.deal_ecc_status = deal_ecc_status;

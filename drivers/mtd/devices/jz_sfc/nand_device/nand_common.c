@@ -350,3 +350,31 @@ void nand_get_feature(struct sfc_transfer *transfer, uint8_t addr, uint8_t *val)
 	return;
 }
 EXPORT_SYMBOL_GPL(nand_get_feature);
+
+int32_t nand_get_ecc_conf(struct sfc_flash *flash, uint8_t addr)
+{
+	struct sfc_transfer transfer;
+	uint32_t buf = 0;
+
+	memset(&transfer, 0, sizeof(transfer));
+
+	transfer.cmd_info.cmd = SPINAND_CMD_GET_FEATURE;
+	transfer.sfc_mode = TM_STD_SPI;
+
+	transfer.addr = addr;
+	transfer.addr_len = 1;
+
+	transfer.cmd_info.dataen = ENABLE;
+	transfer.direction = GLB_TRAN_DIR_READ;
+	transfer.data = (uint8_t *)&buf;
+
+	transfer.data_dummy_bits = 0;
+	transfer.ops_mode = CPU_OPS;
+
+	if(sfc_sync(flash->sfc, &transfer)) {
+		printf("sfc_sync error ! %s %s %d\n",__FILE__,__func__,__LINE__);
+		return -EIO;
+	}
+	return buf;
+}
+EXPORT_SYMBOL_GPL(nand_get_ecc_conf);

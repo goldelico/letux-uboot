@@ -29,9 +29,10 @@ LIB	= $(obj)lib$(SOC).o
 SOBJS-y	=
 COBJS-y	= soc.o
 
-COBJS-$(CONFIG_BURNER) += dym_pll.o
-
-ifndef CONFIG_BURNER
+ifdef CONFIG_BURNER
+COBJS-y += dym_pll.o
+COBJS-y += ../param_manage.o
+else
 COBJS-y += pllsetting.o
 endif
 
@@ -39,7 +40,6 @@ COBJS-y += clk.o
 COBJS-y += ddr_set_dll.o
 COBJS-y += ../ddr_dwc.o
 COBJS-$(CONFIG_DDR_TEST) += ../ddr_test.o
-COBJS-$(CONFIG_BURNER) += ../param_manage.o
 COBJS-$(CONFIG_CHECK_SOCID) += check_socid.o
 
 SRCS	:= $(START:.o=.S) $(SOBJS-y:.o=.S) $(COBJS-y:.o=.c)

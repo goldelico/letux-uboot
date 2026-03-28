@@ -10,8 +10,10 @@
 
 #include <asm/io.h>
 #include <asm/arch/sfc.h>
-#include <asm/arch/spinor.h>
 #include "jz_sfc_common.h"
+#ifdef CONFIG_MTD_SFCNOR
+#include <asm/arch/spinor.h>
+#endif
 
 #define STATUS_MAX_LEN  4      //4 * byte = 32 bit
 
@@ -51,6 +53,37 @@ int get_status(struct sfc_flash *flash, unsigned short cmd_index, int len)
 
 	return val;
 }
+
+int set_status(struct sfc_flash *flash, unsigned short cmd_index, int len, unsigned char *buf)
+{
+	struct sfc_cdt_xfer xfer;
+
+	memset(&xfer, 0, sizeof(xfer));
+	len = (len > STATUS_MAX_LEN ? STATUS_MAX_LEN : len);
+
+	/* set index */
+	xfer.cmd_index = cmd_index;
+
+	/* set addr */
+	xfer.rowaddr = 0;
+	xfer.columnaddr = 0;
+
+	/* set transfer config */
+	xfer.dataen = ENABLE;
+	xfer.config.datalen = len;
+	xfer.config.data_dir = GLB_TRAN_DIR_WRITE;
+	xfer.config.ops_mode = CPU_OPS;
+	xfer.config.buf = (uint8_t *)buf;
+
+
+	if(sfc_sync_cdt(flash->sfc, &xfer)) {
+		printf("sfc_sync_cdt error ! %s %s %d\n",__FILE__,__func__,__LINE__);
+		return -EIO;
+	}
+
+	return 0;
+}
+
 
 /* do nothing to set quad mode, use cmd directly */
 static int set_quad_mode_cmd(struct sfc_flash *flash)
@@ -178,6 +211,7 @@ static int set_4byte_mode_wren(struct sfc_flash *flash)
 	return ret;
 }
 
+#ifdef CONFIG_MTD_SFCNOR
 
 struct spi_nor_flash_ops nor_flash_ops;
 
@@ -218,4 +252,4 @@ int sfc_nor_get_special_ops(struct sfc_flash *flash)
 
 	return 0;
 }
-
+#endif

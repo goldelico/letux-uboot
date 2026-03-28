@@ -11,9 +11,6 @@
 #define NOR_VERSION             (NOR_MAJOR_VERSION_NUMBER | (NOR_MINOR_VERSION_NUMBER << 8) | (NOR_REVERSION_NUMBER << 16))
 
 #define NOR_PART_NUM	10
-#define NORFLASH_PART_RW	0
-#define NORFLASH_PART_WO	1
-#define NORFLASH_PART_RO	2
 
 
 struct spi_nor_cmd_info {
@@ -86,7 +83,6 @@ struct mini_spi_nor_info {
 	unsigned int page_size;
 	unsigned int erase_size;
 
-//	unsigned char spl_quad;	//reserve, for spl set quad mode
 };
 
 
@@ -117,15 +113,12 @@ struct burner_params {
 	uint32_t version;
 	struct spi_nor_info spi_nor_info;
 	struct norflash_partitions norflash_partitions;
-/*	unsigned int fs_erase_size;*/
-/*	unsigned char uk_quad;	//for uboot kernel set quad mode*/
 	struct nor_private_data nor_pri_data;
 };
 
 struct spiflash_info {
 	struct burner_params burner_params;
 	struct mini_spi_nor_info mini_spi_nor_info;
-	unsigned char b_quad;	//for burner set quad mode
 };
 
 struct spi_nor_flash_ops {

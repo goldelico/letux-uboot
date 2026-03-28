@@ -568,6 +568,7 @@ int efuse_read_id(void *buf, int length, int id)
 	uint32_t *ptmp_buf = (uint32_t *)buf;
 	int ret = -EPERM;
 	int offset = 0;
+	id = id + 1;
 	switch(id) {
 		case EFUSE_R_CHIP_ID:
 			offset = CHIP_ID_ADDR;

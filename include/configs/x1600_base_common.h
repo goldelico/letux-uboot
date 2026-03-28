@@ -14,14 +14,19 @@
 #define CONFIG_X1600
 #define CONFIG_SOC_NAME		x1600
 
+#include "x1600_ddr.h"
 
-#define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
-#define CONFIG_SYS_MPLL_FREQ		1200000000	/*If MPLL not use mast be set 0*/
-#define CONFIG_SYS_EPLL_FREQ		200000000	/*If EPLL not use mast be set 0*/
+
+#define CONFIG_SYS_APLL_FREQ		1104000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_MPLL_FREQ		1400000000	/*If MPLL not use mast be set 0*/
+#define CONFIG_SYS_EPLL_FREQ		300000000	/*If EPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		1200000000
-#define CONFIG_SYS_MEM_FREQ		400000000
+#define CONFIG_SYS_CPU_FREQ		1104000000
+#define CONFIG_SYS_MEM_FREQ		350000000
+
+#define CONFIG_SYS_AHB0_FREQ		280000000
+#define CONFIG_SYS_AHB2_FREQ		280000000	/*APB = AHB2/2*/
 
 #define CONFIG_SYS_EXTAL		24000000	/* EXTAL freq: 48 MHz */
 #define CONFIG_SYS_HZ			1000		/* incrementer freq */
@@ -29,6 +34,14 @@
 /*
  * uart setting
  */
+#ifdef CONFIG_GPIO_SPI_TO_UART
+#define CONFIG_SYS_UART_INDEX		-1
+#endif
+
+#ifdef CONFIG_GPIO_SPI_TO_UART2
+#define CONFIG_SYS_UART_INDEX		-1
+#endif
+
 #ifndef CONFIG_SYS_UART_INDEX
 #define CONFIG_SYS_UART_INDEX		2
 #endif
@@ -59,68 +72,17 @@
 		{SRC_EOF,SRC_EOF}		\
 	}
 
-/*
- *#define CONFIG_DDR_TEST_CPU
- *#define CONFIG_DDR_TEST
- */
-
-#define CONFIG_DDR_DLL_OFF
-#define CONFIG_DDR_PARAMS_CREATOR
-#define CONFIG_DDR_HOST_CC
-/*#define CONFIG_DDR_FORCE_SELECT_CS1*/
-
-#define CONFIG_DDR_TYPE_LPDDR2
-/*#define CONFIG_DDR_TYPE_LPDDR3*/
-
-#ifdef CONFIG_DDR_TYPE_LPDDR2
-#ifdef CONFIG_X1660_DDR
-#define CONFIG_LPDDR2_SCB4BL256160AFL19GI  /* 1660 ddr */
-#else
-#define CONFIG_LPDDR2_M54D5121632A
-/*#define CONFIG_MCP_H9TP32A8JDMC_PRKGM_LPDDR2*/
-/*#define CONFIG_LPDDR2_FMT4D32UAB_25LI_FPGA*/
-#endif
-#endif
-
-#ifdef CONFIG_DDR_TYPE_LPDDR
-#define CONFIG_MDDR_H5MS5122DFR_J3M
-#endif
-
-#ifdef CONFIG_DDR_TYPE_DDR3
-#define CONFIG_DDR3_TSD34096M1333C9_E
-#endif
-
-#ifdef CONFIG_DDR_TYPE_LPDDR3
-	#define CONFIG_LPDDR3_MT52L256M32D1PF_FPGA
-#endif
-
-#define CONFIG_DDR_INNOPHY
-#define CONFIG_DDR_CS0          1   /* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1          0   /* 1-connected, 0-disconnected */
-#define CONFIG_DDR_DW32         0   /* 1-32bit-width, 0-16bit-width */
-
-#define CONFIG_DDR_PHY_IMPEDANCE 40
-#define CONFIG_DDR_PHY_ODT_IMPEDANCE 120
-
-
-#define CONFIG_DDR_AUTO_SELF_REFRESH
-#define CONFIG_DDR_AUTO_SELF_REFRESH_CNT 257
-
-
-/* #define CONFIG_DDR_DLL_OFF */
-/*
- * #define CONFIG_DDR_CHIP_ODT
- * #define CONFIG_DDR_PHY_ODT
- * #define CONFIG_DDR_PHY_DQ_ODT
- * #define CONFIG_DDR_PHY_DQS_ODT
- * #define CONFIG_DDR_PHY_IMPED_PULLUP		0xe
- * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
- */
-
 
 #define CONFIG_SPL_MAX_SIZE		26624	/* 18KB */
 #define CONFIG_SPL_PAD_TO		26624  /* equal to spl max size in x1600 */
 #define CONFIG_UBOOT_OFFSET             26624 /* equal to spl max size in x1600 */
+
+#ifdef CONFIG_JZ_WATCHDOG
+#define CONFIG_HW_WATCHDOG
+#define CONFIG_WDT_TIMEOUT_BY_MS (20*000)
+#define CONFIG_WDT_FREQ_BY_RTC
+#define CONFIG_RTC_SELEXC_BY_RTC
+#endif
 
 /********** RTOS **********/
 #ifdef CONFIG_SPL_RTOS_BOOT
@@ -160,8 +122,8 @@
 #define CONFIG_CMD_SFC_NOR
 #define CONFIG_JZ_SFC_NOR
 #define CONFIG_SPI_SPL_CHECK
-#define CONFIG_SFC_NOR_INIT_RATE		100000000
-#define CONFIG_SFC_NOR_RATE			100000000	/* value <= 400000000(sfc 100Mhz)*/
+#define CONFIG_SFC_NOR_INIT_RATE		200000000
+#define CONFIG_SFC_NOR_RATE			200000000	/* value <= 400000000(sfc 100Mhz)*/
 #define CONFIG_SFC_QUAD
 #define CONFIG_SPIFLASH_PART_OFFSET		0x5800
 #define CONFIG_SPI_NORFLASH_PART_OFFSET		0x5874
@@ -171,13 +133,15 @@
 #define CONFIG_NOR_VERSION     (CONFIG_NOR_MAJOR_VERSION_NUMBER | (CONFIG_NOR_MINOR_VERSION_NUMBER << 8) | (CONFIG_NOR_REVERSION_NUMBER <<16))
 #define CONFIG_FLASH_TYPE "flashtype=nor"
 /*#define CONFIG_NOR_BUILTIN_PARAMS*/
+/*#define CONFIG_NOR_COMMON_PARAMS*/
+/*#define CONFIG_NOR_COMMON_PARAMS_COUNT          3*/
 #endif
 
 /* sfc nand config */
 #ifdef  CONFIG_SPL_SFC_NAND
 #define CONFIG_JZ_SFC
-#define CONFIG_SFC_NAND_INIT_RATE		100000000
-#define CONFIG_SFC_NAND_RATE			100000000	/* value <= 400000000(sfc 100Mhz)*/
+#define CONFIG_SFC_NAND_INIT_RATE		200000000
+#define CONFIG_SFC_NAND_RATE			200000000	/* value <= 400000000(sfc 100Mhz)*/
 #define CONFIG_SFC_QUAD
 #define CONFIG_SPI_SPL_CHECK
 #define CONFIG_SPIFLASH_PART_OFFSET		0x5800
@@ -310,6 +274,7 @@
 #define CONFIG_SYS_MEMTEST_END		0x88000000
 
 #define CONFIG_SYS_TEXT_BASE		0x80100000
+#define CONFIG_SYS_SC_TEXT_BASE     0x80100004
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
 #endif /* DBG_USE_UNCACHED_MEMORY */
 
@@ -342,6 +307,12 @@
 #define CONFIG_ENV_IS_IN_SFC_NAND
 #endif
 
+/* spl secure load kernel */
+#ifdef CONFIG_JZ_SCBOOT
+#define CONFIG_JZ_SECURE_SUPPORT
+#define CONFIG_JZ_CKEYAES
+#endif
+
 /**
  * SPL configuration
  */
@@ -354,6 +325,7 @@
 #else
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/$(SOC)/u-boot-spl.lds"
 #endif
+
 
 #define CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR	86//0x5A //wli changed 0x20 /* 16KB offset */
 #define CONFIG_SYS_U_BOOT_MAX_SIZE_SECTORS	0x400 /* 512 KB */
@@ -393,7 +365,10 @@
  * GPT configuration
  */
 #ifdef CONFIG_GPT_CREATOR
+#define CONFIG_GPT_TAB_BUILT_IN
+#ifndef CONFIG_GPT_TABLE_PATH
 #define CONFIG_GPT_TABLE_PATH	"$(TOPDIR)/board/$(BOARDDIR)"
+#endif
 #else
 /* USE MBR + zero-GPT-table instead if no gpt table defined*/
 #define CONFIG_MBR_P0_OFF	64mb
@@ -418,7 +393,9 @@
 /*
  * boot args console tty
  */
-#if CONFIG_SYS_UART_INDEX == 0
+#if CONFIG_SYS_UART_INDEX == -1
+#define ARG_CONSOLE_TTY "console=ttySC0,"
+#elif CONFIG_SYS_UART_INDEX == 0
 #define ARG_CONSOLE_TTY "console=ttyS0,"
 #elif CONFIG_SYS_UART_INDEX == 1
 #define ARG_CONSOLE_TTY "console=ttyS1,"
@@ -446,10 +423,6 @@
  */
 #define ARGS_CONSOLE ARG_CONSOLE_TTY ARG_CONSOLE_RATE
 
-#ifndef CONFIG_SPL_SERIAL_SUPPORT
-#define ARGS_CONSOLE "no_console"
-#endif
-
 #ifdef CONFIG_ARG_NO_CONSOLE
 #undef ARGS_CONSOLE
 #define ARGS_CONSOLE "no_console"
@@ -466,6 +439,9 @@
  * boot args mem define
  */
 /* #define CONFIG_SPL_AUTO_PROBE_ARGS_MEM */
+
+#define CONFIG_BOOTARGS_AUTO_MODIFY     1       /*auto detect memory size, and modify bootargs for kernel.*/
+
 #define CONFIG_SPL_AUTO_PROBE_ARGS_MEM
 #ifdef CONFIG_SPL_AUTO_PROBE_ARGS_MEM
 #define ARGS_MEM_RESERVED "[mem-start------------------------------------------------------------mem-end]"
@@ -481,8 +457,16 @@
 #define CONFIG_RMEM_MB 0
 #endif
 
+#ifndef CONFIG_NMEM_MB
+#define CONFIG_NMEM_MB 0
+#endif
+
 #ifndef CONFIG_RTOS_SIZE_MB
 #define CONFIG_RTOS_SIZE_MB 0
+#endif
+
+#ifndef CONFIG_LCD_MEM_MB
+#define CONFIG_LCD_MEM_MB 0
 #endif
 
 /*
@@ -509,27 +493,33 @@
 #error "please add more define here"
 #endif
 
+#if defined(CONFIG_SPL_RTOS_LOAD_KERNEL)
+#define CONFIG_CLK_IGNORE_UNUSED " clk_ignore_unused "
+#else
+#define CONFIG_CLK_IGNORE_UNUSED " "
+#endif
+
+#ifndef CONFIG_ROOTFS_PARAM
+
 #ifndef CONFIG_ROOTFS_DEV
 #ifdef CONFIG_SPL_JZMMC_SUPPORT
 #define CONFIG_ROOTFS_DEV "root=/dev/mmcblk0p2 rootwait"
 #else
-#define CONFIG_ROOTFS_DEV CONFIG_FLASH_TYPE " " "root=/dev/mtdblock_bbt_ro2"
-#endif
-#endif
+#define CONFIG_ROOTFS_DEV "root=/dev/mtdblock_bbt_ro2"
+#endif /* CONFIG_SPL_JZMMC_SUPPORT */
+#endif /* CONFIG_ROOTFS_DEV */
 
-#define ARGS_ROOTFS CONFIG_ROOTFS_INITRC" "CONFIG_ROOTFS_DEV" "ARG_ROOTFS_TYPE
+#if defined(CONFIG_SPL_MMC_SUPPORT)
+#define CONFIG_ROOTFS_PARAM CONFIG_CLK_IGNORE_UNUSED CONFIG_ROOTFS_DEV
+#else
+#define CONFIG_ROOTFS_PARAM CONFIG_FLASH_TYPE CONFIG_CLK_IGNORE_UNUSED " " CONFIG_ROOTFS_DEV
+#endif
+#endif /* CONFIG_ROOTFS_PARAM */
+
+#define ARGS_ROOTFS CONFIG_ROOTFS_INITRC" "CONFIG_ROOTFS_PARAM" "ARG_ROOTFS_TYPE
 
 /* boot args rootfs2
  */
-#ifndef CONFIG_ROOTFS2_DEV
-#ifdef CONFIG_SPL_JZMMC_SUPPORT
-#define CONFIG_ROOTFS2_DEV "root=/dev/mmcblk0p4 rootwait"
-#else
-#define CONFIG_ROOTFS2_DEV CONFIG_FLASH_TYPE " " "root=/dev/mtdblock_bbt_ro4"
-#endif
-#endif
-
-#ifdef CONFIG_ROOTFS2_DEV
 #if defined(CONFIG_ROOTFS2_UBI)
 #define ARG_ROOTFS2_TYPE "rootfstype=ubifs ro"
 #elif defined(CONFIG_ROOTFS2_SQUASHFS)
@@ -540,14 +530,42 @@
 #error "please add more define here"
 #endif
 
-#define ARGS_ROOTFS2 CONFIG_ROOTFS2_INITRC " " CONFIG_ROOTFS2_DEV " " ARG_ROOTFS2_TYPE
+#ifndef CONFIG_ROOTFS2_PARAM
+
+#ifndef CONFIG_ROOTFS2_DEV
+#ifdef CONFIG_SPL_JZMMC_SUPPORT
+#define CONFIG_ROOTFS2_DEV "root=/dev/mmcblk0p4 rootwait"
+#else
+#define CONFIG_ROOTFS2_DEV "root=/dev/mtdblock_bbt_ro4"
+#endif /* CONFIG_SPL_JZMMC_SUPPORT */
+#endif /* CONFIG_ROOTFS2_DEV */
+
+#if defined(CONFIG_SPL_MMC_SUPPORT)
+#define CONFIG_ROOTFS2_PARAM CONFIG_CLK_IGNORE_UNUSED CONFIG_ROOTFS2_DEV
+#else
+#define CONFIG_ROOTFS2_PARAM CONFIG_FLASH_TYPE CONFIG_CLK_IGNORE_UNUSED " " CONFIG_ROOTFS2_DEV
 #endif
+#endif /* CONFIG_ROOTFS2_PARAM */
+
+#define ARGS_ROOTFS2 CONFIG_ROOTFS2_INITRC " " CONFIG_ROOTFS2_PARAM " " ARG_ROOTFS2_TYPE
 
 #ifndef CONFIG_ARGS_EXTRA
 #define CONFIG_ARGS_EXTRA ""
 #endif
 
 #define BOOTARGS_COMMON ARGS_CONSOLE " " ARGS_QUIET " " ARGS_MEM_RESERVED " " CONFIG_ARGS_EXTRA
+
+#ifdef CONFIG_SPL_RTOS_LOAD_KERNEL
+#ifndef CONFIG_SPL_RTOS_BOOT
+#define CONFIG_SPL_RTOS_BOOT 1
+#endif
+#ifndef CONFIG_SPL_OS_BOOT
+#define CONFIG_SPL_OS_BOOT 1
+#endif
+#ifndef CONFIG_RTOS_CAN_RETURN
+#define CONFIG_RTOS_CAN_RETURN 1
+#endif
+#endif
 
 #ifdef CONFIG_SPL_RTOS_BOOT
 
@@ -580,11 +598,33 @@
     #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON " " ARGS_ROOTFS
     #define CONFIG_SPL_OS_NAME          "kernel" /* spi offset of xImage being loaded */
     #define CONFIG_SYS_SPL_ARGS_ADDR    CONFIG_SPL_BOOTARGS
+#ifdef CONFIG_JZ_SECURE_ROOTFS
+    #define CONFIG_SPL_SIG_NAME         "signature"
+    #define CONFIG_SPL_ROOTFS_NAME      "rootfs"
+#endif
     #define CONFIG_BOOTX_BOOTARGS       ""
     #undef  CONFIG_BOOTCOMMAND
     #define CONFIG_BOOTCOMMAND          ""
     #define CONFIG_LOAD_ADDR            0x80001000
 #endif  /* CONFIG_SPL_OS_BOOT */
+
+#ifdef CONFIG_BOOT_RTOS_OTA
+    #define CONFIG_SPL_RTOS_OTA_NAME  "rtos_ota"
+#ifndef CONFIG_SPL_OTA_NAME
+    #define CONFIG_SPL_OTA_NAME       "ota"
+#endif
+
+#ifndef CONFIG_SPL_RTOS_OTA_INFO
+    #define CONFIG_SPL_RTOS_OTA_INFO       "ota:rtos_ota"
+#endif
+
+#ifdef CONFIG_SPL_RTOS_BOOT
+#ifndef CONFIG_SPL_RTOS_NAME
+    #define CONFIG_SPL_RTOS_NAME    "rtos"
+#endif
+#endif /* CONFIG_SPL_RTOS_BOOT */
+
+#endif /* CONFIG_BOOT_RTOS_OTA */
 
 #define CONFIG_BOOTARGS                 ""
 

@@ -30,7 +30,25 @@
 #include "spl_rtos.h"
 #include <version.h>
 
+#include <asm/arch/clk.h>
+#include <asm/arch/mmc.h>
+#include <asm/arch/cpm.h>
+#include <asm/io.h>
+#include "spl_gpt_partition.h"
+#ifdef CONFIG_JZSD_OTA_VERSION20
+#include "spl_ota_jzsd.h"
+#endif
+
 DECLARE_GLOBAL_DATA_PTR;
+
+static ulong mmc_block_read(lbaint_t start, lbaint_t blkcnt, void *dst)
+{
+	int err;
+	struct mmc *mmc = find_mmc_device(0);
+	if (!mmc)
+		return 0;
+	err = mmc->block_dev.block_read(0, start, blkcnt, dst);
+}
 
 static int mmc_load_image_raw(struct mmc *mmc, unsigned long sector)
 {
@@ -74,6 +92,34 @@ end:
 }
 
 #ifdef CONFIG_SPL_OS_BOOT
+
+#ifndef CONFIG_GPT_CREATOR
+#error "must define CONFIG_GPT_CREATOR"
+#endif
+
+static int mmc_load_img_from_partition(const char *name)
+{
+	unsigned int start_sector;
+	int ret;
+	struct mmc *mmc;
+
+	mmc = find_mmc_device(0);
+	if (!mmc) {
+#ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
+		puts("spl: mmc device not found!!\n");
+#endif
+		hang();
+	}
+
+	ret = spl_get_built_in_gpt_partition(name, &start_sector, NULL);
+	if (ret) {
+		printf("mmc:failed get part %s\n", name);
+		return ret;
+	}
+
+	return mmc_load_image_raw(mmc, start_sector);
+}
+
 static int mmc_load_image_raw_os(struct mmc *mmc)
 {
 #ifdef CONFIG_SYS_MMCSD_RAW_MODE_ARGS_SECTOR
@@ -87,7 +133,7 @@ static int mmc_load_image_raw_os(struct mmc *mmc)
 		return -1;
 	}
 #endif
-	return mmc_load_image_raw(mmc, CONFIG_SYS_MMCSD_RAW_MODE_KERNEL_SECTOR);
+	return mmc_load_img_from_partition(CONFIG_SPL_OS_NAME);
 }
 #endif
 
@@ -148,6 +194,7 @@ static int mmc_rtos_load(struct mmc *mmc, unsigned long sector)
 	unsigned long err;
 	u32 rtos_size_sectors;
 	struct rtos_header *header;
+	struct rtos_header mheader;
 
 	header = (struct rtos_header *)(CONFIG_SYS_TEXT_BASE -
 						sizeof(struct rtos_header));
@@ -158,6 +205,7 @@ static int mmc_rtos_load(struct mmc *mmc, unsigned long sector)
 	if (err == 0)
 		goto end;
 
+	memcpy(&mheader, header, sizeof(struct rtos_header));
 	if (rtos_check_header(header))
 		return -1;
 
@@ -170,7 +218,7 @@ static int mmc_rtos_load(struct mmc *mmc, unsigned long sector)
 		goto end;
 
 	flush_cache_all();
-	rtos_raw_start(header, NULL);
+	rtos_raw_start(&mheader, NULL);
 	return 0;
 end:
 	printf("spl: [rtos] mmc blk read err, %d\n", err);
@@ -193,13 +241,14 @@ static void mmc_load_rtos_boot(struct mmc *mmc)
 		hang();
 }
 
-void *spl_rtos_get_spl_image_info(void)
-{
-	return NULL;
-}
-
 #endif /* CONFIG_SPL_RTOS_BOOT */
 
+#ifdef CONFIG_JZSD_OTA_VERSION20
+static struct jzsd_ota_ops jzsd_ota_ops = {
+	.jzsd_read = mmc_block_read,
+	.jzsd_load_img_from_partition = mmc_load_img_from_partition,
+};
+#endif
 
 char *spl_mmc_load_image(void)
 {
@@ -244,8 +293,12 @@ char *spl_mmc_load_image(void)
 		return NULL;
 #endif /* CONFIG_BOOT_VMLINUX */
 #ifdef CONFIG_SPL_OS_BOOT
-		if (spl_start_uboot() || mmc_load_image_raw_os(mmc))
+#ifdef CONFIG_JZSD_OTA_VERSION20
+		register_jzsd_ota_ops(&jzsd_ota_ops);
+		return spl_jzsd_ota_load_image();
 #endif
+		if (spl_start_uboot() || mmc_load_image_raw_os(mmc))
+#endif /* CONFIG_SPL_OS_BOOT */
 			err = mmc_load_image_raw(mmc,
 				CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR);
 #ifdef CONFIG_SPL_FAT_SUPPORT
@@ -265,7 +318,7 @@ char *spl_mmc_load_image(void)
 		if (spl_start_uboot() || mmc_load_image_fat_os(mmc))
 #endif
 		err = mmc_load_image_fat(mmc, CONFIG_SPL_FAT_LOAD_PAYLOAD_NAME);
-#endif
+#endif /* CONFIG_SPL_FAT_SUPPORT */
 	} else {
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
 		puts("spl: wrong MMC boot mode\n");

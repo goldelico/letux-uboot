@@ -90,6 +90,9 @@ struct jz_gpio_func_def {
 #define PXPEHS		0x124   /* Port Pull Disable Set Register */
 #define PXPEHC		0x128   /* Port Pull Disable Clear Register */
 
+#define PXPE_PULLHZ     0x0
+#define PXPE_PULLUP     0x1
+#define PXPE_PULLDN     0x2
 
 #define GPIO_PXPIN(n)	(GPIO_BASE + (PXPIN + (n)*0x1000)) /* PIN Level Register */
 #define GPIO_PXINT(n)	(GPIO_BASE + (PXINT + (n)*0x1000)) /* Port Interrupt Register */

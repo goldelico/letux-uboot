@@ -50,6 +50,7 @@ void preloader_console_init(void);
 u32 spl_boot_device(void);
 u32 spl_boot_mode(void);
 void spl_parse_image_header(const struct image_header *header);
+void spl_parse_image_info(const struct image_header *header, struct image_info *info);
 void spl_board_prepare_for_linux(void);
 void __noreturn jump_to_image_linux(void *arg);
 int spl_start_uboot(void);

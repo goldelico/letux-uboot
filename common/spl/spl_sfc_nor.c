@@ -476,7 +476,7 @@ static void spl_sfc_nor_rtos_boot(void)
 	int size = 0;
 	sfc_read_data(CONFIG_RTOS_OFFSET, sizeof(rtos), (unsigned int)&rtos);
 	size = rtos.img_end - rtos.img_start;
-	printf("size = %d tag = 0x%08x 0x%08x\n",size,rtos.tag,CONFIG_RTOS_OFFSET);
+	printf("size = %d tag = 0x%x 0x%x\n",size,rtos.tag,CONFIG_RTOS_OFFSET);
 	if(size > 0)
 	{
 #ifdef CONFIG_SPL_SCBOOT
@@ -503,7 +503,7 @@ static void spl_sfc_nor_rtos_boot(void)
 	}
 	if (size == 0)
 		hang();
-	rtos_start(&rtos);
+	rtos_start(&rtos, NULL);
 }
 #endif
 

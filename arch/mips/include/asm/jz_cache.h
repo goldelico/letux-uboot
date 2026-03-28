@@ -426,18 +426,31 @@ __BUILD_BLAST_CACHE_RANGE(inv_d, dcache, Hit_Invalidate_D, )
 __BUILD_BLAST_CACHE_RANGE(inv_s, scache, Hit_Invalidate_SD, )
 
 
-
+#if (CONFIG_SYS_DCACHELINE_SIZE == 32)
 #define flush_dcache_all()				blast_dcache32()
-#define flush_dcache_range(start, end) 			blast_dcache_range(start, end)
 #define invalid_dcache_all()				blast_inv_dcache32()
+#elif (CONFIG_SYS_DCACHELINE_SIZE == 64)
+#define flush_dcache_all()				blast_dcache64()
+#define invalid_dcache_all()				blast_inv_dcache64()
+#endif
+#define flush_dcache_range(start, end) 			blast_dcache_range(start, end)
 #define invalid_dcache_range(start, end)		blast_inv_dcache_range(start, end)
 
+#if (CONFIG_SYS_ICACHELINE_SIZE == 32)
 #define flush_icache_all()				blast_icache32()
+#elif (CONFIG_SYS_ICACHELINE_SIZE == 64)
+#define flush_icache_all()				blast_icache64()
+#endif
 #define flush_icache_range(start, end)			blast_icache_range(start, end)
 
+#if (CONFIG_SYS_SCACHELINE_SIZE == 32)
+#define flush_scache_all()				blast_scache32()
+#define invalid_scache_all()				blast_inv_scache32()
+#elif (CONFIG_SYS_SCACHELINE_SIZE == 64)
 #define flush_scache_all()				blast_scache64()
-#define flush_scache_range(start, end)			blast_scache_range(start, end)
 #define invalid_scache_all()				blast_inv_scache64()
+#endif
+#define flush_scache_range(start, end)			blast_scache_range(start, end)
 #define invalid_scache_range(start, end)		blast_inv_scache_range(start, end)
 
 

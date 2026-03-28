@@ -23,7 +23,11 @@
 #include <config.h>
 #include <lcd.h>
 #include <asm/types.h>
+#if defined CONFIG_JZ_PWM
 #include <asm/arch/tcu.h>
+#else
+#include <asm/arch/pwm.h>
+#endif
 #include <asm/arch/gpio.h>
 
 
@@ -32,9 +36,6 @@
  * support pwm and paulse adjuster
  */
 
-#ifndef DEFAULT_BACKLIGHT_LEVEL
-#define DEFAULT_BACKLIGHT_LEVEL 80
-#endif
 
 #define PWM_BACKLIGHT_CHIP 1/*0: digital pusle; 1: PWM*/
 
@@ -56,20 +57,29 @@ void lcd_set_backlight_level(int num)
 	else
 		_period = CONFIG_SYS_PWM_PERIOD;
 	_period = (unsigned long long)CONFIG_SYS_EXTAL * _period / 1000000000;
+#if defined CONFIG_JZ_PWM
 	while (_period > 0xffff && prescaler < 6) {
 		_period >>= 2;
 		++prescaler;
 	}
+#else
+	while (_period > 0xffff && prescaler < 8) {
+		_period >>= 1;
+		++prescaler;
+	}
+#endif
 	_half =_period * _val / (CONFIG_SYS_PWM_FULL);
 #if defined SOC_X1000 || defined SOC_X1830
 {
 	gpio_set_func(GPIO_PORT_C, GPIO_FUNC_0,1 << (CONFIG_GPIO_LCD_PWM % 32));
 }
 #else
-	gpio_set_func(GPIO_PORT_E, GPIO_FUNC_0,1 << (CONFIG_GPIO_LCD_PWM % 32));
+	gpio_set_func(CONFIG_GPIO_LCD_PWM / 32, GPIO_FUNC_0,1 << (CONFIG_GPIO_LCD_PWM % 32));
 #endif
 	struct pwm pwm_backlight = {CONFIG_SYS_PWM_CHN,prescaler,EXTAL,_period,_half};
+#if defined(CONFIG_JZ_PWM) || defined(CONFIG_JZ_PWM_V2)
 	pwm_init(&pwm_backlight);
+#endif
 }
 
 void lcd_close_backlight(void)

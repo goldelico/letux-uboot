@@ -46,10 +46,13 @@
 #define	UART2_BASE	0xb0032000
 #define	UART3_BASE	0xb0033000
 #define	UART4_BASE	0xb0034000
+#define	SSI0_BASE	0xb0043000
+#define	SSI1_BASE	0xb0044000
 #define	WDT_BASE	0xb0002000
 
 /* AHB2 BUS Devices Base */
 #define OTG_BASE	0xb3500000
+#define OTGPHY_BASE	0xb0078000
 
 #define G_OST_BASE	0xb2000000
 

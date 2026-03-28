@@ -27,6 +27,7 @@
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_X2100	/* x2100 SoC */
 
+#include "x2100_ddr.h"
 
 #define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		1500000000	/*If MPLL not use mast be set 0*/
@@ -84,55 +85,6 @@
 #define CONFIG_SYS_UART_INDEX		2
 #define CONFIG_BAUDRATE			115200
 
-/*
-#define CONFIG_DDR_TEST_CPU
-#define CONFIG_DDR_TEST
-#define CONFIG_DDR_TEST_DATALINE
-#define CONFIG_DDR_TEST_ADDRLINE
-*/
-
-#define CONFIG_DDR_INNOPHY
-#define CONFIG_DDR_DLL_OFF
-#define CONFIG_DDR_PARAMS_CREATOR
-#define CONFIG_DDR_HOST_CC
-/*#define CONFIG_DDR_TYPE_DDR3*/
-#define CONFIG_DDR_TYPE_LPDDR2
-#define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_DW32			0	/* 1-32bit-width, 0-16bit-width */
-/*#define CONFIG_DDR3_TSD34096M1333C9_E*/
-
-#ifdef CONFIG_DDR_TYPE_LPDDR2
-	#define CONFIG_LPDDR2_M54D5121632A
-	#define CONFIG_LPDDR2_M54D5121632A_MEM_FREQ		500000000
-#endif
-
-#ifdef CONFIG_DDR_TYPE_DDR3
-	#define CONFIG_DDR3_TSD34096M1333C9_E_FPGA
-#endif
-
-#ifdef CONFIG_DDR_TYPE_LPDDR3
-	/* #define CONFIG_LPDDR3_MT52L256M32D1PF_FPGA*/
-	/* #define CONFIG_LPDDR3_AD310032C_AB_FPGA */
-	#define CONFIG_LPDDR3_W63AH6NKB_BI
-	#define CONFIG_LPDDR3_W63AH6NKB_BI_MEM_FREQ	750000000
-#endif
-
-#define CONFIG_DDR_PHY_IMPEDANCE 40
-#define CONFIG_DDR_PHY_ODT_IMPEDANCE 120
-/* #define CONFIG_FPGA_TEST */
-/*#define CONFIG_DDR_AUTO_REFRESH_TEST*/
-
-#define CONFIG_DDR_AUTO_SELF_REFRESH
-#define CONFIG_DDR_AUTO_SELF_REFRESH_CNT 257
-/*
- * #define CONFIG_DDR_CHIP_ODT
- * #define CONFIG_DDR_PHY_ODT
- * #define CONFIG_DDR_PHY_DQ_ODT
- * #define CONFIG_DDR_PHY_DQS_ODT
- * #define CONFIG_DDR_PHY_IMPED_PULLUP		0xe
- * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
- */
 
 /*pmu slp pin*/
 /*#define CONFIG_REGULATOR*/
@@ -156,11 +108,7 @@
  */
 
 /* #define BOOTARGS_COMMON "console=ttyS3,115200 mem=96M@0x0 rmem=32M@0x6000000"*/
-#define CONFIG_BOOTARGS_MEM_INDEX	2	/*start from 1, position of the args mem=xxx@0x0*/
 #define CONFIG_BOOTARGS_AUTO_MODIFY	1	/*auto detect memory size, and modify bootargs for kernel.*/
-#define CONFIG_BOOTARGS_MEM_64M			"mem=64M@0x0"	/* customize bootargs for default env.*/
-#define CONFIG_BOOTARGS_MEM_128M		"mem=128M@0x0"
-#define CONFIG_BOOTARGS_MEM_256M		"mem=256M@0x0"
 
 #if (CONFIG_BOOTARGS_AUTO_MODIFY == 1)
 	#define BOOTARGS_COMMON "console=ttyS2,115200 "

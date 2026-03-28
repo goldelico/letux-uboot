@@ -3,9 +3,7 @@
 #include <linux/mtd/partitions.h>
 #include "../jz_sfc_common.h"
 #include "nand_common.h"
-#include <ubi_uboot.h>
 
-#define XTX_DEVICES_NUM         3
 #define TSETUP		5
 #define THOLD		5
 #define	TSHSL_R		20
@@ -17,7 +15,7 @@
 
 static struct jz_sfcnand_device *xtx_nand;
 
-static struct jz_sfcnand_base_param xtx_param[XTX_DEVICES_NUM] = {
+static struct jz_sfcnand_base_param xtx_param[] = {
 
 	[0] = {
 		/*PN26G01AW*/
@@ -82,57 +80,57 @@ static struct jz_sfcnand_base_param xtx_param[XTX_DEVICES_NUM] = {
 
 };
 
-static struct device_id_struct device_id[XTX_DEVICES_NUM] = {
+static struct device_id_struct device_id[] = {
 	DEVICE_ID_STRUCT(0xE1, "PN26G01AW", &xtx_param[0]),
 	DEVICE_ID_STRUCT(0xE2, "PN26G02AW", &xtx_param[1]),
 	DEVICE_ID_STRUCT(0xC1, "PN26Q01AW", &xtx_param[2]),
 };
 
 
-static cdt_params_t *xtx_get_cdt_params(struct sfc_flash *flash, uint8_t device_id)
+static cdt_params_t *xtx_get_cdt_params(struct sfc_flash *flash, uint16_t device_id)
 {
 	CDT_PARAMS_INIT(xtx_nand->cdt_params);
 
 	switch(device_id) {
-	    case 0xE1:
-	    case 0xE2:
-	    case 0xC1:
-		    break;
-	    default:
-		    pr_err("device_id err, please check your  device id: device_id = 0x%02x\n", device_id);
-		    return NULL;
+		case 0xE1:
+		case 0xE2:
+		case 0xC1:
+			break;
+		default:
+			pr_err("device_id err, please check your  device id: device_id = 0x%02x\n", device_id);
+			return NULL;
 	}
 
 	return &xtx_nand->cdt_params;
 }
 
 
-static inline int deal_ecc_status(struct sfc_flash *flash, uint8_t device_id, uint8_t ecc_status)
+static inline int deal_ecc_status(struct sfc_flash *flash, uint16_t device_id, uint8_t ecc_status)
 {
-	int ret = 0;
 
 	switch(device_id) {
-		case 0xE1 ... 0xE2:
+		case 0xE1:
+		case 0xE2:
 		case 0xC1:
 			switch((ecc_status >> 4) & 0x3) {
-			    case 0x02:
-				    ret = -EBADMSG;
-				    break;
-			    case 0x03:
-				    ret = 0x8;
-				    break;
-			    default:
-				    ret = 0;
+				case 0x0:
+				case 0x1:
+					return 0;
+				case 0x2:
+					return -EBADMSG;
+				case 0x3:
+					return 8;
+				default:
+					break;
 			}
 			break;
 		default:
 			printf("device_id err, it maybe don`t support this device, check your device id: device_id = 0x%02x\n", device_id);
-			ret = -EIO;   //notice!!!
+			break;
 
 	}
-	return ret;
+	return -EINVAL;
 }
-
 
 static int xtx_nand_init(void) {
 
@@ -144,7 +142,7 @@ static int xtx_nand_init(void) {
 
 	xtx_nand->id_manufactory = 0xA1;
 	xtx_nand->id_device_list = device_id;
-	xtx_nand->id_device_count = XTX_DEVICES_NUM;
+	xtx_nand->id_device_count = ARRAY_SIZE(xtx_param);
 
 	xtx_nand->ops.get_cdt_params = xtx_get_cdt_params;
 	xtx_nand->ops.deal_ecc_status = deal_ecc_status;

@@ -103,6 +103,18 @@
 #define CONFIG_SPL_VERSION_OFFSET   16
 #define CONFIG_JZ_SFC_NOR
 #define CONFIG_SFC_NOR
+#define CONFIG_MTD_UBI_BEB_LIMIT    20
+
+/*
+ *  SPINAND MAC SN : the product of customer add partition of sequence code.
+ */
+#define CONFIG_JZ_SPINAND_MAC
+#define CONFIG_MAC_SIZE	                 (1 * 1024 * 1024)
+#define CONFIG_JZ_SPINAND_SN
+#define CONFIG_SN_SIZE	                 (1 * 1024 * 1024)
+#define CONFIG_JZ_SPINAND_LICENSE
+#define CONFIG_LICENSE_SIZE              (1 * 1024 * 1024)
+
 
 
 /* MMC */
@@ -133,8 +145,8 @@
 
 #define CONFIG_SYS_MAXARGS              16
 #define CONFIG_SYS_LONGHELP
-#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "# "
-#define CONFIG_SYS_CBSIZE               1024 /* Console I/O Buffer Size */
+#define CONFIG_SYS_PROMPT "burner# "
+#define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
 #define CONFIG_SYS_MONITOR_LEN		(1024 * 1024)

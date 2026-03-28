@@ -1209,8 +1209,9 @@ static void handle_fastboot_cmd_complete(struct usb_ep *ep,
 		goto cmd_finish;
 	}
 
-	explain_cmd_else(fastboot);
-	//fastboot->explain_cmd_status = 1;
+//	explain_cmd_else(fastboot);
+	fastboot->explain_cmd_status = 1;
+	goto cmd_finish;
 cmd_finish:
 cmd_finish_2:
 	memset(fastboot->cmd_req->buf, 0, fastboot->cmd_req->length);

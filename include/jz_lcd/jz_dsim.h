@@ -146,7 +146,18 @@ struct video_config {
 	unsigned short v_sync_lines;
 	unsigned short v_back_porch_lines;	/* vbp */
 	unsigned short v_total_lines;	/* v_total */
+	unsigned char  clk_lane_pn_swap:1;
+	unsigned char  lane0_pn_swap:1;
+	unsigned char  lane1_pn_swap:1;
+	unsigned char  lane2_pn_swap:1;
+	unsigned char  lane3_pn_swap:1;
+	unsigned char  ths_trail_value;
 };
+typedef enum {
+	DSIPHY_MIPI_MODE,
+	DSIPHY_LVDS_VESA_MODE,
+	DSIPHY_LVDS_JEIDA_MODE,
+}dsi_phy_work_mode_t;
 
 struct dsi_device {
 	unsigned int  address;
@@ -160,7 +171,7 @@ struct dsi_device {
 	unsigned int bpp_info;
 	unsigned int max_bps;
 	unsigned int real_mipiclk;
-
+	dsi_phy_work_mode_t phy_mode;
 };
 
 struct dsi_phy {

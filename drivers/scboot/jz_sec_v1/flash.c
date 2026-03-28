@@ -18,7 +18,7 @@ void read_flash(unsigned int from, unsigned int len, unsigned char *buf)
 		break;
 #endif
 	default:
-		printf("## ERROR ## Ckey aes only support sfc_nor ##\n");
+		serial_debug("## ERROR ## Ckey aes only support sfc_nor ##\n");
 		hang();
 	}
 }
@@ -34,7 +34,7 @@ void write_flash(unsigned int from, unsigned int len, unsigned char *buf)
 	case BOOT_DEVICE_SFC_NOR:
 
 		if (sfc_nor_erase(from, len)) {
-			printf("sfcnor erase err!\n");
+			serial_debug("sfcnor erase err!\n");
 			_machine_restart();
 		}
 
@@ -42,7 +42,7 @@ void write_flash(unsigned int from, unsigned int len, unsigned char *buf)
 		break;
 #endif
 	default:
-		printf("## ERROR ## Ckey aes only support sfc_nor ##\n");
+		serial_debug("## ERROR ## Ckey aes only support sfc_nor ##\n");
 		hang();
 	}
 }

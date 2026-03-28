@@ -31,24 +31,26 @@
 #include <spi_flash.h>
 #include <ingenic_soft_i2c.h>
 #include <ingenic_soft_spi.h>
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
-#include <linux/compiler.h>
-#include <linux/usb/composite.h>
 #include <cloner/cloner.h>
-#include "cloner/burn_printf.h"
+#include "cloner/cloner_moudle.h"
+#include "cloner/cloner_log.h"
 
 #ifdef CONFIG_JZ_SCBOOT
-#ifdef CONFIG_X1600
-#include "../../scboot/jz_sec_v3/otp.h"
-#include "../../scboot/jz_sec_v3/secure.h"
-#include "../../scboot/jz_sec_v3/aes.h"
-#include "../../scboot/jz_sec_v3/spi_checksum.h"
-#elif defined(CONFIG_X2000_V12)
+#if defined(CONFIG_X2000_V12) || defined(CONFIG_X2100) || defined(CONFIG_M300)
 #include "../../scboot/jz_sec_v2/otp.h"
 #include "../../scboot/jz_sec_v2/secure.h"
 #include "../../scboot/jz_sec_v2/aes.h"
 #include "../../scboot/jz_sec_v2/spi_checksum.h"
+#elif defined(CONFIG_X1600)
+#include "../../scboot/jz_sec_v3/otp.h"
+#include "../../scboot/jz_sec_v3/secure.h"
+#include "../../scboot/jz_sec_v3/aes.h"
+#include "../../scboot/jz_sec_v3/spi_checksum.h"
+#elif defined(CONFIG_X2600) || defined(CONFIG_AD100)
+#include "../../scboot/jz_sec_v4/otp.h"
+#include "../../scboot/jz_sec_v4/secure.h"
+#include "../../scboot/jz_sec_v4/aes.h"
+#include "../../scboot/jz_sec_v4/spi_checksum.h"
 #else
 #include "../../scboot/jz_sec_v1/otp.h"
 #include "../../scboot/jz_sec_v1/secure.h"
@@ -57,17 +59,17 @@
 #endif
 #endif
 
-int buf_compare(unsigned char *org_data,unsigned char *read_data,unsigned int len,unsigned int offset)
+int buf_compare(void *s, void *d, int len, int offs)
 {
 	unsigned int i = 0;
-	unsigned int *buf1 = (unsigned int *)org_data;
-	unsigned int *buf2 = (unsigned int *)read_data;
+	unsigned int *src = (unsigned int *)s;
+	unsigned int *des = (unsigned int *)d;
 	for(i = 0; i < len / 4; i++)
 	{
-		if(buf1[i] != buf2[i])
+		if(src[i] != des[i])
 		{
-			printf("XXXXXXXXXX  compare error: org_data[%d] = 0x%08x read_data[%d] = 0x%08x addr= 0x%08x  len = %d\n",
-					i, buf1[i], i, buf2[i], offset + i * 4, len);
+			printf("compare error: org_data[%d] = 0x%08x read_data[%d] = 0x%08x addr= 0x%08x len = %d\n",
+					i, src[i], i, des[i], offs + i * 4, len);
 			return -1;
 		}
 	}
@@ -232,11 +234,15 @@ int i2c_program(struct cloner *cloner)
 }
 
 
-struct ParameterInfo	*global_args;
-struct policy_param	*policy_args;
-struct efuse_param	*efuse_args;
-struct debug_param	*debug_args;
-struct ddr_param	*ddr_args;
+struct ParameterInfo	*global_args = NULL;
+struct policy_param	*policy_args = NULL;
+struct efuse_param	*efuse_args = NULL;
+struct debug_param	*debug_args = NULL;
+struct mmc_param	*mmc_args = NULL;
+struct spi_param	*spi_args = NULL;
+struct nand_param	*nand_args = NULL;
+struct ddr_param	*ddr_args = NULL;
+
 struct ParameterInfo	*m = NULL;
 
 void handle_args(struct usb_ep *ep,struct usb_request *req)
@@ -249,14 +255,15 @@ void handle_args(struct usb_ep *ep,struct usb_request *req)
 	{
 		if(((int)p % 4 != 0) || (p->magic == 0)
 			|| ((char*)p < (char*)global_args)
-			|| ((char*)p > ((char*)global_args + ARGS_LEN))) {
+			|| ((char*)p > ((char*)global_args + CLONER_ARGS_LEN))) {
 			break;
 		}
-
+#if 0
 		printf("magic=");
 		for(i=3; i>=0; i--)
 			printf("%c", ((char*)&p->magic)[i]);
 		printf("\n");
+#endif
 		switch(p->magic)
 		{
 			case MAGIC_POLICY:
@@ -597,25 +604,25 @@ int f_cloner_bind(struct usb_configuration *c,
 	cloner->args_req = usb_ep_alloc_request(cloner->ep_out,0);
 	cloner->read_req = usb_ep_alloc_request(cloner->ep_in,0);
 
-	cloner->buf_size = ARGS_LEN;
-	cloner->buf = calloc(1,ARGS_LEN);
-	memset(cloner->buf, 0, ARGS_LEN);
+	cloner->buf_size = CLONER_ARGS_LEN;
+	cloner->buf = calloc(1,CLONER_ARGS_LEN);
+	memset(cloner->buf, 0, CLONER_ARGS_LEN);
 	cloner->write_req->complete = handle_write;
 	cloner->write_req->buf = cloner->buf;
-	cloner->write_req->length = ARGS_LEN;
+	cloner->write_req->length = CLONER_ARGS_LEN;
 	cloner->write_req->context = cloner;
 
-	cloner->args = calloc(1,ARGS_LEN);
-	memset(cloner->args, 0, ARGS_LEN);
+	cloner->args = calloc(1,CLONER_ARGS_LEN);
+	memset(cloner->args, 0, CLONER_ARGS_LEN);
 	global_args = (struct ParameterInfo*)(cloner->args);
 	cloner->args_req->complete = handle_args;
 	cloner->args_req->buf = cloner->args;
-	cloner->args_req->length = ARGS_LEN;
+	cloner->args_req->length = CLONER_ARGS_LEN;
 	cloner->args_req->context = cloner;
 
 	cloner->read_req->complete = handle_read_complete;
 	cloner->read_req->buf = cloner->buf;
-	cloner->read_req->length = ARGS_LEN;
+	cloner->read_req->length = CLONER_ARGS_LEN;
 	cloner->read_req->context = cloner;
 
 	return 0;

@@ -28,11 +28,24 @@ struct ddr_chip_info supported_ddr_chips[] = {
 #ifdef CONFIG_LVDDR_W9464L6KH
 	LVDDR_W9464L6KH,
 #endif
+#ifdef CONFIG_LVDDR2_A3L28E40BGD
+	LVDDR2_A3L28E40BGD_AHJA,
+#endif
+#ifdef CONFIG_X1600EN_DDR2
+	X1600EN_DDR2,
+#endif
+#ifdef CONFIG_X1600HN_DDR2
+	X1600HN_DDR2,
+#endif
+#ifdef CONFIG_X1600E_LPDDR2
+	X1600E_LPDDR2,
+#endif
 };
 
 
 void dump_ddr_info(struct ddr_chip_info *c)
 {
+	printf("/** Only DDR test\n");
 	printf("name 		= %s\n", c->name);
 	printf("id 		= %x\n", c->id);
 	printf("type 		= %x\n", c->type);
@@ -67,10 +80,8 @@ void dump_ddr_info(struct ddr_chip_info *c)
 	printf("DDR_tCKESR 	= %d\n", c->DDR_tCKESR);
 	printf("DDR_tXSR 	= %d\n", c->DDR_tXSR);
 	printf("DDR_tXP 	= %d\n", c->DDR_tXP);
-
-
+	printf("**/ \n");
 }
-
 
 int init_supported_ddr(void)
 {

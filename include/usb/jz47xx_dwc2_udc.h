@@ -1,5 +1,6 @@
 #ifndef JZ47XX_DWC2_UDC_H
 #define JZ47XX_DWC2_UDC_H
+#include <usb/ingenic_phy.h>
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
 #include <asm/io.h>

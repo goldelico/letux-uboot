@@ -47,8 +47,10 @@ int init_seboot(void)
 	volatile struct pdma_message *pdma_msg;
 	pdma_msg = (volatile struct pdma_message *)GET_PDMA_MESSAGE();
 #endif
+
+	serial_debug("scboot for x2xxx.\n");
 	reset_mcu();
-	printf("reset_mcu %x\n", REG32(PDMA_BASE + DMCS_OFF));
+	serial_debug("reset_mcu %x\n", REG32(PDMA_BASE + DMCS_OFF));
 
 	load_pdma_firmware();
 	boot_up_mcu();

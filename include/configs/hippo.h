@@ -28,17 +28,17 @@
 #define CONFIG_X2500	/* x2500 SoC */
 
 
-#define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
+#define CONFIG_SYS_APLL_FREQ		1008000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		1400000000	/*If MPLL not use mast be set 0*/
-#define CONFIG_SYS_VPLL_FREQ		1080000000	/*If VPLL not use mast be set 0*/
+#define CONFIG_SYS_VPLL_FREQ		1100000000	/*If VPLL not use mast be set 0*/
 #define CONFIG_SYS_EPLL_FREQ		891000000	/*If EPLL not use mast be set 0*/
 #define CONFIG_CPU_SEL_PLL		APLL
 #define CONFIG_DDR_SEL_PLL		MPLL
-#define CONFIG_SYS_CPU_FREQ		1200000000
+#define CONFIG_SYS_CPU_FREQ		1008000000
 #define CONFIG_SYS_MEM_FREQ		700000000
 
-#define CONFIG_SYS_AHB0_FREQ		300000000
-#define CONFIG_SYS_AHB2_FREQ		300000000	/*APB = AHB2/2*/
+#define CONFIG_SYS_AHB0_FREQ		280000000
+#define CONFIG_SYS_AHB2_FREQ		280000000	/*APB = AHB2/2*/
 
 
 /* Device Tree Configuration*/
@@ -92,7 +92,7 @@
 */
 
 #define CONFIG_DDR_INNOPHY
-#define CONFIG_DDR_DLL_OFF
+/*#define CONFIG_DDR_DLL_OFF*/
 #define CONFIG_DDR_PARAMS_CREATOR
 #define CONFIG_DDR_HOST_CC
 #define CONFIG_DDR_TYPE_DDR3
@@ -102,9 +102,10 @@
 
 
 #ifdef CONFIG_DDR_TYPE_DDR3
-	/* #define CONFIG_DDR3_W631GU6NG */
+	#define CONFIG_DDR3_W631GU6NG
 	#define CONFIG_DDR3_NK5CC128M8HKX
-	/* #define CONFIG_DDR3L_W634GU6QB_11 */
+	/* #define CONFIG_DDR3L_GDP1BFLM_CB */
+	#define CONFIG_DDR3L_W634GU6QB_11
 	/* #define CONFIG_DDR3_PMF512816FBR_MBDN */
 #endif
 
@@ -123,16 +124,16 @@
 #define CONFIG_OPEN_KGD_DRIVER_STRENGTH
 #ifdef CONFIG_OPEN_KGD_DRIVER_STRENGTH
 #define CONFIG_DDR_DRIVER_OUT_STRENGTH
-#define CONFIG_DDR_DRIVER_OUT_STRENGTH_1 0
-#define CONFIG_DDR_DRIVER_OUT_STRENGTH_0 1
+#define CONFIG_DDR_DRIVER_OUT_STRENGTH_1 1
+#define CONFIG_DDR_DRIVER_OUT_STRENGTH_0 0
 #endif
 
 #define CONFIG_DDR_CHIP_ODT
 #define CONFIG_DDR_CHIP_ODT_VAL
 #ifdef CONFIG_DDR_CHIP_ODT_VAL
 #define CONFIG_DDR_CHIP_ODT_VAL_RTT_NOM_9 0 /* RTT_Nom_9 is MR1 A9 bit */
-#define CONFIG_DDR_CHIP_ODT_VAL_RTT_NOM_6 0 /* RTT_Nom_6 is MR1 A6 bit */
-#define CONFIG_DDR_CHIP_ODT_VAL_RTT_NOM_2 1 /* RTT_Nom_2 is MR1 A2 bit */
+#define CONFIG_DDR_CHIP_ODT_VAL_RTT_NOM_6 1 /* RTT_Nom_6 is MR1 A6 bit */
+#define CONFIG_DDR_CHIP_ODT_VAL_RTT_NOM_2 0 /* RTT_Nom_2 is MR1 A2 bit */
 #define CONFIG_DDR_CHIP_ODT_VAL_RTT_WR 0  /* RTT_WR is odt for KGD write of MR2*/
 #endif
 
@@ -167,13 +168,12 @@
  */
 
 /* #define BOOTARGS_COMMON "console=ttyS3,115200 mem=96M@0x0 rmem=32M@0x6000000"*/
-#define CONFIG_BOOTARGS_MEM_INDEX	2	/*start from 1, position of the args mem=xxx@0x0*/
 #define CONFIG_BOOTARGS_AUTO_MODIFY	0	/*auto detect memory size, and modify bootargs for kernel.*/
 #define CONFIG_BOOTARGS_MEM_64M			"mem=64M@0x0"	/* customize bootargs for default env.*/
 #define CONFIG_BOOTARGS_MEM_128M		"mem=128M@0x0"
 #define CONFIG_BOOTARGS_MEM_256M		"mem=256M@0x0"
 
-#define BOOTARGS_COMMON " console=ttyS1,115200n8 mem=199M@0x0 rmem=1M@0xC700000 nmem=56M@0xC800000 "
+#define BOOTARGS_COMMON " console=ttyS1,115200n8 mem=200M@0x0 nmem=56M@0xC800000 "
 
 
 
@@ -248,25 +248,40 @@
 
 #ifdef CONFIG_SPL_OS_BOOT
     #ifdef  CONFIG_SPL_SFC_NOR
-		#define CONFIG_SPL_BOOTARGS	BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=jffs2 root=/dev/mtdblock2 rw"
+		#define CONFIG_SPL_BOOTARGS	BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=jffs2 root=/dev/mtdblock2 rw flashtype=nor"
     #elif defined (CONFIG_SPL_SFC_NAND)
-		#define CONFIG_SPL_BOOTARGS	BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=2 root=ubi0:rootfs ubi.mtd=3 rootfstype=ubifs rw"
+		#define CONFIG_SPL_BOOTARGS	BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=2 root=ubi0:rootfs ubi.mtd=3 rootfstype=ubifs rw flashtype=nand"
     #else
+	#if defined(CONFIG_JZ_MMC_MSC0)
 		#define CONFIG_SPL_BOOTARGS	BOOTARGS_COMMON  " rootfstype=ext4 root=/dev/mmcblk0p7 rootdelay=3 rw"
+	#elif defined(CONFIG_JZ_MMC_MSC1)
+		#define CONFIG_SPL_BOOTARGS	 BOOTARGS_COMMON " rootfstype=ext4 root=/dev/mmcblk1p7 rootdelay=3 rw"
+	#endif
     #endif
     #ifdef CONFIG_OTA_VERSION30
 		#define CONFIG_PAT_KERNEL_NAME	  "kernel"
 		#define CONFIG_PAT_RECOVERY_NAME  "recovery"
 		#define CONFIG_PAT_NV_NAME        "nv"
 		#undef CONFIG_SPL_BOOTARGS
-		#ifdef CONFIG_SPL_SFC_NOR
+		#ifdef defined(CONFIG_SPL_SFC_NOR)
 			#define CONFIG_PAT_USERFS_NAME   "userfs"
 			#define CONFIG_PAT_UPDATEFS_NAME "updatefs"
             		#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock5 rw"
-		#else
-        		#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=4 root=ubi0:system ubi.mtd=5 rootfstype=ubifs ro"
-        		#define CONFIG_SPL_OTA_BOOTARGS    BOOTARGS_COMMON "ip=off ubi.mtd=4 ubi.mtd=5 root=/dev/ram0 rw rdinit=/linuxrc"
-		#endif
+		#elif defined(CONFIG_SPL_SFC_NAND)
+        		#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=4 root=ubi0:system ubi.mtd=5 rootfstype=ubifs ro flashtype=nand"
+        		#define CONFIG_SPL_OTA_BOOTARGS    BOOTARGS_COMMON "ip=off ubi.mtd=4 ubi.mtd=5 root=/dev/ram0 rw rdinit=/linuxrc flashtype=nand"
+        #else
+			#define CONFIG_GPT_TAB_BUILT_IN
+			#undef CONFIG_SPL_BOOTARGS
+			#if defined(CONFIG_JZ_MMC_MSC0)
+				#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON  " ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk0p8 rootdelay=3 rw"
+			#elif defined(CONFIG_JZ_MMC_MSC1)
+				#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON  " ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk1p8 rootdelay=3 rw"
+			#elif defined(CONFIG_JZ_MMC_MSC2)
+				#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON  " ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk2p8 rootdelay=3 rw"
+			#endif
+			#define CONFIG_SPL_OTA_BOOTARGS    BOOTARGS_COMMON "ip=off root=/dev/ram0 rw rdinit=/linuxrc"
+        #endif
     #else
 		#ifdef CONFIG_BOOT_VMLINUX
 			#undef CONFIG_SPL_BOOTARGS
@@ -284,7 +299,7 @@
              #define CONFIG_SPL_BOOTARGS         BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock2 rw"
      #endif /* CONFIG_BOOT_VMLINUX */
 
-    #ifdef CONFIG_JZ_MMC_MSC0
+    #if defined(CONFIG_JZ_MMC_MSC0) || defined(CONFIG_JZ_MMC_MSC1)
 	#define CONFIG_SPL_OS_NAME        "boot" /* sd offset of xImage being loaded */
     #else
 	#define CONFIG_SPL_OS_NAME        "kernel" /* spi offset of xImage being loaded */
@@ -356,8 +371,13 @@
 
 /* sfc ota config */
 #ifdef CONFIG_OTA_VERSION30
+#ifdef CONFIG_SPL_SFC_NAND
 #define CONFIG_KUNPENG_OTA_VERSION20
+#else
+#define CONFIG_JZSD_OTA_VERSION20
 #endif
+#endif /*end of ota*/
+
 
 /* sfc nor config */
 #ifdef CONFIG_SPL_SFC_NOR
@@ -484,7 +504,7 @@
 #define CONFIG_CMD_EXT4
 #define CONFIG_CMD_FAT
 #define CONFIG_EFI_PARTITION
-/*#define CONFIG_SOFT_BURNER*/
+#define CONFIG_SOFT_BURNER_V2
 
 
 #define CONFIG_CMD_DDR_TEST	/* DDR Test Command */
@@ -638,7 +658,7 @@
 #else
 #define CONFIG_SPL_TEXT_BASE		0x80001000
 #endif	/*CONFIG_SPL_NOR_SUPPORT*/
-#define CONFIG_SPL_MAX_SIZE		(18 * 1024)
+#define CONFIG_SPL_MAX_SIZE		CONFIG_SPL_PAD_TO
 
 
 

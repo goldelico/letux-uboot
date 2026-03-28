@@ -61,6 +61,22 @@
 #include "./chips/DDR3_TSD34096M1333C9_E.h"
 #endif
 
+#ifdef CONFIG_DDR3_H5TQ2G63BFR_H9C
+#include "./chips/DDR3_H5TQ2G63BFR_H9C.h"
+#endif
+
+#ifdef CONFIG_DDR3_TSD34096M1333C9_E
+#include "./chips/DDR3_TSD34096M1333C9_E.h"
+#endif
+
+#ifdef CONFIG_DDR3_TSD34096M1333C9_E_FPGA
+#include "./chips/DDR3_TSD34096M1333C9_E_FPGA.h"
+#endif
+
+#ifdef CONFIG_DDR3_PALLADIUM_MODLE
+#include "./chips/DDR3_PALLADIUM_MODLE.h"
+#endif
+
 #ifdef CONFIG_MCP_KMS5U000JM_B308
 #include "./chips/MCP_KMS5U000JM_B308.h"
 #endif
@@ -171,6 +187,34 @@
 
 #ifdef CONFIG_DDR2_W971GV6NG
 #include "./chips/DDR2_W971GV6NG.h"
+#endif
+
+#ifdef CONFIG_MDDR_H5MS5122DFR_J3M
+#include "./chips/MDDR_H5MS5122DFR_J3M.h"
+#endif
+
+#ifdef CONFIG_DDR2_M14D5121632A
+#include "./chips/DDR2_M14D5121632A.h"
+#endif
+
+#ifdef CONFIG_DDR2_M14D1G1664A
+#include "./chips/DDR2_M14D1G1664A.h"
+#endif
+
+#ifdef CONFIG_DDR3_M15T1G1664A_2C
+#include "./chips/DDR3_M15T1G1664A_2C.h"
+#endif
+
+#ifdef CONFIG_DDR3_M15T2G16128A_2R
+#include "./chips/DDR3_M15T2G16128A_2R.h"
+#endif
+
+#ifdef CONFIG_DDR3_W631GU6NG
+#include "./chips/DDR3_W631GU6NG.h"
+#endif
+
+#ifdef CONFIG_DDR3_W632GU6NG
+#include "./chips/DDR3_W632GU6NG.h"
 #endif
 
 #endif /* __DDR_CHIPS_H__ */

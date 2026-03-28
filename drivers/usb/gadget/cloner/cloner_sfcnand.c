@@ -3,6 +3,7 @@
 #include <nand.h>
 #include <linux/mtd/mtd.h>
 #include <ingenic_nand_mgr/nand_param.h>
+#include <asm/arch/sfc.h>
 #include <asm/arch/spinand.h>
 
 extern struct jz_sfcnand_partition *get_partion_index(u32 startaddr,u32 length,int *pt_index);
@@ -15,9 +16,10 @@ extern struct jz_sfcnand_partition *get_partion_index(u32 startaddr,u32 length,i
  * ******************************************************************************/
 
 struct jz_sfcnand_burner_param bp;
-void get_burner_nandinfo(char *flash_info)
+void get_burner_nandinfo()
 {
 	int i;
+	struct jz_sfcnand_burner_param *flash_info = spi_args->flash_info;
 	struct jz_sfcnand_burner_param *tmpbp = (struct jz_sfcnand_burner_param*)flash_info;
 
 	bp.magic_num = tmpbp->magic_num;
@@ -68,6 +70,10 @@ int spinand_read(struct cloner *cloner)
 	nand_info_t *nand;
 	nand = &nand_info[0];
 
+	if (nand_block_isbad(nand, addr)) {
+		printf("Skip bad block 0x%lx\n", addr);
+		return 0xFF;
+	}
 	ret = nand_read(nand, addr, &len, buf);
 	if(ret < 0)
 		printf("%s error\n",__func__);
@@ -75,7 +81,7 @@ int spinand_read(struct cloner *cloner)
 	return ret;
 }
 
-int spinand_program(struct cloner *cloner)
+int sfc_nand_program(struct cloner *cloner)
 {
 	u32 length = cloner->cmd->write.length;
 	u32 full_size = cloner->full_size;
@@ -91,10 +97,18 @@ int spinand_program(struct cloner *cloner)
 	nand_info_t *nand;
 	nand = &nand_info[0];
 	unsigned int block_size = nand->erasesize;
+        uint32_t erase_type_backup = spi_args->spi_erase;
 
-	partition = get_partion_index(startaddr,length,&pt_index);
-	if (pt_index < 0)
+	partition = get_sfc_nand_partition(startaddr,length,&pt_index);
+	if (pt_index < 0) {
+		printf("startaddr 0x%x can't find the pt_index or you partition size 0x%x is not align with %x\n",
+                                startaddr, length, block_size);
 		return -EIO;
+        }
+
+        if (spi_args->spi_erase == CHIP_ERASE && partition->mask_flags == PART_RO)
+                spi_args->spi_erase = PART_ERASE;
+
 	if (startaddr==0 && spi_args->download_params != 0) {
 		sfcnand_add_info_to_flash(databuf);
 	}
@@ -104,7 +118,7 @@ int spinand_program(struct cloner *cloner)
 			bad_len = 0;
 		}
 		startaddr = sfc_nand_skip_bad(startaddr);
-		if (!spi_args->spi_erase) {
+		if (spi_args->spi_erase == PART_ERASE || partition->mask_flags == PART_RO) {
 			if (pt_index != pt_index_bak || (partition->manager_mode == MTD_D_MODE && !(startaddr % block_size))) {
 				memset(command, 0 , 128);
 				if (partition->manager_mode == MTD_D_MODE)
@@ -136,7 +150,7 @@ int spinand_program(struct cloner *cloner)
 
 	} else if (partition->manager_mode == UBI_MANAGER) {
 		if (startaddr == partition->offset) {
-			if (!spi_args->spi_erase) {
+			if (spi_args->spi_erase == PART_ERASE || partition->mask_flags == PART_RO) {
 				if (pt_index != pt_index_bak) {
 					pt_index_bak = pt_index;
 					memset(command, 0 , 128);
@@ -188,6 +202,9 @@ int spinand_program(struct cloner *cloner)
 	}
 	if (cloner->full_size)
 		cloner->full_size = 0;
+
+        spi_args->spi_erase = erase_type_backup;
+
 	return 0;
 out:
 	BURNNER_PRI("...error\n");
@@ -202,8 +219,13 @@ out:
  * **************************************************************************************/
 void sfcnand_add_info_to_flash(char *buf)
 {
-	memcpy(buf + CONFIG_SPIFLASH_PART_OFFSET, &bp, sizeof(struct jz_sfcnand_burner_param) - 4);
-	memcpy(buf + CONFIG_SPIFLASH_PART_OFFSET + sizeof(struct jz_sfcnand_burner_param) - 4, bp.partition, sizeof(struct jz_sfcnand_partition) * bp.partition_num);
+	uint32_t param_offset = CONFIG_SPIFLASH_PART_OFFSET;
+
+	if ((int)(spi_args->param_offset) > 0)
+		param_offset = spi_args->param_offset;
+
+	memcpy(buf + param_offset, &bp, sizeof(struct jz_sfcnand_burner_param) - 4);
+	memcpy(buf + param_offset + sizeof(struct jz_sfcnand_burner_param) - 4, bp.partition, sizeof(struct jz_sfcnand_partition) * bp.partition_num);
 
 	if(ddr_args != NULL && ddr_args->ddr_type > 0)
 		*(volatile unsigned int *)(buf + 128) = ddr_args->ddr_type;
@@ -211,4 +233,5 @@ void sfcnand_add_info_to_flash(char *buf)
 	if(*(volatile unsigned int *)(buf + 512) == 0 || *(volatile unsigned int *)(buf + 512) > 65535)
 		*(volatile unsigned int *)(buf + 512) = 0x1111;
 }
-#endif
+
+#endif /*CONFIG_MTD_SFCNAND*/

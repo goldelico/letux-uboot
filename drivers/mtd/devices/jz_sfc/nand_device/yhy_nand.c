@@ -6,17 +6,17 @@
 #include "nand_common.h"
 #include <ubi_uboot.h>
 
-#define	YHY_MIDC9_DEVICES_NUM         2
-#define TSETUP		2
-#define THOLD		4
-#define	TSHSL_R		20
+
+#define TSETUP		20
+#define THOLD		20
+#define	TSHSL_R		50
 #define	TSHSL_W		50
 
 #define TRD		200
 #define TPP		800
 #define TBE		10
 
-static struct jz_sfcnand_base_param yhy_midc9_param[YHY_MIDC9_DEVICES_NUM] = {
+static struct jz_sfcnand_base_param yhy_midc9_param[] = {
 
 	[0] = {
 		/*HYF1GQ4U */
@@ -34,7 +34,7 @@ static struct jz_sfcnand_base_param yhy_midc9_param[YHY_MIDC9_DEVICES_NUM] = {
 		.tPP = TPP,
 		.tBE = TBE,
 
-		.ecc_max = 0x1,
+		.ecc_max = 0x4,
 		.need_quad = 1,
 	},
 
@@ -54,15 +54,36 @@ static struct jz_sfcnand_base_param yhy_midc9_param[YHY_MIDC9_DEVICES_NUM] = {
 		.tPP = TPP,
 		.tBE = TBE,
 
-		.ecc_max = 0x1,
+		.ecc_max = 0x4,
+		.need_quad = 1,
+	},
+
+	[2] = {
+		/*HYF4GQ4U */
+		.pagesize = 4 * 1024,
+		.blocksize = 4 * 1024 * 64,
+		.oobsize = 256,
+		.flashsize = 4 * 1024 * 64 * 2048,
+
+		.tSETUP  = TSETUP,
+		.tHOLD   = THOLD,
+		.tSHSL_R = TSHSL_R,
+		.tSHSL_W = TSHSL_W,
+
+		.tRD = TRD,
+		.tPP = TPP,
+		.tBE = TBE,
+
+		.ecc_max = 0x4,
 		.need_quad = 1,
 	},
 
 };
 
-static struct device_id_struct device_id[YHY_MIDC9_DEVICES_NUM] = {
+static struct device_id_struct device_id[] = {
 	DEVICE_ID_STRUCT(0x21, "HYF1GQ4U", &yhy_midc9_param[0]),
 	DEVICE_ID_STRUCT(0x52, "HYF2GQ4U", &yhy_midc9_param[1]),
+	DEVICE_ID_STRUCT(0xD4, "HYF4GQ4U", &yhy_midc9_param[2]),
 };
 
 static int32_t yhy_midc9_get_read_feature(struct flash_operation_message *op_info) {
@@ -70,7 +91,7 @@ static int32_t yhy_midc9_get_read_feature(struct flash_operation_message *op_inf
 	struct sfc_flash *flash = op_info->flash;
 	struct jz_sfcnand_flashinfo *nand_info = flash->flash_info;
 	struct sfc_transfer transfer;
-	uint8_t device_id = nand_info->id_device;
+	uint16_t device_id = nand_info->id_device;
 	uint8_t ecc_status = 0;
 	int32_t ret = 0;
 
@@ -104,23 +125,25 @@ retry:
 	switch(device_id) {
 		case 0x21:
 		case 0x52:
+		case 0xD4:
 			switch((ecc_status >> 4) & 0x3) {
-				case 0x00:
-					ret = 0;
-					break;
-				case 0x01:
-					ret = 0x1;
-					break;
+				case 0x0:
+					return 0;
+				case 0x1:
+					return 4;
+				case 0x2:
+					return -EBADMSG;
 				default:
-					ret = -EBADMSG;
+					break;
 			}
 			break;
 		default:
-			printf("device_id err, it maybe don`t support this device, check your         device id: device_id = 0x%02x\n", device_id);
-			ret = -EIO;
+			printf("device_id err, it maybe don`t support this device, check your device id: device_id = 0x%02x\n", device_id);
+			break;
 	}
-	return ret;
+	return -EINVAL;
 }
+
 static int yhy_midc9_nand_init(void) {
 	struct jz_sfcnand_device *yhy_midc9_nand;
 	yhy_midc9_nand = kzalloc(sizeof(*yhy_midc9_nand), GFP_KERNEL);
@@ -130,7 +153,7 @@ static int yhy_midc9_nand_init(void) {
 	}
 	yhy_midc9_nand->id_manufactory = 0xC9;
 	yhy_midc9_nand->id_device_list = device_id;
-	yhy_midc9_nand->id_device_count = YHY_MIDC9_DEVICES_NUM;
+	yhy_midc9_nand->id_device_count = ARRAY_SIZE(yhy_midc9_param);
 	yhy_midc9_nand->ops.nand_read_ops.get_feature = yhy_midc9_get_read_feature;
 	return jz_sfcnand_register(yhy_midc9_nand);
 }

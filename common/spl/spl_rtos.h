@@ -9,6 +9,9 @@ struct rtos_header {
 	unsigned int version;
 	unsigned long img_start;
 	unsigned long img_end;
+	unsigned long heap_start;
+	unsigned long heap_end;
+	unsigned long mapped_rtosdata_size;
 };
 
 extern void flush_cache_all(void);

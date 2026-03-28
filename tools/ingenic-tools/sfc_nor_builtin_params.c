@@ -30,8 +30,18 @@
 #include <asm/arch/spinor.h>
 #include "sfc_builtin_params/nor_device.h"
 
+
 /* global params */
-extern struct spi_nor_info builtin_spi_nor_info;
+
+#ifdef CONFIG_NOR_COMMON_PARAMS
+extern int nor_id_info_count;
+extern struct nor_id_info nor_id_info_list[];
+static struct mini_spi_nor_info *p_common_params;
+#endif
+
+extern int builtin_params_count;
+extern struct spi_nor_info builtin_spi_nor_info[];
+
 extern struct norflash_partitions builtin_norflash_partitions;
 extern private_params_t builtin_private_params;
 
@@ -42,20 +52,26 @@ void dump_mini_cloner_params(struct mini_spi_nor_info *mini_params);
 
 static void dump_params(void)
 {
-	struct burner_params *burner_params = &builtin_params.burner_params;
-	struct mini_spi_nor_info *mini_params = &builtin_params.mini_spi_nor_info;
+        int i = 0;
 
-	dump_cloner_params(burner_params);
-	dump_mini_cloner_params(mini_params);
+        struct burner_params *burner_params = &builtin_params.burner_params;
+        struct mini_spi_nor_info *mini_params = &builtin_params.mini_spi_nor_info;
 
-	printf("fs_erase_size=%d\n", burner_params->fs_erase_size);
-	printf("uk_quad=%d\n", burner_params->uk_quad);
+        dump_cloner_params(burner_params);
+        dump_mini_cloner_params(mini_params);
+
+        printf("fs_erase_size=%d\n", burner_params->fs_erase_size);
+        printf("uk_quad=%d\n", burner_params->uk_quad);
+
+#ifdef CONFIG_NOR_COMMON_PARAMS
+        for (i = 1; i < builtin_params_count; i++) {
+                dump_mini_cloner_params(p_common_params + i);
+        }
+#endif
 }
 
-void mini_spi_nor_info_init(struct burner_params *params, struct mini_spi_nor_info *mini)
+void mini_spi_nor_info_init(struct spi_nor_info *info, struct mini_spi_nor_info *mini)
 {
-	struct spi_nor_info *info = &params->spi_nor_info;
-
 	memcpy((void *)mini->name, (void *)info->name, sizeof(mini->name));
 	mini->id = info->id;
 	mini->read_standard = info->read_standard;
@@ -73,32 +89,46 @@ void mini_spi_nor_info_init(struct burner_params *params, struct mini_spi_nor_in
 
 static int nor_builtin_params_init(void)
 {
-	struct burner_params *burner_params = &builtin_params.burner_params;
-	struct mini_spi_nor_info *mini_params = &builtin_params.mini_spi_nor_info;
+        int i = 0;
 
-	/* 1.other params */
-	burner_params->magic = NOR_MAGIC;
-	burner_params->version = NOR_VERSION;
-	burner_params->fs_erase_size = builtin_private_params.fs_erase_size;
-	burner_params->uk_quad = builtin_private_params.uk_quad;
+        struct burner_params *burner_params = &builtin_params.burner_params;
+        struct mini_spi_nor_info *mini_params = &builtin_params.mini_spi_nor_info;
 
-	/* 2.spi nor info params */
-	memcpy((void *)&burner_params->spi_nor_info, &builtin_spi_nor_info,
-			sizeof(struct spi_nor_info));
+        /* 1.other params */
+        burner_params->magic = NOR_MAGIC;
+        burner_params->version = NOR_VERSION;
+        burner_params->fs_erase_size = builtin_private_params.fs_erase_size;
+        burner_params->uk_quad = builtin_private_params.uk_quad;
 
-	/* 3.nor flash partitions params */
-	memcpy((void *)&burner_params->norflash_partitions, &builtin_norflash_partitions,
-			sizeof(struct norflash_partitions));
+        /* 2.spi nor info params */
+        memcpy((void *)&burner_params->spi_nor_info, &builtin_spi_nor_info[i],
+                        sizeof(struct spi_nor_info));
+
+        /* 3.nor flash partitions params */
+        memcpy((void *)&burner_params->norflash_partitions, &builtin_norflash_partitions,
+                        sizeof(struct norflash_partitions));
 
 
-	/* 4.mini params */
-	mini_spi_nor_info_init(burner_params, mini_params);
+        /* 4.mini params */
+        mini_spi_nor_info_init(&burner_params->spi_nor_info, mini_params);
 
-	if(!burner_params->spi_nor_info.id && !mini_params->id) {
-		printf("nor builtin params init fail!\n");
-		return -EINVAL;
-	}
+        if(!burner_params->spi_nor_info.id && !mini_params->id) {
+                printf("nor builtin params init fail!\n");
+                return -EINVAL;
+        }
 
+#ifdef CONFIG_NOR_COMMON_PARAMS
+        for (i = 0; i < builtin_params_count; i++) {
+
+                /* 4.mini params */
+                mini_spi_nor_info_init(&builtin_spi_nor_info[i], p_common_params + i);
+
+                if(!(p_common_params + i)->id) {
+                        printf("nor builtin common params init fail!\n");
+                        return -EINVAL;
+                }
+        }
+#endif
 	return 0;
 }
 
@@ -107,7 +137,13 @@ int main(int argc, char *argv[])
 	int fd, i, ret, offset, params_length;
 	char *spl_path, *fix_file;
 
-	if (argc != 4) {
+#ifdef CONFIG_NOR_COMMON_PARAMS
+        int common_params_length, nor_id_info_length, nor_id_list_length;
+        common_params_length = sizeof(struct mini_spi_nor_info) * builtin_params_count;
+        p_common_params = (struct mini_spi_nor_info *)malloc(common_params_length);
+#endif
+
+        if (argc != 4) {
 		printf("Usage: %s fix_file spl_path offset\n",argv[0]);
 		return 1;
 	}
@@ -123,7 +159,7 @@ int main(int argc, char *argv[])
 		return ret;
 
 	/* dump builtin params */
-	//dump_params();
+	dump_params();
 
 	printf("fix_file:%s spl_path:%s offset:%d\n", fix_file, spl_path, offset);
 
@@ -144,9 +180,31 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+#ifdef CONFIG_NOR_COMMON_PARAMS
+        if (write(fd, (void *)p_common_params, common_params_length) != common_params_length) {
+		printf("write %s Error\n", spl_path);
+		return -1;
+	}
+
+        for (i = 0; i < nor_id_info_count; i++) {
+                nor_id_info_length = sizeof(struct nor_id_info) - sizeof(struct nor_id *);
+                if (write(fd, (void *)&nor_id_info_list[i], nor_id_info_length) != nor_id_info_length) {
+                        printf("write %s Error\n", spl_path);
+                        return -1;
+                }
+
+                nor_id_list_length = sizeof(struct nor_id) * nor_id_info_list[i].id_count;
+                if (write(fd, (void *)nor_id_info_list[i].id_list, nor_id_list_length) != nor_id_list_length) {
+                        printf("write %s Error\n", spl_path);
+                        return -1;
+                }
+        }
+
+        free(p_common_params);
+#endif
 	close(fd);
 
-	return 0;
+        return 0;
 }
 
 void dump_cloner_params(struct burner_params *params)

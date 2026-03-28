@@ -9,6 +9,7 @@
 #define CONFIG_SYS_LITTLE_ENDIAN
 #define CONFIG_X2000_V12	/* x2000_v12 SoC */
 
+#include "x2000_ddr.h"
 
 #define CONFIG_SYS_APLL_FREQ		1200000000	/*If APLL not use mast be set 0*/
 #define CONFIG_SYS_MPLL_FREQ		1500000000	/*If MPLL not use mast be set 0*/
@@ -60,68 +61,7 @@
 #endif
 
 
-/*
-#define CONFIG_DDR_TEST_CPU
-#define CONFIG_DDR_TEST
-#define CONFIG_DDR_TEST_DATALINE
-#define CONFIG_DDR_TEST_ADDRLINE
-*/
-
-#define CONFIG_DDR_INNOPHY
-#define CONFIG_DDR_DLL_OFF
-#define CONFIG_DDR_PARAMS_CREATOR
-#define CONFIG_DDR_HOST_CC
-/* #define CONFIG_DDR_TYPE_DDR3 */
-#ifndef CONFIG_X2100
-  #define CONFIG_DDR_TYPE_LPDDR3
-#endif
-
-#define CONFIG_DDR_TYPE_LPDDR2
-#define CONFIG_DDR_CS0			1	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_CS1			0	/* 1-connected, 0-disconnected */
-#define CONFIG_DDR_DW32			0	/* 1-32bit-width, 0-16bit-width */
-/*#define CONFIG_DDR3_TSD34096M1333C9_E*/
-
-#ifdef CONFIG_DDR_TYPE_LPDDR2
-#ifndef CONFIG_X2100
-  /* #define CONFIG_LPDDR2_FMT4D32UAB_25LI_FPGA */
-  /* #define CONFIG_LPDDR2_AD210032F_AB_FPGA */
-  #define CONFIG_LPDDR2_W97BV6MK
-  #define CONFIG_LPDDR2_W97BV6MK_MEM_FREQ		500000000
-#else
-  #define CONFIG_LPDDR2_M54D5121632A
-  #define CONFIG_LPDDR2_M54D5121632A_MEM_FREQ		500000000
-#endif
-#endif
-
-#ifdef CONFIG_DDR_TYPE_DDR3
-  #define CONFIG_DDR3_TSD34096M1333C9_E_FPGA
-#endif
-
-#ifdef CONFIG_DDR_TYPE_LPDDR3
-	/* #define CONFIG_LPDDR3_MT52L256M32D1PF_FPGA*/
-	/* #define CONFIG_LPDDR3_AD310032C_AB_FPGA */
-	#define CONFIG_LPDDR3_W63AH6NKB_BI
-	#define CONFIG_LPDDR3_NK6CL256M16DKX_H1
-#endif
-
-#define CONFIG_DDR_PHY_IMPEDANCE 40
-#define CONFIG_DDR_PHY_ODT_IMPEDANCE 120
-/* #define CONFIG_FPGA_TEST */
-/*#define CONFIG_DDR_AUTO_REFRESH_TEST*/
-
-#define CONFIG_DDR_AUTO_SELF_REFRESH
-#define CONFIG_DDR_AUTO_SELF_REFRESH_CNT 257
-/*#define CONFIG_DDRP_SOFTWARE_TRAINING   1*/
-
-/*
- * #define CONFIG_DDR_CHIP_ODT
- * #define CONFIG_DDR_PHY_ODT
- * #define CONFIG_DDR_PHY_DQ_ODT
- * #define CONFIG_DDR_PHY_DQS_ODT
- * #define CONFIG_DDR_PHY_IMPED_PULLUP		0xe
- * #define CONFIG_DDR_PHY_IMPED_PULLDOWN	0xe
- */
+#define CONFIG_SPL_COMMAND_ICACHE
 
 #if defined(CONFIG_SPL_SFC_NOR) || defined(CONFIG_SPL_SFC_NAND)
 #define CONFIG_SPL_SFC_SUPPORT
@@ -146,12 +86,14 @@
 #define CONFIG_SDHCI
 #define CONFIG_JZ_SDHCI
 
+#ifndef CONFIG_JZ_SCBOOT
 #ifdef CONFIG_BOOT_FAST_FIXED
 #define CONFIG_MMC_SDMA
 #define CONFIG_SPL_JZ_MSC_BUS_8BIT
 #define MSC_INIT_CLK                      (1 * 1000 * 1000)  /* 1M */
 #define MSC_WORKING_CLK                   (200 * 1000000)    /* 200M */
 #define CONFIG_SPL_RTOS_CARD_PARAMS_BASE  (0x80000A00)     /* 起始地址:CONFIG_PARAM_BASE + 512      大小:1024 */
+#endif /* end of CONFIG_BOOT_FAST_FIXED */
 #endif
 
 /* MSC Command configuration */
@@ -170,9 +112,11 @@
 #define CONFIG_MMC_SPL_PARAMS
 #define CONFIG_JZ_SDHCI
 
+#ifndef CONFIG_JZ_SCBOOT
 #ifdef CONFIG_BOOT_FAST_FIXED
 #define CONFIG_MMC_SDMA
 #define CONFIG_SPL_JZ_MSC_BUS_4BIT
+#endif /* end of CONFIG_BOOT_FAST_FIXED */
 #endif
 
 /* MSC Command configuration */
@@ -191,12 +135,14 @@
 #define CONFIG_MMC_SPL_PARAMS
 #define CONFIG_JZ_SDHCI
 
+#ifndef CONFIG_JZ_SCBOOT
 #ifdef CONFIG_BOOT_FAST_FIXED
 #define CONFIG_MMC_SDMA
 #define CONFIG_SPL_JZ_MSC_BUS_4BIT
 #define MSC_INIT_CLK                      (1 * 1000 * 1000)  /* 1M */
 #define MSC_WORKING_CLK                   (50 * 1000000)    /* 50M */
 #define CONFIG_SPL_RTOS_CARD_PARAMS_BASE  (0x80000A00)     /* CONFIG_PARAM_BASE + 512 */
+#endif /* end of CONFIG_BOOT_FAST_FIXED */
 #endif
 
 /* MSC Command configuration */
@@ -416,7 +362,7 @@
 #else
 #define CONFIG_SPL_TEXT_BASE		0xb2401000
 #endif	/*CONFIG_SPL_NOR_SUPPORT*/
-#define CONFIG_SPL_MAX_SIZE		(18 * 1024)
+#define CONFIG_SPL_MAX_SIZE		(24 * 1024)
 
 
 #ifdef CONFIG_SPL_NOR_SUPPORT
@@ -496,10 +442,6 @@
  */
 #define ARGS_CONSOLE ARG_CONSOLE_TTY ARG_CONSOLE_RATE
 
-#ifndef CONFIG_SPL_SERIAL_SUPPORT
-#define ARGS_CONSOLE "no_console"
-#endif
-
 #ifdef CONFIG_ARG_NO_CONSOLE
 #undef ARGS_CONSOLE
 #define ARGS_CONSOLE "no_console"
@@ -513,14 +455,25 @@
 
 /* boot args mem define
  */
+
+#define CONFIG_BOOTARGS_AUTO_MODIFY	1	/*auto detect memory size, and modify bootargs for kernel.*/
+
 #define CONFIG_SPL_AUTO_PROBE_ARGS_MEM
 #define ARGS_MEM_RESERVED "[mem-start------------------------------------------------------------mem-end]"
 #ifndef CONFIG_RMEM_MB
 #define CONFIG_RMEM_MB 0
 #endif
 
+#ifndef CONFIG_NMEM_MB
+#define CONFIG_NMEM_MB 0
+#endif
+
 #ifndef CONFIG_RTOS_SIZE_MB
 #define CONFIG_RTOS_SIZE_MB 0
+#endif
+
+#ifndef CONFIG_LCD_MEM_MB
+#define CONFIG_LCD_MEM_MB 0
 #endif
 
 /* boot args init program
@@ -547,41 +500,40 @@
 #error "please add more define here"
 #endif
 
-#ifndef CONFIG_ROOTFS_DEV
-
-#ifdef CONFIG_SPL_JZMMC_SUPPORT
-
-#ifdef CONFIG_RTOS_CONN_WITH_OS
-#define CONFIG_ROOTFS_DEV "root=/dev/mtdblock0 rootwait" " clk_ignore_unused "
+#if defined(CONFIG_RTOS_CONN_WITH_OS) || defined(CONFIG_SPL_RTOS_LOAD_KERNEL)
+#define CONFIG_CLK_IGNORE_UNUSED " clk_ignore_unused "
 #else
-#define CONFIG_ROOTFS_DEV "root=/dev/mmcblk0p2 rootwait"
-#endif
-
-#else
-#define CONFIG_ROOTFS_DEV CONFIG_FLASH_TYPE " " "root=/dev/mtdblock_bbt_ro2"
-#endif
-
+#define CONFIG_CLK_IGNORE_UNUSED " "
 #endif
 
 #ifdef CONFIG_LPJ
 #define CONFIG_BOGOMIPS "lpj="CONFIG_LPJ
 #else
 #define CONFIG_BOGOMIPS ""
+#endif /* CONFIG_LPJ */
+
+#ifndef CONFIG_ROOTFS_PARAM
+
+#ifndef CONFIG_ROOTFS_DEV
+#ifdef CONFIG_SPL_JZMMC_SUPPORT
+#define CONFIG_ROOTFS_DEV "root=/dev/mmcblk0p2 rootwait"
+#else
+#define CONFIG_ROOTFS_DEV "root=/dev/mtdblock_bbt_ro2"
+#endif /* CONFIG_SPL_JZMMC_SUPPORT */
+#endif /* CONFIG_ROOTFS_DEV */
+
+#ifdef CONFIG_SPL_JZMMC_SUPPORT
+#define CONFIG_ROOTFS_PARAM CONFIG_CLK_IGNORE_UNUSED " " CONFIG_ROOTFS_DEV
+#else
+#define CONFIG_ROOTFS_PARAM CONFIG_FLASH_TYPE CONFIG_CLK_IGNORE_UNUSED " " CONFIG_ROOTFS_DEV
 #endif
 
-#define ARGS_ROOTFS CONFIG_ROOTFS_INITRC" "CONFIG_ROOTFS_DEV" "ARG_ROOTFS_TYPE" "CONFIG_BOGOMIPS
+#endif /* CONFIG_ROOTFS_PARAM */
+
+#define ARGS_ROOTFS CONFIG_ROOTFS_INITRC" "CONFIG_ROOTFS_PARAM" "ARG_ROOTFS_TYPE" "CONFIG_BOGOMIPS
 
 /* boot args rootfs2
  */
-#ifndef CONFIG_ROOTFS2_DEV
-#ifdef CONFIG_SPL_JZMMC_SUPPORT
-#define CONFIG_ROOTFS2_DEV "root=/dev/mmcblk0p4 rootwait"
-#else
-#define CONFIG_ROOTFS2_DEV CONFIG_FLASH_TYPE " " "root=/dev/mtdblock_bbt_ro4"
-#endif
-#endif
-
-#ifdef CONFIG_ROOTFS2_DEV
 #if defined(CONFIG_ROOTFS2_EXT2)
 #define ARG_ROOTFS2_TYPE " ro" /* rootfstype=ext2 */
 #elif defined(CONFIG_ROOTFS2_UBI)
@@ -594,14 +546,42 @@
 #error "please add more define here"
 #endif
 
-#define ARGS_ROOTFS2 CONFIG_ROOTFS2_INITRC " " CONFIG_ROOTFS2_DEV " " ARG_ROOTFS2_TYPE
+#ifndef CONFIG_ROOTFS2_PARAM
+
+#ifndef CONFIG_ROOTFS2_DEV
+#ifdef CONFIG_SPL_JZMMC_SUPPORT
+#define CONFIG_ROOTFS2_DEV "root=/dev/mmcblk0p4 rootwait"
+#else
+#define CONFIG_ROOTFS2_DEV "root=/dev/mtdblock_bbt_ro4"
+#endif /* CONFIG_SPL_JZMMC_SUPPORT */
+#endif /* CONFIG_ROOTFS2_DEV */
+
+#ifdef CONFIG_SPL_JZMMC_SUPPORT
+#define CONFIG_ROOTFS2_PARAM CONFIG_CLK_IGNORE_UNUSED " " CONFIG_ROOTFS2_DEV
+#else
+#define CONFIG_ROOTFS2_PARAM CONFIG_FLASH_TYPE CONFIG_CLK_IGNORE_UNUSED " " CONFIG_ROOTFS2_DEV
 #endif
+#endif /* CONFIG_ROOTFS2_PARAM */
+
+#define ARGS_ROOTFS2 CONFIG_ROOTFS2_INITRC " " CONFIG_ROOTFS2_PARAM " " ARG_ROOTFS2_TYPE " " CONFIG_BOGOMIPS
 
 #ifndef CONFIG_ARGS_EXTRA
 #define CONFIG_ARGS_EXTRA ""
 #endif
 
 #define BOOTARGS_COMMON ARGS_CONSOLE " " ARGS_QUIET " " ARGS_MEM_RESERVED " " CONFIG_ARGS_EXTRA
+
+#ifdef CONFIG_SPL_RTOS_LOAD_KERNEL
+#ifndef CONFIG_SPL_RTOS_BOOT
+#define CONFIG_SPL_RTOS_BOOT 1
+#endif
+#ifndef CONFIG_SPL_OS_BOOT
+#define CONFIG_SPL_OS_BOOT 1
+#endif
+#ifndef CONFIG_RTOS_CAN_RETURN
+#define CONFIG_RTOS_CAN_RETURN 1
+#endif
+#endif
 
 #ifdef CONFIG_SPL_RTOS_BOOT
 
@@ -624,6 +604,9 @@
 #endif
     #define CONFIG_SPL_OTA_NAME       "ota"
     #define CONFIG_SPL_OS_NAME2       "kernel2"
+#ifdef CONFIG_JZ_SECURE_ROOTFS
+    #define CONFIG_SPL_ROOTFS_NAME2   "rootfs2"
+#endif /* end of CONFIG_JZ_SECURE_ROOTFS */
     #define CONFIG_SPL_BOOTARGS2      BOOTARGS_COMMON " " ARGS_ROOTFS2
     #define CONFIG_SYS_SPL_ARGS_ADDR2 CONFIG_SPL_BOOTARGS2
 #endif
@@ -632,12 +615,35 @@
     #define CONFIG_SPL_RTOS_NAME    "rtos"
     #define CONFIG_SPL_BOOTARGS	 BOOTARGS_COMMON " " ARGS_ROOTFS
     #define CONFIG_SPL_OS_NAME        "kernel" /* spi offset of xImage being loaded */
+    #define CONFIG_SPL_RTOS_LINUX_MAPPED_FILESYSTEM_NAME    "rtosdata"
     #define CONFIG_SYS_SPL_ARGS_ADDR    CONFIG_SPL_BOOTARGS
+#ifdef CONFIG_JZ_SECURE_ROOTFS
+    #define CONFIG_SPL_SIG_NAME         "signature"
+    #define CONFIG_SPL_ROOTFS_NAME      "rootfs"
+#endif
     #define CONFIG_BOOTX_BOOTARGS ""
     #undef  CONFIG_BOOTCOMMAND
     #define CONFIG_BOOTCOMMAND    ""
     #define CONFIG_LOAD_ADDR	0x80001000
 #endif	/* CONFIG_SPL_OS_BOOT */
+
+#ifdef CONFIG_BOOT_RTOS_OTA
+    #define CONFIG_SPL_RTOS_OTA_NAME  "rtos_ota"
+#ifndef CONFIG_SPL_OTA_NAME
+    #define CONFIG_SPL_OTA_NAME       "ota"
+#endif
+
+#ifndef CONFIG_SPL_RTOS_OTA_INFO
+    #define CONFIG_SPL_RTOS_OTA_INFO       "ota:rtos_ota"
+#endif
+
+#ifdef CONFIG_SPL_RTOS_BOOT
+#ifndef CONFIG_SPL_RTOS_NAME
+    #define CONFIG_SPL_RTOS_NAME    "rtos"
+#endif
+#endif /* CONFIG_SPL_RTOS_BOOT */
+
+#endif /* CONFIG_BOOT_RTOS_OTA */
 
 #define CONFIG_BOOTARGS ""
 

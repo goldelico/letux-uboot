@@ -21,6 +21,12 @@
  */
 #include "ddr_params_creator.h"
 
+#if (defined(CONFIG_X2600) || defined(CONFIG_AD100))
+#define REMAP_ARR_SIZE 6
+#else
+#define REMAP_ARR_SIZE 5
+#endif
+
 unsigned int __ps_per_tck = -1;
 /**
  * ps2cycle:   translate timing(ps) to clk count
@@ -45,7 +51,7 @@ union ddrc_refcnt {
 		unsigned clk_div:3;
 		unsigned reserved4_15:12;
 		unsigned con:8;
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500))
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500) || defined(CONFIG_X2600) || defined(CONFIG_AD100))
 		unsigned reserved24_31:8;
 #else
 		unsigned rfc:6;
@@ -67,7 +73,7 @@ static void get_refcnt_value(struct ddr_params *p, unsigned int *rfc, unsigned i
 
 	tmp = ps2cycle_floor(p->private_params.ddr_base_params.tREFI);
 	/* TODO: x2000 need??*/
-#if ((!defined CONFIG_X2000_V12) && (!defined CONFIG_M300) && (!defined CONFIG_X2100) && (!defined CONFIG_X2500))
+#if ((!defined CONFIG_X2000_V12) && (!defined CONFIG_M300) && (!defined CONFIG_X2100) && (!defined CONFIG_X2500) && (!defined CONFIG_X2600) && (!defined CONFIG_AD100))
 	tmp -= 16; // controller is add 16 cycles.
 #endif
 	if(tmp < 0){
@@ -89,7 +95,7 @@ static void get_refcnt_value(struct ddr_params *p, unsigned int *rfc, unsigned i
 	tmp = ps2cycle_ceil(p->private_params.ddr_base_params.tRFC,2) / 2;
 	if(tmp < 0)
 		tmp = 0;
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500))
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500) || defined(CONFIG_X2600) || defined(CONFIG_AD100))
 	ASSERT_MASK(tmp, 8);
 #else
 	ASSERT_MASK(tmp, 6);
@@ -114,7 +120,7 @@ static void get_dynamic_refcnt(struct ddr_params *p)
 
 		drefcnt.refcnt.clk_div = clk_div;
 		drefcnt.refcnt.con = con;
-#if ((!defined CONFIG_X2000_V12) && (!defined CONFIG_M300))
+#if ((!defined CONFIG_X2000_V12) && (!defined CONFIG_M300) && (!defined CONFIG_X2600) && (!defined CONFIG_AD100))
 		drefcnt.refcnt.rfc = rfc;
 #endif
 /*		printf("#define DDRC_REFCNT_VALUE_%d		0x%08x\n", div, drefcnt.d32); */
@@ -207,7 +213,7 @@ static void ddrc_base_params_creator_common(struct ddrc_reg *ddrc, struct ddr_pa
 {
 	int tmp;
 	int div;
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500))
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500) || defined(CONFIG_X2600) || defined(CONFIG_AD100))
 	unsigned int rfc;
 #endif
 	/* tWTR is differ in lpddr & lpddr2 & ddr2 & ddr3*/
@@ -242,7 +248,7 @@ static void ddrc_base_params_creator_common(struct ddrc_reg *ddrc, struct ddr_pa
 	 */
 	DDRC_TIMING_SET(4,ddr_base_params,tRAS,6);
 	DDRC_TIMING_SET(4,ddr_base_params,tRRD,6);
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500))
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500) || defined(CONFIG_X2600) || defined(CONFIG_AD100))
 	DDRC_TIMING_SET(4,ddr_base_params,tRC,7);
 #else
 	DDRC_TIMING_SET(4,ddr_base_params,tRC,6);
@@ -253,7 +259,7 @@ static void ddrc_base_params_creator_common(struct ddrc_reg *ddrc, struct ddr_pa
 	 * timing5
 	 */
 	tmp = ps2cycle_ceil(p->private_params.ddr_base_params.tCKE,1);
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500))
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500) || defined(CONFIG_X2600) || defined(CONFIG_AD100))
 	ASSERT_MASK(tmp,4);
 #else
 	ASSERT_MASK(tmp,3);
@@ -274,13 +280,13 @@ static void ddrc_base_params_creator_common(struct ddrc_reg *ddrc, struct ddr_pa
 	/* tFAW is differ in lpddr & lpddr2 & ddr2 & ddr3*/
 	/* tXSR is differ in lpddr & lpddr2 & ddr2 & ddr3*/
 	{
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500))
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500) || defined(CONFIG_X2600) || defined(CONFIG_AD100))
 		unsigned int con, clk_div;
 #else
 		unsigned int rfc, con, clk_div;
 #endif
 		get_refcnt_value(p, &rfc, &con, &clk_div);
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500))
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500) || defined(CONFIG_X2600) || defined(CONFIG_AD100))
 		ddrc->refcnt = (con << DDRC_REFCNT_CON_BIT)
 			| (clk_div << DDRC_REFCNT_CLK_DIV_BIT)
 			| DDRC_REFCNT_REF_EN
@@ -325,7 +331,7 @@ static void ddrc_base_params_creator_common(struct ddrc_reg *ddrc, struct ddr_pa
 	/* ddrc->refcnt |= tmp << DDRC_REFCNT_TRFC_BIT; */
 
 
-#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500))
+#if (defined(CONFIG_X2000_V12) || defined(CONFIG_M300) || defined(CONFIG_X2100) || defined(CONFIG_X2500) || defined(CONFIG_X2600) || defined(CONFIG_AD100))
 	ddrc->autosr_cnt = (rfc << 24) | CONFIG_DDR_AUTO_SELF_REFRESH_CNT;
 #else
 	ddrc->autosr_cnt = CONFIG_DDR_AUTO_SELF_REFRESH_CNT;
@@ -385,7 +391,7 @@ static void ddrc_config_creator(struct ddrc_reg *ddrc, struct ddr_params *p)
 	}
 
 	/* CTRL */
-	ddrc->ctrl = DDRC_CTRL_ACTPD | DDRC_CTRL_PDT_32  | DDRC_CTRL_CKE |
+	ddrc->ctrl = DDRC_CTRL_PDT_32  | DDRC_CTRL_CKE |
 		DDRC_CTRL_PD_CCE | DDRC_CTRL_SR_CCE;
 
 	/* MMAP0,1 */
@@ -470,10 +476,17 @@ static void ddrp_config_creator(struct ddrp_reg *ddrp, struct ddr_params *p)
 		case D:				\
 			ddrp->memcfg.b.memsel = P;\
 			break
+#if ((!defined CONFIG_X2600) && (!defined CONFIG_AD100))
 		_CASE(LPDDR2, 3);
 		_CASE(LPDDR3, 2);
 		_CASE(DDR2, 1);
 		_CASE(DDR3, 0);
+#else
+		_CASE(LPDDR3, 3);
+		_CASE(DDR3, 2);
+		_CASE(LPDDR2, 1);
+		_CASE(DDR2, 0);
+#endif
 #undef _CASE
 	default:
 		break;
@@ -483,6 +496,10 @@ static void ddrp_config_creator(struct ddrp_reg *ddrp, struct ddr_params *p)
 		ddrp->memcfg.b.brusel = 0;
 	else if(p->bl == 8)
 		ddrp->memcfg.b.brusel = 1;
+#if (defined CONFIG_X2600) || (defined CONFIG_AD100)
+	ddrp->memcfg.b.reserved6_7= 2;
+#endif
+
 }
 
 static unsigned int frandom(int max)
@@ -508,7 +525,7 @@ static void fill_mem_remap(struct ddr_reg_value *reg, struct ddr_params *p)
 	int bank_bits;
 	int startA, startB;
 	int bit_width;
-	unsigned int remap_array[5];
+	unsigned int remap_array[REMAP_ARR_SIZE];
 	unsigned char *s;
 	int i,width;
 	s = (unsigned char *)remap_array;
@@ -530,7 +547,20 @@ static void fill_mem_remap(struct ddr_reg_value *reg, struct ddr_params *p)
 	 * count address space bits for swap.
 	 */
 	swap_bits = bank_bits + (CONFIG_DDR_CS0 + CONFIG_DDR_CS1 - 1);
+#if ((defined CONFIG_X2600) || (defined CONFIG_AD100))
+	startA = bit_width + p->col > 8 ? bit_width + p->col : 8;
 
+	startB = address_bits - swap_bits - 8;
+	startA = startA - 8;
+
+    	/*
+	 * bank and cs swap with row.
+	 */
+	for(i = 0;i < swap_bits;i++){
+		swap_bytes(s,startA + i,startB + i);
+		//swap_bytes(s,startA + i,startB + i,startB);
+	}
+#else
 	startA = bit_width + p->col > 12 ? bit_width + p->col : 12;
 
 	startB = address_bits - swap_bits - startA;
@@ -542,8 +572,8 @@ static void fill_mem_remap(struct ddr_reg_value *reg, struct ddr_params *p)
 		swap_bytes(s,startA + i,startB + i);
 		//swap_bytes(s,startA + i,startB + i,startB);
 	}
-
-	for(i = 0; i <5; i++)
+#endif
+	for(i = 0; i <REMAP_ARR_SIZE; i++)
 	{
 		reg->REMMAP_ARRAY[i] = remap_array[i];
 	}
@@ -646,6 +676,9 @@ int create_one_ddr_params(struct ddr_chip_info *chip, struct ddr_reg_value *reg)
 	reg->h.type = chip->type;
 	memcpy(reg->h.name, chip->name, sizeof(reg->h.name));
 
+        memcpy(&reg->phy_drvodt, &chip->phy_drvodt, sizeof(struct phy_drvodt_config));
+        memcpy(&reg->phy_deskew, &chip->phy_deskew, sizeof(struct phy_deskew_config));
+
 	fill_reg_value(reg, &ddrc, &ddrp, &ddr_params);
 
 }
@@ -686,7 +719,7 @@ void dump_generated_reg(struct ddr_reg_value *reg)
 	printf("DDR_MR63_VALUE        = %08x\n", reg->DDR_MR63_VALUE);
 	printf("DDR_CHIP_0_SIZE       = %08x\n", reg->DDR_CHIP_0_SIZE);
 	printf("DDR_CHIP_1_SIZE       = %08x\n", reg->DDR_CHIP_1_SIZE);
-	for(i = 0; i < 5; i++) {
+	for(i = 0; i < REMAP_ARR_SIZE; i++) {
 		printf("REMMAP_ARRAY[%d] = %08x\n", i, reg->REMMAP_ARRAY[i]);
 	}
 
@@ -731,10 +764,41 @@ void dump_generated_reg_struct(struct ddr_reg_value *reg)
 	printf("	.DDR_MR63_VALUE        = 0x%08x,\n", reg->DDR_MR63_VALUE);
 	printf("	.DDR_CHIP_0_SIZE       = 0x%08x,\n", reg->DDR_CHIP_0_SIZE);
 	printf("	.DDR_CHIP_1_SIZE       = 0x%08x,\n", reg->DDR_CHIP_1_SIZE);
-	for(i = 0; i < 5; i++) {
+	for(i = 0; i < REMAP_ARR_SIZE; i++) {
 		printf("	.REMMAP_ARRAY[%d] = 0x%08x,\n", i, reg->REMMAP_ARRAY[i]);
 	}
-	printf("},\n");
+        printf("	.phy_drvodt = {\n");
+        printf("                .use_drvodt_config    = 0x%02x,\n", reg->phy_drvodt.use_drvodt_config);
+        printf("                .phy_pu_drv_cmd       = 0x%02x,\n", reg->phy_drvodt.phy_pu_drv_cmd);
+        printf("                .phy_pd_drv_cmd       = 0x%02x,\n", reg->phy_drvodt.phy_pd_drv_cmd);
+        printf("                .phy_pu_drv_ck        = 0x%02x,\n", reg->phy_drvodt.phy_pu_drv_ck);
+        printf("                .phy_pd_drv_ck        = 0x%02x,\n", reg->phy_drvodt.phy_pd_drv_ck);
+        printf("                .phy_pu_drv_dq7_0     = 0x%02x,\n", reg->phy_drvodt.phy_pu_drv_dq7_0);
+        printf("                .phy_pd_drv_dq7_0     = 0x%02x,\n", reg->phy_drvodt.phy_pd_drv_dq7_0);
+        printf("                .phy_pu_drv_dq15_8    = 0x%02x,\n", reg->phy_drvodt.phy_pu_drv_dq15_8);
+        printf("                .phy_pd_drv_dq15_8    = 0x%02x,\n", reg->phy_drvodt.phy_pd_drv_dq15_8);
+        printf("                .phy_pu_odt_dq7_0     = 0x%02x,\n", reg->phy_drvodt.phy_pu_odt_dq7_0);
+        printf("                .phy_pd_odt_dq7_0     = 0x%02x,\n", reg->phy_drvodt.phy_pd_odt_dq7_0);
+        printf("                .phy_pu_odt_dq15_8    = 0x%02x,\n", reg->phy_drvodt.phy_pu_odt_dq15_8);
+        printf("                .phy_pd_odt_dq15_8    = 0x%02x,\n", reg->phy_drvodt.phy_pd_odt_dq15_8);
+        printf("        },\n");
+        printf("	.phy_deskew = {\n");
+        printf("                .use_deskew_config    = 0x%02x,\n", reg->phy_deskew.use_deskew_config);
+        printf("                .phy_deskew_cmd       = 0x%02x,\n", reg->phy_deskew.phy_deskew_cmd);
+        printf("                .phy_deskew_rx_dm0    = 0x%02x,\n", reg->phy_deskew.phy_deskew_rx_dm0);
+        printf("                .phy_deskew_tx_dm0    = 0x%02x,\n", reg->phy_deskew.phy_deskew_tx_dm0);
+        printf("                .phy_deskew_rx_dq7_0  = 0x%02x,\n", reg->phy_deskew.phy_deskew_rx_dq7_0);
+        printf("                .phy_deskew_tx_dq7_0  = 0x%02x,\n", reg->phy_deskew.phy_deskew_tx_dq7_0);
+        printf("                .phy_deskew_rx_dqs0   = 0x%02x,\n", reg->phy_deskew.phy_deskew_rx_dqs0);
+        printf("                .phy_deskew_tx_dqs0   = 0x%02x,\n", reg->phy_deskew.phy_deskew_tx_dqs0);
+        printf("                .phy_deskew_rx_dm1    = 0x%02x,\n", reg->phy_deskew.phy_deskew_rx_dm1);
+        printf("                .phy_deskew_tx_dm1    = 0x%02x,\n", reg->phy_deskew.phy_deskew_tx_dm1);
+        printf("                .phy_deskew_rx_dq15_8 = 0x%02x,\n", reg->phy_deskew.phy_deskew_rx_dq15_8);
+        printf("                .phy_deskew_tx_dq15_8 = 0x%02x,\n", reg->phy_deskew.phy_deskew_tx_dq15_8);
+        printf("                .phy_deskew_rx_dqs1   = 0x%02x,\n", reg->phy_deskew.phy_deskew_rx_dqs1);
+        printf("                .phy_deskew_tx_dqs1   = 0x%02x,\n", reg->phy_deskew.phy_deskew_tx_dqs1);
+        printf("        },\n");
+        printf("},\n");
 
 }
 
@@ -757,6 +821,11 @@ int main(int argc, char *argv[])
 #ifdef CONFIG_DDR_TYPE_DDR3
 	ddr3_creator_init();
 #endif
+
+#ifdef CONFIG_DDR_TYPE_DDR2
+	ddr2_creator_init();
+#endif
+
 	generated_reg_values = malloc(ddr_nums * sizeof(struct ddr_reg_value));
 
 	create_supported_ddr_params(generated_reg_values);

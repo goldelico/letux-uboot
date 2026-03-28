@@ -125,6 +125,25 @@ void spl_parse_image_header(const struct image_header *header)
 	}
 }
 
+void spl_parse_image_info(const struct image_header *header, struct image_info *info)
+{
+	info->type = image_get_type(header);
+	info->comp = image_get_comp(header);
+	info->os = image_get_os(header);
+
+	info->end = image_get_image_end(header);
+	info->load = image_get_load(header);
+
+	info->image_start = image_get_data(header);
+	info->image_len = image_get_data_size(header);
+
+	if (info->type == IH_TYPE_KERNEL_NOLOAD) {
+		info->load = info->image_start;
+		spl_image.entry_point += info->load;
+	}
+	info->start = (ulong)header;
+}
+
 __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
 	typedef void __noreturn (*image_entry_noargs_t)(void);
@@ -258,13 +277,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		hang();
 	}
 
-#ifdef CONFIG_SPL_RTOS_BOOT
-	/* RTOS只完成引导,但没有启动 */
-	if (spl_rtos_get_spl_image_info()) {
-		memcpy(&spl_image, spl_rtos_get_spl_image_info(), sizeof(struct rtos_boot_os_args) );
-	}
-#endif
-
 	switch (spl_image.os) {
 	case IH_OS_U_BOOT:
 		debug("Jumping to U-Boot\n");
@@ -276,12 +288,15 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 
 		cmdargs = cmdargs ? cmdargs : CONFIG_SYS_SPL_ARGS_ADDR;
 		cmdargs = spl_board_process_bootargs(cmdargs);
-#ifdef CONFIG_SPL_AUTO_PROBE_ARGS_MEM
+#if defined(CONFIG_SPL_AUTO_PROBE_ARGS_MEM) && !defined(CONFIG_SPL_RTOS_LOAD_KERNEL)
 		cmdargs = spl_board_process_mem_bootargs(cmdargs);
 #endif
 		debug("get cmdargs: %s.\n", cmdargs);
 		jump_to_image_linux((void *)cmdargs);
 #endif
+	case IH_OS_ALIOS:
+		debug("Jumping to Alios\n");
+		break;
 	default:
 		debug("Unsupported OS image.. Jumping nevertheless..\n");
 	}
@@ -293,6 +308,12 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
  * This requires UART clocks to be enabled.  In order for this to work the
  * caller must ensure that the gd pointer is valid.
  */
+#ifdef CONFIG_GPIO_SPI_TO_UART
+extern int gpio_spi_to_uart_init(void);
+#endif
+#ifdef CONFIG_GPIO_SPI_TO_UART2
+extern int gpio_spi_to_uart_init2(void);
+#endif
 void preloader_console_init(void)
 {
 	gd->bd = &bdata;
@@ -304,12 +325,19 @@ void preloader_console_init(void)
 #ifdef CONFIG_PALLADIUM
 	gd->baudrate = 3750000;
 #endif
+#if defined CONFIG_GPIO_SPI_TO_UART
+	gpio_spi_to_uart_init();
+#elif defined CONFIG_GPIO_SPI_TO_UART2
+	gpio_spi_to_uart_init2();
+#else
 	serial_init();		/* serial communications setup */
+#endif
 
 	gd->have_console = 1;
-
-	puts("\nU-Boot SPL " PLAIN_VERSION " (" U_BOOT_DATE " - " \
+#ifndef CONFIG_DDR_DRVODT_DEBUG
+	serial_debug("\nU-Boot SPL " PLAIN_VERSION " (" U_BOOT_DATE " - " \
 			U_BOOT_TIME ")\n");
+#endif
 #ifdef CONFIG_SPL_DISPLAY_PRINT
 	spl_display_print();
 #endif

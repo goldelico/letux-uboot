@@ -99,8 +99,39 @@ int ubi_check_volume(struct ubi_device *ubi, int vol_id)
  */
 void ubi_calculate_reserved(struct ubi_device *ubi)
 {
+#ifdef CONFIG_MTD_UBI_BEB_LIMIT
+
+/*
+ * Multiplies an integer by a fraction, while avoiding unnecessary
+ * overflow or loss of precision.
+ */
+#define mult_frac(x, numer, denom)(                     \
+{                                                       \
+        typeof(x) quot = (x) / (denom);                 \
+        typeof(x) rem  = (x) % (denom);                 \
+        (quot * (numer)) + ((rem * (numer)) / (denom)); \
+}                                                       \
+)
+
+	int max_beb_per1024 = CONFIG_MTD_UBI_BEB_LIMIT;
+	int limit, device_pebs;
+	uint64_t device_size;
+
+	device_size = mtd_get_device_size(ubi->mtd);
+	device_pebs = mtd_div_by_eb(device_size, ubi->mtd);
+
+	limit = mult_frac(device_pebs, max_beb_per1024, 1024);
+
+	/* Round it up */
+	if (mult_frac(limit, 1024, max_beb_per1024) < device_pebs)
+		limit += 1;
+
+	ubi->beb_rsvd_level = limit;
+
+#else
 	ubi->beb_rsvd_level = ubi->good_peb_count/100;
 	ubi->beb_rsvd_level *= CONFIG_MTD_UBI_BEB_RESERVE;
 	if (ubi->beb_rsvd_level < MIN_RESEVED_PEBS)
 		ubi->beb_rsvd_level = MIN_RESEVED_PEBS;
+#endif
 }

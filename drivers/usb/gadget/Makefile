@@ -43,8 +43,9 @@ COBJS-$(CONFIG_FASTBOOT_GADGET) += g_fastboot.o
 COBJS-$(CONFIG_FASTBOOT_FUNCTION) += f_fastboot.o fb_mmc.o image-sparse.o
 COBJS-$(CONFIG_USB_JZ_BURNER_GADGET) += g_burntool.o
 COBJS-$(CONFIG_JZ_VERDOR_BURN_FUNCTION) += f_jz_cloner.o
-COBJS-$(CONFIG_USBSERIAL_FUNCTION) += f_serial.o g_serial.o
-SUBOBJS-$(CONFIG_JZ_VERDOR_BURN_FUNCTION) += cloner/libcloner_module_mg.o
+COBJS-$(CONFIG_G_PRINTER_FUNCTION) += g_printer.o
+COBJS-$(CONFIG_USBSERIAL_FUNCTION) += f_acm.o g_serial.o
+SUBOBJS-$(CONFIG_JZ_VERDOR_BURN_FUNCTION) += cloner/libcloner_moudle_mg.o
 SUBOBJS-$(CONFIG_HID_KEYBOARD_DEMO) += hid/libhid.o
 endif
 ifdef CONFIG_USB_ETHER

@@ -69,13 +69,14 @@
 #define CPM_CPVPACR	(0xE4)
 #define CPM_GMACPHYC	(0xE8)
 
+#define CPM_SOFT_APPR	(0x9C)
 /************power/reset management*********/
 #define CPM_LCR		(0x04)
 #define CPM_CLKGR0  (0x20)
 #define CPM_OPCR    (0x24)
 #define CPM_CLKGR1  (0x28)
 
-#define CPM_SRBC0   (0xc4)
+#define CPM_SRBC   (0xC4)
 #define CPM_MESTSEL (0xEC)
 /******************************************/
 
@@ -134,6 +135,8 @@
 #define OPCR_PD			(0x1<<3)
 #define OPCR_IDLE		(0x1<<31)
 
+#define CPM_SLBC_OTG_SR		(1 << 12)
+
 #define cpm_readl(off)          readl(CPM_BASE + (off))
 #define cpm_writel(val,off)     writel(val, CPM_BASE + (off))
 #define cpm_inl(off)		readl(CPM_BASE + (off))
@@ -148,6 +151,9 @@
 #define MSCCDR_MPCS_MASK        (3 << MSCCDR_MPCS)
 #define MSCCDR_MPCS_EXCLK       (3 << MSCCDR_MPCS)
 
+/*USBRDT*/
+#define USBRDT_IDDIG_EN		(1 << 1)
+#define USBRDT_IDDIG_REG        (1 << 0)
 
 /*USBCDR*/
 #define USBCDR_UCS_PLL		(1 << 31)

@@ -1,19 +1,18 @@
 #include <stdio.h>
 #include "nand_common.h"
 
-#define TC_MID			    0x98
-#define TC_NAND_DEVICD_COUNT	    1
 
-static unsigned char tc_xaw[] = {0x2};
+static unsigned char tc_errstat_2[] = {0x2, 0x3};
 
-static struct device_struct device[1] = {
-	DEVICE_STRUCT(0xC2, 2048, 2, 4, 2, 1, tc_xaw),
+static struct device_struct device[] = {
+	DEVICE_STRUCT(0xC2, 2048, 2, 4, 2, 1, tc_errstat_2, 0),
+	DEVICE_STRUCT(0xED, 4096, 2, 4, 2, 1, tc_errstat_2, 0),
 };
 
 static struct nand_desc tc_nand = {
 
-	.id_manufactory = TC_MID,
-	.device_counts = TC_NAND_DEVICD_COUNT,
+	.id_manufactory = 0x98,
+	.device_counts = ARRAY_SIZE(device),
 	.device = device,
 };
 

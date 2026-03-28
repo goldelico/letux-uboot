@@ -30,7 +30,7 @@
 #define CPM_MACPHYCDR		(0x54)
 #define CPM_I2S0CDR		(0x60)
 #define CPM_I2S0CDR1		(0x70)
-#define CPM_I2S1CDR		(0x7C)
+#define CPM_I2S1CDR		(0x7c)
 #define CPM_I2S1CDR1		(0x80)
 #define CPM_LPCDR		(0x64)
 #define CPM_MSC0CDR		(0x68)
@@ -121,11 +121,98 @@
 
 #define CPM_SLBC_OTG_SR		(1 << 12)
 
+/*USBCDR*/
+#define USBCDR_UCS_PLL		(1 << 31)
+#define USBCDR_UPCS_MPLL	(1 << 30)
+#define USBCDR_CE_USB		(1 << 29)
+#define USBCDR_USB_BUSY		(1 << 28)
+#define USBCDR_USB_STOP		(1 << 27)
+#define USBCDR_USB_DIS		(1 << 26)
+#define USBCDR_MIPI_CS		(1 << 25)
+#define USBCDR_USBCDR_MSK	(0xff)
+
+/*USBPCR*/
+#define USBPCR_USB_MODE_ORG	(1 << 31)
+#define USBPCR_VBUSVLDEXT	(1 << 24)
+#define USBPCR_VBUSVLDEXTSEL	(1 << 23)
+#define USBPCR_POR		(1 << 22)
+#define USBPCR_OTG_DISABLE	(1 << 20)
+
+/*USBPCR1*/
+#define USBPCR1_REFCLKSEL_BIT	(26)
+#define USBPCR1_REFCLKSEL_MSK	(0x3 << USBPCR1_REFCLKSEL_BIT)
+#define USBPCR1_REFCLKSEL_CORE	(0x2 << USBPCR1_REFCLKSEL_BIT)
+#define USBPCR1_REFCLKSEL_EXT	(0x1 << USBPCR1_REFCLKSEL_BIT)
+#define USBPCR1_REFCLKSEL_CSL	(0x0 << USBPCR1_REFCLKSEL_BIT)
+#define USBPCR1_REFCLKDIV_BIT	(24)
+#define USBPCR1_REFCLKDIV_MSK	(0X3 << USBPCR1_REFCLKDIV_BIT)
+#define USBPCR1_REFCLKDIV_19_2M	(0x3 << USBPCR1_REFCLKDIV_BIT)
+#define USBPCR1_REFCLKDIV_48M	(0x2 << USBPCR1_REFCLKDIV_BIT)
+#define USBPCR1_REFCLKDIV_24M	(0x1 << USBPCR1_REFCLKDIV_BIT)
+#define USBPCR1_REFCLKDIV_12M	(0x0 << USBPCR1_REFCLKDIV_BIT)
+#define USBPCR1_WORD_IF_16_30	(1 << 19)
+
+#define OPCR_SPENDN		(1 << 7)
+
+#ifndef BIT
+#define BIT(nr)  (1UL << nr)
+#endif
+
+/*USB Parameter Control Register*/
+#define USBPCR_USB_MODE                 BIT(31)
+#define USBPCR_AVLD_REG                 BIT(30)
+#define USBPCR_IDPULLUP_MASK_BIT        28
+#define USBPCR_IDPULLUP_MASK		(0x3 << USBPCR_IDPULLUP_MASK_BIT)
+#define USBPCR_IDPULLUP_OTG             (0x0 << USBPCR_IDPULLUP_MASK_BIT)
+#define USBPCR_IDPULLUP_ALWAYS_SUSPEND  (0x1 << USBPCR_IDPULLUP_MASK_BIT)
+#define USBPCR_IDPULLUP_ALWAYS          (0x2 << USBPCR_IDPULLUP_MASK_BIT)
+#define USBPCR_INCR_MASK                BIT(27)
+
+/*USB Reset Detect Timer Register*/
+#define USBRDT_RESUME_INTEEN		BIT(31)	/*RW*/
+#define USBRDT_RESUME_INTERCLR		BIT(30)	/*W0*/
+#define USBRDT_RESUME_SPEED_BIT		28	/*RW*/
+#define USBRDT_RESUME_SPEED_MSK		(0x3 << USBRDT_RESUME_SPEED_BIT)
+#define USBRDT_RESUME_SPEED_HIGH	(0x0 << USBRDT_RESUME_SPEED_BIT)
+#define USBRDT_RESUME_SPEED_FULL	(0x1 << USBRDT_RESUME_SPEED_BIT)
+#define USBRDT_RESUME_SPEED_LOW		(0x2 << USBRDT_RESUME_SPEED_BIT)
+#define USBRDT_RESUME_STATUS		BIT(27)	/*RO*/
+#define USBRDT_HB_MASK                  BIT(26)
+#define USBRDT_VBFIL_LD_EN              BIT(25)
+#define USBRDT_IDDIG_EN			BIT(24)
+#define USBRDT_IDDIG_REG                BIT(23)
+#define USBRDT_USBRDT_MSK               (0x7fffff)
+#define USBRDT_USBRDT(x)                ((x) & USBRDT_USBRDT_MSK)
+
+/*USB VBUS Jitter Filter Register*/
+#define USBVBFIL_USBVBFIL(x)		((x) & 0xffff)
+#define USBVBFIL_IDDIGFIL(x)		((x) & (0xffff << 16))
+
+/*USB Parameter Control Register1*/
+#define USBPCR1_BVLD_REG        BIT(31)
+#define USBPCR1_DPPULLDOWN	BIT(29)
+#define USBPCR1_DMPULLDOWN	BIT(28)
+#define USBPCR1_PORT_RST	BIT(21)
+
+/*Oscillator and Power Control Register*/
+#define OPCR_USB_SPENDN		BIT(7)
+#define OPCR_USB_PHY_GATE	BIT(23)
+
+
+#define LCR_LPM_MASK		(0x3)
+#define LCR_LPM_SLEEP		(0x1)
+
+#define OPCR_ERCS		(0x1<<2)
+#define OPCR_PD			(0x1<<3)
+#define OPCR_IDLE		(0x1<<31)
+
 #define cpm_inl(off)		readl(CPM_BASE + (off))
 #define cpm_outl(val,off)	writel(val,CPM_BASE + (off))
 #define cpm_clear_bit(val,off)	do{cpm_outl((cpm_inl(off) & ~(1<<(val))),off);}while(0)
 #define cpm_set_bit(val,off)	do{cpm_outl((cpm_inl(off) |  (1<<val)),off);}while(0)
 #define cpm_test_bit(val,off)	(cpm_inl(off) & (0x1<<val))
+#define cpm_writel(val,off)   writel(val,CPM_BASE + (off))
+#define cpm_readl(off)        readl(CPM_BASE + (off))
 
 /* CPM scratch pad protected register(CPSPPR) */
 #define CPSPPR_CPSPR_WRITABLE   (0x00005a5a)

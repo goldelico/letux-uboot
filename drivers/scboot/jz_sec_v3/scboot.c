@@ -95,7 +95,6 @@ static int setup_sckeys(void *addr, unsigned int *len)
 	int iLoop = 0;
 	unsigned int ret;
 
-#ifdef CONFIG_X1600
 	/* parsing sc_key: info */
 	for (iLoop = 0; iLoop < SC_KEY_INFO_WORD_SIZE; iLoop++)
 		tcsmptr[SC_KEY_INFO_WORD_OFF + iLoop]
@@ -149,18 +148,7 @@ static int setup_sckeys(void *addr, unsigned int *len)
 				tcsmptr + SC_KEY_KU_WORD_OFF,
 				SC_KEY_N_WORD_SIZE);
 	}
-#else
-	/* 384 * 4 = 1536, sc_key */
-	for (iLoop = 0; iLoop < SC_KEY_SIZE/4; iLoop++)
-		tcsmptr[iLoop] = ddrptr[iLoop];
 
-	*len = tcsmptr[0]; /* image length */
-
-	/* len must 4 wrod align */
-	if((*len) == 0 || (*len) % 16)
-		return -1;
-
-#endif
 	return 0;
 }
 
@@ -174,7 +162,7 @@ static int start_scboot(void *input, void *output, unsigned int binlen)
 	int *srcptr = (int *)(input + SC_MAGIC_SIZE + SC_KEY_SIZE);
 	int *dstptr = (int *)(output);
 
-#ifdef CONFIG_X1600
+#if 1
 	int newround = 1;
 	int endround = 0;
 	int pos = 0;
@@ -201,8 +189,6 @@ static int start_scboot(void *input, void *output, unsigned int binlen)
 		binlen -= SC_MAX_SIZE_PERTIME;
 	} while (!endround);
 
-//			if(ret)
-//				return ret;
 #else
 
 	args->arg[0] = 1 | (1 << 1) | (1 << 2); //bit 0:newround bit 1:endround bit 2:dmamode
@@ -260,28 +246,28 @@ int secure_scboot(void *input, void *output)
 
 	if(EFUSTATE_SECBOOT_EN == 0) {
 		if (issig == 0) {
-			printf("Normal boot...\n");
+			serial_debug("Normal boot...\n");
 			return 0;
 		} else {
-			printf("ERROR: please check image size !!\n");
+			serial_debug("ERROR: please check image size !!\n");
 			return -1;
 		}
 	} else if (EFUSTATE_SECBOOT_EN) {
 		if(issig == 1) {
-			printf("Security boot...\n");
+			serial_debug("Security boot...\n");
 			ret = setup_sckeys(input, &len);
 			if(ret) {
-				printf("ERROR: please check image size, ret = %x !!\n", ret);
+				serial_debug("ERROR: please check image size, ret = %x !!\n", ret);
 				return -1;
 			}
 
 			ret = start_scboot(input, output, len);
 			if(ret) {
-				printf("ERROR: please check your image, ret = %x!!\n", ret);
+				serial_debug("ERROR: please check your image, ret = %x!!\n", ret);
 				return -1;
 			}
 		} else {
-			printf("ERROR: please sign your image !!\n");
+			serial_debug("ERROR: please sign your image !!\n");
 			return -1;
 		}
 	}

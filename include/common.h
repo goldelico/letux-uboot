@@ -115,7 +115,7 @@ typedef volatile unsigned char	vu_char;
 #include <flash.h>
 #include <image.h>
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(CONFIG_SPL_SERIAL_SUPPORT)
 #define _DEBUG	1
 #else
 #define _DEBUG	0
@@ -134,6 +134,16 @@ typedef volatile unsigned char	vu_char;
 
 #define debug(fmt, args...)			\
 	debug_cond(_DEBUG, fmt, ##args)
+
+#ifndef CONFIG_SPL_SERIAL_SUPPORT
+#define serial_debug(fmt, args...)
+#else
+#define serial_debug(fmt, args...)		\
+	do {					\
+		printf(fmt, ##args);	\
+	} while (0)
+#endif
+
 
 /*
  * An assertion is run-time check done in debug mode only. If DEBUG is not

@@ -5,10 +5,12 @@
 #define RISCV_BIN_LOAD_ADDR 0x0c600000
 #define RISCV_BIN_MMC_ADDR 0xbb800000
 #define RISCV_BIN_NAND_ADDR 0x06900000
+#define RISCV_BIN_SIZE 300*1024
 
-#define SENSOR_BIN_LOAD_ADDR 0x0c680000
+#define SENSOR_BIN_LOAD_ADDR 0x0c6a0000
 #define SENSOR_BIN_MMC_ADDR 0xbb880000
 #define SENSOR_BIN_NAND_ADDR 0x06a00000
+#define	SENSOR_BIN_SIZE 201*1024
 #define LEP_RISCV_RESET_ENTRY       (RISCV_BIN_LOAD_ADDR + 0x80)
 
 static uint32_t ccu_readl(uint32_t off)
@@ -36,8 +38,8 @@ extern int sfc_nand_load(unsigned int src_addr, unsigned int count, unsigned int
 
 void spl_nand_load_riscv(void)
 {
-	sfc_nand_load(RISCV_BIN_NAND_ADDR, 132*1024, RISCV_BIN_LOAD_ADDR);
-	sfc_nand_load(SENSOR_BIN_NAND_ADDR, 201*1024, SENSOR_BIN_LOAD_ADDR);
+	sfc_nand_load(RISCV_BIN_NAND_ADDR, RISCV_BIN_SIZE, RISCV_BIN_LOAD_ADDR);
+	sfc_nand_load(SENSOR_BIN_NAND_ADDR, SENSOR_BIN_SIZE, SENSOR_BIN_LOAD_ADDR);
 }
 
 void spl_mmc_load_riscv(void)

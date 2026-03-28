@@ -44,16 +44,15 @@ struct fb_videomode jzfb1_videomode = {
 	.refresh = 30,
 	.xres = 720,
 	.yres = 1280,
-	.left_margin = 120,
+	.left_margin = 100,
 	.right_margin = 100,
-	.upper_margin = 25,
+	.upper_margin = 30,
 	.lower_margin = 20,
 	.hsync_len = 10,
-	.vsync_len = 10,
+	.vsync_len = 2,
 	.sync = FB_SYNC_HOR_HIGH_ACT & FB_SYNC_VERT_HIGH_ACT,
 	.vmode = FB_VMODE_NONINTERLACED,
 	.flag = 0,
-	.pixclock = 26283,
 };
 
 struct jzfb_tft_config fw050_cfg = {
@@ -98,7 +97,13 @@ struct video_config jz_dsi_video_config={
 	.is_18_loosely = 0,
 	.data_en_polarity = 1,
 	.byte_clock = 0,
-	.byte_clock_coef = MIPI_PHY_BYTE_CLK_COEF_MUL6_DIV5,
+	.byte_clock_coef = MIPI_PHY_BYTE_CLK_COEF_MUL3_DIV2,
+	.lane0_pn_swap = 0,
+	.lane1_pn_swap = 0,
+	.lane2_pn_swap = 0,
+	.lane3_pn_swap = 0,
+	.clk_lane_pn_swap = 0,
+	.ths_trail_value = 0x10,
 };
 
 struct dsi_device jz_dsi = {
@@ -113,7 +118,6 @@ struct lcd_fw050_data lcd_fw050_pdata = {
 	.gpio_lcd_vdd = CONFIG_GPIO_LCD_VDD,
 	.gpio_lcd_rst = CONFIG_GPIO_LCD_RST,
 	.gpio_lcd_pwm  = CONFIG_GPIO_LCD_PWM,
-	.gpio_lcd_te  = CONFIG_GPIO_LCD_TE,
 
 };
 
@@ -342,11 +346,6 @@ void panel_pin_init(void)
 	 	/*printf("cannot request gpoi lcd_pwm\n");*/
 	}
 
-	ret = gpio_request(lcd_fw050_pdata.gpio_lcd_te,"lcd_te");
-	if(ret){
-	 	/*printf("cannot request gpoi lcd_te\n");*/
-	}
-
 	serial_puts("lcd_fw050 panel display pin init\n");
 
 }
@@ -358,11 +357,18 @@ void panel_power_on(void)
 	gpio_direction_output(lcd_fw050_pdata.gpio_lcd_rst,0);
 	mdelay(10);
 	gpio_direction_output(lcd_fw050_pdata.gpio_lcd_rst,1);
-	mdelay(120);
+#ifndef CONFIG_X2600
 	gpio_direction_output(lcd_fw050_pdata.gpio_lcd_pwm,1);
+#endif
 	serial_puts("lcd_fw050 panel display on\n");
 }
-
+#ifdef CONFIG_X2600
+void panel_pwm_on(void)
+{
+	mdelay(100);
+	gpio_direction_output(lcd_fw050_pdata.gpio_lcd_pwm,1);
+}
+#endif
 void panel_power_off(void)
 {
 	gpio_direction_output(lcd_fw050_pdata.gpio_lcd_vdd,1);

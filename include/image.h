@@ -148,6 +148,7 @@ struct lmb;
 #define IH_OS_INTEGRITY		21	/* INTEGRITY	*/
 #define IH_OS_OSE		22	/* OSE		*/
 #define IH_OS_PLAN9		23	/* Plan 9	*/
+#define IH_OS_ALIOS		24	/* Alios	*/
 
 /*
  * CPU Architecture Codes (supported by Linux)
@@ -238,6 +239,7 @@ struct lmb;
 #define IH_COMP_BZIP2		2	/* bzip2 Compression Used	*/
 #define IH_COMP_LZMA		3	/* lzma  Compression Used	*/
 #define IH_COMP_LZO		4	/* lzo   Compression Used	*/
+#define IH_COMP_HARDLZMA	5
 
 #define IH_MAGIC	0x27051956	/* Image Magic Number		*/
 #define IH_NMLEN		32	/* Image Name Length		*/

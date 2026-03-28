@@ -203,6 +203,8 @@ static void dump_dc_reg(void)
 	printf("-----------------dc_reg------------------\n");
 	printf("DC_FRM_CFG_ADDR:    %lx\n",fb_read(DC_FRM_CFG_ADDR));
 	printf("DC_FRM_CFG_CTRL:    %lx\n",fb_read(DC_FRM_CFG_CTRL));
+	printf("DC_RDMA_CHAIN_ADDR: %lx\n",fb_read(DC_RDMA_CHAIN_ADDR));
+	printf("DC_RDMA_CHAIN_CTRL: %lx\n",fb_read(DC_RDMA_CHAIN_CTRL));
 	printf("DC_CTRL:            %lx\n",fb_read(DC_CTRL));
 	printf("DC_LAYER0_CSC_MULT_YRV:    %lx\n",fb_read(DC_LAYER0_CSC_MULT_YRV));
 	printf("DC_LAYER0_CSC_MULT_GUGV:   %lx\n",fb_read(DC_LAYER0_CSC_MULT_GUGV));
@@ -242,7 +244,7 @@ static void dump_slcd_reg(void)
 	printf("SLCD_TIMING:        %lx\n",fb_read(DC_SLCD_TIMING));
 	printf("SLCD_FRM_SIZE:      %lx\n",fb_read(DC_SLCD_FRM_SIZE));
 	printf("SLCD_SLOW_TIME:     %lx\n",fb_read(DC_SLCD_SLOW_TIME));
-	printf("SLCD_CMD:           %lx\n",fb_read(DC_SLCD_CMD));
+//	printf("SLCD_CMD:           %lx\n",fb_read(DC_SLCD_CMD));
 	printf("SLCD_ST:            %lx\n",fb_read(DC_SLCD_ST));
 	printf("---------------slcd_reg------------------\n");
 }
@@ -267,6 +269,22 @@ static void dump_frm_desc_reg(void)
 	printf("LayCfgEn:	    %lx\n",fb_read(DC_FRM_DES));
 	printf("InterruptControl:   %lx\n",fb_read(DC_FRM_DES));
 	printf("--------Frame Descriptor register--------\n");
+}
+
+static void dump_rdma_desc_reg(void)
+{
+	unsigned int ctrl;
+	ctrl = fb_read(DC_CTRL);
+	ctrl |= DC_DES_CNT_RST;
+	fb_write(DC_CTRL, ctrl);
+
+	printf("--------rdma Descriptor register--------\n");
+	printf("RdmaNextCfgAddr:    %lx\n",fb_read(DC_RDMA_DES));
+	printf("FrameBufferAddr:    %lx\n",fb_read(DC_RDMA_DES));
+	printf("stride:             %lx\n",fb_read(DC_RDMA_DES));
+	printf("CfgEn:	            %lx\n",fb_read(DC_RDMA_DES));
+	printf("InterruptControl:   %lx\n",fb_read(DC_RDMA_DES));
+	printf("--------rdma Descriptor register--------\n");
 }
 
 static void dump_layer_desc_reg(void)
@@ -355,10 +373,11 @@ void dump_lay_cfg(struct jzfb_lay_cfg * lay_cfg, int index)
 
 static void dump_lcdc_registers(void)
 {
-	dump_dsi_reg();
+	dump_dsi_reg(dsi);
 	dump_dc_reg();
 	dump_tft_reg();
 	dump_slcd_reg();
+	dump_rdma_desc_reg();
 	dump_frm_desc_reg();
 	dump_layer_desc_reg();
 }
@@ -486,13 +505,24 @@ static bool cmp_var_to_colormode(struct fb_var_screeninfo *var,
 		cmp_component(&var->blue, &color->blue) &&
 		cmp_component(&var->transp, &color->transp);
 }
-
+#ifdef CONFIG_LCD_ENABLE_RDMA_FB
+struct jzfb_sreadesc g_rdmadesc[FB_INGENIC_NR_FRAMES] __attribute__((aligned(256)));
+#else
 struct jzfb_framedesc g_framedesc[MAX_DESC_NUM] __attribute__((aligned(256)));
 struct jzfb_layerdesc g_layerdesc[MAX_DESC_NUM][MAX_LAYER_NUM] __attribute__((aligned(256)));
+#endif
 
 static int jzfb_alloc_devmem(struct jzfb_config_info *info)
 {
 	int i, j;
+
+#ifdef CONFIG_LCD_ENABLE_RDMA_FB
+	for(i = 0; i < FB_INGENIC_NR_FRAMES; i++) {
+		info->sreadesc[0] = ((unsigned int)&g_rdmadesc[0]) | 0xa0000000;
+		info->sreadesc_phys[0] = virt_to_phys((unsigned int)info->sreadesc[0]);
+		info->buffer_phys[0] = virt_to_phys((unsigned int)info->screen);
+	}
+#else
 	for(i = 0; i < MAX_DESC_NUM; i++) {
 		/* uncached addr*/
 		info->framedesc[i] = ((unsigned int)&g_framedesc[i]) | 0xa0000000;
@@ -507,6 +537,7 @@ static int jzfb_alloc_devmem(struct jzfb_config_info *info)
 			info->vidmem_phys[i][j] = virt_to_phys((unsigned int)info->screen);
 		}
 	}
+#endif
 }
 
 static int jzfb_check_frm_cfg(struct jzfb_config_info *info, struct jzfb_frm_cfg *frm_cfg)
@@ -580,12 +611,20 @@ static int jzfb_desc_init(struct jzfb_config_info *info, int frm_num)
 	struct jzfb_frm_cfg *frm_cfg;
 	struct jzfb_lay_cfg *lay_cfg;
 	struct jzfb_framedesc **framedesc;
+	struct jzfb_sreadesc **sreadesc;
 	int frm_num_mi, frm_num_ma;
 	int frm_size;
 	int i, j;
 	int ret = 0;
+	int tmp_num;
 
+#ifdef CONFIG_LCD_ENABLE_RDMA_FB
+	sreadesc = info->sreadesc;
+	tmp_num = FB_INGENIC_NR_FRAMES;
+#else
 	framedesc = info->framedesc;
+	tmp_num = MAX_DESC_NUM;
+#endif
 	frm_mode = &info->current_frm_mode;
 	frm_cfg = &frm_mode->frm_cfg;
 	lay_cfg = frm_cfg->lay_cfg;
@@ -598,9 +637,9 @@ static int jzfb_desc_init(struct jzfb_config_info *info, int frm_num)
 
 	if(frm_num == FRAME_CFG_ALL_UPDATE) {
 		frm_num_mi = 0;
-		frm_num_ma = MAX_DESC_NUM;
+		frm_num_ma = tmp_num;
 	} else {
-		if(frm_num < 0 || frm_num > MAX_DESC_NUM) {
+		if(frm_num < 0 || frm_num > tmp_num) {
 			printf("framedesc num err!\n");
 			return -22;
 		}
@@ -608,6 +647,18 @@ static int jzfb_desc_init(struct jzfb_config_info *info, int frm_num)
 		frm_num_ma = frm_num + 1;
 	}
 
+#ifdef CONFIG_LCD_ENABLE_RDMA_FB
+	for(i = frm_num_mi; i < frm_num_ma; i++) {
+		sreadesc[i]->RdmaNextCfgAddr = info->sreadesc_phys[i];
+		sreadesc[i]->FrameBufferAddr = info->buffer_phys[i];
+		sreadesc[i]->Stride = mode->xres;
+		sreadesc[i]->ChainCfg.d32 = 0;
+		sreadesc[i]->ChainCfg.b.format = lay_cfg[0].format;
+		sreadesc[i]->ChainCfg.b.color = lay_cfg[0].color;
+		sreadesc[i]->ChainCfg.b.chain_end = 0;
+		sreadesc[i]->InterruptControl.d32 = DC_SOS_MSK;
+	}
+#else
 	for(i = frm_num_mi; i < frm_num_ma; i++) {
 		framedesc[i]->FrameNextCfgAddr = info->framedesc_phys[i];
 		framedesc[i]->FrameSize.b.width = mode->xres;
@@ -625,7 +676,6 @@ static int jzfb_desc_init(struct jzfb_config_info *info, int frm_num)
 		framedesc[i]->FrameCtrl.b.stop = 0;
 		framedesc[i]->InterruptControl.d32 = DC_SOS_MSK;
 	}
-
 	frm_size = mode->xres * mode->yres;
 	info->frm_size = frm_size * info->var.bits_per_pixel >> 3;
 	info->screen_size = info->frm_size;
@@ -658,10 +708,10 @@ static int jzfb_desc_init(struct jzfb_config_info *info, int frm_num)
 		}
 
 	}
-
 	for(i = frm_num_mi; i < frm_num_ma; i++) {
 		frm_mode->update_st[i] = FRAME_CFG_UPDATE;
 	}
+#endif
 
 	return 0;
 }
@@ -1038,6 +1088,17 @@ void fb_fill(void *logo_addr, void *fb_addr, int count)
 
 }
 
+#ifdef CONFIG_LCD_ENABLE_RDMA_FB
+static void jzfb_rdma_start()
+{
+	if(!(fb_read(DC_ST) & DC_FRM_WORKING)) {
+		fb_write(DC_RDMA_CHAIN_CTRL, DC_FRM_START);
+		printf("RDMA  enabled.\n");
+	} else {
+		printf("RDMA has enabled.\n");
+	}
+}
+#else
 static void jzfb_cmp_start()
 {
 	if(!(fb_read(DC_ST) & DC_FRM_WORKING)) {
@@ -1047,6 +1108,7 @@ static void jzfb_cmp_start()
 		printf("Composer has enabled.\n");
 	}
 }
+#endif
 
 static void jzfb_tft_start(void)
 {
@@ -1268,13 +1330,34 @@ static void slcd_send_mcu_prm(struct jzfb_config_info *info,unsigned long data)
 void lcd_enable(void)
 {
 	if (lcd_enable_state == 0) {
+#ifdef CONFIG_LCD_ENABLE_RDMA_FB
+		jzfb_rdma_start();
+#else
 		jzfb_cmp_start();
+#endif
 	}
 
+#ifdef CONFIG_X2600
+	panel_pwm_on();
+#endif
 	lcd_enable_state = 1;
 	return;
 }
 
+#ifdef CONFIG_LCD_ENABLE_RDMA_FB
+static void lcd_disable(struct jzfb_config_info *info, stop_mode_t stop_md)
+{
+	if(stop_md == QCK_STOP) {
+		fb_write(DC_CTRL, DC_QCK_STP_SRD);
+		wait_dc_state(DC_WORKING, 0);
+	} else {
+		fb_write(DC_CTRL, DC_GEN_STP_SRD);
+	}
+
+	lcd_enable_state = 0;
+	return;
+}
+#else
 static void lcd_disable(struct jzfb_config_info *info, stop_mode_t stop_md)
 {
 	if(stop_md == QCK_STOP) {
@@ -1287,6 +1370,7 @@ static void lcd_disable(struct jzfb_config_info *info, stop_mode_t stop_md)
 	lcd_enable_state = 0;
 	return;
 }
+#endif
 
 static void wait_slcd_busy()
 {
@@ -1573,9 +1657,19 @@ static void common_cfg_init(void)
 	/*Keep COM_CONFIG reg first bit 0 */
 	com_cfg &= ~DC_OUT_SEL;
 
+#ifdef CONFIG_LCD_ENABLE_RDMA_FB
+	    com_cfg |= DC_OUT_SEL_RDMA;
+#else
+	    com_cfg |= DC_OUT_SEL_CMP;
+#endif
+
 	/* set burst length 32*/
 	com_cfg &= ~DC_BURST_LEN_BDMA_MASK;
 	com_cfg |= DC_BURST_LEN_BDMA_32;
+	com_cfg &= ~DC_BURST_LEN_WDMA_MASK;
+	com_cfg |= DC_BURST_LEN_WDMA_32;
+	com_cfg &= ~DC_BURST_LEN_RDMA_MASK;
+	com_cfg |= DC_BURST_LEN_RDMA_32;
 
 	fb_write(DC_COM_CONFIG, com_cfg);
 }
@@ -1919,10 +2013,13 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 		printf("Desc init err!\n");
 		return ret;
 	}
-
+#ifdef CONFIG_LCD_ENABLE_RDMA_FB
+		fb_write(DC_RDMA_CHAIN_ADDR, info->sreadesc_phys[info->current_frm_desc]);
+#else
 	if(lcd_config_info.lcd_type == LCD_TYPE_MIPI_SLCD || LCD_TYPE_TFT || LCD_TYPE_MIPI_TFT) {
 		fb_write(DC_FRM_CFG_ADDR, info->framedesc_phys[info->current_frm_desc]);
 	}
+#endif
 	if(lcd_config_info.lcd_type == LCD_TYPE_SLCD){
 	/* printf("---------------slcd_reg------------------\n"); */
 	/* printf("SLCD_CFG:           %lx\n",fb_read(DC_SLCD_CFG)); */
@@ -1947,7 +2044,6 @@ static int jzfb_set_par(struct jzfb_config_info *info)
 	}
 
 #endif
-	intc = DC_EOD_MSK | DC_SDA_MSK | DC_UOT_MSK | DC_SOC_MSK | DC_OOW_MSK | DC_EOW_MSK | DC_SOS_MSK | DC_STOP_SRD_ACK;
 	fb_write(DC_INTC,intc);
 
 	return 0;

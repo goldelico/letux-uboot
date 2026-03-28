@@ -237,7 +237,7 @@ static int dm_ddr_test()
 	size   = 0x40000;
 
 	addr_start = KSEG1 + offset;
-	printf("addr_start = %x\n",addr_start);
+	serial_debug("addr_start = %x\n",addr_start);
 
 	for (i = addr_start ; i <= addr_start + size; i++) {
 		*(volatile unsigned char *)i = 0xaa;

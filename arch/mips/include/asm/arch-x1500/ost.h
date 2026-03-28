@@ -24,38 +24,39 @@
 
 #include <asm/arch/base.h>
 
-#define TCU_TESR			0x14
-#define TCU_OSTDR			0xe0
-#define TCU_OSTCNTL			0xe4
-#define TCU_OSTCNTH			0xe8
-#define TCU_OSTCSR			0xec
-#define TCU_OSTCNTHBUF			0xfc
+#define OSTCCR		0x00
+#define OSTER		0x04
+#define OSTESR		0x34
+#define OSTECR		0x38
+#define OSTCR		0x08
+#define OSTFR		0x0c
+#define OSTMR		0x10
+#define OST1DFR		0x14
+#define OST1CNT		0x18
+#define OST2CNTH	0x1C
+#define OST2CNTL	0x20
+#define OSTCNT2HBUF 0x24
 
 #define TER_OSTEN			(1 << 15)
 
 #define OSTCSR_CNT_MD			(1 << 15)
 #define OSTCSR_SD			(1 << 9)
-#define OSTCSR_PRESCALE_1		(0 << 3)
-#define OSTCSR_PRESCALE_4		(1 << 3)
-#define OSTCSR_PRESCALE_16		(2 << 3)
-#define OSTCSR_PRESCALE_64		(3 << 3)
-#define OSTCSR_PRESCALE_256		(4 << 3)
-#define OSTCSR_PRESCALE_1024		(5 << 3)
 
-#define OST_DIV				4
-#if (OST_DIV == 1)
-#define OSTCSR_PRESCALE			OSTCSR_PRESCALE_1
-#elif (OST_DIV == 4)
-#define OSTCSR_PRESCALE			OSTCSR_PRESCALE_4
-#elif (OST_DIV == 16)
-#define OSTCSR_PRESCALE			OSTCSR_PRESCALE_16
-#elif (OST_DIV == 64)
-#define OSTCSR_PRESCALE			OSTCSR_PRESCALE_64
-#elif (OST_DIV == 256)
-#define OSTCSR_PRESCALE			OSTCSR_PRESCALE_256
-#elif (OST_DIV == 1024)
-#define OSTCSR_PRESCALE			OSTCSR_PRESCALE_1024
-#endif
+#define OSTCSR_PRESCALE1 		(0)
+#define OSTCSR_PRESCALE2 		(3)
+#define OST_DIV_1				0
+#define OST_DIV_4				1
+#define OST_DIV_16				2
+#define OSTCSR_PRESCALE(n, o)		(n << o)
+
+#define OST2ENS (1 << 1)
+#define OST1ENS (1 << 0)
+#define OST2ENC (1 << 1)
+#define OST1ENC (1 << 0)
+
+#define OST2CLR (1 << 1)
+#define OST1CLR (1 << 0)
+
 
 #define OSTCSR_EXT_EN			(1 << 2)
 

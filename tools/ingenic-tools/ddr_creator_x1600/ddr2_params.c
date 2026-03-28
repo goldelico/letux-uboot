@@ -9,13 +9,17 @@ static struct ddr_out_impedance odt_out_impedance[]={
 };
 
 #ifdef CONFIG_DDR_INNOPHY
-static void fill_mr_params_ddr2(struct ddr_params *p)
+static void fill_mr_params_ddr2(struct ddr_params *p, struct kgd_config *kgd_cfg)
 {
 	unsigned int tmp = 0;
 	struct ddr2_params *params = &p->private_params.ddr2_params;
+        struct ddr2_mr_config *mr_cfg = &kgd_cfg->mr_config;
 
-	/* MRn registers */
-	if(p->bl == 4)
+        /* MRn registers */
+        p->mr0.ddr2.BA = 0;
+	p->mr1.ddr2.BA = 1;
+
+        if(p->bl == 4)
 		p->mr0.ddr2.BL = 2;
 	else if(p->bl == 8)
 		p->mr0.ddr2.BL = 3;
@@ -36,18 +40,28 @@ static void fill_mr_params_ddr2(struct ddr_params *p)
 	BETWEEN(tmp,2,9);  // debug, BETWEEN(tmp,2,6)
 	p->mr0.ddr2.WR = tmp - 1;
 
-	p->mr0.ddr2.BA = 0;
+	if (kgd_cfg->use_kgd_config) {
+		p->mr0.ddr2.DR = mr_cfg->kgd_mr0_dll_rst & 1;
+		p->mr0.ddr2.PD = mr_cfg->kgd_mr0_pd & 1;
+		p->mr1.ddr2.DE = mr_cfg->kgd_mr1_dll_en & 1;
+                p->mr1.ddr2.DIC = mr_cfg->kgd_mr1_dic & 1;
 
-#ifdef DDR2_CHIP_DRIVER_OUT_STRENGTH
-	p->mr1.ddr2.DIC = DDR2_CHIP_DRIVER_OUT_STRENGTH;
-#else
-	p->mr1.ddr2.DIC = 1; /* Impedance=RZQ/7 */
-#endif
+                p->mr1.ddr2.RTT6 = (mr_cfg->kgd_mr1_rtt_nom & (1 << 1)) >> 1;
+                BETWEEN(p->mr1.ddr2.RTT6,0,1);
+                p->mr1.ddr2.RTT2 = mr_cfg->kgd_mr1_rtt_nom & 1;
+                BETWEEN(p->mr1.ddr2.RTT2,0,1);
 
-#ifdef CONFIG_DDR_CHIP_ODT
-	p->mr1.ddr2.RTT2 = CONFIG_DDR_CHIP_ODT; /* Effective resistance of ODT RZQ/4 */
-#endif
-	p->mr1.ddr2.BA = 0x1;
+                p->mr1.ddr2.OCD = mr_cfg->kgd_mr1_ocd & 1;
+
+        } else {
+		p->mr0.ddr2.DR = 0;
+		p->mr0.ddr2.PD = 0;
+		p->mr1.ddr2.DE = 0;
+                p->mr1.ddr2.DIC = 1;
+                p->mr1.ddr2.RTT6 = 0;
+                p->mr1.ddr2.RTT2 = 0;
+                p->mr1.ddr2.OCD = 0;
+	}
 
 }
 #endif
@@ -71,7 +85,7 @@ static void fill_in_params_ddr2(struct ddr_params *ddr_params, struct ddr_chip_i
 	params->tRTP = chip->DDR_tRTP;
 	ddr_params->cl = chip->DDR_CL;
 #ifdef CONFIG_DDR_INNOPHY
-	fill_mr_params_ddr2(ddr_params);
+	fill_mr_params_ddr2(ddr_params, &chip->kgd_config);
 #endif
 }
 

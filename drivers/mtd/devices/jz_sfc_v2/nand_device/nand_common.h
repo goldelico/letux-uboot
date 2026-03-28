@@ -70,5 +70,6 @@
 
 
 int32_t nand_common_get_feature(struct sfc_flash *flash, uint8_t flag);
+int32_t nand_get_ecc_conf(struct sfc_flash *flash, uint8_t addr);
 
 #endif

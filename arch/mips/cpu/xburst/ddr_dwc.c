@@ -56,63 +56,63 @@ static unsigned char rzq_table[] = DDRP_RZQ_TABLE;
 /* #define CONFIG_DWC_DEBUG 1 */
 #include "ddr_debug.h"
 #define ddr_hang() do{								\
-		printf("%s %d\n",__FUNCTION__,__LINE__);	\
+		serial_debug("%s %d\n",__FUNCTION__,__LINE__);	\
 		hang();										\
 	}while(0)
 
 DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef  CONFIG_DWC_DEBUG
-#define FUNC_ENTER() printf("%s enter.\n",__FUNCTION__);
-#define FUNC_EXIT() printf("%s exit.\n",__FUNCTION__);
+#define FUNC_ENTER() serial_debug("%s enter.\n",__FUNCTION__);
+#define FUNC_EXIT() serial_debug("%s exit.\n",__FUNCTION__);
 
 static void dump_ddrc_register(void)
 {
-	printf("DDRC_STATUS		0x%x\n", ddr_readl(DDRC_STATUS));
-	printf("DDRC_CFG		0x%x\n", ddr_readl(DDRC_CFG));
-	printf("DDRC_CTRL		0x%x\n", ddr_readl(DDRC_CTRL));
-	printf("DDRC_LMR		0x%x\n", ddr_readl(DDRC_LMR));
-	printf("DDRC_TIMING1		0x%x\n", ddr_readl(DDRC_TIMING(1)));
-	printf("DDRC_TIMING2		0x%x\n", ddr_readl(DDRC_TIMING(2)));
-	printf("DDRC_TIMING3		0x%x\n", ddr_readl(DDRC_TIMING(3)));
-	printf("DDRC_TIMING4		0x%x\n", ddr_readl(DDRC_TIMING(4)));
-	printf("DDRC_TIMING5		0x%x\n", ddr_readl(DDRC_TIMING(5)));
-	printf("DDRC_TIMING6		0x%x\n", ddr_readl(DDRC_TIMING(6)));
-	printf("DDRC_REFCNT		0x%x\n", ddr_readl(DDRC_REFCNT));
-	printf("DDRC_MMAP0		0x%x\n", ddr_readl(DDRC_MMAP0));
-	printf("DDRC_MMAP1		0x%x\n", ddr_readl(DDRC_MMAP1));
-	printf("DDRC_REMAP1		0x%x\n", ddr_readl(DDRC_REMAP(1)));
-	printf("DDRC_REMAP2		0x%x\n", ddr_readl(DDRC_REMAP(2)));
-	printf("DDRC_REMAP3		0x%x\n", ddr_readl(DDRC_REMAP(3)));
-	printf("DDRC_REMAP4		0x%x\n", ddr_readl(DDRC_REMAP(4)));
-	printf("DDRC_REMAP5		0x%x\n", ddr_readl(DDRC_REMAP(5)));
-	printf("DDRC_CLKSTP_CFG		0x%x\n", ddr_readl(DDRC_CLKSTP_CFG));
-	printf("DDRC_AUTOSR_EN		0x%x\n", ddr_readl(DDRC_AUTOSR_EN));
+	serial_debug("DDRC_STATUS		0x%x\n", ddr_readl(DDRC_STATUS));
+	serial_debug("DDRC_CFG		0x%x\n", ddr_readl(DDRC_CFG));
+	serial_debug("DDRC_CTRL		0x%x\n", ddr_readl(DDRC_CTRL));
+	serial_debug("DDRC_LMR		0x%x\n", ddr_readl(DDRC_LMR));
+	serial_debug("DDRC_TIMING1		0x%x\n", ddr_readl(DDRC_TIMING(1)));
+	serial_debug("DDRC_TIMING2		0x%x\n", ddr_readl(DDRC_TIMING(2)));
+	serial_debug("DDRC_TIMING3		0x%x\n", ddr_readl(DDRC_TIMING(3)));
+	serial_debug("DDRC_TIMING4		0x%x\n", ddr_readl(DDRC_TIMING(4)));
+	serial_debug("DDRC_TIMING5		0x%x\n", ddr_readl(DDRC_TIMING(5)));
+	serial_debug("DDRC_TIMING6		0x%x\n", ddr_readl(DDRC_TIMING(6)));
+	serial_debug("DDRC_REFCNT		0x%x\n", ddr_readl(DDRC_REFCNT));
+	serial_debug("DDRC_MMAP0		0x%x\n", ddr_readl(DDRC_MMAP0));
+	serial_debug("DDRC_MMAP1		0x%x\n", ddr_readl(DDRC_MMAP1));
+	serial_debug("DDRC_REMAP1		0x%x\n", ddr_readl(DDRC_REMAP(1)));
+	serial_debug("DDRC_REMAP2		0x%x\n", ddr_readl(DDRC_REMAP(2)));
+	serial_debug("DDRC_REMAP3		0x%x\n", ddr_readl(DDRC_REMAP(3)));
+	serial_debug("DDRC_REMAP4		0x%x\n", ddr_readl(DDRC_REMAP(4)));
+	serial_debug("DDRC_REMAP5		0x%x\n", ddr_readl(DDRC_REMAP(5)));
+	serial_debug("DDRC_CLKSTP_CFG		0x%x\n", ddr_readl(DDRC_CLKSTP_CFG));
+	serial_debug("DDRC_AUTOSR_EN		0x%x\n", ddr_readl(DDRC_AUTOSR_EN));
 }
 
 static void dump_ddrp_register(void)
 {
-	printf("DDRP_PIR		0x%x\n", ddr_readl(DDRP_PIR));
-	printf("DDRP_PGCR		0x%x\n", ddr_readl(DDRP_PGCR));
-	printf("DDRP_PGSR		0x%x\n", ddr_readl(DDRP_PGSR));
-	printf("DDRP_PTR0		0x%x\n", ddr_readl(DDRP_PTR0));
-	printf("DDRP_PTR1		0x%x\n", ddr_readl(DDRP_PTR1));
-	printf("DDRP_PTR2		0x%x\n", ddr_readl(DDRP_PTR2));
-	printf("DDRP_DCR		0x%x\n", ddr_readl(DDRP_DCR));
-	printf("DDRP_DTPR0		0x%x\n", ddr_readl(DDRP_DTPR0));
-	printf("DDRP_DTPR1		0x%x\n", ddr_readl(DDRP_DTPR1));
-	printf("DDRP_DTPR2		0x%x\n", ddr_readl(DDRP_DTPR2));
-	printf("DDRP_MR0		0x%x\n", ddr_readl(DDRP_MR0));
-	printf("DDRP_MR1		0x%x\n", ddr_readl(DDRP_MR1));
-	printf("DDRP_MR2		0x%x\n", ddr_readl(DDRP_MR2));
-	printf("DDRP_MR3		0x%x\n", ddr_readl(DDRP_MR3));
-	printf("DDRP_ODTCR		0x%x\n", ddr_readl(DDRP_ODTCR));
-	printf("DDRP_ZQXSR0		0x%x\n", ddr_readl(DDRP_ZQXSR0(0)));
+	serial_debug("DDRP_PIR		0x%x\n", ddr_readl(DDRP_PIR));
+	serial_debug("DDRP_PGCR		0x%x\n", ddr_readl(DDRP_PGCR));
+	serial_debug("DDRP_PGSR		0x%x\n", ddr_readl(DDRP_PGSR));
+	serial_debug("DDRP_PTR0		0x%x\n", ddr_readl(DDRP_PTR0));
+	serial_debug("DDRP_PTR1		0x%x\n", ddr_readl(DDRP_PTR1));
+	serial_debug("DDRP_PTR2		0x%x\n", ddr_readl(DDRP_PTR2));
+	serial_debug("DDRP_DCR		0x%x\n", ddr_readl(DDRP_DCR));
+	serial_debug("DDRP_DTPR0		0x%x\n", ddr_readl(DDRP_DTPR0));
+	serial_debug("DDRP_DTPR1		0x%x\n", ddr_readl(DDRP_DTPR1));
+	serial_debug("DDRP_DTPR2		0x%x\n", ddr_readl(DDRP_DTPR2));
+	serial_debug("DDRP_MR0		0x%x\n", ddr_readl(DDRP_MR0));
+	serial_debug("DDRP_MR1		0x%x\n", ddr_readl(DDRP_MR1));
+	serial_debug("DDRP_MR2		0x%x\n", ddr_readl(DDRP_MR2));
+	serial_debug("DDRP_MR3		0x%x\n", ddr_readl(DDRP_MR3));
+	serial_debug("DDRP_ODTCR		0x%x\n", ddr_readl(DDRP_ODTCR));
+	serial_debug("DDRP_ZQXSR0		0x%x\n", ddr_readl(DDRP_ZQXSR0(0)));
 
 	int i=0;
 	for(i=0;i<4;i++) {
-		printf("DX%dGSR0: %x\n", i, ddr_readl(DDRP_DXGSR0(i)));
-		printf("@pas:DXDQSTR(%d)= 0x%x\n", i,ddr_readl(DDRP_DXDQSTR(i)));
+		serial_debug("DX%dGSR0: %x\n", i, ddr_readl(DDRP_DXGSR0(i)));
+		serial_debug("@pas:DXDQSTR(%d)= 0x%x\n", i,ddr_readl(DDRP_DXDQSTR(i)));
 	}
 }
 #else
@@ -192,7 +192,7 @@ static int ddr_training_hardware(int bypass)
 	wait_ddrp_pgsr(wait_val,timeout);
 	result = ddr_readl(DDRP_PGSR);
 	if (result & (DDRP_PGSR_DTERR | DDRP_PGSR_DTIERR)) {
-		printf("DDR hardware training error result= %x\n",result);
+		serial_debug("DDR hardware training error result= %x\n",result);
 		dump_ddrp_register();
 	} else
 		result = 0;

@@ -25,16 +25,24 @@ include $(TOPDIR)/config.mk
 
 ifdef CONFIG_BURNER
 
-LIB	:= $(obj)libcloner_module_mg.o
+LIB	:= $(obj)libcloner_moudle_mg.o
 
 COBJS-$(CONFIG_JZ_VERDOR_BURN_EXTPOL) += extend_policy_manager.o
 SUBOBJS-$(CONFIG_JZ_VERDOR_BURN_EXTPOL) += expy/libexpy.o
 
-COBJS-$(if $(CONFIG_MTD_SFCNOR)$(CONFIG_MTD_SFCNAND)$(CONFIG_MTD_SPINAND)$(CONFIG_JZ_SPI),y,n) += cloner_module_spisfc.o
-COBJS-$(if $(CONFIG_JZ_SPINAND_SN)$(CONFIG_JZ_SPINAND_MAC),y,n) += cloner_spinand_firmware.o
-COBJS-$(if $(CONFIG_JZ_NAND_MGR)$(CONFIG_MTD_NAND_JZ),y,n) += cloner_module_nand.o
-COBJS-$(if $(CONFIG_JZ_MMC)$(CONFIG_JZ_SDHCI),y,n) += cloner_module_mmc.o
-COBJS-$(CONFIG_JZ_EFUSE) += cloner_module_efuse.o
+ifneq ($(findstring y, $(CONFIG_MTD_SFCNOR)$(CONFIG_MTD_SFCNAND)$(CONFIG_MTD_SPINAND)$(CONFIG_JZ_SPI)),)
+COBJS-y += cloner_moudle_sfc.o
+endif
+ifneq ($(findstring y, $(CONFIG_JZ_SPINAND_SN)$(CONFIG_JZ_SPINAND_MAC)),)
+COBJS-y += cloner_spinand_firmware.o
+endif
+ifneq ($(findstring y, $(CONFIG_JZ_NAND_MGR)$(CONFIG_MTD_NAND_JZ)),)
+COBJS-y += cloner_moudle_nand.o
+endif
+ifneq ($(findstring y, $(CONFIG_JZ_MMC)$(CONFIG_JZ_SDHCI)),)
+COBJS-y += cloner_moudle_mmc.o
+endif
+COBJS-$(CONFIG_JZ_EFUSE) += cloner_moudle_efuse.o
 
 
 COBJS	:= $(COBJS-y)

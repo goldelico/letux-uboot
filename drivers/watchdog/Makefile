@@ -34,8 +34,15 @@ COBJS-$(CONFIG_TNETV107X_WATCHDOG) += tnetv107x_wdt.o
 COBJS-$(CONFIG_S5P)               += s5p_wdt.o
 COBJS-$(CONFIG_XILINX_TB_WATCHDOG) += xilinx_tb_wdt.o
 COBJS-$(CONFIG_BFIN_WATCHDOG)  += bfin_wdt.o
-COBJS-$(CONFIG_JZ_WATCHDOG) += jz_wdt.o
-
+ifdef CONFIG_JZ_WATCHDOG
+ifeq ($(CONFIG_X2600),y)
+COBJS-y += x2600_wdt.o
+else ifeq ($(CONFIG_AD100),y)
+COBJS-y += ad100_wdt.o
+else ifeq ($(CONFIG_X1600),y)
+COBJS-y += jz_wdt.o
+endif
+endif
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
 OBJS	:= $(addprefix $(obj),$(COBJS))

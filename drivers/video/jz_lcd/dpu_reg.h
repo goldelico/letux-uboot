@@ -28,6 +28,10 @@
 #define DC_FRM_CFG_ADDR		        (0x0000)
 /* -W	32	0x0000_0000	frame descriptor's control*/
 #define DC_FRM_CFG_CTRL		        (0x0004)
+/* RW   32  0x0000_0000 RDMA descriptor's address*/
+#define DC_RDMA_CHAIN_ADDR              (0x1000)
+/* -W   32  0x0000_0000 RDMA descriptor's control*/
+#define DC_RDMA_CHAIN_CTRL              (0x1004)
 /* RW	32	0x0000_0000	DC control*/
 #define DC_CTRL				(0x2000)
 /* RW	32	0x0000_0000	DC status*/
@@ -153,9 +157,13 @@
 /* Write 1 to start SLCD transfer. */
 #define DC_SLCD_START			BIT(5)
 /* General stop the composer channel. Assure integrity of the current frame */
+#define DC_GEN_STP_SRD			BIT(4)
+/* General stop the composer channel. Assure integrity of the current frame */
 #define DC_GEN_STP_CMP			BIT(3)
 /* Reset the counter of FRM_DES, LAYx_DES and RDMA_DES */
 #define DC_DES_CNT_RST			BIT(2)
+/* Quick stop the composer channel. */
+#define DC_QCK_STP_SRD			BIT(1)
 /* Quick stop the composer channel. */
 #define DC_QCK_STP_CMP			BIT(0)
 

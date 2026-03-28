@@ -652,7 +652,7 @@ static int do_bootm_states(cmd_tbl_t *cmdtp, int flag, int argc,
 			goto err;
 		else if (ret == BOOTM_ERR_OVERLAP)
 			ret = 0;
-#ifdef CONFIG_SILENT_CONSOLE
+#if defined(CONFIG_SILENT_CONSOLE) && !defined(CONFIG_SILENT_U_BOOT_ONLY)
 		if (images->os.os == IH_OS_LINUX)
 			fixup_silent_linux();
 #endif
@@ -931,7 +931,7 @@ static const void *boot_get_kernel(cmd_tbl_t *cmdtp, int flag, int argc,
 	bootstage_mark(BOOTSTAGE_ID_CHECK_MAGIC);
 
 #ifdef CONFIG_JZ_SECURE_SUPPORT
-#ifdef CONFIG_X2000_V12
+#if defined(CONFIG_X2000_V12) || defined(CONFIG_X2100) || defined(CONFIG_M300) || defined(CONFIG_X1600) || defined(CONFIG_X2600) || defined(CONFIG_AD100)
 #define SC_OFFSET 2048
 	int ret = secure_scboot(img_addr, img_addr + SC_OFFSET);
 	img_addr += SC_OFFSET;

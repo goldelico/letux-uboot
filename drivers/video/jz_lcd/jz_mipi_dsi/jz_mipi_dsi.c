@@ -307,7 +307,6 @@ void jz_dsi_init(struct dsi_device *dsi)
 
 	if(!dsi->video_config->byte_clock) {
 	dsi->video_config->byte_clock = dsi->video_config->h_total_pixels * dsi->video_config->v_total_lines * jzfb1_videomode.refresh * dsi->bpp_info / dsi->video_config->no_of_lanes /8 /1000 ;
-	dsi->real_mipiclk =  dsi->video_config->h_total_pixels * dsi->video_config->v_total_lines * jzfb1_videomode.refresh * dsi->bpp_info / dsi->video_config->no_of_lanes / 2;
 	/*dsi->video_config->byte_clock = dsi->video_config->byte_clock + dsi->video_config->byte_clock / 2;*/
 		switch(dsi->video_config->byte_clock_coef) {
 		case MIPI_PHY_BYTE_CLK_COEF_MUL1:
@@ -334,6 +333,7 @@ void jz_dsi_init(struct dsi_device *dsi)
 			break;
 		}
 	}
+	dsi->real_mipiclk = dsi->video_config->byte_clock * 8 * 1000;;
 
 	debug("dsi->video_config->h_total_pixels = %d,\
 			dsi->video_config->v_total_lines = %d,\
@@ -391,7 +391,7 @@ void jz_dsi_init(struct dsi_device *dsi)
 
 	dsi->state = INITIALIZED;
 	debug("---------------dsi init oK-----------------\n");
-
+//#define DPI_DEBUG
 #ifdef DPI_DEBUG
 	mipi_dsih_write_word(dsi, R_DSI_HOST_DPI_CFG_POL, 0x0);
 	panel_init_sequence(dsi);

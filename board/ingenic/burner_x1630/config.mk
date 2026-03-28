@@ -1,11 +1,9 @@
 #
-# Ingenic x1630 configuration
+# Ingenic burner configuration
 #
 #
 # Copyright (c) 2013 Ingenic Semiconductor Co.,Ltd
 # Author: Zoro <ykli@ingenic.cn>
-# Based on: board/reliableIPTV/urboard/config.mk
-#           Written by Paul Burton <paul.burton@imgtec.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as

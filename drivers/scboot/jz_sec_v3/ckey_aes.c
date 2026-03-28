@@ -214,7 +214,7 @@ void ckey_aes(void)
 
 	if ((spl_cencrypt == CHIPKEY_ENCRYPT) && (spl_kencrypt == CHIPKEY_ENCRYPT) &&
 							(is_need_ckey_s == NO_NEED_CKY_AES)) {
-		printf("spl chipkey aes success\n");
+		serial_debug("spl chipkey aes success\n");
 		_machine_restart();
 	}else {
 		goto ERR;
@@ -225,6 +225,6 @@ void ckey_aes(void)
 STEP_ERR:
 	free(read_buf);
 ERR:
-	printf("## ERROR ## ckey aes failed!! ##\n");
+	serial_debug("## ERROR ## ckey aes failed!! ##\n");
 	hang();
 }

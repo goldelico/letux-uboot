@@ -86,7 +86,7 @@ static void tcu_writel(uint32_t val, uint32_t off)
 #define USEC_IN_1SEC 1000000
 int timer_init(void)
 {
-#ifdef CONFIG_BURNER
+#if defined(CONFIG_BURNER) && !defined(CONFIG_SPL_USB_BOOT)
 	multiple = gd->arch.gi->extal / USEC_IN_1SEC / OST_DIV;
 #else
 	multiple = CONFIG_SYS_EXTAL / USEC_IN_1SEC / OST_DIV;

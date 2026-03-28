@@ -1,58 +1,52 @@
-/*
- * Ingenic Fastboot Command Explain CMD
- *
- *  Copyright (C) 2013 Ingenic Semiconductor Co., LTD.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
- */
-
 #include <common.h>
 #include <command.h>
-#include <asm/errno.h>
 
-extern int jz_usb_serial_register(const char *type);
-extern int usb_gadget_handle_interrupts(void);
-extern void jz_usb_serial_unregister(void);
-bool jz_usb_serial_flag = 0;
+#define USB_TEST_BUF_SIZE 8192
+char usb_test_buf[USB_TEST_BUF_SIZE];
+char usb_test_char[] = "Test message!\r\n";
+static int total = 0;
 
 static int do_gser(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
-	char *s = "gser";
+	int read_len, write_len, i;
 
-	if (argc > 1)
-		return CMD_RET_USAGE;
+	if (argc <= 1)
+		return cmd_usage(cmdtp);
 
-	jz_usb_serial_register(s);
-	jz_usb_serial_flag = 0;
-
-	while(!jz_usb_serial_flag)
-	{
-		usb_gadget_handle_interrupts();
+	if (strcmp(argv[1], "connect") == 0) {
+		usb_gser_register();
+	} else if (strcmp(argv[1], "read") == 0) {
+		while (!ctrlc()) {
+			usb_gadget_handle_interrupts();
+			memset(usb_test_buf, 0, sizeof(usb_test_buf));
+			read_len = acm_read(usb_test_buf, sizeof(usb_test_buf));
+			if (read_len > 0) {
+				total += read_len;
+				printf("read %d bytes, total read data %d bytes\n", read_len, total);
+				//for (i = 0; i < read_len; i++)
+				//	printf("%c", usb_test_buf[i]);
+			}
+		}
+	} else if (strcmp(argv[1], "write") == 0) {
+		while (!ctrlc()) {
+			usb_gadget_handle_interrupts();
+			write_len = acm_write(usb_test_char, strlen(usb_test_char));
+			if (write_len > 0) {
+				printf("write data: %d bytes\n", write_len);
+			}
+		}
+	} else {
+		return cmd_usage(cmdtp);
 	}
-
-	jz_usb_serial_unregister();
 
 	return CMD_RET_SUCCESS;
 }
 
 U_BOOT_CMD(
-	gser, 1, 1, do_gser,
-	"enter gser mode",
-	"enter gser mode"
+	gser,	3,	1,	do_gser,
+	"USB serial commands",
+	"gser connect - Register and Connect USB serial device\n"
+	"gser read - Read data through a serial device\n"
+	"gser write - Write data through a serial device\n"
 );
-
-
 

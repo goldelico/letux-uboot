@@ -43,6 +43,7 @@
 #define MAC_IOBASE	0xb34b0000
 #define PWM_IOBASE	0xb34c0000
 #define OTG_BASE	0xb3500000
+#define OTGPHY_BASE	0xb0078000
 #define EFUSE_BASE	0xb3540000
 
 

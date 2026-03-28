@@ -19,11 +19,26 @@ struct ddr_chip_info supported_ddr_chips[] = {
 #ifdef CONFIG_DDR3_W631GU6NG
 	DDR3_W631GU6NG,
 #endif
+#ifdef CONFIG_DDR3L_W631GU6RG
+	DDR3L_W631GU6RG,
+#endif
+#ifdef CONFIG_DDR2_M14D5121632A
+	DDR2_M14D5121632A,
+#endif
+#ifdef CONFIG_DDR2_M14F5121632A
+	DDR2_M14F5121632A,
+#endif
+#ifdef CONFIG_DDR3_M15T1G1664A
+	DDR3_M15T1G1664A,
+#endif
 #ifdef	CONFIG_DDR3_NK5CC128M8HKX
 	DDR3_NK5CC128M8HKX,
 #endif
 #ifdef	CONFIG_DDR3_PMF512816FBR_MBDN
 	DDR3_PMF512816FBR_MBDN,
+#endif
+#ifdef CONFIG_DDR3L_W632GU6QG_11
+	DDR3L_W632GU6QG_11,
 #endif
 #ifdef CONFIG_DDR3L_W634GU6QB_11
 	DDR3L_W634GU6QB_11,
@@ -31,11 +46,62 @@ struct ddr_chip_info supported_ddr_chips[] = {
 #ifdef CONFIG_LPDDR3_NK6CL256M16DKX_H1
 	LPDDR3_NK6CL256M16DKX_H1,
 #endif
+#ifdef CONFIG_DDR3L_GDP1BFLM_CB
+	DDR3L_GDP1BFLM_CB,
+#endif
+
+#ifdef CONFIG_DDR2_W9751V6NG
+	DDR2_W9751V6NG,
+#endif
+
+#ifdef CONFIG_DDR2_SCKL18T512XX0AAE1
+	DDR2_SCKL18T512XX0AAE1,
+#endif
+#ifdef  CONFIG_DDR3_NT5CB128M16JR
+        DDR3_NT5CB128M16JR,
+#endif
+
+#ifdef CONFIG_X2670M_DDR2
+	X2670M_DDR2,
+#endif
+
+#ifdef CONFIG_X2600M_DDR2
+	X2600M_DDR2,
+#endif
+
+#ifdef CONFIG_X2600_DDR3
+	X2600_DDR3,
+#endif
+
+#ifdef CONFIG_X2600E_DDR3
+	X2600E_DDR3,
+#endif
+
+#ifdef CONFIG_X2600H_DDR3L
+	X2600H_DDR3L,
+#endif
+
+#ifdef CONFIG_X2600N_DDR3
+	X2600N_DDR3,
+#endif
+
+#ifdef CONFIG_X2670N_DDR3
+	X2670N_DDR3,
+#endif
+
+#ifdef CONFIG_DDR3L_W634GU6QG_11
+	DDR3L_W634GU6QG_11
+#endif
+
+#ifdef CONFIG_X2100_LPDDR2
+	X2100_LPDDR2
+#endif
 };
 
 
 void dump_ddr_info(struct ddr_chip_info *c)
 {
+	printf("/** Only DDR test\n");
 	printf("name 		= %s\n", c->name);
 	printf("id 		= %x\n", c->id);
 	printf("type 		= %x\n", c->type);
@@ -70,10 +136,8 @@ void dump_ddr_info(struct ddr_chip_info *c)
 	printf("DDR_tCKESR 	= %d\n", c->DDR_tCKESR);
 	printf("DDR_tXSR 	= %d\n", c->DDR_tXSR);
 	printf("DDR_tXP 	= %d\n", c->DDR_tXP);
-
-
+	printf("**/ \n");
 }
-
 
 int init_supported_ddr(void)
 {

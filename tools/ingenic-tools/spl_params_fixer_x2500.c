@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <config.h>
 
-#define FPGA
+//#define FPGA
 
 #define SEL_SCLKA		2
 #define SEL_CPU			1

@@ -161,7 +161,6 @@
  */
 
 /* #define BOOTARGS_COMMON "console=ttyS3,115200 mem=96M@0x0 rmem=32M@0x6000000"*/
-/*#define CONFIG_BOOTARGS_MEM_INDEX	2*/	/*start from 1, position of the args mem=xxx@0x0*/
 #define CONFIG_BOOTARGS_AUTO_MODIFY	1	/*auto detect memory size, and modify bootargs for kernel.*/
 #define CONFIG_BOOTARGS_MEM_64M			"mem=64M@0x0"	/* customize bootargs for default env.*/
 #define CONFIG_BOOTARGS_MEM_128M		"mem=128M@0x0"

@@ -259,11 +259,10 @@ static void ddrc_config_creator(struct ddrc_reg *ddrc, struct ddr_params *p)
 #if defined(CONFIG_X1600) || defined(CONFIG_X1521)
 	ddrc->ctrl =  DDRC_CTRL_CKE;
 #elif defined(CONFIG_DDR_INNOPHY)
-	ddrc->ctrl = DDRC_CTRL_ACTPD | DDRC_CTRL_PDT_64 | DDRC_CTRL_ACTSTP
-		| 0 << 6 | DDRC_CTRL_CKE;
+	ddrc->ctrl = DDRC_CTRL_PDT_64 | 0 << 6 | DDRC_CTRL_CKE;
 
 #else
-	ddrc->ctrl = DDRC_CTRL_ACTPD | DDRC_CTRL_PDT_64 | DDRC_CTRL_ACTSTP
+	ddrc->ctrl = DDRC_CTRL_PDT_64
 		| DDRC_CTRL_PRET_8 | 0 << 6 | DDRC_CTRL_UNALIGN
 		| DDRC_CTRL_ALH | DDRC_CTRL_CKE;
 #endif
@@ -271,7 +270,6 @@ static void ddrc_config_creator(struct ddrc_reg *ddrc, struct ddr_params *p)
 	/* 	| DDRC_CTRL_ALH | DDRC_CTRL_RDC | DDRC_CTRL_CKE; */
 #ifdef CONFIG_DDRC_CTRL_PDT
 	ddrc->ctrl &= ~(DDRC_CTRL_PDT_MASK);
-	ddrc->ctrl |= CONFIG_DDRC_CTRL_PDT;
 #endif
 	/* MMAP0,1 */
 	memsize_cs0 = p->size.chip0;

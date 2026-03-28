@@ -70,6 +70,10 @@ extern void sdram_init(void);
 extern int check_socid();
 #endif
 
+#ifdef CONFIG_SPL_USB_BOOT
+extern int spl_usb_boot;
+#endif
+
 #ifdef CONFIG_SOFT_BURNER
 static void jz_burner_boot(void)
 {
@@ -96,15 +100,26 @@ void board_init_f(ulong dummy)
 	/* Setup global info */
 #ifndef CONFIG_BURNER
 	gd->arch.gi = &ginfo;
-#else
-	burner_param_info();
-#endif
-#ifdef CONFIG_SOFT_BURNER
-	jz_burner_boot();
-#endif
+
 #ifdef CONFIG_CHECK_SOCID
 	if(check_socid() < 0)
 		return;
+#endif
+
+#else
+	burner_param_info();
+
+#ifdef CONFIG_SPL_USB_BOOT
+	if (!!spl_usb_boot) {
+		timer_init();
+		usb_boot_loop();
+		return;
+	}
+#endif
+#endif
+
+#ifdef CONFIG_SOFT_BURNER
+	jz_burner_boot();
 #endif
 	gpio_init();
 
@@ -115,6 +130,7 @@ void board_init_f(ulong dummy)
 	preloader_console_init();
 #endif
 	printf("ERROR EPC %x\n", read_c0_errorepc());
+	printf("Reset status %x\n", *(volatile unsigned int *)0xb0000008);
 
 	debug("Timer init\n");
 	timer_init();

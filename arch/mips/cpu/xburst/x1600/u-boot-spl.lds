@@ -44,3 +44,8 @@ SECTIONS
 		*(.rel.dyn)
 	}
 }
+
+#if !defined(CONFIG_NOR_BUILTIN_PARAMS) && !defined(CONFIG_NAND_BUILTIN_PARAMS) && defined(CONFIG_SPIFLASH_PART_OFFSET)
+ASSERT(__image_copy_end - __start < (CONFIG_SPIFLASH_PART_OFFSET), \
+        "SPL image too big");
+#endif

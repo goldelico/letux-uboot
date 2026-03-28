@@ -4,7 +4,6 @@
 #include "../jz_sfc_common.h"
 #include "nand_common.h"
 
-#define GD_DEVICES_NUM          10
 #define TSETUP		5
 #define THOLD		5
 #define	TSHSL_R		20
@@ -17,10 +16,11 @@
 
 #define TRD_Q5	        50
 #define TPP_Q5	        600
+#define TRD_QH          60
 
 static struct jz_sfcnand_device *gd_nand;
 
-static struct jz_sfcnand_base_param gd_param[GD_DEVICES_NUM] = {
+static struct jz_sfcnand_base_param gd_param[] = {
 
 	[0] = {
 		/*GD5F1GQ4UB*/
@@ -122,6 +122,7 @@ static struct jz_sfcnand_base_param gd_param[GD_DEVICES_NUM] = {
 		.ecc_max = 0x8,
 		.need_quad = 1,
 	},
+#if 1
 	[5] = {
 		/*GD5F4GQ4UC*/
 		.pagesize = 4 * 1024,
@@ -142,9 +143,30 @@ static struct jz_sfcnand_base_param gd_param[GD_DEVICES_NUM] = {
 		.ecc_max = 0x8,
 		.need_quad = 1,
 	},
+#else
+      [5] = {
+		/*GD5F4GM5UF*/
+		.pagesize = 4 * 1024,
+		.blocksize = 4 * 1024 * 64,
+		.oobsize = 128,
+		.flashsize = 4 * 1024 * 64 * 2048,
 
-	[6] = {
-		/*GD5F1GQ4RF9IG*/
+		.tSETUP  = TSETUP,
+		.tHOLD   = THOLD,
+		.tSHSL_R = TSHSL_R,
+		.tSHSL_W = TSHSL_W,
+
+		.tRD = TRD_4G,
+		.tPP = TPP,
+		.tBE = TBE,
+
+		.plane_select = 0,
+		.ecc_max = 0x8,
+		.need_quad = 1,
+	},
+#endif
+      [6] = {
+		/*GD5F1GQ4RF*/
 		.pagesize = 2 * 1024,
 		.blocksize = 2 * 1024 * 64,
 		.oobsize = 64,
@@ -165,19 +187,19 @@ static struct jz_sfcnand_base_param gd_param[GD_DEVICES_NUM] = {
 	},
 
 	[7] = {
-		/*GD5F4GQ6UE*/
+		/*GD5F1GQ5UE*/
 		.pagesize = 2 * 1024,
 		.blocksize = 2 * 1024 * 64,
 		.oobsize = 64,
-		.flashsize = 2 * 1024 * 64 * 4096,
+		.flashsize = 2 * 1024 * 64 * 1024,
 
 		.tSETUP  = TSETUP,
 		.tHOLD   = THOLD,
 		.tSHSL_R = TSHSL_R,
 		.tSHSL_W = TSHSL_W,
 
-		.tRD = TRD,
-		.tPP = TPP,
+		.tRD = TRD_Q5,
+		.tPP = TPP_Q5,
 		.tBE = TBE,
 
 		.plane_select = 0,
@@ -205,7 +227,148 @@ static struct jz_sfcnand_base_param gd_param[GD_DEVICES_NUM] = {
 		.need_quad = 1,
 	},
 	[9] = {
-		/*GD5F1GQ5UE*/
+		/*GD5F4GQ6UE*/
+		.pagesize = 2 * 1024,
+		.blocksize = 2 * 1024 * 64,
+		.oobsize = 64,
+		.flashsize = 2 * 1024 * 64 * 4096,
+
+		.tSETUP  = 20,
+		.tHOLD   = 20,
+		.tSHSL_R = TSHSL_R,
+		.tSHSL_W = TSHSL_W,
+
+		.tRD = TRD,
+		.tPP = TPP,
+		.tBE = TBE,
+
+		.plane_select = 0,
+		.ecc_max = 0x4,
+		.need_quad = 1,
+	},
+	[10] = {
+		/*GD5F2GQ5UF*/
+		.pagesize = 2 * 1024,
+		.blocksize = 2 * 1024 * 64,
+		.oobsize = 64,
+		.flashsize = 2 * 1024 * 64 * 2048,
+
+		.tSETUP  = TSETUP,
+		.tHOLD   = THOLD,
+		.tSHSL_R = TSHSL_R,
+		.tSHSL_W = TSHSL_W,
+
+		.tRD = TRD_QH,
+		.tPP = TPP_Q5,
+		.tBE = TBE,
+
+		.plane_select = 0,
+		.ecc_max = 0x4,
+		.need_quad = 1,
+	},
+	[11] = {
+		/*GD5F2GM7UE*/
+		.pagesize = 2 * 1024,
+		.blocksize = 2 * 1024 * 64,
+		.oobsize = 64,
+		.flashsize = 2 * 1024 * 64 * 2048,
+
+		.tSETUP  = TSETUP,
+		.tHOLD   = THOLD,
+		.tSHSL_R = TSHSL_R,
+		.tSHSL_W = TSHSL_W,
+
+		.tRD = 120,
+		.tPP = TPP_Q5,
+		.tBE = 10,
+
+		.plane_select = 0,
+		.ecc_max = 0x8,
+		.need_quad = 1,
+	},
+	[12] = {
+		/*GD5F1GM7UE*/
+		.pagesize = 2 * 1024,
+		.blocksize = 2 * 1024 * 64,
+		.oobsize = 64,
+		.flashsize = 2 * 1024 * 64 * 1024,
+
+		.tSETUP  = TSETUP,
+		.tHOLD   = THOLD,
+		.tSHSL_R = TSHSL_R,
+		.tSHSL_W = TSHSL_W,
+
+		.tRD = 120,
+		.tPP = TPP_Q5,
+		.tBE = 10,
+
+		.plane_select = 0,
+		.ecc_max = 0x8,
+		.need_quad = 1,
+	},
+	[13] = {
+		/*GD5F2GQ5UExxH*/
+		.pagesize = 2 * 1024,
+		.blocksize = 2 * 1024 * 64,
+		.oobsize = 64,
+		.flashsize = 2 * 1024 * 64 * 2048,
+
+		.tSETUP  = TSETUP,
+		.tHOLD   = THOLD,
+		.tSHSL_R = TSHSL_R,
+		.tSHSL_W = TSHSL_W,
+
+		.tRD = TRD_QH,
+		.tPP = TPP_Q5,
+		.tBE = TBE,
+
+		.plane_select = 0,
+		.ecc_max = 0x4,
+		.need_quad = 1,
+	},
+	[14] = {
+		/*GD5F4GM8UE*/
+		.pagesize = 2 * 1024,
+		.blocksize = 2 * 1024 * 64,
+		.oobsize = 64,
+		.flashsize = 2 * 1024 * 64 * 4096,
+
+		.tSETUP  = TSETUP,
+		.tHOLD   = THOLD,
+		.tSHSL_R = TSHSL_R,
+		.tSHSL_W = TSHSL_W,
+
+		.tRD = 120,
+		.tPP = TPP_Q5,
+		.tBE = 10,
+
+		.plane_select = 0,
+		.ecc_max = 0x8,
+		.need_quad = 1,
+	},
+	[15] = {
+		/*GD5F1GQ4UExxH*/
+		/* Not aging test */
+		.pagesize = 2 * 1024,
+		.blocksize = 2 * 1024 * 64,
+		.oobsize = 64,
+		.flashsize = 2 * 1024 * 64 * 1024,
+
+		.tSETUP  = TSETUP,
+		.tHOLD   = THOLD,
+		.tSHSL_R = TSHSL_R,
+		.tSHSL_W = TSHSL_W,
+
+		.tRD = 80,
+		.tPP = 700,
+		.tBE = 5,
+
+		.plane_select = 0,
+		.ecc_max = 0x8,
+		.need_quad = 1,
+	},
+	[16] = {
+		/*GD5F1GQ5RE-1.8V*/
 		.pagesize = 2 * 1024,
 		.blocksize = 2 * 1024 * 64,
 		.oobsize = 64,
@@ -224,165 +387,137 @@ static struct jz_sfcnand_base_param gd_param[GD_DEVICES_NUM] = {
 		.ecc_max = 0x4,
 		.need_quad = 1,
 	},
-
 };
 
-static struct device_id_struct device_id[GD_DEVICES_NUM] = {
-	DEVICE_ID_STRUCT(0xD1, "GD5F1GQ4UB",&gd_param[0]),
-	DEVICE_ID_STRUCT(0xD2, "GD5F2GQ4UB",&gd_param[1]),
-	DEVICE_ID_STRUCT(0xD4, "GD5F4GQ4UB",&gd_param[2]),
-	DEVICE_ID_STRUCT(0xB1, "GD5F1GQ4UC",&gd_param[3]),
-	DEVICE_ID_STRUCT(0xB2, "GD5F2GQ4UC",&gd_param[4]),
-	DEVICE_ID_STRUCT(0xB4, "GD5F4GQ4UC",&gd_param[5]),
-	DEVICE_ID_STRUCT(0xA1, "GD5F1GQ4RF",&gd_param[6]),
-	DEVICE_ID_STRUCT(0x55, "GD5F4GQ6UE",&gd_param[7]),
-	DEVICE_ID_STRUCT(0x52, "GD5F2GQ5UE",&gd_param[8]),
-	DEVICE_ID_STRUCT(0x51, "GD5F1GQ5UE",&gd_param[9]),
+static struct device_id_struct device_id[] = {
+	DEVICE_ID_STRUCT(0xD1,   "GD5F1GQ4UB",    &gd_param[0]),
+	DEVICE_ID_STRUCT(0xD2,   "GD5F2GQ4UB",    &gd_param[1]),
+	DEVICE_ID_STRUCT(0xD4,   "GD5F4GQ4UB",    &gd_param[2]),
+	DEVICE_ID_STRUCT(0xB1,   "GD5F1GQ4UC",    &gd_param[3]),
+	DEVICE_ID_STRUCT(0xB2,   "GD5F2GQ4UC",    &gd_param[4]),
+	DEVICE_ID_STRUCT(0xB468, "GD5F4GQ4UC",    &gd_param[5]),
+	DEVICE_ID_STRUCT(0xA1,   "GD5F1GQ4RF",    &gd_param[6]),
+	DEVICE_ID_STRUCT(0x51,   "GD5F1GQ5UE",    &gd_param[7]),
+	DEVICE_ID_STRUCT(0x52,   "GD5F2GQ5UE",    &gd_param[8]),
+	DEVICE_ID_STRUCT(0x55,   "GD5F4GQ6UE",    &gd_param[9]),
+	DEVICE_ID_STRUCT(0x61,   "GD5F2GQ5UF",    &gd_param[10]),
+	DEVICE_ID_STRUCT(0x92,   "GD5F2GM7UE",    &gd_param[11]),
+	DEVICE_ID_STRUCT(0x91,   "GD5F1GM7UE",    &gd_param[12]),
+	DEVICE_ID_STRUCT(0x32,   "GD5F2GQ5UExxH", &gd_param[13]),
+	DEVICE_ID_STRUCT(0x95,   "GD5F4GM8UE",    &gd_param[14]),
+	DEVICE_ID_STRUCT(0xD9,   "GD5F1GQ4UExxH", &gd_param[15]),
+	DEVICE_ID_STRUCT(0x41, "GD5F1GQ5RE-1.8V", &gd_param[16]),
 };
 
 
-static cdt_params_t *gd_get_cdt_params(struct sfc_flash *flash, uint8_t device_id)
+static cdt_params_t *gd_get_cdt_params(struct sfc_flash *flash, uint16_t device_id)
 {
 	CDT_PARAMS_INIT(gd_nand->cdt_params);
 
 	switch(device_id) {
-	    case 0xB1 ... 0xB4:
-	    case 0xA1:
-		    gd_nand->cdt_params.standard_r.addr_nbyte = 3;
-		    gd_nand->cdt_params.quad_r.addr_nbyte = 3;
-		    break;
-	    case 0xD1 ... 0xD4:
-	    case 0x51 ... 0x55:
-		    break;
-	    default:
-		    pr_err("device_id err, please check your  device id: device_id = 0x%02x\n", device_id);
-		    return NULL;
+		case 0xB1 ... 0xB4:
+		case 0xA1:
+		case 0x61:
+		case 0xB468:
+			gd_nand->cdt_params.standard_r.addr_nbyte = 3;
+			gd_nand->cdt_params.quad_r.addr_nbyte = 3;
+			break;
+		case 0xD1 ... 0xD4:
+		case 0x51 ... 0x55:
+		case 0x32:
+		case 0x92:
+		case 0x91:
+		case 0x95:
+		case 0xD9:
+		case 0x41:
+			break;
+		default:
+			pr_err("device_id err, please check your  device id: device_id = 0x%02x\n", device_id);
+			return NULL;
 	}
 
 	return &gd_nand->cdt_params;
 }
 
-
-static int32_t gd_get_f0_register_value(struct sfc_flash *flash)
-{
-	struct sfc_cdt_xfer xfer;
-	uint32_t buf = 0;
-
-	memset(&xfer, 0, sizeof(xfer));
-
-	/*set index*/
-	xfer.cmd_index = NAND_GET_FEATURE;
-
-	/* set addr */
-	xfer.staaddr0 = 0xf0;
-
-	/* set transfer config */
-	xfer.dataen = ENABLE;
-	xfer.config.datalen = 1;
-	xfer.config.data_dir = GLB_TRAN_DIR_READ;
-	xfer.config.ops_mode = CPU_OPS;
-	xfer.config.buf = (uint8_t *)&buf;
-
-	if(sfc_sync_cdt(flash->sfc, &xfer)){
-	        pr_err("sfc_sync_cdt error ! %s %s %d\n",__FILE__,__func__,__LINE__);
-		return -EIO;
-	}
-	return buf;
-}
-
-
-static inline int deal_ecc_status(struct sfc_flash *flash, uint8_t device_id, uint8_t ecc_status)
+static inline int deal_ecc_status(struct sfc_flash *flash, uint16_t device_id, uint8_t ecc_status)
 {
 	int ret = 0;
 
 	switch(device_id) {
+		case 0x61:
+			switch((ecc_status >> 4) & 0x7) {
+				case 0x0:
+					return 0;
+				case 0x1 ... 0x4:
+					return ((ecc_status >> 4) & 0x7);
+				case 0x7:
+					return -EBADMSG;
+				default:
+					break;
+			}
+			break;
 		case 0xA1:
 		case 0xB1 ... 0xB4:
+		case 0xB468:
 			switch((ecc_status >> 4) & 0x7) {
+				case 0x0:
+					return 0;
+				case 0x1 ... 0x6:
+					return ((ecc_status >> 4) & 0x7) + 2;
 				case 0x7:
-					ret = -EBADMSG;
-					break;
-				case 0x6:
-					ret = 0x8;
-					break;
-				case 0x5:
-					ret = 0x7;
-					break;
+					return -EBADMSG;
 				default:
-					ret = 0;
+					break;
 			}
 			break;
 		case 0xD1 ... 0xD4:
+		case 0x92:
+		case 0x91:
+		case 0x95:
+		case 0xD9:
 			switch((ecc_status >> 4) & 0x3) {
-				case 0x3:
-					ret = 0x8;
-					break;
-				case 0x2:
-					ret = -EBADMSG;
-					break;
+				case 0x0:
+					return 0;
 				case 0x1:
-					if((ret = gd_get_f0_register_value(flash)) < 0)
+					ret = nand_get_ecc_conf(flash, 0xf0);
+					if (ret < 0)
 						return ret;
-					if(((ret >> 4) & 0x3) == 0x3)
-						ret = 0x7;
-					break;
+					return ((ret >> 4) & 0x3) + 4;
+				case 0x2:
+					return -EBADMSG;
+				case 0x3:
+					return 8;
 				default:
-					ret = 0;
 					break;
 			}
 			break;
+		case 0x41:
 		case 0x51:
 		case 0x55:
-			switch((ecc_status >> 4) & 0x3) {
-				case 0x3:
-				case 0x0:
-					ret = 0x0;
-					break;
-				case 0x1:
-					ret = 0x4;
-					break;
-				default:
-					ret = -EBADMSG;
-			}
-			break;
 		case 0x52:
+		case 0x32:
 			switch((ecc_status >> 4) & 0x3) {
+				case 0x0:
+					return 0;
 				case 0x1:
-					if((ret = gd_get_f0_register_value(flash)) < 0)
+					ret = nand_get_ecc_conf(flash, 0xf0);
+					if (ret < 0)
 						return ret;
-					switch((ecc_status >> 4) & 0x3) {
-						case 0x0:
-							ret = 0x1;
-							break;
-						case 0x1:
-							ret = 0x2;
-							break;
-						case 0x2:
-							ret = 0x3;
-							break;
-						case 0x3:
-							ret = 0x4;
-							break;
-						default:
-							break;
-					}
-					break;
+					return ((ret >> 4) & 0x3) + 1;
 				case 0x2:
-					ret = -EBADMSG;
+					return -EBADMSG;
 					break;
 				default:
-					ret = 0x0;
 					break;
 			}
 			break;
 		default:
-			pr_err("device_id err,it maybe don`t support	\
-					this device, please check your device id: device_id = 0x%02x\n", device_id);
-			ret = -EIO;   //notice!!!
+			pr_err("device_id err,it maybe don`t support this device, please check your device id: device_id = 0x%02x\n", device_id);
+			break;
 	}
-	return ret;
-}
 
+	return -EINVAL;
+}
 
 static int gd_nand_init(void) {
 
@@ -394,7 +529,7 @@ static int gd_nand_init(void) {
 
 	gd_nand->id_manufactory = 0xC8;
 	gd_nand->id_device_list = device_id;
-	gd_nand->id_device_count = GD_DEVICES_NUM;
+	gd_nand->id_device_count = ARRAY_SIZE(gd_param);
 
 	gd_nand->ops.get_cdt_params = gd_get_cdt_params;
 	gd_nand->ops.deal_ecc_status = deal_ecc_status;

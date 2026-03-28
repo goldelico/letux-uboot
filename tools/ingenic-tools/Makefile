@@ -76,10 +76,14 @@ TOOLS := $(TOOLS) gpt_partitions_to_c
 endif
 
 DDR_CREATOR_DIR := ddr_creator
-ifeq ($(if $(CONFIG_X2000)$(CONFIG_X2000_V12)$(CONFIG_M300)$(CONFIG_X2100)$(CONFIG_X2500),y,n),y)
+ifeq ($(if $(CONFIG_X2000)$(CONFIG_X2000_V12)$(CONFIG_M300)$(CONFIG_X2100)$(CONFIG_X2500)$(CONFIG_X2600)$(CONFIG_AD100),y,n),y)
 DDR_CREATOR_DIR := ddr_creator_x2000
 else ifeq ($(if $(CONFIG_X1600),y,n),y)
 DDR_CREATOR_DIR := ddr_creator_x1600
+else ifeq ($(if $(CONFIG_A1),y,n),y)
+DDR_CREATOR_DIR := ddr_creator_a1
+else ifeq ($(if $(CONFIG_X2580),y,n),y)
+DDR_CREATOR_DIR := ddr_creator_x2580
 endif
 
 ifdef CONFIG_MULT_DDR_PARAMS_CREATOR
@@ -147,6 +151,8 @@ ifeq ($(DDR_CREATOR_DIR), ddr_creator_x2000)
 DDR-TYPE-y	+= $(DDR_CREATOR_DIR)/supported_ddr_chips.o
 else ifeq ($(DDR_CREATOR_DIR), ddr_creator_x1600)
 DDR-TYPE-y	+= $(DDR_CREATOR_DIR)/supported_ddr_chips.o
+else ifeq ($(DDR_CREATOR_DIR), ddr_creator_x2580)
+DDR-TYPE-y  += $(DDR_CREATOR_DIR)/supported_ddr_chips.o
 endif
 
 define PRIVATE_BUILD
@@ -157,15 +163,18 @@ endef
 ALL_INCLUDE_PRIVATE := $(SRCTREE)/include/configs/$(BOARD).h $(DDR_CREATOR_DIR)/ddr_params_creator.h
 all:	$(obj).depend $(TOOLS)
 
-
-$(obj)ddr_params_creator: $(DDR-TYPE-y)
+ddr-type-objs-y := $(addprefix $(obj), $(DDR-TYPE-y))
+$(obj)ddr_params_creator: $(ddr-type-objs-y)
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
-$(foreach f,$(DDR-TYPE-y), \
-	$(eval $(call PRIVATE_BUILD,$(f),$(f:.o=.c),$(ALL_INCLUDE_PRIVATE))))
 
-$(obj)ddr_reg_values.h:        $(obj)ddr_params_creator
+$(shell [ -d $(obj)$(DDR_CREATOR_DIR) ] || mkdir -p $(obj)$(DDR_CREATOR_DIR))
+
+$(foreach f,$(DDR-TYPE-y), \
+	$(eval $(call PRIVATE_BUILD,$(obj)$(f),$(f:.o=.c),$(ALL_INCLUDE_PRIVATE))))
+
+$(obj)ddr_reg_values.h:   $(obj)ddr_params_creator
 	$(OBJTREE)/tools/ingenic-tools/ddr_params_creator > $(OBJTREE)/include/generated/$(notdir $@)
 
 endif
@@ -197,8 +206,13 @@ $(obj)gpt_creator:	$(SRCTREE)/lib/crc32.c gpt_creator.c
 
 ifdef CONFIG_GPT_TABLE_PATH
 $(obj)mbr-gpt.bin:	$(obj)gpt_creator
+ifdef CONFIG_JZSD_OTA_VERSION20
+	$(OBJTREE)/tools/ingenic-tools/gpt_creator		\
+	$(CONFIG_GPT_TABLE_PATH)/partitions_mmc_ota.tab mbr-of-gpt.bin gpt.bin
+else
 	$(OBJTREE)/tools/ingenic-tools/gpt_creator		\
 	$(CONFIG_GPT_TABLE_PATH)/partitions.tab mbr-of-gpt.bin gpt.bin
+endif
 	cat mbr-of-gpt.bin gpt.bin > $@
 	dd if=/dev/zero of=file.bin bs=512 count=33
 	cat $@ file.bin > file2.bin
@@ -218,23 +232,57 @@ $(obj)mmc_params:	mmc_params.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
 
+fixer_var:=
 ifeq ($(if $(CONFIG_X2000_V12)$(CONFIG_M300)$(CONFIG_X2100),y,n),y)
-$(obj)spl_params_fixer:	spl_params_fixer_x2000_v12.c
-	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	fixer_var:=spl_params_fixer_x2000_v12.c
 else ifeq ($(if $(CONFIG_X2500),y,n),y)
-$(obj)spl_params_fixer:	spl_params_fixer_x2500.c
-	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	fixer_var:=spl_params_fixer_x2500.c
 else ifeq ($(if $(CONFIG_X1600),y,n),y)
-$(obj)spl_params_fixer:	spl_params_fixer_x1600.c
-	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
-	$(HOSTSTRIP) $@
+	fixer_var:=spl_params_fixer_x1600.c
+else ifeq ($(if $(CONFIG_X2580),y,n),y)
+	fixer_var:=spl_params_fixer_x2580.c
+else ifeq ($(if $(CONFIG_X2600),y,n),y)
+	fixer_var:=spl_params_fixer_x2600.c
+else ifeq ($(if $(CONFIG_AD100),y,n),y)
+	fixer_var:=spl_params_fixer_ad100.c
 else
-$(obj)spl_params_fixer:	spl_params_fixer.c
+	fixer_var:=spl_params_fixer.c
+endif
+
+$(obj)spl_params_fixer:	$(fixer_var)
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
 	$(HOSTSTRIP) $@
+
+
+spl_source_list:=
+ifeq ($(if $(CONFIG_SPL_PARAMS_FIXER),y,n),y)
+	spl_source_list += $(fixer_var)
 endif
+
+ifeq ($(if $(CONFIG_SPI_SPL_CHECK),y,n),y)
+	spl_source_list += spi_checksum.c
+endif
+
+ifeq ($(if $(CONFIG_MMC_SPL_PARAMS),y,n),y)
+	spl_source_list += mmc_params.c
+endif
+
+ifeq ($(if $(CONFIG_SPL_PAD_TO_BLOCK),y,n),y)
+	spl_source_list +=  spl_pad_to_block.c
+endif
+
+ifeq ($(if $(CONFIG_NOR_BUILTIN_PARAMS),y,n),y)
+	spl_source_list += sfc_nor_builtin_params.c sfc_builtin_params/nor_device.c
+endif
+
+ifeq ($(if $(CONFIG_NAND_BUILTIN_PARAMS),y,n),y)
+	spl_source_list += sfc_nand_builtin_params.c sfc_builtin_params/nand_device.c
+endif
+
+spl_tools_source:
+	echo "$(spl_source_list)" > .spl_source_tools_depend
+
+
 
 $(obj)sfc_timing_params: sfc_timing_params.c
 	$(HOSTCC) $(HOSTCFLAGS_NOPED) $(HOSTLDFLAGS) -o $@ $^
@@ -257,8 +305,13 @@ $(obj)sfc_nand_params: nand_device/
 	cp -f nand_device/sfc_nand_params $@
 
 gpt_partitions_to_c:
+ifdef CONFIG_JZSD_OTA_VERSION20
+	$(SRCTREE)/tools/ingenic-tools/gpt_tab_to_c.sh \
+	 $(CONFIG_GPT_TABLE_PATH)/partitions_mmc_ota.tab > $(SRCTREE)/common/spl/spl_gpt_tab_data.h
+else
 	$(SRCTREE)/tools/ingenic-tools/gpt_tab_to_c.sh \
 	 $(CONFIG_GPT_TABLE_PATH)/partitions.tab > $(SRCTREE)/common/spl/spl_gpt_tab_data.h
+endif
 
 .PHONY:gpt_partitions_to_c
 
@@ -273,7 +326,8 @@ clean:
 		$(obj)sfc_nand_params \
 		$(obj)sfc_timing_params \
 		$(obj)sfc_nor_builtin_params \
-		$(obj)sfc_nand_builtin_params
+		$(obj)sfc_nand_builtin_params \
+		$(TOPDIR)/tools/ingenic-tools/.spl_source_tools_depend
 
 distclean:	clean
 
@@ -298,5 +352,6 @@ endif
 include $(SRCTREE)/rules.mk
 
 sinclude $(obj).depend
+
 
 #########################################################################

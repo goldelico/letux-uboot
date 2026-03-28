@@ -1,20 +1,20 @@
 #include <stdio.h>
 #include "nand_common.h"
 
-#define WINBOND_MID			    0xEF
-#define WINBOND_NAND_DEVICD_COUNT	    2
 
-static unsigned char winbond_xgv[] = {0x2, 0x3};
+static unsigned char winbond_errstat_2[] = {0x2, 0x3};
 
 static struct device_struct device[] = {
-	DEVICE_STRUCT(0xAA, 2048, 2, 4, 2, 2, winbond_xgv),
-	DEVICE_STRUCT(0xAB, 2048, 2, 4, 2, 2, winbond_xgv),
+	DEVICE_STRUCT(0xAA21, 2048, 2, 4, 2, 1, winbond_errstat_2, 0),
+	DEVICE_STRUCT(0xAA22, 2048, 2, 4, 2, 1, winbond_errstat_2, 1),
+	DEVICE_STRUCT(0xAB21, 2048, 2, 4, 2, 1, winbond_errstat_2, 0),
+	DEVICE_STRUCT(0xAE21, 2048, 2, 4, 2, 1, winbond_errstat_2, 1),
 };
 
 static struct nand_desc winbond_nand = {
 
-	.id_manufactory = WINBOND_MID,
-	.device_counts = WINBOND_NAND_DEVICD_COUNT,
+	.id_manufactory = 0xEF,
+	.device_counts = ARRAY_SIZE(device),
 	.device = device,
 };
 

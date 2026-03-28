@@ -43,9 +43,7 @@ void __attribute__((weak)) _machine_restart(void)
 
 	writel(TSCR_WDTSC, TCU_BASE + TCU_TSCR);
 
-#if (defined(CONFIG_X1600))
 	writel(0, WDT_BASE + WDT_TCNT);
-#endif
 	writel(time, WDT_BASE + WDT_TDR);
 	writel(TCSR_PRESCALE | TCSR_RTC_EN
 #if (defined(CONFIG_X1600))
@@ -54,7 +52,7 @@ void __attribute__((weak)) _machine_restart(void)
 			, WDT_BASE + WDT_TCSR);
 	writel(0,WDT_BASE + WDT_TCER);
 
-	printf("reset in %dms", RESET_DELAY_MS);
+	serial_debug("reset in %dms", RESET_DELAY_MS);
 	writel(TCER_TCEN,WDT_BASE + WDT_TCER);
 	mdelay(1000);
 }

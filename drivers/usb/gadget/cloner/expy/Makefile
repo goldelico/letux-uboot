@@ -25,7 +25,7 @@ include $(TOPDIR)/config.mk
 
 LIB	:= $(obj)libexpy.o
 
-#COBJS-$(CONFIG_JZ_VERDOR_BURN_EP_TEST) += expy_file.o expy_test.o expy_efuse.o
+COBJS-$(CONFIG_JZ_VERDOR_BURN_EP_TEST) += expy_file.o expy_test.o expy_efuse.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

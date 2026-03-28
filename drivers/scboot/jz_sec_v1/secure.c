@@ -29,7 +29,7 @@ static void load_pdma_firmware(void)
 	unsigned int *pdma_ins = (unsigned int *)pdma_wait;
 	unsigned int *dst_ptr = (unsigned int *)(TCSM_BANK0);//cacheable
 
-//	printf("xxxxxxxx load pdma firmware!\n");
+//	serial_debug("xxxxxxxx load pdma firmware!\n");
 	for(i=0; i < 6; i++)
 		dst_ptr[i] = pdma_ins[i];
 }
@@ -41,17 +41,18 @@ int init_seboot(void)
 	args = (volatile struct sc_args *)GET_SC_ARGS();
 	volatile unsigned int * clkgate = (volatile unsigned int *)0xb0000020;
 	*clkgate = 0;
+	serial_debug("scboot for x1xxx.\n");
 
 	reset_mcu();
-	printf("reset_mcu %x\n", REG32(PDMA_BASE + DMCS_OFF));
-	printf("MCU_TCSM_RETVAL 0x%08x\n", REG32(MCU_TCSM_RETVAL));
+	serial_debug("reset_mcu %x\n", REG32(PDMA_BASE + DMCS_OFF));
+	serial_debug("MCU_TCSM_RETVAL 0x%08x\n", REG32(MCU_TCSM_RETVAL));
 
 	load_pdma_firmware();
 	boot_up_mcu();
 	udelay(50 * 1000);
 	otp_init();
 
-//	printf("mcu control status: %x\n", REG32(PDMA_BASE + DMCS_OFF));
+//	serial_debug("mcu control status: %x\n", REG32(PDMA_BASE + DMCS_OFF));
 
 	return 0;
 }

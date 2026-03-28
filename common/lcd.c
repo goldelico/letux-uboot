@@ -180,6 +180,8 @@ void lcd_sync(void)
 	if (lcd_flush_dcache)
 		flush_dcache_range((u32)lcd_base,
 			(u32)(lcd_base + lcd_get_size(&line_length)));
+		flush_scache_range((u32)lcd_base,
+			(u32)(lcd_base + lcd_get_size(&line_length)));
 #endif
 
 	lcd_dma_sync();
@@ -561,7 +563,7 @@ U_BOOT_CMD(
 
 static int lcd_init(void *lcdbase)
 {
-#ifdef DEFAULT_BACKLIGHT_LEVEL
+#ifdef CONFIG_SYS_BACKLIGHT_LEVEL
 	lcd_set_backlight_level(CONFIG_SYS_BACKLIGHT_LEVEL);
 #else
 	lcd_set_backlight_level(80);
@@ -1249,6 +1251,7 @@ static void *lcd_logo(void)
 #if defined(CONFIG_RLE_LCD_LOGO) && !defined(CONFIG_LCD_INFO_BELOW_LOGO)
 	rle_plot(RLE_LOGO_DEFAULT_ADDR, lcd_base);
 #else
+#if defined(CONFIG_LCD_LOGO)
 	/*  The logo size should not larger than framebuffer, else the DMA descriptor will be destroyed. */
 	if ((BMP_LOGO_WIDTH > panel_info.vl_col) || (BMP_LOGO_HEIGHT > panel_info.vl_row)) {
 		printf("\033[31mThe LOGO's width or height is larger than lcd panel, skip draw the LOGO!!!\033[0m\n");
@@ -1259,6 +1262,7 @@ static void *lcd_logo(void)
 		ypos = (panel_info.vl_row - BMP_LOGO_HEIGHT) / 2;
 		bitmap_plot(xpos, ypos);
 	}
+#endif
 #endif
 	flush_cache_all();
 #ifdef CONFIG_LCD_INFO

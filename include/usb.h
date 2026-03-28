@@ -252,6 +252,10 @@ int usb_host_eth_scan(int mode);
 
 #endif
 
+#ifdef CONFIG_USB_LOAD
+int usb_load_scan(int mode);
+#endif
+
 #ifdef CONFIG_USB_KEYBOARD
 
 int drv_usb_kbd_init(void);

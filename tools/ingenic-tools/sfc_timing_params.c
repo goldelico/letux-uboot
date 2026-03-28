@@ -10,9 +10,9 @@
 #define DEV_CONF_TSETUP_MSK             (0x3 << DEV_CONF_TSETUP_OFFSET)
 #define DEV_CONF_TSH_OFFSET             (5)
 #define DEV_CONF_TSH_MSK                (0xf << DEV_CONF_TSH_OFFSET)
-#define DEF_TCHSH       5
-#define DEF_TSLCH       5
-#define DEF_TSHSL_R     20
+#define DEF_TCHSH       20
+#define DEF_TSLCH       20
+#define DEF_TSHSL_R     50
 #define DEF_TSHSL_W     50
 
 static void file_head_print(void)
