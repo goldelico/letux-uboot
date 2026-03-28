@@ -196,6 +196,7 @@ HOSTCPPFLAGS =	-include $(SRCTREE)/include/libfdt_env.h \
 		-I $(SRCTREE)/tools \
 		-DCONFIG_SYS_TEXT_BASE=$(CONFIG_SYS_TEXT_BASE) \
 		-DUSE_HOSTCC \
+	-D__MIPSEL__ \
 		-D__KERNEL_STRICT_NAMES
 
 
