@@ -86,6 +86,7 @@
 /*
  * uart setting
  */
+
 #ifndef CONFIG_SYS_UART_INDEX
 #define CONFIG_SYS_UART_INDEX		2
 #endif
