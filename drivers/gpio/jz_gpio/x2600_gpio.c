@@ -21,7 +21,11 @@
  */
 
 static struct jz_gpio_func_def uart_gpio_func[] = {
+#ifdef CONFIG_SYS_UART0_PC
+	[0] = { .port = GPIO_PORT_C, .func = GPIO_FUNC_1 | GPIO_PULLUP, .pins = 0xf << 21},
+#else/* CONFIG_SYS_UART0_PD */
 	[0] = { .port = GPIO_PORT_E, .func = GPIO_FUNC_1 | GPIO_PULLUP, .pins = 0xf << 9},
+#endif
 #ifdef CONFIG_SYS_UART1_PC
 	[1] = { .port = GPIO_PORT_C, .func = GPIO_FUNC_2 | GPIO_PULLUP, .pins = 0x3 << 2},
 #else/* CONFIG_SYS_UART1_PB */
