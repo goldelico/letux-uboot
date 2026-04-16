@@ -108,7 +108,7 @@ int spl_start_uboot(void)
 /* U-Boot common routines */
 int checkboard(void)
 {
-	puts("Board: x2600h_halley7 (Ingenic XBurst2 X2600H SoC)\n");
+	puts("Board: Letux X26 (Ingenic XBurst2 X2600H SoC)\n");
 	return 0;
 }
 
