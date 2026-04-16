@@ -363,12 +363,14 @@
 #define GMAC_PHY_RMII   2//4
 #define CONFIG_SYS_RX_ETH_BUFFER 64
 
+#if 0
 #define CONFIG_NET_X2600
+#endif
 #ifdef CONFIG_NET_X2600
 #define CONFIG_MAC_AHB_BUS
 
 /* Select GMAC Controller */
-// #define CONFIG_GMAC0
+#define CONFIG_GMAC0
 /* Select GMAC Interface mode */
 
 #define CONFIG_NET_GMAC_PHY_MODE GMAC_PHY_RMII
