@@ -23,7 +23,7 @@
 #if((CONFIG_SYS_PLL_FREQ % CONFIG_DDR2_W971GV6NG_MEM_FREQ) ||\
 	(CONFIG_SYS_PLL_FREQ / CONFIG_DDR2_W971GV6NG_MEM_FREQ < 0) ||\
 	(CONFIG_SYS_PLL_FREQ / CONFIG_DDR2_W971GV6NG_MEM_FREQ > 15))
-#error DDR memoryclock division ratio should be an integer between 1 and 16, check CONFIG_SYS_MPLL_FREQ and CONFIG_DDR2_W971GV6NG_MEM_FREQ;
+#error "DDR memoryclock division ratio should be an integer between 1 and 16, check CONFIG_SYS_MPLL_FREQ and CONFIG_DDR2_W971GV6NG_MEM_FREQ;"
 #endif
 
 #if ((CONFIG_DDR_DATA_RATE > 100000000) &&\
@@ -42,7 +42,7 @@
 #define CONFIG_DDR_AL	0
 
 #if(-1 == CONFIG_DDR_CL)
-#error CONFIG_DDR2_W971GV6NG_MEM_FREQ don't support, check %s\n, check data_rate range
+#error "CONFIG_DDR2_W971GV6NG_MEM_FREQ don't support, check %s\n, check data_rate range"
 #endif
 
 
