@@ -19,8 +19,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
  * MA 02111-1307 USA
  */
-#ifndef __X2600H_HALLEY7_H_
-#define	__X2600H_HALLEY7_H_
+#ifndef __LX26_
+#define	__LX26_
 /**
  * Basic configuration(SOC, Cache, UART, DDR).
  */
@@ -153,8 +153,15 @@
     #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 user/pzqi/uImage; bootm 0x80600000"
     /*#define CONFIG_BOOTCOMMAND "loady 0x80600000; bootm 0x80600000"*/
   #elif defined(CONFIG_SPL_JZMMC_SUPPORT) || defined(CONFIG_SPL_MMC_SUPPORT)
-    #define CONFIG_BOOTCOMMAND "mmc dev 0; mmc read 0x80a00000 0x1800 0x3000; bootm 0x80a00000"
+    /*#define CONFIG_BOOTCOMMAND "mmc dev 0; mmc read 0x80a00000 0x1800 0x3000; bootm 0x80a00000"*/
     /*#define CONFIG_BOOTCOMMAND "set dtb 0x83000000; set uImage 0x80600000; mmc dev 0;mmc read ${uImage} 0x1800 0x2800; mmc read ${dtb} 0x5800 0x100; bootm ${uImage} - ${dtb}"*/ /*dtb support*/
+	#define CONFIG_SYS_HUSH_PARSER          1
+	#define CONFIG_EXTRA_ENV_SETTINGS \
+		"bootfile="     "/uImage"               "\0" \
+		"bootaddr="     "0x80600000"            "\0" \
+		"fdtfile="      "/ingenic/lx26.dtb"     "\0" \
+		"fdt_addr="     "0x83000000"            "\0"
+	#define CONFIG_BOOTCOMMAND "fatload mmc 0 ${bootaddr} ${bootfile}; if fatload mmc 0 ${fdt_addr} ${fdtfile}; then bootm ${bootaddr} - ${fdt_addr}; else bootm ${bootaddr}; fi"
   #elif defined(CONFIG_SPL_SFC_NOR)
     #ifdef CONFIG_OF_LIBFDT
         /* Device tree not compiled into kernel support*/
@@ -197,10 +204,10 @@
 		#ifdef CONFIG_SPL_SFC_NOR
 			#define CONFIG_PAT_USERFS_NAME   "userfs"
 			#define CONFIG_PAT_UPDATEFS_NAME "updatefs"
-            		#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock5 rw"
+			#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=cramfs root=/dev/mtdblock5 rw"
 		#elif CONFIG_SPL_SFC_NAND
-        		#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=4 root=ubi0:system ubi.mtd=5 rootfstype=ubifs ro flashtype=nand"
-        		#define CONFIG_SPL_OTA_BOOTARGS    BOOTARGS_COMMON "ip=off ubi.mtd=4 ubi.mtd=5 root=/dev/ram0 rw rdinit=/linuxrc flashtype=nand"
+			#define CONFIG_SPL_BOOTARGS    BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=4 root=ubi0:system ubi.mtd=5 rootfstype=ubifs ro flashtype=nand"
+			#define CONFIG_SPL_OTA_BOOTARGS    BOOTARGS_COMMON "ip=off ubi.mtd=4 ubi.mtd=5 root=/dev/ram0 rw rdinit=/linuxrc flashtype=nand"
 		#else
 			#define CONFIG_GPT_TAB_BUILT_IN
 			#undef CONFIG_SPL_BOOTARGS
@@ -625,4 +632,4 @@
 /* #define CONFIG_JZ_CKEYAES */
 /* #define CONFIG_JZ_SECURE_SUPPORT */
 
-#endif/*END OF __X2600H_HALLEY7_H_ */
+#endif/*END OF __LX26_ */
