@@ -43,6 +43,7 @@
 
 /* Device Tree Configuration*/
 /*#define CONFIG_OF_LIBFDT 1*/
+#define CONFIG_OF_LIBFDT 1
 #ifdef CONFIG_OF_LIBFDT
 #define IMAGE_ENABLE_OF_LIBFDT	1
 #define CONFIG_LMB
@@ -448,7 +449,9 @@
 #define CONFIG_XBURST2_GEM_NAND_MAC_LEN (6)
 #endif/*CONFIG_NET_NAND_MAC*/
 
-/*#define CONFIG_NET_X2000_V12*/
+#if 0
+#define CONFIG_NET_X2000_V12
+#endif
 #ifdef CONFIG_NET_X2000_V12
 
 #define CONFIG_MAC_AXI_BUS
@@ -517,8 +520,10 @@
 #define CONFIG_SYS_ALT_MEMTEST
 #endif
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
+#ifdef CONFIG_NET_X2000
 #define CONFIG_CMD_NET		/* networking support			*/
 #define CONFIG_CMD_PING
+#endif
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
 #define CONFIG_CMD_SOURCE	/* "source" command support	*/
@@ -591,8 +596,9 @@
 #define CONFIG_ENV_SIZE			(32 << 10)
 #if 0
 #define CONFIG_ENV_OFFSET		(CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR +4) * 512)
-#endif
+#else
 #define CONFIG_ENV_OFFSET		0xcac00
+#endif
 
 #elif defined(CONFIG_ENV_IS_IN_SFC)
 #define CONFIG_CMD_SFC_NOR
