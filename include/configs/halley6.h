@@ -106,13 +106,13 @@
 #define CONFIG_BOOTDELAY 1
 
 #if defined(CONFIG_JZ_MMC_MSC0)
-	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk0p1 rootdelay=3 rw"
+	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk0p7 rootdelay=3 rw"
 #elif defined(CONFIG_JZ_MMC_MSC1)
-	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk1p1 rootdelay=3 rw"
+	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk1p7 rootdelay=3 rw"
 #endif
 
 #if defined(CONFIG_SPL_JZMMC_SUPPORT) || defined(CONFIG_SPL_MMC_SUPPORT)
-	#define CONFIG_BOOTARGS BOOTARGS_COMMON " rootfstype=ext4 root=/dev/mmcblk0p2 rw"
+	#define CONFIG_BOOTARGS BOOTARGS_COMMON MSC_BOOTARGS
 #elif defined(CONFIG_SPL_NOR_SUPPORT)
 	#define CONFIG_BOOTARGS BOOTARGS_COMMON " ip=192.168.10.207:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.4.13:/home/nfsroot/fpga/user/pzqi/rootfs-tst rw"
 #elif defined(CONFIG_SPL_SFC_NOR)
@@ -127,13 +127,7 @@
 	#define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 user/pzqi/uImage; bootm 0x80600000"
 /*#define CONFIG_BOOTCOMMAND "loady 0x80600000; bootm 0x80600000"*/
 #elif defined(CONFIG_SPL_JZMMC_SUPPORT) || defined(CONFIG_SPL_MMC_SUPPORT)
-	#define	CONFIG_SYS_HUSH_PARSER		1
-	#define CONFIG_EXTRA_ENV_SETTINGS \
-		"bootfile="	"/uImage"		"\0" \
-		"bootaddr="	"0x80a00000"		"\0" \
-		"fdtfile="	"/ingenic/lx16.dtb"	"\0" \
-		"fdt_addr="	"0x81f00000"		"\0"
-	#define CONFIG_BOOTCOMMAND "fatload mmc 0 ${bootaddr} ${bootfile}; if fatload mmc 0 ${fdt_addr} ${fdtfile}; then saveenv; bootm ${bootaddr} - ${fdt_addr}; else bootm ${bootaddr}; fi"
+	#define CONFIG_BOOTCOMMAND "mmc dev 0; mmc read 0x80a00000 0x1800 0x3000; bootm 0x80a00000"
 #elif defined(CONFIG_SPL_SFC_NOR)
 	#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x600000 0x80a00000 ;bootm 0x80a00000"
 #elif defined(CONFIG_SPL_SFC_NAND)
@@ -238,11 +232,11 @@
 	     #define CONFIG_SPL_BOOTARGS	BOOTARGS_COMMON "ip=off init=/linuxrc ubi.mtd=2 root=ubi0:rootfs ubi.mtd=3 rootfstype=ubifs rw flashtype=nand"
     #else
 		#if defined(CONFIG_JZ_MMC_MSC0)
-			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk0p1 rootdelay=3 rw"
+			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk0p7 rootdelay=3 rw"
 		#elif defined(CONFIG_JZ_MMC_MSC1)
-			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk1p1 rootdelay=3 rw"
+			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk1p7 rootdelay=3 rw"
 		#elif defined(CONFIG_JZ_MMC_MSC2)
-			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk2p1 rootdelay=3 rw"
+			#define CONFIG_SPL_BOOTARGS        BOOTARGS_COMMON "ip=off init=/linuxrc rootfstype=ext4 root=/dev/mmcblk2p7 rootdelay=3 rw"
 		#endif
     #endif
     #ifdef CONFIG_OTA_VERSION30
@@ -329,7 +323,7 @@
 #define GMAC_PHY_RMII   2//4
 #define CONFIG_SYS_RX_ETH_BUFFER 64
 
-/*#define CONFIG_NET_X1600*/
+#define CONFIG_NET_X1600
 #ifdef CONFIG_NET_X1600
 #define CONFIG_MAC_AHB_BUS
 
@@ -373,20 +367,8 @@
 #define CONFIG_CMD_LOADB	/* loadb			*/
 #define CONFIG_CMD_LOADS	/* loads			*/
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
-#if 1
-#define CONFIG_LOOPW
-#define CONFIG_CMD_MEMTEST
-#endif
-#if 0
-#define CONFIG_SYS_ALT_MEMTEST
-#endif
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/
-#if 1
-#define CONFIG_OF_LIBFDT	/* fdt				*/
-#define CONFIG_LMB		/* image_setup_linux() support	*/
-
-#endif
 #define CONFIG_CMD_NET		/* networking support			*/
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
@@ -443,8 +425,7 @@
 
 #define CONFIG_SYS_MAXARGS 16
 #define CONFIG_SYS_LONGHELP
-/*#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "# "*/
-#define CONFIG_SYS_PROMPT "lx16" "# "
+#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "# "
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
@@ -469,7 +450,7 @@
 #define CONFIG_SYS_INIT_SP_OFFSET	0x400000
 #define CONFIG_SYS_LOAD_ADDR		0x80010000
 #define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		0x82000000
+#define CONFIG_SYS_MEMTEST_END		0x88000000
 
 #define CONFIG_SYS_TEXT_BASE		0x80100000
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
@@ -485,10 +466,7 @@
 #ifdef CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			(32 << 10)
-#if 0
 #define CONFIG_ENV_OFFSET		(CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
-#endif
-#define CONFIG_ENV_OFFSET		0xcac00
 
 #elif defined(CONFIG_ENV_IS_IN_SFC)
 #define CONFIG_CMD_SFC_NOR
