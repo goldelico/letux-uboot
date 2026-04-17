@@ -30,6 +30,7 @@
 /* #define CONFIG_X2600_FPGA	/1* x2600 SoC *1/ */
 /* #define CONFIG_FPGA		/1* x2600 FPGA *1/ */
 #define CONFIG_X2600		/* x2600 SoC */
+#define CONFIG_SOC_NAME		x2600
 
 #include "x2600_ddr.h"
 
@@ -46,6 +47,7 @@
 
 /* Device Tree Configuration*/
 /*#define CONFIG_OF_LIBFDT 1*/
+#define CONFIG_OF_LIBFDT 1
 #ifdef CONFIG_OF_LIBFDT
 #define IMAGE_ENABLE_OF_LIBFDT  1
 #define CONFIG_LMB
@@ -103,7 +105,7 @@
   #endif
 #else
   #if defined(CONFIG_SPL_JZMMC_SUPPORT) || defined(CONFIG_SPL_MMC_SUPPORT)
-	#define CONFIG_BOOTARGS BOOTARGS_COMMON " rootfstype=ext4 root=/dev/mmcblk0p7 rootdelay=3 rw"
+	#define CONFIG_BOOTARGS BOOTARGS_COMMON " rootfstype=ext4 root=/dev/mmcblk0p2 rootdelay=3 rw"
   #elif defined(CONFIG_SPL_NOR_SUPPORT)
   /*#define CONFIG_BOOTARGS  BOOTARGS_COMMON " ip=192.168.10.210:192.168.10.1:192.168.10.1:255.255.255.0 nfsroot=192.168.4.13:/home/nfsroot/fpga/user/bliu/root_ok rw" */
     /*#define CONFIG_BOOTARGS  BOOTARGS_COMMON " ip=off root=/dev/ram0 rw rdinit=/linuxrc"*/
@@ -161,7 +163,7 @@
 		"bootaddr="     "0x80600000"            "\0" \
 		"fdtfile="      "/ingenic/lx26.dtb"     "\0" \
 		"fdt_addr="     "0x83000000"            "\0"
-	#define CONFIG_BOOTCOMMAND "fatload mmc 0 ${bootaddr} ${bootfile}; if fatload mmc 0 ${fdt_addr} ${fdtfile}; then bootm ${bootaddr} - ${fdt_addr}; else bootm ${bootaddr}; fi"
+	#define CONFIG_BOOTCOMMAND "fatload mmc 0 ${bootaddr} ${bootfile}; if fatload mmc 0 ${fdt_addr} ${fdtfile}; then saveenv; bootm ${bootaddr} - ${fdt_addr}; else bootm ${bootaddr}; fi"
   #elif defined(CONFIG_SPL_SFC_NOR)
     #ifdef CONFIG_OF_LIBFDT
         /* Device tree not compiled into kernel support*/
@@ -414,6 +416,10 @@
 #define CONFIG_CMD_LOADB	/* loadb			*/
 #define CONFIG_CMD_LOADS	/* loads			*/
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
+#if 1
+#define CONFIG_LOOPW
+#define CONFIG_CMD_MEMTEST
+#endif
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #ifdef CONFIG_NET_X2600
 #define CONFIG_CMD_NET		/* networking support			*/
@@ -486,7 +492,11 @@
 #ifdef CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			(32 << 10)
+#if 0
 #define CONFIG_ENV_OFFSET		(CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
+#else
+#define CONFIG_ENV_OFFSET		0xcac00
+#endif
 
 #elif defined(CONFIG_ENV_IS_IN_SFC)
 #define CONFIG_CMD_SFC_NOR
@@ -512,7 +522,7 @@
 
 /* LCD */
 /* #define CONFIG_LCD */
-#define CONFIG_GPIO_PWR_WAKE		GPIO_PB(31)
+#define CONFIG_GPIO_PWR_WAKE		GPIO_PC(7)
 #define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
 #define CONFIG_SYS_DCACHE_OFF
 
