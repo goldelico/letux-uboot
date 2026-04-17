@@ -82,7 +82,7 @@
 #define CONFIG_SYS_SCACHE_WAYS		(16)
 
 
-#define CONFIG_SYS_UART_INDEX		2
+#define CONFIG_SYS_UART_INDEX		3
 #define CONFIG_BAUDRATE			115200
 
 
@@ -132,20 +132,20 @@
  * Boot arguments definitions.
  */
 #define LINUX_LOGLEVEL "loglevel=7"
-/* #define BOOTARGS_COMMON "console=ttyS2,115200 mem=96M@0x0 rmem=32M@0x6000000"*/
+/* #define BOOTARGS_COMMON "console=ttyS3,115200 mem=96M@0x0 rmem=32M@0x6000000"*/
 #define CONFIG_BOOTARGS_AUTO_MODIFY	1	/*auto detect memory size, and modify bootargs for kernel.*/
 
 #if (CONFIG_BOOTARGS_AUTO_MODIFY == 1)
-	#define BOOTARGS_COMMON LINUX_LOGLEVEL " ieee754=emulated console=ttyS2,115200 "
+	#define BOOTARGS_COMMON LINUX_LOGLEVEL " console=ttyS3,115200 "
 #else
-	#define BOOTARGS_COMMON LINUX_LOGLEVEL " ieee754=emulated console=ttyS2,115200 mem=128M@0x0 "
+	#define BOOTARGS_COMMON LINUX_LOGLEVEL " console=ttyS3,115200 mem=128M@0x0 "
 #endif
 
 
 #if defined(CONFIG_JZ_MMC_MSC0)
-	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk0p2 rw"
+	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk0p7 rootdelay=3 rw"
 #elif defined(CONFIG_JZ_MMC_MSC2)
-	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk0p2 rw"
+	#define MSC_BOOTARGS " rootfstype=ext4 root=/dev/mmcblk2p7 rootdelay=3 rw"
 #endif
 
 #ifdef CONFIG_BOOT_ANDROID
@@ -197,14 +197,7 @@
     #define CONFIG_BOOTCOMMAND "tftpboot 0x80600000 user/pzqi/uImage; bootm 0x80600000"
     /*#define CONFIG_BOOTCOMMAND "loady 0x80600000; bootm 0x80600000"*/
   #elif defined(CONFIG_SPL_JZMMC_SUPPORT) || defined(CONFIG_SPL_MMC_SUPPORT)
-    /*#define CONFIG_BOOTCOMMAND "mmc dev 0; mmc read 0x80a00000 0x1800 0x3000; bootm 0x80a00000" */
-	#define CONFIG_SYS_HUSH_PARSER          1
-	#define CONFIG_EXTRA_ENV_SETTINGS \
-		"bootfile="     "/uImage"               "\0" \
-		"bootaddr="     "0x80a00000"            "\0" \
-		"fdtfile="      "/ingenic/lx20.dtb"     "\0" \
-		"fdt_addr="     "0x83000000"            "\0"
-	#define CONFIG_BOOTCOMMAND "fatload mmc 0 ${bootaddr} ${bootfile}; if fatload mmc 0 ${fdt_addr} ${fdtfile}; then saveenv; bootm ${bootaddr} - ${fdt_addr}; else bootm ${bootaddr}; fi"
+    #define CONFIG_BOOTCOMMAND "mmc dev 0; mmc read 0x80a00000 0x1800 0x3000; bootm 0x80a00000"
     /*#define CONFIG_BOOTCOMMAND "set dtb 0x83000000; set uImage 0x80600000; mmc dev 0;mmc read ${uImage} 0x1800 0x2800; mmc read ${dtb} 0x5800 0x100; bootm ${uImage} - ${dtb}"*/ /*dtb support*/
   #elif defined(CONFIG_SPL_SFC_NOR)
 	#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x600000 0x80a00000 ;bootm 0x80a00000"
@@ -345,17 +338,13 @@
 
 #define CONFIG_JZ_MMC_MSC2_PE   //set gpio
 
-/* #define CONFIG_SDHCI_SDR_PIN	GPIO_PC(0) */
+#define CONFIG_SDHCI_SDR_PIN	GPIO_PC(0)
 
 
 /*#define CONFIG_MMC_TRACE		// only for DEBUG*/
 /*#define CONFIG_SDHCI_TRACE	// only for DEBUG*/
 #endif
 
-#if 1
-#define CONFIG_OF_LIBFDT       /* fdt                          */
-#define CONFIG_LMB             /* image_setup_linux() support  */
-#endif
 
 /* SFC */
 #define CONFIG_SFC_V20
@@ -448,7 +437,7 @@
 #define CONFIG_XBURST2_GEM_NAND_MAC_LEN (6)
 #endif/*CONFIG_NET_NAND_MAC*/
 
-/*#define CONFIG_NET_X2000_V12*/
+#define CONFIG_NET_X2000_V12
 #ifdef CONFIG_NET_X2000_V12
 
 #define CONFIG_MAC_AXI_BUS
@@ -509,13 +498,6 @@
 #define CONFIG_CMD_LOADB	/* loadb			*/
 #define CONFIG_CMD_LOADS	/* loads			*/
 #define CONFIG_CMD_MEMORY	/* md mm nm mw cp cmp crc base loop mtest */
-#if 1
-#define CONFIG_LOOPW
-#define CONFIG_CMD_MEMTEST
-#endif
-#if 0
-#define CONFIG_SYS_ALT_MEMTEST
-#endif
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_NET		/* networking support			*/
 #define CONFIG_CMD_PING
@@ -557,12 +539,11 @@
 
 #define CONFIG_SYS_MAXARGS 16
 #define CONFIG_SYS_LONGHELP
-/*#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "# "*/
-#define CONFIG_SYS_PROMPT "lx20" "# "
+#define CONFIG_SYS_PROMPT CONFIG_SYS_BOARD "# "
 #define CONFIG_SYS_CBSIZE 1024 /* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE + sizeof(CONFIG_SYS_PROMPT) + 16)
 
-#define CONFIG_SYS_MONITOR_LEN		(768 * 1024)
+#define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(16 * 1024 * 1024)
 #define CONFIG_SYS_BOOTPARAMS_LEN	(128 * 1024)
 
@@ -571,7 +552,7 @@
 #define CONFIG_SYS_INIT_SP_OFFSET	0x400000
 #define CONFIG_SYS_LOAD_ADDR		0x88000000
 #define CONFIG_SYS_MEMTEST_START	0x80000000
-#define CONFIG_SYS_MEMTEST_END		0x86000000
+#define CONFIG_SYS_MEMTEST_END		0x88000000
 
 #define CONFIG_SYS_TEXT_BASE		0x80100000
 #define CONFIG_SYS_SC_TEXT_BASE     0x80100004
@@ -590,10 +571,7 @@
 #ifdef CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			(32 << 10)
-#if 0
-#define CONFIG_ENV_OFFSET		(CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR +4) * 512)
-#endif
-#define CONFIG_ENV_OFFSET		0xcac00
+#define CONFIG_ENV_OFFSET		(CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
 
 #elif defined(CONFIG_ENV_IS_IN_SFC)
 #define CONFIG_CMD_SFC_NOR
