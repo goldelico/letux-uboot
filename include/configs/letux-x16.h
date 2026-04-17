@@ -62,6 +62,13 @@
 #define CONFIG_SYS_SCACHELINE_SIZE	(32)
 #define CONFIG_SYS_SCACHE_WAYS		(8)
 
+/* Device Tree Configuration*/
+/*#define CONFIG_OF_LIBFDT 1*/
+#define CONFIG_OF_LIBFDT 1
+#ifdef CONFIG_OF_LIBFDT
+#define IMAGE_ENABLE_OF_LIBFDT  1
+#define CONFIG_LMB
+#endif
 
 #define  CGU_CLK_SRC {				\
 		{LCD, MPLL},			\
@@ -167,7 +174,7 @@
 	"bootaddr="     "0x80a00000"            "\0" \
 	"fdtfile="      "/ingenic/lx16.dtb"     "\0" \
 	"fdt_addr="     "0x81f00000"            "\0"
-#define CONFIG_BOOTCOMMAND "fatload mmc 0 ${bootaddr} ${bootfile}; if fatload mmc 0 ${fdt_addr} ${fdtfile}; then bootm ${bootaddr} - ${fdt_addr}; else bootm ${bootaddr}; fi"
+#define CONFIG_BOOTCOMMAND "fatload mmc 0 ${bootaddr} ${bootfile}; if fatload mmc 0 ${fdt_addr} ${fdtfile}; then saveenv; bootm ${bootaddr} - ${fdt_addr}; else bootm ${bootaddr}; fi"
 
 #elif defined(CONFIG_SPL_SFC_NOR)
 	#define CONFIG_BOOTCOMMAND "sfcnor read 0x40000 0x600000 0x80a00000 ;bootm 0x80a00000"
@@ -329,7 +336,9 @@
 #define GMAC_PHY_RMII   2//4
 #define CONFIG_SYS_RX_ETH_BUFFER 64
 
+#if 0
 #define CONFIG_NET_X1600
+#endif
 #ifdef CONFIG_NET_X1600
 #define CONFIG_MAC_AHB_BUS
 
@@ -382,7 +391,9 @@
 #endif
 #define CONFIG_CMD_MISC		/* Misc functions like sleep etc*/
 #define CONFIG_CMD_MMC		/* MMC/SD support			*/
+#ifdef CONFIG_NET_X1600
 #define CONFIG_CMD_NET		/* networking support			*/
+#endif
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_RUN		/* run command in env variable	*/
 #define CONFIG_CMD_SETGETDCR	/* DCR support on 4xx		*/
@@ -472,7 +483,11 @@
 #ifdef CONFIG_ENV_IS_IN_MMC
 #define CONFIG_SYS_MMC_ENV_DEV		0
 #define CONFIG_ENV_SIZE			(32 << 10)
+#if 0
 #define CONFIG_ENV_OFFSET		(CONFIG_SYS_MONITOR_LEN + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
+#else
+#define CONFIG_ENV_OFFSET		0xcac00
+#endif
 
 #elif defined(CONFIG_ENV_IS_IN_SFC)
 #define CONFIG_CMD_SFC_NOR
@@ -494,6 +509,7 @@
 /**
  * SPL configuration
  */
+#define CONFIG_SPL
 #define CONFIG_SPL_FRAMEWORK
 
 #define CONFIG_SPL_NO_CPU_SUPPORT_CODE
@@ -565,10 +581,11 @@
 /**
  * Keys.
  */
+/* FIXME!!! */
 #define CONFIG_GPIO_USB_DETECT		GPIO_PA(14)
 #define CONFIG_GPIO_USB_DETECT_ENLEVEL	1
 
-#define CONFIG_GPIO_PWR_WAKE		GPIO_PA(30)
+#define CONFIG_GPIO_PWR_WAKE		GPIO_PC(31)
 #define CONFIG_GPIO_PWR_WAKE_ENLEVEL	0
 
 #endif
