@@ -160,9 +160,10 @@
 	#define CONFIG_SYS_HUSH_PARSER          1
 	#define CONFIG_EXTRA_ENV_SETTINGS \
 		"bootfile="     "/uImage"               "\0" \
-		"bootaddr="     "0x80600000"            "\0" \
+		"bootaddr="     "0x81000000"            "\0" \
 		"fdtfile="      "/ingenic/lx26.dtb"     "\0" \
-		"fdt_addr="     "0x83000000"            "\0"
+		"fdt_addr="     "0x83000000"            "\0" \
+		"fdt_high="     "0x83080000"            "\0"
 	#define CONFIG_BOOTCOMMAND "fatload mmc 0 ${bootaddr} ${bootfile}; if fatload mmc 0 ${fdt_addr} ${fdtfile}; then saveenv; bootm ${bootaddr} - ${fdt_addr}; else bootm ${bootaddr}; fi"
   #elif defined(CONFIG_SPL_SFC_NOR)
     #ifdef CONFIG_OF_LIBFDT
