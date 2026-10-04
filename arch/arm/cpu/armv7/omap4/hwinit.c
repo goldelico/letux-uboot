@@ -162,6 +162,21 @@ void omap_die_id(unsigned int *die_id)
 	die_id[1] = readl((*ctrl)->control_std_fuse_die_id_1);
 	die_id[2] = readl((*ctrl)->control_std_fuse_die_id_2);
 	die_id[3] = readl((*ctrl)->control_std_fuse_die_id_3);
+
+    u32 rstst = readl(0x4A307B04);
+
+    printf("PRM_RSTST = 0x%08x\n", rstst);
+
+    if (rstst & (1 << 0))  printf(" GLOBAL COLD RESET\n");
+    if (rstst & (1 << 1))  printf(" GLOBAL WARM SW RESET\n");
+    if (rstst & (1 << 2))  printf(" MPU SECURITY VIOLATION RESET\n");
+    if (rstst & (1 << 3))  printf(" MPU WATCHDOG RESET\n");
+    if (rstst & (1 << 4))  printf(" SECURE WATCHDOG RESET\n");
+    if (rstst & (1 << 5))  printf(" EXTERNAL WARM RESET\n");
+
+    /* Write-1-to-clear */
+    writel(rstst, 0x4A307B04);
+
 }
 
 #ifndef CONFIG_SYS_L2CACHE_OFF
